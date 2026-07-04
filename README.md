@@ -21,18 +21,23 @@ docker compose ps
 ```
 
 The database URL in `.env.example` matches the Compose credentials:
-`postgresql+psycopg://experimentos:experimentos@localhost:5432/experimentos`.
+`postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos`.
 
-When migrations are introduced in a future issue, enable pgvector with:
+Run Alembic migrations after Postgres is healthy:
 
-```sql
-CREATE EXTENSION vector;
+```bash
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run alembic upgrade head
 ```
+
+The initial migration enables the `vector` extension and creates tables for documents,
+document chunks, experiments, and experiment metrics.
 
 ## Project Layout
 
 ```text
 apps/api/              FastAPI application
+packages/db/           SQLAlchemy models and Alembic metadata
 packages/ingestion/   ingestion package boundary
 packages/retrieval/   retrieval package boundary
 packages/experiments/ experiment domain package boundary

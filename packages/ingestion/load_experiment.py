@@ -15,8 +15,10 @@ from pydantic import BaseModel, ValidationError
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from packages.db.models import Document, Experiment, ExperimentMetric
+from packages.db.models import Document, DocumentChunk, Experiment, ExperimentMetric
 from packages.db.session import create_async_session_factory, create_database_engine
+from packages.ingestion.chunking import chunk_markdown_report
+from packages.ingestion.embeddings import build_embedding_provider
 
 LOGGER = logging.getLogger(__name__)
 
@@ -85,6 +87,7 @@ class IngestionResult:
     experiment_name: str
     metrics_inserted: int
     document_inserted: bool
+    chunks_inserted: int
     replaced_existing: bool
 
 
@@ -210,9 +213,19 @@ def _document_title(report_content: str, fallback: str) -> str:
 async def ingest_experiment_dir(
     experiment_dir: Path,
     session_factory: async_sessionmaker[AsyncSession],
+    *,
+    embedding_provider: str = "auto",
+    skip_embeddings: bool = False,
 ) -> IngestionResult:
     experiment_input = load_experiment_files(experiment_dir)
     metadata = experiment_input.metadata
+    chunks = chunk_markdown_report(experiment_input.report_content)
+    provider = None if skip_embeddings else build_embedding_provider(embedding_provider)
+    embeddings = (
+        [None] * len(chunks)
+        if provider is None
+        else provider.embed_texts([chunk.text for chunk in chunks])
+    )
 
     async with session_factory() as session:
         async with session.begin():
@@ -252,42 +265,69 @@ async def ingest_experiment_dir(
                 )
 
             report_path = experiment_input.experiment_dir / "report.md"
-            session.add(
-                Document(
-                    experiment_id=experiment.id,
-                    source_uri=str(report_path),
-                    source_type="markdown",
-                    title=_document_title(experiment_input.report_content, metadata.name),
-                    content=experiment_input.report_content,
-                    content_hash=hashlib.sha256(
-                        experiment_input.report_content.encode("utf-8")
-                    ).hexdigest(),
-                    document_metadata={
-                        "experiment_id": metadata.experiment_id,
-                        "filename": "report.md",
-                    },
-                )
+            document = Document(
+                experiment_id=experiment.id,
+                source_uri=str(report_path),
+                source_type="markdown",
+                title=_document_title(experiment_input.report_content, metadata.name),
+                content=experiment_input.report_content,
+                content_hash=hashlib.sha256(
+                    experiment_input.report_content.encode("utf-8")
+                ).hexdigest(),
+                document_metadata={
+                    "experiment_id": metadata.experiment_id,
+                    "filename": "report.md",
+                },
             )
+            session.add(document)
+            await session.flush()
+            await session.execute(
+                delete(DocumentChunk).where(DocumentChunk.document_id == document.id)
+            )
+
+            for chunk, embedding in zip(chunks, embeddings, strict=True):
+                session.add(
+                    DocumentChunk(
+                        document_id=document.id,
+                        chunk_index=int(chunk.metadata["chunk_index"]),
+                        chunk_text=chunk.text,
+                        token_count=chunk.token_count,
+                        embedding=embedding,
+                        chunk_metadata=dict(chunk.metadata),
+                    )
+                )
 
     if replaced_existing:
         LOGGER.info("Replaced existing records for experiment: %s", metadata.name)
     LOGGER.info("Experiment loaded: %s", metadata.name)
     LOGGER.info("Metrics rows inserted: %s", len(experiment_input.metrics))
     LOGGER.info("Document inserted: report.md")
+    LOGGER.info("Document chunks inserted: %s", len(chunks))
 
     return IngestionResult(
         experiment_name=metadata.name,
         metrics_inserted=len(experiment_input.metrics),
         document_inserted=True,
+        chunks_inserted=len(chunks),
         replaced_existing=replaced_existing,
     )
 
 
-async def _run_cli(experiment_dir: Path) -> IngestionResult:
+async def _run_cli(
+    experiment_dir: Path,
+    *,
+    embedding_provider: str,
+    skip_embeddings: bool,
+) -> IngestionResult:
     engine = create_database_engine()
     session_factory = create_async_session_factory(engine)
     try:
-        return await ingest_experiment_dir(experiment_dir, session_factory)
+        return await ingest_experiment_dir(
+            experiment_dir,
+            session_factory,
+            embedding_provider=embedding_provider,
+            skip_embeddings=skip_embeddings,
+        )
     finally:
         await engine.dispose()
 
@@ -302,6 +342,20 @@ def parse_args() -> argparse.Namespace:
             "Path to a synthetic experiment folder containing metadata.json, metrics.csv, "
             "and report.md."
         ),
+    )
+    parser.add_argument(
+        "--embedding-provider",
+        choices=("auto", "fake", "openai"),
+        default="auto",
+        help=(
+            "Embedding provider to use. 'auto' uses OpenAI when OPENAI_API_KEY is set, "
+            "otherwise deterministic fake embeddings."
+        ),
+    )
+    parser.add_argument(
+        "--skip-embeddings",
+        action="store_true",
+        help="Store chunks with NULL embeddings.",
     )
     return parser.parse_args()
 
@@ -319,7 +373,13 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     args = parse_args()
     try:
-        run_async(_run_cli(args.experiment_dir))
+        run_async(
+            _run_cli(
+                args.experiment_dir,
+                embedding_provider=args.embedding_provider,
+                skip_embeddings=args.skip_embeddings,
+            )
+        )
     except IngestionInputError as exc:
         raise SystemExit(f"Input error: {exc}") from exc
 

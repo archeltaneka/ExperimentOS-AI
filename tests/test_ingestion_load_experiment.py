@@ -8,7 +8,13 @@ from pathlib import Path
 import pytest
 from sqlalchemy import delete, func, select
 
-from packages.db.models import Document, Experiment, ExperimentMetric
+from packages.db.models import (
+    EMBEDDING_DIMENSION,
+    Document,
+    DocumentChunk,
+    Experiment,
+    ExperimentMetric,
+)
 
 
 def write_sample_experiment(experiment_dir: Path) -> None:
@@ -79,10 +85,16 @@ def write_sample_experiment(experiment_dir: Path) -> None:
             ]
         )
 
-    (experiment_dir / "report.md").write_text(
-        "# Ingestion Pipeline Test\n\nThis report is intentionally short but non-empty.\n",
-        encoding="utf-8",
+    report = "\n\n".join(
+        [
+            "# Ingestion Pipeline Test",
+            "## Background\n" + "Background sentence for ingestion chunk tests. " * 100,
+            "## Results\n" + "Results sentence for ingestion chunk tests. " * 100,
+            "## Risks\n" + "Risk sentence for ingestion chunk tests. " * 80,
+            "## Recommendation\n" + "Recommendation sentence for ingestion chunk tests. " * 80,
+        ]
     )
+    (experiment_dir / "report.md").write_text(report, encoding="utf-8")
 
 
 def test_missing_metadata_fails(tmp_path: Path) -> None:
@@ -118,7 +130,11 @@ def test_valid_experiment_folder_ingests_successfully(tmp_path: Path) -> None:
                 )
                 await session.commit()
 
-            result = await ingest_experiment_dir(experiment_dir, session_factory)
+            result = await ingest_experiment_dir(
+                experiment_dir,
+                session_factory,
+                embedding_provider="fake",
+            )
 
             async with session_factory() as session:
                 experiment_id = await session.scalar(
@@ -134,6 +150,14 @@ def test_valid_experiment_folder_ingests_successfully(tmp_path: Path) -> None:
                     .select_from(Document)
                     .where(Document.experiment_id == experiment_id)
                 )
+                chunk_rows = (
+                    await session.scalars(
+                        select(DocumentChunk)
+                        .join(Document)
+                        .where(Document.experiment_id == experiment_id)
+                        .order_by(DocumentChunk.chunk_index)
+                    )
+                ).all()
                 await session.execute(
                     delete(Experiment).where(Experiment.name == "Ingestion Pipeline Test")
                 )
@@ -145,6 +169,14 @@ def test_valid_experiment_folder_ingests_successfully(tmp_path: Path) -> None:
         assert result.document_inserted is True
         assert metric_count == 2
         assert document_count == 1
+        assert len(chunk_rows) > 1
+        assert all(len(chunk.embedding or []) == EMBEDDING_DIMENSION for chunk in chunk_rows)
+        assert {chunk.chunk_metadata["section"] for chunk in chunk_rows} >= {
+            "Background",
+            "Results",
+            "Risks",
+            "Recommendation",
+        }
 
     run_async(run_test())
 
@@ -167,8 +199,28 @@ def test_repeated_ingestion_does_not_duplicate_rows(tmp_path: Path) -> None:
                 )
                 await session.commit()
 
-            first = await ingest_experiment_dir(experiment_dir, session_factory)
-            second = await ingest_experiment_dir(experiment_dir, session_factory)
+            first = await ingest_experiment_dir(
+                experiment_dir,
+                session_factory,
+                embedding_provider="fake",
+            )
+            first_chunk_count = None
+            async with session_factory() as session:
+                experiment_id = await session.scalar(
+                    select(Experiment.id).where(Experiment.name == "Ingestion Pipeline Test")
+                )
+                first_chunk_count = await session.scalar(
+                    select(func.count())
+                    .select_from(DocumentChunk)
+                    .join(Document)
+                    .where(Document.experiment_id == experiment_id)
+                )
+
+            second = await ingest_experiment_dir(
+                experiment_dir,
+                session_factory,
+                embedding_provider="fake",
+            )
 
             async with session_factory() as session:
                 experiment_id = await session.scalar(
@@ -189,6 +241,12 @@ def test_repeated_ingestion_does_not_duplicate_rows(tmp_path: Path) -> None:
                     .select_from(Document)
                     .where(Document.experiment_id == experiment_id)
                 )
+                chunk_count = await session.scalar(
+                    select(func.count())
+                    .select_from(DocumentChunk)
+                    .join(Document)
+                    .where(Document.experiment_id == experiment_id)
+                )
                 await session.execute(
                     delete(Experiment).where(Experiment.name == "Ingestion Pipeline Test")
                 )
@@ -201,5 +259,7 @@ def test_repeated_ingestion_does_not_duplicate_rows(tmp_path: Path) -> None:
         assert experiment_count == 1
         assert metric_count == 2
         assert document_count == 1
+        assert first_chunk_count and first_chunk_count > 1
+        assert chunk_count == first_chunk_count
 
     run_async(run_test())

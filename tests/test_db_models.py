@@ -56,6 +56,8 @@ def test_document_chunks_reference_documents_and_are_ordered_per_document() -> N
     embedding = chunks.c.embedding.type
     assert isinstance(embedding, VECTOR)
     assert embedding.dim == EMBEDDING_DIMENSION == 1536
+    assert "chunk_text" in chunks.c
+    assert "metadata" in chunks.c
 
 
 def test_experiment_metrics_reference_experiments() -> None:

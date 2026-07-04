@@ -1,7 +1,0 @@
-[mcp_servers.firecrawl]
-type = "http"
-url = "https://mcp.firecrawl.dev/fc-5eb0f81389f44da2bf23d090b8cb356a/v2/mcp"
-
-[mcp_servers.composio]
-url = "https://connect.composio.dev/mcp"
-http_headers = { "x-consumer-api-key" = "ck_xPGiB-ymJu-PfkWly0yE" }

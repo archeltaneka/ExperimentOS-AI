@@ -49,6 +49,7 @@ class Document(TimestampMixin, Base):
     source_uri: Mapped[str] = mapped_column(Text, nullable=False)
     source_type: Mapped[str] = mapped_column(String(64), nullable=False)
     title: Mapped[str | None] = mapped_column(Text)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
     content_hash: Mapped[str | None] = mapped_column(String(128), index=True)
     document_metadata: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
 

@@ -4,8 +4,11 @@ import os
 
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
+from packages.config.env import load_environment
+
 
 def get_database_url() -> str:
+    load_environment()
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
         raise RuntimeError("DATABASE_URL environment variable is required")

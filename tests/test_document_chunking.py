@@ -125,3 +125,18 @@ def test_ingestion_cli_accepts_huggingface_provider(tmp_path) -> None:
     )
 
     assert args.embedding_provider == "huggingface"
+
+
+def test_ingestion_cli_accepts_ollama_provider(tmp_path) -> None:
+    from packages.ingestion.load_experiment import parse_args
+
+    args = parse_args(
+        [
+            "--experiment-dir",
+            str(tmp_path),
+            "--embedding-provider",
+            "ollama",
+        ]
+    )
+
+    assert args.embedding_provider == "ollama"

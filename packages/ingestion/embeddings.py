@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
+import urllib.error
+import urllib.request
 from collections.abc import Sequence
 from typing import Any, Protocol
 
+from packages.config.env import load_environment
 from packages.db.models import EMBEDDING_DIMENSION
 
 OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
 BGE_SMALL_EN_MODEL = "BAAI/bge-small-en-v1.5"
+OLLAMA_EMBEDDING_MODEL = "nomic-embed-text"
 
 
 class EmbeddingProvider(Protocol):
@@ -48,6 +53,7 @@ class OpenAIEmbeddingProvider:
         dimension: int = EMBEDDING_DIMENSION,
         model: str = OPENAI_EMBEDDING_MODEL,
     ) -> None:
+        load_environment()
         try:
             from openai import OpenAI
         except ImportError as exc:
@@ -122,7 +128,79 @@ class HuggingFaceEmbeddingProvider:
         return embedding + ([0.0] * (self.dimension - len(embedding)))
 
 
+class OllamaEmbeddingProvider:
+    def __init__(
+        self,
+        *,
+        base_url: str | None = None,
+        dimension: int = EMBEDDING_DIMENSION,
+        model: str | None = None,
+        post_json: Any | None = None,
+    ) -> None:
+        load_environment()
+        self.base_url = base_url or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+        self.dimension = dimension
+        self.model = model or os.environ.get("OLLAMA_EMBEDDING_MODEL", OLLAMA_EMBEDDING_MODEL)
+        self.post_json = post_json or self._post_json
+
+    def embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
+        if not texts:
+            return []
+
+        response = self.post_json(
+            self._url("/api/embed"),
+            {"model": self.model, "input": list(texts)},
+        )
+        embeddings = response.get("embeddings")
+        if not isinstance(embeddings, list):
+            raise RuntimeError("Ollama embedding response must include an embeddings list")
+        return [
+            self._fit_storage_dimension(self._as_float_list(embedding))
+            for embedding in embeddings
+        ]
+
+    def _url(self, path: str) -> str:
+        return f"{self.base_url.rstrip('/')}{path}"
+
+    def _post_json(self, url: str, payload: dict[str, Any]) -> dict[str, Any]:
+        request = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                body = response.read().decode("utf-8")
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(
+                f"Ollama embedding request failed with HTTP {exc.code}: {detail}"
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"Ollama embedding request failed: {exc.reason}") from exc
+
+        parsed = json.loads(body or "{}")
+        if not isinstance(parsed, dict):
+            raise RuntimeError("Ollama embedding response must be a JSON object")
+        return parsed
+
+    def _as_float_list(self, embedding: Any) -> list[float]:
+        if hasattr(embedding, "tolist"):
+            embedding = embedding.tolist()
+        return [float(value) for value in embedding]
+
+    def _fit_storage_dimension(self, embedding: list[float]) -> list[float]:
+        if len(embedding) > self.dimension:
+            raise ValueError(
+                f"Ollama embedding dimension {len(embedding)} exceeds configured "
+                f"storage dimension {self.dimension}"
+            )
+        return embedding + ([0.0] * (self.dimension - len(embedding)))
+
+
 def build_embedding_provider(provider: str) -> EmbeddingProvider:
+    load_environment()
     normalized = provider.lower()
     if normalized == "fake":
         return FakeEmbeddingProvider()
@@ -136,4 +214,6 @@ def build_embedding_provider(provider: str) -> EmbeddingProvider:
         return FakeEmbeddingProvider()
     if normalized in {"huggingface", "hf", "bge-small-en-v1.5"}:
         return HuggingFaceEmbeddingProvider()
-    raise ValueError("embedding provider must be one of: auto, fake, openai, huggingface")
+    if normalized in {"ollama", "local"}:
+        return OllamaEmbeddingProvider()
+    raise ValueError("embedding provider must be one of: auto, fake, openai, huggingface, ollama")

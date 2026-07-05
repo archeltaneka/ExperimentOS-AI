@@ -105,12 +105,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--embedding-provider",
-        choices=("auto", "fake", "openai", "huggingface"),
+        choices=("auto", "fake", "openai", "huggingface", "ollama"),
         default="auto",
         help=(
             "Embedding provider to use. 'auto' uses OpenAI when OPENAI_API_KEY is set, "
             "otherwise deterministic fake embeddings. 'huggingface' uses "
-            "BAAI/bge-small-en-v1.5."
+            "BAAI/bge-small-en-v1.5. 'ollama' uses OLLAMA_BASE_URL and "
+            "OLLAMA_EMBEDDING_MODEL."
         ),
     )
     return parser.parse_args(argv)

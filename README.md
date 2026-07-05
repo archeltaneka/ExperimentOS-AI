@@ -8,8 +8,13 @@ ExperimentOS AI is starting as a Python backend workspace. Issue #1 sets up the 
 uv sync
 copy .env.example .env
 docker compose up -d postgres
+uv run alembic upgrade head
 uv run uvicorn apps.api.main:app --reload
 ```
+
+Local commands load configuration from `.env`. Values in `.env` override conflicting shell
+environment variables, so you should edit `.env` instead of setting values manually with
+PowerShell assignments.
 
 ## Local Database
 
@@ -26,7 +31,6 @@ The database URL in `.env.example` matches the Compose credentials:
 Run Alembic migrations after Postgres is healthy:
 
 ```bash
-$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
 uv run alembic upgrade head
 ```
 
@@ -50,6 +54,10 @@ tests/                automated tests
 ```
 
 Health check: `GET http://127.0.0.1:8000/health`
+
+Ollama embeddings can be selected with `EMBEDDING_PROVIDER=ollama` or
+`--embedding-provider ollama`. Ensure the configured model, such as `nomic-embed-text`, is
+available in your local Ollama server.
 
 ## Test
 

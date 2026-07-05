@@ -4,8 +4,13 @@ from dataclasses import dataclass
 
 from fastapi.testclient import TestClient
 
-from apps.api.main import app, get_embedding_provider_name, get_question_answering_service
-from packages.llm.client import LLMMetrics
+from apps.api.main import (
+    app,
+    get_embedding_provider_name,
+    get_llm_client,
+    get_question_answering_service,
+)
+from packages.llm.client import LLMMetrics, OllamaLLMClient
 from packages.qa.question_answering_service import (
     Citation,
     EmbeddingFailureError,
@@ -29,6 +34,16 @@ def test_embedding_provider_name_uses_environment(monkeypatch) -> None:
     monkeypatch.setenv("EMBEDDING_PROVIDER", "huggingface")
 
     assert get_embedding_provider_name() == "huggingface"
+
+
+def test_llm_client_uses_ollama_provider(monkeypatch) -> None:
+    monkeypatch.setenv("LLM_PROVIDER", "ollama")
+    monkeypatch.setenv("OLLAMA_MODEL", "qwen2.5:7b")
+
+    client = get_llm_client()
+
+    assert isinstance(client, OllamaLLMClient)
+    assert client.model == "qwen2.5:7b"
 
 
 @dataclass

@@ -7,13 +7,20 @@ from packages.db.session import (
 )
 
 
-def test_database_url_comes_from_environment(monkeypatch) -> None:
-    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://user:pass@localhost:5432/app")
+def test_database_url_comes_from_dotenv(monkeypatch, tmp_path) -> None:
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text(
+        "DATABASE_URL=postgresql+psycopg://user:pass@localhost:5433/app\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://other:pass@localhost:5432/app")
 
-    assert get_database_url() == "postgresql+psycopg://user:pass@localhost:5432/app"
+    assert get_database_url() == "postgresql+psycopg://user:pass@localhost:5433/app"
 
 
-def test_database_url_requires_environment(monkeypatch) -> None:
+def test_database_url_requires_configuration(monkeypatch, tmp_path) -> None:
+    monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
     try:

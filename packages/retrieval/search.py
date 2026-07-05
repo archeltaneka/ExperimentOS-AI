@@ -25,14 +25,12 @@ def parse_metadata_filter(values: list[str]) -> dict[str, Any]:
 
 
 def format_result(result: RetrievalResult) -> str:
-    experiment = result.experiment_name or str(result.experiment_id)
-    document = result.document_title or str(result.document_id)
     metadata = json.dumps(result.metadata, sort_keys=True)
     return "\n".join(
         [
-            f"Similarity Score: {result.similarity_score:.4f}",
-            f"Experiment: {experiment} ({result.experiment_id})",
-            f"Document: {document} ({result.document_id})",
+            f"Similarity Score: {result.similarity:.4f}",
+            f"Experiment: {result.experiment_name} ({result.experiment_id})",
+            f"Document: {result.document_name} ({result.document_id})",
             "Retrieved Chunk:",
             result.chunk_text,
             "Metadata:",

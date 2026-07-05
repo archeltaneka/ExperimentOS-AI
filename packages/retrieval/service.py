@@ -15,13 +15,21 @@ from packages.ingestion.embeddings import EmbeddingProvider
 
 @dataclass(frozen=True)
 class RetrievalResult:
-    chunk_text: str
-    similarity_score: float
-    document_id: uuid.UUID
-    experiment_id: uuid.UUID
+    experiment_id: str
     metadata: dict[str, Any]
-    experiment_name: str | None = None
-    document_title: str | None = None
+    experiment_name: str
+    document_id: str
+    document_name: str
+    chunk_text: str
+    similarity: float
+
+    @property
+    def similarity_score(self) -> float:
+        return self.similarity
+
+    @property
+    def document_title(self) -> str:
+        return self.document_name
 
 
 @dataclass(frozen=True)
@@ -110,13 +118,13 @@ class RetrievalService:
         vector_search_time_ms = (perf_counter() - search_started_at) * 1000.0
         results = [
             RetrievalResult(
-                chunk_text=chunk.chunk_text,
-                similarity_score=1.0 - float(distance_value),
-                document_id=document.id,
-                experiment_id=experiment.id,
+                experiment_id=str(experiment.id),
                 metadata=dict(chunk.chunk_metadata),
                 experiment_name=experiment.name,
-                document_title=document.title,
+                document_id=str(document.id),
+                document_name=document.title or document.source_uri,
+                chunk_text=chunk.chunk_text,
+                similarity=1.0 - float(distance_value),
             )
             for chunk, document, experiment, distance_value in rows
         ]

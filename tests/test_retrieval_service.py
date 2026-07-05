@@ -54,10 +54,10 @@ def test_semantic_retrieval_returns_expected_experiment() -> None:
             await engine.dispose()
 
         assert len(results) == 1
-        assert results[0].experiment_id == payment_id
+        assert results[0].experiment_id == str(payment_id)
         assert results[0].experiment_name == "Payment Recommendation Launch"
         assert "payment recommendation" in results[0].chunk_text
-        assert results[0].similarity_score == pytest.approx(1.0)
+        assert results[0].similarity == pytest.approx(1.0)
 
     run_async(run_test())
 
@@ -87,7 +87,7 @@ def test_experiment_filtering_limits_results() -> None:
             await cleanup_retrieval_fixtures(session_factory)
             await engine.dispose()
 
-        assert [result.experiment_id for result in results] == [search_id]
+        assert [result.experiment_id for result in results] == [str(search_id)]
         assert results[0].experiment_name == "Search Ranking Experiment"
 
     run_async(run_test())
@@ -116,13 +116,13 @@ def test_top_k_behaves_correctly() -> None:
             await engine.dispose()
 
         assert len(results) == 2
-        assert results[0].similarity_score >= results[1].similarity_score
+        assert results[0].similarity >= results[1].similarity
         assert metrics is not None
         assert metrics.embedding_time_ms >= 0.0
         assert metrics.vector_search_time_ms >= 0.0
         assert metrics.retrieved_chunks == 2
         assert metrics.average_similarity == pytest.approx(
-            sum(result.similarity_score for result in results) / len(results)
+            sum(result.similarity for result in results) / len(results)
         )
 
     run_async(run_test())
@@ -185,13 +185,13 @@ def test_cli_result_format_includes_required_labels() -> None:
     from packages.retrieval.service import RetrievalResult
 
     result = RetrievalResult(
-        chunk_text="The payment recommendation was shipped after guardrails passed.",
-        similarity_score=0.875,
-        document_id=uuid.uuid4(),
-        experiment_id=uuid.uuid4(),
-        metadata={"section": "Decision"},
+        experiment_id=str(uuid.uuid4()),
         experiment_name="Payment Recommendation Launch",
-        document_title="Launch Report",
+        document_id=str(uuid.uuid4()),
+        document_name="Launch Report",
+        chunk_text="The payment recommendation was shipped after guardrails passed.",
+        similarity=0.875,
+        metadata={"section": "Decision"},
     )
 
     output = format_result(result)
@@ -201,6 +201,23 @@ def test_cli_result_format_includes_required_labels() -> None:
     assert "Document: Launch Report" in output
     assert "Retrieved Chunk:" in output
     assert "Metadata:" in output
+
+
+def test_retrieval_result_exposes_shared_contract_fields() -> None:
+    from dataclasses import fields
+
+    from packages.retrieval.service import RetrievalResult
+
+    field_names = {field.name for field in fields(RetrievalResult)}
+
+    assert {
+        "experiment_id",
+        "experiment_name",
+        "document_name",
+        "chunk_text",
+        "similarity",
+        "metadata",
+    } <= field_names
 
 
 def test_cli_metrics_format_includes_required_labels() -> None:

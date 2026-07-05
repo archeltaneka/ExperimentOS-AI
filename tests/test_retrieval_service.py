@@ -110,12 +110,20 @@ def test_top_k_behaves_correctly() -> None:
             async with session_factory() as session:
                 service = RetrievalService(session, provider)
                 results = await service.search("payment recommendation", top_k=2)
+                metrics = service.last_metrics
         finally:
             await cleanup_retrieval_fixtures(session_factory)
             await engine.dispose()
 
         assert len(results) == 2
         assert results[0].similarity_score >= results[1].similarity_score
+        assert metrics is not None
+        assert metrics.embedding_time_ms >= 0.0
+        assert metrics.vector_search_time_ms >= 0.0
+        assert metrics.retrieved_chunks == 2
+        assert metrics.average_similarity == pytest.approx(
+            sum(result.similarity_score for result in results) / len(results)
+        )
 
     run_async(run_test())
 
@@ -193,6 +201,40 @@ def test_cli_result_format_includes_required_labels() -> None:
     assert "Document: Launch Report" in output
     assert "Retrieved Chunk:" in output
     assert "Metadata:" in output
+
+
+def test_cli_metrics_format_includes_required_labels() -> None:
+    from packages.retrieval.search import format_metrics
+    from packages.retrieval.service import RetrievalMetrics
+
+    metrics = RetrievalMetrics(
+        embedding_time_ms=28.4,
+        vector_search_time_ms=9.2,
+        retrieved_chunks=5,
+        average_similarity=0.84,
+    )
+
+    output = format_metrics(metrics)
+
+    assert "Embedding Time: 28 ms" in output
+    assert "Vector Search: 9 ms" in output
+    assert "Retrieved Chunks: 5" in output
+    assert "Average Similarity: 0.84" in output
+
+
+def test_retrieval_cli_accepts_huggingface_provider() -> None:
+    from packages.retrieval.search import parse_args
+
+    args = parse_args(
+        [
+            "--query",
+            "payment recommendation",
+            "--embedding-provider",
+            "huggingface",
+        ]
+    )
+
+    assert args.embedding_provider == "huggingface"
 
 
 async def seed_retrieval_fixtures(

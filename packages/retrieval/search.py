@@ -8,7 +8,7 @@ from typing import Any
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.ingestion.embeddings import build_embedding_provider
 from packages.ingestion.load_experiment import run_async
-from packages.retrieval.service import RetrievalResult, RetrievalService
+from packages.retrieval.service import RetrievalMetrics, RetrievalResult, RetrievalService
 
 
 def parse_metadata_filter(values: list[str]) -> dict[str, Any]:
@@ -41,6 +41,17 @@ def format_result(result: RetrievalResult) -> str:
     )
 
 
+def format_metrics(metrics: RetrievalMetrics) -> str:
+    return "\n".join(
+        [
+            f"Embedding Time: {metrics.embedding_time_ms:.0f} ms",
+            f"Vector Search: {metrics.vector_search_time_ms:.0f} ms",
+            f"Retrieved Chunks: {metrics.retrieved_chunks}",
+            f"Average Similarity: {metrics.average_similarity:.2f}",
+        ]
+    )
+
+
 async def _run_cli(
     *,
     query: str,
@@ -48,7 +59,7 @@ async def _run_cli(
     experiment_id: uuid.UUID | None,
     embedding_provider: str,
     metadata_filter: dict[str, Any],
-) -> list[RetrievalResult]:
+) -> tuple[list[RetrievalResult], RetrievalMetrics]:
     engine = create_database_engine()
     session_factory = create_async_session_factory(engine)
     provider = build_embedding_provider(embedding_provider)
@@ -56,22 +67,26 @@ async def _run_cli(
         async with session_factory() as session:
             service = RetrievalService(session, provider)
             if experiment_id is None:
-                return await service.search(
+                results = await service.search(
                     query,
                     top_k=top_k,
                     metadata_filter=metadata_filter or None,
                 )
-            return await service.search_by_experiment(
-                experiment_id,
-                query,
-                top_k=top_k,
-                metadata_filter=metadata_filter or None,
-            )
+            else:
+                results = await service.search_by_experiment(
+                    experiment_id,
+                    query,
+                    top_k=top_k,
+                    metadata_filter=metadata_filter or None,
+                )
+            if service.last_metrics is None:
+                raise RuntimeError("retrieval metrics were not recorded")
+            return results, service.last_metrics
     finally:
         await engine.dispose()
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Search experiment document chunks with pgvector.")
     parser.add_argument(
         "--query",
@@ -92,21 +107,22 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--embedding-provider",
-        choices=("auto", "fake", "openai"),
+        choices=("auto", "fake", "openai", "huggingface"),
         default="auto",
         help=(
             "Embedding provider to use. 'auto' uses OpenAI when OPENAI_API_KEY is set, "
-            "otherwise deterministic fake embeddings."
+            "otherwise deterministic fake embeddings. 'huggingface' uses "
+            "BAAI/bge-small-en-v1.5."
         ),
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def main() -> None:
     args = parse_args()
     try:
         metadata_filter = parse_metadata_filter(args.metadata)
-        results = run_async(
+        results, metrics = run_async(
             _run_cli(
                 query=args.query,
                 top_k=args.top_k,
@@ -122,6 +138,10 @@ def main() -> None:
         if index:
             print()
         print(format_result(result))
+
+    if results:
+        print()
+    print(format_metrics(metrics))
 
 
 if __name__ == "__main__":

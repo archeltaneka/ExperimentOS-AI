@@ -1,3 +1,3 @@
-from packages.retrieval.service import RetrievalResult, RetrievalService
+from packages.retrieval.service import RetrievalMetrics, RetrievalResult, RetrievalService
 
-__all__ = ["RetrievalResult", "RetrievalService"]
+__all__ = ["RetrievalMetrics", "RetrievalResult", "RetrievalService"]

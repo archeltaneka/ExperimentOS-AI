@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
+from time import perf_counter
 from typing import Any
 
 from sqlalchemy import select
@@ -23,10 +24,19 @@ class RetrievalResult:
     document_title: str | None = None
 
 
+@dataclass(frozen=True)
+class RetrievalMetrics:
+    embedding_time_ms: float
+    vector_search_time_ms: float
+    retrieved_chunks: int
+    average_similarity: float
+
+
 class RetrievalService:
     def __init__(self, session: AsyncSession, embedding_provider: EmbeddingProvider) -> None:
         self.session = session
         self.embedding_provider = embedding_provider
+        self.last_metrics: RetrievalMetrics | None = None
 
     async def search(
         self,
@@ -68,9 +78,18 @@ class RetrievalService:
         if not normalized_query:
             raise ValueError("query must not be empty")
         if top_k < 1:
+            self.last_metrics = RetrievalMetrics(
+                embedding_time_ms=0.0,
+                vector_search_time_ms=0.0,
+                retrieved_chunks=0,
+                average_similarity=0.0,
+            )
             return []
 
+        embedding_started_at = perf_counter()
         query_embedding = self._embed_query(normalized_query)
+        embedding_time_ms = (perf_counter() - embedding_started_at) * 1000.0
+
         distance = DocumentChunk.embedding.cosine_distance(query_embedding).label("distance")
         stmt = (
             select(DocumentChunk, Document, Experiment, distance)
@@ -86,8 +105,10 @@ class RetrievalService:
         if metadata_filter:
             stmt = stmt.where(DocumentChunk.chunk_metadata.contains(dict(metadata_filter)))
 
+        search_started_at = perf_counter()
         rows = (await self.session.execute(stmt)).all()
-        return [
+        vector_search_time_ms = (perf_counter() - search_started_at) * 1000.0
+        results = [
             RetrievalResult(
                 chunk_text=chunk.chunk_text,
                 similarity_score=1.0 - float(distance_value),
@@ -99,6 +120,16 @@ class RetrievalService:
             )
             for chunk, document, experiment, distance_value in rows
         ]
+        average_similarity = (
+            sum(result.similarity_score for result in results) / len(results) if results else 0.0
+        )
+        self.last_metrics = RetrievalMetrics(
+            embedding_time_ms=embedding_time_ms,
+            vector_search_time_ms=vector_search_time_ms,
+            retrieved_chunks=len(results),
+            average_similarity=average_similarity,
+        )
+        return results
 
     def _embed_query(self, query: str) -> list[float]:
         embeddings = self.embedding_provider.embed_texts([query])

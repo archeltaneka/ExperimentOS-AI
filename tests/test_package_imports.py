@@ -14,7 +14,7 @@ def test_workspace_packages_import() -> None:
         "ExperimentMetric",
     }
     assert packages.ingestion.__all__ == []
-    assert packages.retrieval.__all__ == []
+    assert set(packages.retrieval.__all__) == {"RetrievalResult", "RetrievalService"}
     assert packages.experiments.__all__ == []
     assert packages.agents.__all__ == []
     assert packages.evals.__all__ == []

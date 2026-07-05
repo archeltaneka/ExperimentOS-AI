@@ -170,7 +170,8 @@ def test_valid_experiment_folder_ingests_successfully(tmp_path: Path) -> None:
         assert metric_count == 2
         assert document_count == 1
         assert len(chunk_rows) > 1
-        assert all(len(chunk.embedding or []) == EMBEDDING_DIMENSION for chunk in chunk_rows)
+        assert all(chunk.embedding is not None for chunk in chunk_rows)
+        assert all(len(chunk.embedding) == EMBEDDING_DIMENSION for chunk in chunk_rows)
         assert {chunk.chunk_metadata["section"] for chunk in chunk_rows} >= {
             "Background",
             "Results",

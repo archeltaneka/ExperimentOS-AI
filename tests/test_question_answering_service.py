@@ -179,3 +179,49 @@ def test_question_answering_service_maps_llm_failures() -> None:
             experiment_id=result.experiment_id,
             top_k=5,
         ))
+
+
+def test_prompt_templates_are_centralized_and_used_for_qa_prompt() -> None:
+    from packages.llm.prompts import (
+        DECISION_PROMPT,
+        QA_PROMPT,
+        SUMMARY_PROMPT,
+        SYSTEM_PROMPT,
+        build_grounded_prompt,
+    )
+
+    result = retrieval_result(
+        chunk_text="The payment recommendation shipped after guardrails passed.",
+        metadata={"section": "Decision"},
+    )
+
+    prompt = build_grounded_prompt(
+        question="Why did it ship?",
+        retrieved_chunks=[result],
+    )
+
+    assert "Only answer using retrieved context." in SYSTEM_PROMPT
+    assert "{question}" in QA_PROMPT
+    assert "{context}" in QA_PROMPT
+    assert DECISION_PROMPT
+    assert SUMMARY_PROMPT
+    assert prompt.system_instruction == SYSTEM_PROMPT
+    assert prompt.prompt == QA_PROMPT.format(
+        question="Why did it ship?",
+        context="\n\n".join(
+            [
+                "\n".join(
+                    [
+                        "Chunk 1",
+                        f"Experiment ID: {result.experiment_id}",
+                        f"Experiment: {result.experiment_name}",
+                        f"Document: {result.document_name}",
+                        f"Similarity: {result.similarity:.4f}",
+                        f"Metadata: {result.metadata}",
+                        "Text:",
+                        result.chunk_text,
+                    ]
+                )
+            ]
+        ),
+    )

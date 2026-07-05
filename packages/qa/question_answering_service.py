@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
-from typing import Any
+
+from pydantic import BaseModel, ConfigDict
 
 from packages.llm.client import LLMClient, LLMClientError, LLMMetrics
 from packages.llm.prompts import build_grounded_prompt
@@ -34,30 +34,25 @@ class LLMGenerationError(QuestionAnsweringServiceError):
 ExperimentExists = Callable[[str], Awaitable[bool]]
 
 
-@dataclass(frozen=True)
-class Citation:
+class Citation(BaseModel):
     experiment_id: str
     document: str
     similarity: float
 
-
-@dataclass(frozen=True)
-class RetrievedChunk:
-    experiment_id: str
-    experiment_name: str
-    document: str
-    text: str
-    similarity: float
-    metadata: dict[str, Any]
+    model_config = ConfigDict(frozen=True)
 
 
-@dataclass(frozen=True)
-class QuestionAnsweringServiceResponse:
+class QAResponse(BaseModel):
     answer: str
     citations: list[Citation]
-    retrieved_chunks: list[RetrievedChunk]
-    retrieval_metrics: dict[str, float | int]
+    retrieved_chunks: list[RetrievalResult]
+    retrieval_metrics: RetrievalMetrics
     llm_metrics: LLMMetrics
+
+    model_config = ConfigDict(frozen=True)
+
+
+QuestionAnsweringServiceResponse = QAResponse
 
 
 class QuestionAnsweringService:
@@ -78,7 +73,7 @@ class QuestionAnsweringService:
         question: str,
         experiment_id: str,
         top_k: int = 5,
-    ) -> QuestionAnsweringServiceResponse:
+    ) -> QAResponse:
         normalized_question = question.strip()
         if not normalized_question:
             raise EmptyQuestionError("question must not be empty")
@@ -97,12 +92,12 @@ class QuestionAnsweringService:
         except Exception as exc:
             raise EmbeddingFailureError(str(exc)) from exc
 
-        retrieval_metrics = self._serialize_retrieval_metrics(
+        retrieval_metrics = self._resolve_retrieval_metrics(
             self.retrieval_service.last_metrics,
             retrieved_chunks=len(results),
         )
         if not results:
-            return QuestionAnsweringServiceResponse(
+            return QAResponse(
                 answer=INSUFFICIENT_EVIDENCE_ANSWER,
                 citations=[],
                 retrieved_chunks=[],
@@ -126,10 +121,10 @@ class QuestionAnsweringService:
         except Exception as exc:
             raise LLMGenerationError(str(exc)) from exc
 
-        return QuestionAnsweringServiceResponse(
+        return QAResponse(
             answer=llm_response.answer,
             citations=self._build_citations(results),
-            retrieved_chunks=self._build_retrieved_chunks(results),
+            retrieved_chunks=results,
             retrieval_metrics=retrieval_metrics,
             llm_metrics=llm_response.metrics,
         )
@@ -144,35 +139,17 @@ class QuestionAnsweringService:
             for result in results
         ]
 
-    def _build_retrieved_chunks(self, results: list[RetrievalResult]) -> list[RetrievedChunk]:
-        return [
-            RetrievedChunk(
-                experiment_id=result.experiment_id,
-                experiment_name=result.experiment_name,
-                document=result.document_name,
-                text=result.chunk_text,
-                similarity=result.similarity,
-                metadata=result.metadata,
-            )
-            for result in results
-        ]
-
-    def _serialize_retrieval_metrics(
+    def _resolve_retrieval_metrics(
         self,
         metrics: RetrievalMetrics | None,
         *,
         retrieved_chunks: int,
-    ) -> dict[str, float | int]:
+    ) -> RetrievalMetrics:
         if metrics is None:
-            return {
-                "embedding_time_ms": 0.0,
-                "vector_search_time_ms": 0.0,
-                "retrieved_chunks": retrieved_chunks,
-                "average_similarity": 0.0,
-            }
-        return {
-            "embedding_time_ms": metrics.embedding_time_ms,
-            "vector_search_time_ms": metrics.vector_search_time_ms,
-            "retrieved_chunks": metrics.retrieved_chunks,
-            "average_similarity": metrics.average_similarity,
-        }
+            return RetrievalMetrics(
+                embedding_time_ms=0.0,
+                vector_search_time_ms=0.0,
+                retrieved_chunks=retrieved_chunks,
+                average_similarity=0.0,
+            )
+        return metrics

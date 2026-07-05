@@ -3,11 +3,11 @@ from __future__ import annotations
 import os
 import uuid
 from functools import lru_cache
-from typing import Annotated, Any, Protocol
+from typing import Annotated, Protocol
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, status
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -19,8 +19,8 @@ from packages.qa.question_answering_service import (
     EmbeddingFailureError,
     EmptyQuestionError,
     LLMGenerationError,
+    QAResponse,
     QuestionAnsweringService,
-    QuestionAnsweringServiceResponse,
     UnknownExperimentError,
 )
 from packages.retrieval.service import RetrievalService
@@ -41,42 +41,6 @@ class AskRequest(BaseModel):
         if not value.strip():
             raise ValueError("question must not be empty")
         return value
-
-
-class CitationResponse(BaseModel):
-    experiment_id: str
-    document: str
-    similarity: float
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class RetrievedChunkResponse(BaseModel):
-    experiment_id: str
-    experiment_name: str
-    document: str
-    text: str
-    similarity: float
-    metadata: dict[str, Any]
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class LLMMetricsResponse(BaseModel):
-    model: str
-    input_tokens: int
-    output_tokens: int
-    latency_ms: float
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class AskResponse(BaseModel):
-    answer: str
-    citations: list[CitationResponse]
-    retrieved_chunks: list[RetrievedChunkResponse]
-    retrieval_metrics: dict[str, float | int]
-    llm_metrics: LLMMetricsResponse
 
 
 @lru_cache(maxsize=1)
@@ -105,7 +69,7 @@ class QuestionAnsweringDependency(Protocol):
         question: str,
         experiment_id: str,
         top_k: int,
-    ) -> QuestionAnsweringServiceResponse:
+    ) -> QAResponse:
         pass
 
 
@@ -116,7 +80,7 @@ class DatabaseQuestionAnsweringService:
         question: str,
         experiment_id: str,
         top_k: int,
-    ) -> QuestionAnsweringServiceResponse:
+    ) -> QAResponse:
         session_factory = get_session_factory()
         async with session_factory() as session:
             retrieval_service = RetrievalService(
@@ -155,11 +119,11 @@ async def health() -> dict[str, str]:
     return {"status": "ok", "service": "experimentos-api"}
 
 
-@app.post("/ask", response_model=AskResponse)
+@app.post("/ask", response_model=QAResponse)
 async def ask(
     request: AskRequest,
     service: Annotated[QuestionAnsweringDependency, Depends(get_question_answering_service)],
-) -> AskResponse:
+) -> QAResponse:
     try:
         response = await service.answer_question(
             question=request.question,
@@ -175,16 +139,4 @@ async def ask(
     except LLMGenerationError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
-    return serialize_ask_response(response)
-
-
-def serialize_ask_response(response: QuestionAnsweringServiceResponse) -> AskResponse:
-    return AskResponse(
-        answer=response.answer,
-        citations=[CitationResponse.model_validate(citation) for citation in response.citations],
-        retrieved_chunks=[
-            RetrievedChunkResponse.model_validate(chunk) for chunk in response.retrieved_chunks
-        ],
-        retrieval_metrics=response.retrieval_metrics,
-        llm_metrics=LLMMetricsResponse.model_validate(response.llm_metrics),
-    )
+    return response

@@ -6,10 +6,11 @@ from collections.abc import Callable
 
 import pytest
 
-from packages.llm.client import LLMClientError, MockLLMClient
+from packages.llm.client import LLMClientError, LLMMetrics, MockLLMClient
 from packages.qa.question_answering_service import (
     EmbeddingFailureError,
     LLMGenerationError,
+    QAResponse,
     QuestionAnsweringService,
     UnknownExperimentError,
 )
@@ -92,13 +93,15 @@ def test_question_answering_service_returns_grounded_answer_and_citations(top_k:
     ))
 
     assert answer.answer == "The launch passed guardrails."
+    assert isinstance(answer, QAResponse)
     assert retrieval.calls == [(experiment_id, "Why was it launched?", top_k)]
     assert answer.citations[0].experiment_id == experiment_id
     assert answer.citations[0].document == "Launch Report"
     assert answer.citations[0].similarity == pytest.approx(0.91)
-    assert answer.retrieved_chunks[0].text == result.chunk_text
+    assert answer.retrieved_chunks[0] == result
+    assert answer.retrieved_chunks[0].chunk_text == result.chunk_text
     assert answer.retrieved_chunks[0].metadata == {"section": "Results"}
-    assert answer.retrieval_metrics["retrieved_chunks"] == 1
+    assert answer.retrieval_metrics.retrieved_chunks == 1
     assert answer.llm_metrics.model == "mock-answerer"
     assert answer.llm_metrics.input_tokens > 0
     assert answer.llm_metrics.output_tokens > 0
@@ -125,11 +128,47 @@ def test_question_answering_service_returns_no_context_answer_without_llm_call()
     ))
 
     assert answer.answer == "Insufficient evidence exists to answer the question."
+    assert isinstance(answer, QAResponse)
     assert answer.citations == []
     assert answer.retrieved_chunks == []
-    assert answer.retrieval_metrics["retrieved_chunks"] == 0
+    assert answer.retrieval_metrics.retrieved_chunks == 0
     assert answer.llm_metrics.model == "mock"
     assert llm.calls == 0
+
+
+def test_qa_response_serializes_shared_models() -> None:
+    from packages.qa.question_answering_service import Citation
+
+    result = retrieval_result()
+    metrics = RetrievalMetrics(
+        embedding_time_ms=1.0,
+        vector_search_time_ms=2.0,
+        retrieved_chunks=1,
+        average_similarity=0.91,
+    )
+
+    response = QAResponse(
+        answer="The answer.",
+        citations=[
+            Citation(
+                experiment_id=result.experiment_id,
+                document=result.document_name,
+                similarity=result.similarity,
+            )
+        ],
+        retrieved_chunks=[result],
+        retrieval_metrics=metrics,
+        llm_metrics=LLMMetrics(
+            model="mock",
+            input_tokens=10,
+            output_tokens=2,
+            latency_ms=0.5,
+        ),
+    )
+
+    assert response.model_dump()["retrieved_chunks"][0]["chunk_text"] == result.chunk_text
+    assert response.model_dump()["retrieval_metrics"]["retrieved_chunks"] == 1
+    assert response.model_dump()["llm_metrics"]["model"] == "mock"
 
 
 def test_question_answering_service_rejects_unknown_experiment() -> None:

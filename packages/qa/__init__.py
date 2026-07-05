@@ -5,10 +5,10 @@ from packages.qa.question_answering_service import (
     EmbeddingFailureError,
     EmptyQuestionError,
     LLMGenerationError,
+    QAResponse,
     QuestionAnsweringService,
     QuestionAnsweringServiceError,
     QuestionAnsweringServiceResponse,
-    RetrievedChunk,
     UnknownExperimentError,
 )
 
@@ -17,9 +17,9 @@ __all__ = [
     "EmbeddingFailureError",
     "EmptyQuestionError",
     "LLMGenerationError",
+    "QAResponse",
     "QuestionAnsweringService",
     "QuestionAnsweringServiceError",
     "QuestionAnsweringServiceResponse",
-    "RetrievedChunk",
     "UnknownExperimentError",
 ]

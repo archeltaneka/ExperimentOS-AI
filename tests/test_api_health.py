@@ -10,10 +10,10 @@ from packages.qa.question_answering_service import (
     Citation,
     EmbeddingFailureError,
     LLMGenerationError,
-    QuestionAnsweringServiceResponse,
-    RetrievedChunk,
+    QAResponse,
     UnknownExperimentError,
 )
+from packages.retrieval.service import RetrievalMetrics, RetrievalResult
 
 
 def test_health_endpoint_returns_ok() -> None:
@@ -33,7 +33,7 @@ def test_embedding_provider_name_uses_environment(monkeypatch) -> None:
 
 @dataclass
 class StubQuestionAnsweringService:
-    response: QuestionAnsweringServiceResponse | None = None
+    response: QAResponse | None = None
     failure: Exception | None = None
 
     async def answer_question(
@@ -42,7 +42,7 @@ class StubQuestionAnsweringService:
         question: str,
         experiment_id: str,
         top_k: int,
-    ) -> QuestionAnsweringServiceResponse:
+    ) -> QAResponse:
         if self.failure is not None:
             raise self.failure
         if self.response is None:
@@ -51,8 +51,17 @@ class StubQuestionAnsweringService:
 
 
 def test_ask_endpoint_returns_grounded_answer() -> None:
+    retrieval_result = RetrievalResult(
+        experiment_id="exp-123",
+        metadata={"section": "Decision"},
+        experiment_name="Payment Recommendation Launch",
+        document_id="doc-123",
+        document_name="Launch Report",
+        chunk_text="The launch passed guardrails.",
+        similarity=0.91,
+    )
     service = StubQuestionAnsweringService(
-        response=QuestionAnsweringServiceResponse(
+        response=QAResponse(
             answer="The launch passed guardrails.",
             citations=[
                 Citation(
@@ -61,22 +70,13 @@ def test_ask_endpoint_returns_grounded_answer() -> None:
                     similarity=0.91,
                 )
             ],
-            retrieved_chunks=[
-                RetrievedChunk(
-                    experiment_id="exp-123",
-                    experiment_name="Payment Recommendation Launch",
-                    document="Launch Report",
-                    text="The launch passed guardrails.",
-                    similarity=0.91,
-                    metadata={"section": "Decision"},
-                )
-            ],
-            retrieval_metrics={
-                "embedding_time_ms": 3.0,
-                "vector_search_time_ms": 5.0,
-                "retrieved_chunks": 1,
-                "average_similarity": 0.91,
-            },
+            retrieved_chunks=[retrieval_result],
+            retrieval_metrics=RetrievalMetrics(
+                embedding_time_ms=3.0,
+                vector_search_time_ms=5.0,
+                retrieved_chunks=1,
+                average_similarity=0.91,
+            ),
             llm_metrics=LLMMetrics(
                 model="mock-answerer",
                 input_tokens=42,
@@ -108,11 +108,12 @@ def test_ask_endpoint_returns_grounded_answer() -> None:
         "retrieved_chunks": [
             {
                 "experiment_id": "exp-123",
-                "experiment_name": "Payment Recommendation Launch",
-                "document": "Launch Report",
-                "text": "The launch passed guardrails.",
-                "similarity": 0.91,
                 "metadata": {"section": "Decision"},
+                "experiment_name": "Payment Recommendation Launch",
+                "document_id": "doc-123",
+                "document_name": "Launch Report",
+                "chunk_text": "The launch passed guardrails.",
+                "similarity": 0.91,
             }
         ],
         "retrieval_metrics": {

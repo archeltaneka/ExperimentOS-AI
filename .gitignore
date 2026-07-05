@@ -220,3 +220,6 @@ __marimo__/
 
 # Dataset
 data/
+
+# Agents markdown
+*AGENTS.md

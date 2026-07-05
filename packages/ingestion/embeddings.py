@@ -3,11 +3,12 @@ from __future__ import annotations
 import hashlib
 import os
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Any, Protocol
 
 from packages.db.models import EMBEDDING_DIMENSION
 
 OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+BGE_SMALL_EN_MODEL = "BAAI/bge-small-en-v1.5"
 
 
 class EmbeddingProvider(Protocol):
@@ -71,6 +72,56 @@ class OpenAIEmbeddingProvider:
         return [list(item.embedding) for item in response.data]
 
 
+class HuggingFaceEmbeddingProvider:
+    def __init__(
+        self,
+        *,
+        dimension: int = EMBEDDING_DIMENSION,
+        model_name: str = BGE_SMALL_EN_MODEL,
+        model: Any | None = None,
+    ) -> None:
+        self.dimension = dimension
+        self.model_name = model_name
+        if model is None:
+            try:
+                from sentence_transformers import SentenceTransformer
+            except ImportError as exc:
+                raise RuntimeError(
+                    "Hugging Face embedding provider requires the "
+                    "'sentence-transformers' package to be installed"
+                ) from exc
+            model = SentenceTransformer(model_name)
+        self.model = model
+
+    def embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
+        if not texts:
+            return []
+
+        embeddings = self.model.encode(
+            list(texts),
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+            show_progress_bar=False,
+        )
+        return [
+            self._fit_storage_dimension(self._as_float_list(embedding))
+            for embedding in embeddings
+        ]
+
+    def _as_float_list(self, embedding: Any) -> list[float]:
+        if hasattr(embedding, "tolist"):
+            embedding = embedding.tolist()
+        return [float(value) for value in embedding]
+
+    def _fit_storage_dimension(self, embedding: list[float]) -> list[float]:
+        if len(embedding) > self.dimension:
+            raise ValueError(
+                f"Hugging Face embedding dimension {len(embedding)} exceeds configured "
+                f"storage dimension {self.dimension}"
+            )
+        return embedding + ([0.0] * (self.dimension - len(embedding)))
+
+
 def build_embedding_provider(provider: str) -> EmbeddingProvider:
     normalized = provider.lower()
     if normalized == "fake":
@@ -83,4 +134,6 @@ def build_embedding_provider(provider: str) -> EmbeddingProvider:
         if os.environ.get("OPENAI_API_KEY"):
             return OpenAIEmbeddingProvider()
         return FakeEmbeddingProvider()
-    raise ValueError("embedding provider must be one of: auto, fake, openai")
+    if normalized in {"huggingface", "hf", "bge-small-en-v1.5"}:
+        return HuggingFaceEmbeddingProvider()
+    raise ValueError("embedding provider must be one of: auto, fake, openai, huggingface")

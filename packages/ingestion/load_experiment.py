@@ -332,7 +332,7 @@ async def _run_cli(
         await engine.dispose()
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Load a synthetic experiment into the database.")
     parser.add_argument(
         "--experiment-dir",
@@ -345,11 +345,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--embedding-provider",
-        choices=("auto", "fake", "openai"),
+        choices=("auto", "fake", "openai", "huggingface"),
         default="auto",
         help=(
             "Embedding provider to use. 'auto' uses OpenAI when OPENAI_API_KEY is set, "
-            "otherwise deterministic fake embeddings."
+            "otherwise deterministic fake embeddings. 'huggingface' uses "
+            "BAAI/bge-small-en-v1.5."
         ),
     )
     parser.add_argument(
@@ -357,7 +358,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Store chunks with NULL embeddings.",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def run_async(coro: Any) -> Any:

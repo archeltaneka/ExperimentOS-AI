@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Evaluation report placeholder</title>
+  <desc id="desc">Placeholder illustration for an offline evaluation report screenshot.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#451a03"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect x="120" y="90" width="1040" height="540" rx="28" fill="#fffbeb"/>
+  <text x="170" y="170" fill="#78350f" font-family="Segoe UI, sans-serif" font-size="34" font-weight="700">reports/evaluation.md</text>
+  <rect x="170" y="220" width="940" height="70" rx="14" fill="#fde68a"/>
+  <text x="200" y="265" fill="#78350f" font-family="Segoe UI, sans-serif" font-size="26">Summary metrics: retrieval success, citation coverage, latency</text>
+  <rect x="170" y="320" width="940" height="220" rx="14" fill="#ffffff"/>
+  <text x="200" y="380" fill="#374151" font-family="Consolas, monospace" font-size="24">| Question | Retrieval | Citation Coverage | Notes |</text>
+  <text x="200" y="430" fill="#374151" font-family="Consolas, monospace" font-size="24">| -------- | --------- | ----------------- | ----- |</text>
+  <text x="200" y="480" fill="#374151" font-family="Consolas, monospace" font-size="24">| exp-001-decision | yes | 1.00 | Placeholder row |</text>
+  <text x="200" y="570" fill="#92400e" font-family="Segoe UI, sans-serif" font-size="24">Replace with a real evaluation report screenshot once report styling stabilizes.</text>
+</svg>

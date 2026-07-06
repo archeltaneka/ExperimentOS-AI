@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Ask endpoint placeholder</title>
+  <desc id="desc">Placeholder illustration for a grounded ask endpoint response screenshot.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#082f49"/>
+      <stop offset="100%" stop-color="#164e63"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect x="100" y="90" width="1080" height="540" rx="28" fill="#ecfeff"/>
+  <text x="150" y="170" fill="#083344" font-family="Segoe UI, sans-serif" font-size="34" font-weight="700">POST /ask</text>
+  <rect x="150" y="210" width="980" height="90" rx="16" fill="#cffafe"/>
+  <text x="180" y="265" fill="#0f172a" font-family="Consolas, monospace" font-size="24">question: "Why was the experiment approved for rollout?"</text>
+  <rect x="150" y="330" width="980" height="200" rx="16" fill="#ffffff"/>
+  <text x="180" y="385" fill="#0f172a" font-family="Segoe UI, sans-serif" font-size="28" font-weight="700">Answer</text>
+  <text x="180" y="430" fill="#334155" font-family="Segoe UI, sans-serif" font-size="24">The QA service returned a grounded answer with citations and retrieval metrics.</text>
+  <text x="180" y="480" fill="#334155" font-family="Segoe UI, sans-serif" font-size="24">Replace this placeholder with a real `/ask` response capture.</text>
+  <rect x="150" y="560" width="300" height="40" rx="12" fill="#99f6e4"/>
+  <text x="170" y="587" fill="#134e4a" font-family="Segoe UI, sans-serif" font-size="20">citations[]</text>
+  <rect x="470" y="560" width="300" height="40" rx="12" fill="#bae6fd"/>
+  <text x="490" y="587" fill="#0c4a6e" font-family="Segoe UI, sans-serif" font-size="20">retrieved_chunks[]</text>
+  <rect x="790" y="560" width="340" height="40" rx="12" fill="#ddd6fe"/>
+  <text x="810" y="587" fill="#4c1d95" font-family="Segoe UI, sans-serif" font-size="20">retrieval_metrics + llm_metrics</text>
+</svg>

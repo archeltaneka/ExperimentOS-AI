@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from time import perf_counter
-from typing import Protocol
+from typing import Any, Protocol
+
+OLLAMA_LLM_MODEL = "qwen2.5:7b"
 
 
 class LLMClientError(RuntimeError):
@@ -115,3 +117,57 @@ class OpenAILLMClient:
                 latency_ms=latency_ms,
             ),
         )
+
+
+class OllamaLLMClient:
+    def __init__(
+        self,
+        *,
+        model: str = OLLAMA_LLM_MODEL,
+        client: Any | None = None,
+    ) -> None:
+        self.model = model
+        if client is None:
+            try:
+                from ollama import AsyncClient
+            except ImportError as exc:
+                raise LLMClientError("Ollama LLM client requires the 'ollama' package") from exc
+            client = AsyncClient()
+        self.client = client
+
+    async def generate(
+        self,
+        *,
+        prompt: str,
+        system_instruction: str,
+    ) -> LLMResponse:
+        try:
+            started_at = perf_counter()
+            response = await self.client.generate(
+                model=self.model,
+                prompt=prompt,
+                system=system_instruction,
+                options={"temperature": 0},
+            )
+            latency_ms = (perf_counter() - started_at) * 1000.0
+        except Exception as exc:
+            raise LLMClientError(str(exc)) from exc
+
+        answer = _response_value(response, "response", default="").strip()
+        input_tokens = int(_response_value(response, "prompt_eval_count", default=0) or 0)
+        output_tokens = int(_response_value(response, "eval_count", default=0) or 0)
+        return LLMResponse(
+            answer=answer,
+            metrics=LLMMetrics(
+                model=self.model,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                latency_ms=latency_ms,
+            ),
+        )
+
+
+def _response_value(response: Any, key: str, *, default: Any) -> Any:
+    if isinstance(response, dict):
+        return response.get(key, default)
+    return getattr(response, key, default)

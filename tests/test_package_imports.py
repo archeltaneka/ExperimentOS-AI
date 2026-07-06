@@ -21,4 +21,14 @@ def test_workspace_packages_import() -> None:
     }
     assert packages.experiments.__all__ == []
     assert packages.agents.__all__ == []
-    assert packages.evals.__all__ == []
+    assert set(packages.evals.__all__) == {
+        "EvaluationQuestion",
+        "EvaluationRun",
+        "EvaluationSampleResult",
+        "EvaluationSummary",
+        "OfflineEvaluator",
+        "SampleMetrics",
+        "calculate_sample_metrics",
+        "load_evaluation_dataset",
+        "render_evaluation_report",
+    }

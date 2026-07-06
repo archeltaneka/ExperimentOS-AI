@@ -1,0 +1,402 @@
+[
+  {
+    "id": "exp-001-decision",
+    "experiment_id": "exp-001-payment-recommendation",
+    "question": "Why was the adaptive payment method recommendation approved for rollout?",
+    "expected_documents": ["Adaptive Payment Method Recommendation"],
+    "expected_keywords": ["Roll out", "wallet telemetry", "AU"],
+    "category": "decision",
+    "difficulty": "easy",
+    "reference_answer": "It was recommended for rollout in markets with clean wallet telemetry, while Japan stayed behind monitoring because wallet success events were under-counted."
+  },
+  {
+    "id": "exp-001-primary-metric",
+    "experiment_id": "exp-001-payment-recommendation",
+    "question": "What primary metric moved in the payment recommendation experiment?",
+    "expected_documents": ["Adaptive Payment Method Recommendation"],
+    "expected_keywords": ["payment_success_rate", "0.6760", "0.7310"],
+    "category": "metric",
+    "difficulty": "easy",
+    "reference_answer": "The primary metric was payment_success_rate, which moved from 0.6760 in control to 0.7310 in treatment."
+  },
+  {
+    "id": "exp-001-caveat",
+    "experiment_id": "exp-001-payment-recommendation",
+    "question": "Which data quality caveats affected the payment recommendation readout?",
+    "expected_documents": ["Adaptive Payment Method Recommendation"],
+    "expected_keywords": ["Sample ratio mismatch", "Japan wallet", "under-counted"],
+    "category": "caveat",
+    "difficulty": "medium",
+    "reference_answer": "The report cites sample ratio mismatch, under-counted Japan wallet success events, and country-specific performance differences."
+  },
+  {
+    "id": "exp-001-risk",
+    "experiment_id": "exp-001-payment-recommendation",
+    "question": "What product risk should be monitored after payment recommendation rollout?",
+    "expected_documents": ["Adaptive Payment Method Recommendation"],
+    "expected_keywords": ["bad payment ranking", "trusted methods", "smaller markets"],
+    "category": "risk",
+    "difficulty": "medium",
+    "reference_answer": "A bad payment ranking could suppress trusted payment methods in smaller markets."
+  },
+  {
+    "id": "exp-002-decision",
+    "experiment_id": "exp-002-hotel-image-quality",
+    "question": "What rollout decision was made for the hotel image quality experiment?",
+    "expected_documents": ["Hotel Gallery Image Quality Boost"],
+    "expected_keywords": ["Roll out globally", "image CDN latency", "byte-size budgets"],
+    "category": "decision",
+    "difficulty": "easy",
+    "reference_answer": "The decision was to roll out globally except markets with pending image CDN latency regressions, with byte-size budgets and CDN pre-warming."
+  },
+  {
+    "id": "exp-002-primary-metric",
+    "experiment_id": "exp-002-hotel-image-quality",
+    "question": "Which primary metric supported the hotel gallery image quality rollout?",
+    "expected_documents": ["Hotel Gallery Image Quality Boost"],
+    "expected_keywords": ["booking_intent_rate", "0.2920", "0.3470"],
+    "category": "metric",
+    "difficulty": "easy",
+    "reference_answer": "The primary metric was booking_intent_rate, increasing from 0.2920 to 0.3470."
+  },
+  {
+    "id": "exp-002-caveat",
+    "experiment_id": "exp-002-hotel-image-quality",
+    "question": "What limitations were noted for the hotel image quality experiment?",
+    "expected_documents": ["Hotel Gallery Image Quality Boost"],
+    "expected_keywords": ["school-holiday", "CDN cache warm-up", "latency"],
+    "category": "caveat",
+    "difficulty": "medium",
+    "reference_answer": "The readout noted AU school-holiday seasonality and CDN cache warm-up latency in the first two days."
+  },
+  {
+    "id": "exp-002-risk",
+    "experiment_id": "exp-002-hotel-image-quality",
+    "question": "What risk comes with showing higher-quality hotel imagery?",
+    "expected_documents": ["Hotel Gallery Image Quality Boost"],
+    "expected_keywords": ["slow weaker devices", "low-bandwidth users"],
+    "category": "risk",
+    "difficulty": "medium",
+    "reference_answer": "Higher quality imagery can slow weaker devices and harm low-bandwidth users."
+  },
+  {
+    "id": "exp-003-decision",
+    "experiment_id": "exp-003-search-ranking",
+    "question": "Why did the intent-aware search ranking experiment remain in monitoring?",
+    "expected_documents": ["Intent-Aware Search Ranking"],
+    "expected_keywords": ["Continue monitoring", "long-tail query diversity", "25 percent"],
+    "category": "decision",
+    "difficulty": "easy",
+    "reference_answer": "The team continued monitoring because long-tail query diversity needed tuning before ramping beyond 25 percent of traffic."
+  },
+  {
+    "id": "exp-003-primary-metric",
+    "experiment_id": "exp-003-search-ranking",
+    "question": "What happened to search_to_order_rate in the search ranking experiment?",
+    "expected_documents": ["Intent-Aware Search Ranking"],
+    "expected_keywords": ["search_to_order_rate", "0.1830", "0.2110"],
+    "category": "metric",
+    "difficulty": "easy",
+    "reference_answer": "search_to_order_rate increased from 0.1830 in control to 0.2110 in treatment."
+  },
+  {
+    "id": "exp-003-caveat",
+    "experiment_id": "exp-003-search-ranking",
+    "question": "Which diversity caveat affected the search ranking readout?",
+    "expected_documents": ["Intent-Aware Search Ranking"],
+    "expected_keywords": ["supplier diversity", "long-tail searches", "Germany"],
+    "category": "caveat",
+    "difficulty": "medium",
+    "reference_answer": "The treatment reduced supplier diversity for long-tail searches in Germany."
+  },
+  {
+    "id": "exp-003-risk",
+    "experiment_id": "exp-003-search-ranking",
+    "question": "What exposure risk can search ranking improvements create?",
+    "expected_documents": ["Intent-Aware Search Ranking"],
+    "expected_keywords": ["concentrate exposure", "popular suppliers"],
+    "category": "risk",
+    "difficulty": "medium",
+    "reference_answer": "Ranking improvements can concentrate exposure among already popular suppliers."
+  },
+  {
+    "id": "exp-004-decision",
+    "experiment_id": "exp-004-checkout-ux",
+    "question": "Who should receive the one-page checkout rollout?",
+    "expected_documents": ["One-Page Checkout UX"],
+    "expected_keywords": ["returning users", "first-time users", "guided checkout"],
+    "category": "decision",
+    "difficulty": "easy",
+    "reference_answer": "The rollout was recommended for returning users, while first-time users should remain on guided checkout."
+  },
+  {
+    "id": "exp-004-primary-metric",
+    "experiment_id": "exp-004-checkout-ux",
+    "question": "What was the primary metric for the one-page checkout experiment?",
+    "expected_documents": ["One-Page Checkout UX"],
+    "expected_keywords": ["checkout_completion_rate", "0.5840", "0.6380"],
+    "category": "metric",
+    "difficulty": "easy",
+    "reference_answer": "checkout_completion_rate was the primary metric and increased from 0.5840 to 0.6380."
+  },
+  {
+    "id": "exp-004-caveat",
+    "experiment_id": "exp-004-checkout-ux",
+    "question": "What telemetry limitation existed in the checkout UX experiment?",
+    "expected_documents": ["One-Page Checkout UX"],
+    "expected_keywords": ["Address autocomplete telemetry", "apartment-unit edits", "mobile Safari"],
+    "category": "caveat",
+    "difficulty": "medium",
+    "reference_answer": "Address autocomplete telemetry missed apartment-unit edits on mobile Safari."
+  },
+  {
+    "id": "exp-004-risk",
+    "experiment_id": "exp-004-checkout-ux",
+    "question": "What risk does compressed checkout introduce?",
+    "expected_documents": ["One-Page Checkout UX"],
+    "expected_keywords": ["Compressed checkout", "hide errors", "final submission"],
+    "category": "risk",
+    "difficulty": "medium",
+    "reference_answer": "Compressed checkout can hide errors until final submission."
+  },
+  {
+    "id": "exp-005-decision",
+    "experiment_id": "exp-005-pricing",
+    "question": "Why was transparent discount price framing stopped?",
+    "expected_documents": ["Transparent Discount Price Framing"],
+    "expected_keywords": ["Do not roll out", "margin dilution", "conversion gain"],
+    "category": "decision",
+    "difficulty": "easy",
+    "reference_answer": "It was not rolled out because conversion gains did not offset margin dilution."
+  },
+  {
+    "id": "exp-005-primary-metric",
+    "experiment_id": "exp-005-pricing",
+    "question": "Which pricing primary metric moved against the treatment?",
+    "expected_documents": ["Transparent Discount Price Framing"],
+    "expected_keywords": ["gross_margin_per_visitor", "4.8600", "4.7100"],
+    "category": "metric",
+    "difficulty": "easy",
+    "reference_answer": "gross_margin_per_visitor moved from 4.86 in control to 4.71 in treatment."
+  },
+  {
+    "id": "exp-005-caveat",
+    "experiment_id": "exp-005-pricing",
+    "question": "What seasonality affected the pricing experiment?",
+    "expected_documents": ["Transparent Discount Price Framing"],
+    "expected_keywords": ["end-of-quarter promotions", "baseline discount sensitivity"],
+    "category": "caveat",
+    "difficulty": "medium",
+    "reference_answer": "End-of-quarter promotions inflated baseline discount sensitivity."
+  },
+  {
+    "id": "exp-005-risk",
+    "experiment_id": "exp-005-pricing",
+    "question": "What customer behavior risk was called out for discount price framing?",
+    "expected_documents": ["Transparent Discount Price Framing"],
+    "expected_keywords": ["train customers", "wait for visible discounts"],
+    "category": "risk",
+    "difficulty": "medium",
+    "reference_answer": "Price framing can train customers to wait for visible discounts."
+  },
+  {
+    "id": "exp-006-decision",
+    "experiment_id": "exp-006-loyalty",
+    "question": "What rollout was recommended for loyalty tier progress nudges?",
+    "expected_documents": ["Loyalty Tier Progress Nudges"],
+    "expected_keywords": ["silver and gold members", "frequency cap", "unsubscribe rates"],
+    "category": "decision",
+    "difficulty": "easy",
+    "reference_answer": "The team recommended rollout to silver and gold members with a frequency cap and unsubscribe monitoring."
+  },
+  {
+    "id": "exp-006-primary-metric",
+    "experiment_id": "exp-006-loyalty",
+    "question": "What was the loyalty experiment primary metric result?",
+    "expected_documents": ["Loyalty Tier Progress Nudges"],
+    "expected_keywords": ["repeat_session_rate_14d", "0.2740", "0.3290"],
+    "category": "metric",
+    "difficulty": "easy",
+    "reference_answer": "repeat_session_rate_14d increased from 0.2740 to 0.3290."
+  },
+  {
+    "id": "exp-006-caveat",
+    "experiment_id": "exp-006-loyalty",
+    "question": "What novelty or allocation issues affected loyalty nudges?",
+    "expected_documents": ["Loyalty Tier Progress Nudges"],
+    "expected_keywords": ["Sample ratio mismatch", "dormant loyalty accounts", "Novelty effect"],
+    "category": "caveat",
+    "difficulty": "medium",
+    "reference_answer": "The report cites delayed exclusion of dormant accounts and a novelty effect in early progress-panel clicks."
+  },
+  {
+    "id": "exp-006-risk",
+    "experiment_id": "exp-006-loyalty",
+    "question": "What risk do too many loyalty prompts create?",
+    "expected_documents": ["Loyalty Tier Progress Nudges"],
+    "expected_keywords": ["loyalty prompts", "transactional surfaces", "promotional"],
+    "category": "risk",
+    "difficulty": "medium",
+    "reference_answer": "Too many loyalty prompts can make transactional surfaces feel promotional."
+  },
+  {
+    "id": "exp-007-decision",
+    "experiment_id": "exp-007-crm-notifications",
+    "question": "How should back-in-stock notification timing roll out?",
+    "expected_documents": ["CRM Back-in-Stock Notification Timing"],
+    "expected_keywords": ["opted-in customers", "quiet hours", "deduplicated Android events"],
+    "category": "decision",
+    "difficulty": "easy",
+    "reference_answer": "It should roll out to opted-in customers outside quiet hours after deduplicating Android events."
+  },
+  {
+    "id": "exp-007-primary-metric",
+    "experiment_id": "exp-007-crm-notifications",
+    "question": "What changed in reactivation_purchase_rate for CRM notifications?",
+    "expected_documents": ["CRM Back-in-Stock Notification Timing"],
+    "expected_keywords": ["reactivation_purchase_rate", "0.0730", "0.0910"],
+    "category": "metric",
+    "difficulty": "easy",
+    "reference_answer": "reactivation_purchase_rate increased from 0.0730 to 0.0910."
+  },
+  {
+    "id": "exp-007-caveat",
+    "experiment_id": "exp-007-crm-notifications",
+    "question": "Which tracking issue affected the CRM notification experiment?",
+    "expected_documents": ["CRM Back-in-Stock Notification Timing"],
+    "expected_keywords": ["Android push opens", "duplicated", "SDK rollout"],
+    "category": "caveat",
+    "difficulty": "medium",
+    "reference_answer": "Android push opens were duplicated for six hours after the SDK rollout."
+  },
+  {
+    "id": "exp-007-risk",
+    "experiment_id": "exp-007-crm-notifications",
+    "question": "What user perception risk exists for faster CRM notifications?",
+    "expected_documents": ["CRM Back-in-Stock Notification Timing"],
+    "expected_keywords": ["perceived as intrusive", "inventory changes repeatedly"],
+    "category": "risk",
+    "difficulty": "medium",
+    "reference_answer": "Faster CRM messages may feel intrusive when inventory changes repeatedly."
+  },
+  {
+    "id": "exp-008-decision",
+    "experiment_id": "exp-008-recommendation-systems",
+    "question": "Why were personalized similar-item recommendations held at limited traffic?",
+    "expected_documents": ["Personalized Similar-Item Recommendations"],
+    "expected_keywords": ["Hold at 15 percent", "category concentration", "diversity constraints"],
+    "category": "decision",
+    "difficulty": "easy",
+    "reference_answer": "They were held at 15 percent while monitoring category concentration and tuning diversity constraints."
+  },
+  {
+    "id": "exp-008-primary-metric",
+    "experiment_id": "exp-008-recommendation-systems",
+    "question": "What was the add_to_cart_rate result for similar-item recommendations?",
+    "expected_documents": ["Personalized Similar-Item Recommendations"],
+    "expected_keywords": ["add_to_cart_rate", "0.2140", "0.2460"],
+    "category": "metric",
+    "difficulty": "easy",
+    "reference_answer": "add_to_cart_rate increased from 0.2140 to 0.2460."
+  },
+  {
+    "id": "exp-008-caveat",
+    "experiment_id": "exp-008-recommendation-systems",
+    "question": "What novelty and recommendation quality issues were observed?",
+    "expected_documents": ["Personalized Similar-Item Recommendations"],
+    "expected_keywords": ["Novelty effect", "premium accessories", "US desktop users"],
+    "category": "caveat",
+    "difficulty": "medium",
+    "reference_answer": "A new carousel placement created novelty effects, and treatment over-recommended premium accessories for US desktop users."
+  },
+  {
+    "id": "exp-008-risk",
+    "experiment_id": "exp-008-recommendation-systems",
+    "question": "What discovery risk does personalization create?",
+    "expected_documents": ["Personalized Similar-Item Recommendations"],
+    "expected_keywords": ["narrow discovery", "overfit to recent browsing"],
+    "category": "risk",
+    "difficulty": "medium",
+    "reference_answer": "Personalization can narrow discovery and overfit to recent browsing."
+  },
+  {
+    "id": "exp-009-decision",
+    "experiment_id": "exp-009-search-filters",
+    "question": "What rollout decision was made for dynamic search filter shortcuts?",
+    "expected_documents": ["Dynamic Search Filter Shortcuts"],
+    "expected_keywords": ["high-volume categories", "mobile web scroll tracking", "corrected impression tracking"],
+    "category": "decision",
+    "difficulty": "easy",
+    "reference_answer": "The recommendation was to ship to high-volume categories after fixing mobile web scroll and impression tracking."
+  },
+  {
+    "id": "exp-009-primary-metric",
+    "experiment_id": "exp-009-search-filters",
+    "question": "What was the primary metric movement for dynamic filter shortcuts?",
+    "expected_documents": ["Dynamic Search Filter Shortcuts"],
+    "expected_keywords": ["qualified_result_click_rate", "0.3160", "0.3690"],
+    "category": "metric",
+    "difficulty": "easy",
+    "reference_answer": "qualified_result_click_rate increased from 0.3160 to 0.3690."
+  },
+  {
+    "id": "exp-009-caveat",
+    "experiment_id": "exp-009-search-filters",
+    "question": "What tracking issue affected shortcut filter impressions?",
+    "expected_documents": ["Dynamic Search Filter Shortcuts"],
+    "expected_keywords": ["Mobile web scroll tracking", "dropped", "shortcut impressions"],
+    "category": "caveat",
+    "difficulty": "medium",
+    "reference_answer": "Mobile web scroll tracking dropped some shortcut impressions."
+  },
+  {
+    "id": "exp-009-risk",
+    "experiment_id": "exp-009-search-filters",
+    "question": "What search experience risk comes from aggressive shortcuts?",
+    "expected_documents": ["Dynamic Search Filter Shortcuts"],
+    "expected_keywords": ["over-filter results", "zero-result rates"],
+    "category": "risk",
+    "difficulty": "medium",
+    "reference_answer": "Aggressive shortcuts can over-filter results and raise zero-result rates."
+  },
+  {
+    "id": "exp-010-decision",
+    "experiment_id": "exp-010-premium-subscriptions",
+    "question": "What rollout guardrail was required for the premium subscription trial offer?",
+    "expected_documents": ["Premium Subscription Trial Offer"],
+    "expected_keywords": ["annual-plan exclusion logic", "billing telemetry", "guardrails"],
+    "category": "decision",
+    "difficulty": "easy",
+    "reference_answer": "The rollout required annual-plan exclusion logic plus annual-plan cannibalization and billing telemetry guardrails."
+  },
+  {
+    "id": "exp-010-primary-metric",
+    "experiment_id": "exp-010-premium-subscriptions",
+    "question": "What was the premium trial primary metric result?",
+    "expected_documents": ["Premium Subscription Trial Offer"],
+    "expected_keywords": ["trial_start_rate", "0.0410", "0.0680"],
+    "category": "metric",
+    "difficulty": "easy",
+    "reference_answer": "trial_start_rate increased from 0.0410 to 0.0680."
+  },
+  {
+    "id": "exp-010-caveat",
+    "experiment_id": "exp-010-premium-subscriptions",
+    "question": "What seasonality and telemetry caveats affected premium subscriptions?",
+    "expected_documents": ["Premium Subscription Trial Offer"],
+    "expected_keywords": ["July holiday planning", "Trial-start tracking", "Apple in-app subscriptions"],
+    "category": "caveat",
+    "difficulty": "medium",
+    "reference_answer": "July holiday planning lifted interest in AU and US, and trial-start tracking lagged for Apple in-app subscriptions."
+  },
+  {
+    "id": "exp-010-risk",
+    "experiment_id": "exp-010-premium-subscriptions",
+    "question": "What commercial risk can premium trial offers create?",
+    "expected_documents": ["Premium Subscription Trial Offer"],
+    "expected_keywords": ["defer annual purchases", "billing-support contacts"],
+    "category": "risk",
+    "difficulty": "medium",
+    "reference_answer": "Trial offers can defer annual purchases and create billing-support contacts."
+  }
+]

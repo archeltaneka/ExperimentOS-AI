@@ -292,6 +292,24 @@ def test_cli_parser_accepts_dataset_output_and_provider_options() -> None:
     assert args.llm_provider == "ollama"
     assert args.llm_model == "qwen2.5:7b"
 
+    gemini_args = parse_args(
+        [
+            "--embedding-provider",
+            "gemini",
+            "--embedding-model",
+            "gemini-embedding-001",
+            "--llm-provider",
+            "gemini",
+            "--llm-model",
+            "gemini-3.5-flash",
+        ]
+    )
+
+    assert gemini_args.embedding_provider == "gemini"
+    assert gemini_args.embedding_model == "gemini-embedding-001"
+    assert gemini_args.llm_provider == "gemini"
+    assert gemini_args.llm_model == "gemini-3.5-flash"
+
 
 class StubOllamaLLMClient:
     def __init__(self) -> None:
@@ -346,3 +364,63 @@ def test_ollama_llm_client_uses_qwen_default_and_reports_tokens() -> None:
     assert response.metrics.model == "qwen2.5:7b"
     assert response.metrics.input_tokens == 10
     assert response.metrics.output_tokens == 6
+
+
+class StubGeminiUsageMetadata:
+    prompt_token_count = 11
+    candidates_token_count = 7
+
+
+class StubGeminiLLMResponse:
+    text = "Use the cited Gemini context."
+    usage_metadata = StubGeminiUsageMetadata()
+
+
+class StubGeminiAsyncModels:
+    def __init__(self) -> None:
+        self.generate_calls = []
+
+    async def generate_content(
+        self,
+        *,
+        model: str,
+        contents: str,
+    ) -> StubGeminiLLMResponse:
+        self.generate_calls.append({"model": model, "contents": contents})
+        return StubGeminiLLMResponse()
+
+
+class StubGeminiAio:
+    def __init__(self) -> None:
+        self.models = StubGeminiAsyncModels()
+
+
+class StubGeminiLLMClient:
+    def __init__(self) -> None:
+        self.aio = StubGeminiAio()
+
+
+def test_gemini_llm_client_uses_flash_default_and_reports_tokens() -> None:
+    from packages.llm.client import GEMINI_LLM_MODEL, GeminiLLMClient
+
+    client = StubGeminiLLMClient()
+    llm = GeminiLLMClient(client=client)
+
+    response = run(
+        llm.generate(
+            prompt="Question and context",
+            system_instruction="Only answer using retrieved context.",
+        )
+    )
+
+    assert llm.model == GEMINI_LLM_MODEL
+    assert client.aio.models.generate_calls == [
+        {
+            "model": "gemini-3.5-flash",
+            "contents": "Only answer using retrieved context.\n\nQuestion and context",
+        }
+    ]
+    assert response.answer == "Use the cited Gemini context."
+    assert response.metrics.model == "gemini-3.5-flash"
+    assert response.metrics.input_tokens == 11
+    assert response.metrics.output_tokens == 7

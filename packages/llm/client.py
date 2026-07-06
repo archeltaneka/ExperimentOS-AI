@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from time import perf_counter
 from typing import Any, Protocol
 
+GEMINI_LLM_MODEL = "gemini-3.5-flash"
 OLLAMA_LLM_MODEL = "qwen2.5:7b"
 
 
@@ -114,6 +115,55 @@ class OpenAILLMClient:
                 model=self.model,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
+                latency_ms=latency_ms,
+            ),
+        )
+
+
+class GeminiLLMClient:
+    def __init__(
+        self,
+        *,
+        model: str = GEMINI_LLM_MODEL,
+        api_key: str | None = None,
+        client: Any | None = None,
+    ) -> None:
+        self.model = model
+        if client is None:
+            try:
+                from google import genai
+            except ImportError as exc:
+                raise LLMClientError(
+                    "Gemini LLM client requires the 'google-genai' package"
+                ) from exc
+            client = genai.Client(api_key=api_key)
+        self.client = client
+
+    async def generate(
+        self,
+        *,
+        prompt: str,
+        system_instruction: str,
+    ) -> LLMResponse:
+        try:
+            started_at = perf_counter()
+            response = await self.client.aio.models.generate_content(
+                model=self.model,
+                contents=f"{system_instruction}\n\n{prompt}",
+            )
+            latency_ms = (perf_counter() - started_at) * 1000.0
+        except Exception as exc:
+            raise LLMClientError(str(exc)) from exc
+
+        usage = _response_value(response, "usage_metadata", default=None)
+        return LLMResponse(
+            answer=str(_response_value(response, "text", default="")).strip(),
+            metrics=LLMMetrics(
+                model=self.model,
+                input_tokens=int(_response_value(usage, "prompt_token_count", default=0) or 0),
+                output_tokens=int(
+                    _response_value(usage, "candidates_token_count", default=0) or 0
+                ),
                 latency_ms=latency_ms,
             ),
         )

@@ -15,12 +15,19 @@ from packages.evals.evaluator import OfflineEvaluator
 from packages.evals.report import render_evaluation_report
 from packages.ingestion.embeddings import (
     BGE_SMALL_EN_MODEL,
-    OLLAMA_EMBEDDING_MODEL,
+    GEMINI_EMBEDDING_MODEL,
     OPENAI_EMBEDDING_MODEL,
     build_embedding_provider,
 )
 from packages.ingestion.load_experiment import run_async
-from packages.llm.client import OLLAMA_LLM_MODEL, MockLLMClient, OllamaLLMClient, OpenAILLMClient
+from packages.llm.client import (
+    GEMINI_LLM_MODEL,
+    OLLAMA_LLM_MODEL,
+    GeminiLLMClient,
+    MockLLMClient,
+    OllamaLLMClient,
+    OpenAILLMClient,
+)
 from packages.qa.question_answering_service import QuestionAnsweringService
 from packages.retrieval.service import RetrievalService
 
@@ -44,25 +51,25 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--top-k", type=int, default=5, help="Number of chunks to retrieve.")
     parser.add_argument(
         "--embedding-provider",
-        choices=("auto", "fake", "openai", "huggingface", "ollama"),
+        choices=("auto", "fake", "openai", "gemini", "huggingface", "ollama"),
         default="auto",
         help="Embedding provider to use for retrieval.",
     )
     parser.add_argument(
         "--embedding-model",
-        default=OLLAMA_EMBEDDING_MODEL,
-        help="Embedding model name. Used by --embedding-provider=ollama.",
+        default=GEMINI_EMBEDDING_MODEL,
+        help="Embedding model name. Used by --embedding-provider=gemini or ollama.",
     )
     parser.add_argument(
         "--llm-provider",
-        choices=("mock", "openai", "ollama"),
+        choices=("mock", "openai", "gemini", "ollama"),
         default="mock",
         help="LLM provider to use for answer generation.",
     )
     parser.add_argument(
         "--llm-model",
-        default=OLLAMA_LLM_MODEL,
-        help="LLM model name. Defaults to qwen2.5:7b for --llm-provider=ollama.",
+        default=GEMINI_LLM_MODEL,
+        help="LLM model name. Defaults to gemini-3.5-flash.",
     )
     parser.add_argument(
         "--input-cost-per-1k-tokens",
@@ -85,7 +92,7 @@ async def run_evaluation(args: argparse.Namespace) -> str:
     session_factory = create_async_session_factory(engine)
     provider = build_embedding_provider(
         args.embedding_provider,
-        model=args.embedding_model if args.embedding_provider == "ollama" else None,
+        model=args.embedding_model if args.embedding_provider in {"gemini", "ollama"} else None,
     )
     try:
         async with session_factory() as session:
@@ -128,7 +135,9 @@ def _build_llm_client(args: argparse.Namespace) -> Any:
         )
     if args.llm_provider == "ollama":
         return OllamaLLMClient(model=_llm_model_label(args))
-    model = args.llm_model if args.llm_model != "mock" else "gpt-4.1-mini"
+    if args.llm_provider == "gemini":
+        return GeminiLLMClient(model=_llm_model_label(args))
+    model = _llm_model_label(args)
     return OpenAILLMClient(model=model)
 
 
@@ -137,6 +146,8 @@ def _embedding_model_label(args: argparse.Namespace) -> str:
         return args.embedding_model
     if args.embedding_provider == "openai":
         return OPENAI_EMBEDDING_MODEL
+    if args.embedding_provider == "gemini":
+        return args.embedding_model
     if args.embedding_provider == "huggingface":
         return BGE_SMALL_EN_MODEL
     if args.embedding_provider == "fake":
@@ -145,9 +156,9 @@ def _embedding_model_label(args: argparse.Namespace) -> str:
 
 
 def _llm_model_label(args: argparse.Namespace) -> str:
-    if args.llm_provider == "openai" and args.llm_model == OLLAMA_LLM_MODEL:
+    if args.llm_provider == "openai" and args.llm_model in {GEMINI_LLM_MODEL, OLLAMA_LLM_MODEL}:
         return "gpt-4.1-mini"
-    if args.llm_provider == "mock" and args.llm_model == OLLAMA_LLM_MODEL:
+    if args.llm_provider == "mock" and args.llm_model in {GEMINI_LLM_MODEL, OLLAMA_LLM_MODEL}:
         return "mock"
     return args.llm_model
 

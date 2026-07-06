@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from packages.db.models import Experiment
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.ingestion.embeddings import build_embedding_provider
-from packages.llm.client import LLMClient, MockLLMClient, OpenAILLMClient
+from packages.llm.client import GeminiLLMClient, LLMClient, MockLLMClient, OpenAILLMClient
 from packages.qa.question_answering_service import (
     EmbeddingFailureError,
     EmptyQuestionError,
@@ -53,6 +53,12 @@ def get_llm_client() -> LLMClient:
     provider = os.environ.get("LLM_PROVIDER", "auto").lower()
     if provider == "mock":
         return MockLLMClient()
+    if provider == "gemini":
+        if not os.environ.get("GEMINI_API_KEY"):
+            raise RuntimeError("GEMINI_API_KEY is required for the gemini LLM provider")
+        return GeminiLLMClient(model=os.environ.get("GEMINI_MODEL", "gemini-3.5-flash"))
+    if provider == "auto" and os.environ.get("GEMINI_API_KEY"):
+        return GeminiLLMClient(model=os.environ.get("GEMINI_MODEL", "gemini-3.5-flash"))
     if provider == "openai" or (provider == "auto" and os.environ.get("OPENAI_API_KEY")):
         return OpenAILLMClient(model=os.environ.get("OPENAI_MODEL", "gpt-4.1-mini"))
     return MockLLMClient()

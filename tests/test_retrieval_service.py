@@ -269,6 +269,21 @@ def test_retrieval_cli_accepts_ollama_provider() -> None:
     assert args.embedding_provider == "ollama"
 
 
+def test_retrieval_cli_accepts_gemini_provider() -> None:
+    from packages.retrieval.search import parse_args
+
+    args = parse_args(
+        [
+            "--query",
+            "payment recommendation",
+            "--embedding-provider",
+            "gemini",
+        ]
+    )
+
+    assert args.embedding_provider == "gemini"
+
+
 async def seed_retrieval_fixtures(
     session_factory: Any,
     provider: KeywordEmbeddingProvider,

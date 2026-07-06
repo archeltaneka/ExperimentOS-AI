@@ -4,7 +4,12 @@ from dataclasses import dataclass
 
 from fastapi.testclient import TestClient
 
-from apps.api.main import app, get_embedding_provider_name, get_question_answering_service
+from apps.api.main import (
+    app,
+    get_embedding_provider_name,
+    get_llm_client,
+    get_question_answering_service,
+)
 from packages.llm.client import LLMMetrics
 from packages.qa.question_answering_service import (
     Citation,
@@ -29,6 +34,25 @@ def test_embedding_provider_name_uses_environment(monkeypatch) -> None:
     monkeypatch.setenv("EMBEDDING_PROVIDER", "huggingface")
 
     assert get_embedding_provider_name() == "huggingface"
+
+
+def test_llm_client_auto_prefers_gemini_when_api_key_is_set(monkeypatch) -> None:
+    import apps.api.main as main_module
+
+    class StubGeminiClient:
+        def __init__(self, *, model: str) -> None:
+            self.model = model
+
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "openai-key")
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-test-model")
+    monkeypatch.setenv("LLM_PROVIDER", "auto")
+    monkeypatch.setattr(main_module, "GeminiLLMClient", StubGeminiClient)
+
+    client = get_llm_client()
+
+    assert isinstance(client, StubGeminiClient)
+    assert client.model == "gemini-test-model"
 
 
 @dataclass

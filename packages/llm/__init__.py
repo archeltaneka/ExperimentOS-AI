@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from packages.llm.client import (
+    GEMINI_LLM_MODEL,
+    GeminiLLMClient,
     LLMClient,
     LLMClientError,
     LLMMetrics,
@@ -11,6 +13,8 @@ from packages.llm.client import (
 )
 
 __all__ = [
+    "GEMINI_LLM_MODEL",
+    "GeminiLLMClient",
     "LLMClient",
     "LLMClientError",
     "LLMMetrics",

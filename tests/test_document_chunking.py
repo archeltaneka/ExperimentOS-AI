@@ -2,8 +2,10 @@ from packages.db.models import EMBEDDING_DIMENSION
 from packages.ingestion.chunking import chunk_markdown_report
 from packages.ingestion.embeddings import (
     BGE_SMALL_EN_MODEL,
+    GEMINI_EMBEDDING_MODEL,
     OLLAMA_EMBEDDING_MODEL,
     FakeEmbeddingProvider,
+    GeminiEmbeddingProvider,
     HuggingFaceEmbeddingProvider,
     OllamaEmbeddingProvider,
     build_embedding_provider,
@@ -150,6 +152,98 @@ def test_build_embedding_provider_accepts_ollama(monkeypatch) -> None:
     assert provider.model == "custom-embed"
 
 
+class StubGeminiEmbedding:
+    def __init__(self, values: list[float]) -> None:
+        self.values = values
+
+
+class StubGeminiEmbeddingResponse:
+    def __init__(self, embeddings: list[StubGeminiEmbedding]) -> None:
+        self.embeddings = embeddings
+
+
+class StubGeminiModels:
+    def __init__(self) -> None:
+        self.embed_calls = []
+
+    def embed_content(
+        self,
+        *,
+        model: str,
+        contents: list[str],
+        config: dict[str, int],
+    ) -> StubGeminiEmbeddingResponse:
+        self.embed_calls.append({"model": model, "contents": contents, "config": config})
+        return StubGeminiEmbeddingResponse(
+            [
+                StubGeminiEmbedding([0.1, 0.2]),
+                StubGeminiEmbedding([0.3, 0.4]),
+            ]
+        )
+
+
+class StubGeminiClient:
+    def __init__(self) -> None:
+        self.models = StubGeminiModels()
+
+
+def test_gemini_embedding_provider_requests_configured_dimension_and_pads_vectors() -> None:
+    client = StubGeminiClient()
+    provider = GeminiEmbeddingProvider(client=client, dimension=4)
+
+    embeddings = provider.embed_texts(["first", "second"])
+
+    assert provider.model == GEMINI_EMBEDDING_MODEL
+    assert client.models.embed_calls == [
+        {
+            "model": "gemini-embedding-001",
+            "contents": ["first", "second"],
+            "config": {"output_dimensionality": 4},
+        }
+    ]
+    assert embeddings == [[0.1, 0.2, 0.0, 0.0], [0.3, 0.4, 0.0, 0.0]]
+
+
+def test_gemini_embedding_provider_returns_empty_list_for_empty_input() -> None:
+    client = StubGeminiClient()
+    provider = GeminiEmbeddingProvider(client=client, dimension=4)
+
+    assert provider.embed_texts([]) == []
+    assert client.models.embed_calls == []
+
+
+def test_build_embedding_provider_accepts_gemini(monkeypatch) -> None:
+    import packages.ingestion.embeddings as embeddings_module
+
+    class StubProvider:
+        def __init__(self, *, model: str = GEMINI_EMBEDDING_MODEL) -> None:
+            self.dimension = EMBEDDING_DIMENSION
+            self.model = model
+
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setattr(embeddings_module, "GeminiEmbeddingProvider", StubProvider)
+
+    provider = build_embedding_provider("gemini", model="custom-gemini-embedding")
+
+    assert isinstance(provider, StubProvider)
+    assert provider.model == "custom-gemini-embedding"
+
+
+def test_build_embedding_provider_auto_prefers_gemini(monkeypatch) -> None:
+    import packages.ingestion.embeddings as embeddings_module
+
+    class StubGeminiProvider:
+        def __init__(self, *, model: str = GEMINI_EMBEDDING_MODEL) -> None:
+            self.dimension = EMBEDDING_DIMENSION
+            self.model = model
+
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "openai-key")
+    monkeypatch.setattr(embeddings_module, "GeminiEmbeddingProvider", StubGeminiProvider)
+
+    assert isinstance(build_embedding_provider("auto"), StubGeminiProvider)
+
+
 def test_ingestion_cli_accepts_huggingface_provider(tmp_path) -> None:
     from packages.ingestion.load_experiment import parse_args
 
@@ -178,3 +272,18 @@ def test_ingestion_cli_accepts_ollama_provider(tmp_path) -> None:
     )
 
     assert args.embedding_provider == "ollama"
+
+
+def test_ingestion_cli_accepts_gemini_provider(tmp_path) -> None:
+    from packages.ingestion.load_experiment import parse_args
+
+    args = parse_args(
+        [
+            "--experiment-dir",
+            str(tmp_path),
+            "--embedding-provider",
+            "gemini",
+        ]
+    )
+
+    assert args.embedding_provider == "gemini"

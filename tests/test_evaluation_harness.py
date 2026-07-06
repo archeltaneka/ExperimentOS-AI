@@ -93,8 +93,11 @@ def test_load_evaluation_dataset_validates_records(tmp_path: Path) -> None:
     assert dataset[0].expected_keywords == ("roll out", "wallet telemetry")
 
 
-def test_bundled_dataset_covers_all_synthetic_experiments() -> None:
+def test_golden_dataset_covers_all_synthetic_experiments() -> None:
     from packages.evals.dataset import DEFAULT_DATASET_PATH, load_evaluation_dataset
+
+    assert DEFAULT_DATASET_PATH == Path("data/eval/qa_dataset.json")
+    assert DEFAULT_DATASET_PATH.is_file()
 
     dataset = load_evaluation_dataset(DEFAULT_DATASET_PATH)
 
@@ -257,6 +260,10 @@ def test_report_renderer_includes_summary_and_low_performing_rows() -> None:
 
 def test_cli_parser_accepts_dataset_output_and_provider_options() -> None:
     from packages.evals.run import parse_args
+
+    default_args = parse_args([])
+
+    assert default_args.dataset == Path("data/eval/qa_dataset.json")
 
     args = parse_args(
         [

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-DEFAULT_DATASET_PATH = Path(__file__).with_name("datasets") / "harness_v1.json"
+DEFAULT_DATASET_PATH = Path("data/eval/qa_dataset.json")
 
 
 @dataclass(frozen=True)

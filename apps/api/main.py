@@ -5,12 +5,12 @@ import uuid
 from functools import lru_cache
 from typing import Annotated, Protocol
 
-from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from packages.config.env import load_environment
 from packages.db.models import Experiment
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.ingestion.embeddings import build_embedding_provider
@@ -25,7 +25,7 @@ from packages.qa.question_answering_service import (
 )
 from packages.retrieval.service import RetrievalService
 
-load_dotenv()
+load_environment()
 
 app = FastAPI(title="ExperimentOS AI API", version="0.1.0")
 
@@ -45,11 +45,13 @@ class AskRequest(BaseModel):
 
 @lru_cache(maxsize=1)
 def get_session_factory() -> async_sessionmaker:
+    load_environment()
     engine = create_database_engine()
     return create_async_session_factory(engine)
 
 
 def get_llm_client() -> LLMClient:
+    load_environment()
     provider = os.environ.get("LLM_PROVIDER", "auto").lower()
     if provider == "mock":
         return MockLLMClient()
@@ -65,6 +67,7 @@ def get_llm_client() -> LLMClient:
 
 
 def get_embedding_provider_name() -> str:
+    load_environment()
     return os.environ.get("EMBEDDING_PROVIDER", "auto").lower()
 
 

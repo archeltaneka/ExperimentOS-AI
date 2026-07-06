@@ -5,6 +5,20 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from packages.config.env import load_environment
+
+
+def test_load_environment_overrides_stale_shell_values(monkeypatch, tmp_path: Path) -> None:
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text("LLM_PROVIDER=gemini\n", encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("LLM_PROVIDER", "ollama")
+
+    load_environment()
+
+    assert os.environ["LLM_PROVIDER"] == "gemini"
+
 
 def test_ingestion_cli_loads_dotenv_before_running(monkeypatch, tmp_path: Path) -> None:
     import packages.ingestion.load_experiment as load_experiment

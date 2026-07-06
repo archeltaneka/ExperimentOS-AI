@@ -2,8 +2,10 @@ from packages.db.models import EMBEDDING_DIMENSION
 from packages.ingestion.chunking import chunk_markdown_report
 from packages.ingestion.embeddings import (
     BGE_SMALL_EN_MODEL,
+    OLLAMA_EMBEDDING_MODEL,
     FakeEmbeddingProvider,
     HuggingFaceEmbeddingProvider,
+    OllamaEmbeddingProvider,
     build_embedding_provider,
 )
 
@@ -112,6 +114,42 @@ def test_build_embedding_provider_accepts_huggingface_aliases(monkeypatch) -> No
     assert isinstance(build_embedding_provider("hf"), StubProvider)
 
 
+class StubOllamaEmbeddingClient:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def embed(self, *, model: str, input: list[str]) -> dict[str, list[list[float]]]:
+        self.calls.append({"model": model, "input": input})
+        return {"embeddings": [[0.25, 0.75], [0.5, 0.5]]}
+
+
+def test_ollama_embedding_provider_uses_nomic_default_and_pads_vectors() -> None:
+    client = StubOllamaEmbeddingClient()
+    provider = OllamaEmbeddingProvider(client=client, dimension=4)
+
+    embeddings = provider.embed_texts(["first", "second"])
+
+    assert provider.model == OLLAMA_EMBEDDING_MODEL
+    assert client.calls == [{"model": "nomic-embed-text", "input": ["first", "second"]}]
+    assert embeddings == [[0.25, 0.75, 0.0, 0.0], [0.5, 0.5, 0.0, 0.0]]
+
+
+def test_build_embedding_provider_accepts_ollama(monkeypatch) -> None:
+    import packages.ingestion.embeddings as embeddings_module
+
+    class StubProvider:
+        def __init__(self, *, model: str = OLLAMA_EMBEDDING_MODEL) -> None:
+            self.dimension = EMBEDDING_DIMENSION
+            self.model = model
+
+    monkeypatch.setattr(embeddings_module, "OllamaEmbeddingProvider", StubProvider)
+
+    provider = build_embedding_provider("ollama", model="custom-embed")
+
+    assert isinstance(provider, StubProvider)
+    assert provider.model == "custom-embed"
+
+
 def test_ingestion_cli_accepts_huggingface_provider(tmp_path) -> None:
     from packages.ingestion.load_experiment import parse_args
 
@@ -125,3 +163,18 @@ def test_ingestion_cli_accepts_huggingface_provider(tmp_path) -> None:
     )
 
     assert args.embedding_provider == "huggingface"
+
+
+def test_ingestion_cli_accepts_ollama_provider(tmp_path) -> None:
+    from packages.ingestion.load_experiment import parse_args
+
+    args = parse_args(
+        [
+            "--experiment-dir",
+            str(tmp_path),
+            "--embedding-provider",
+            "ollama",
+        ]
+    )
+
+    assert args.embedding_provider == "ollama"

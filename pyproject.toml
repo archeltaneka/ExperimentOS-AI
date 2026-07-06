@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
   "alembic>=1.16.0",
   "fastapi>=0.115.0",
+  "ollama>=0.6.2",
   "openai>=1.68.0",
   "pgvector>=0.3.6",
   "psycopg[binary,pool]>=3.2.3",
@@ -14,7 +15,7 @@ dependencies = [
   "python-dotenv>=1.0.1",
   "sentence-transformers>=5.1.0",
   "sqlalchemy[asyncio]>=2.0.36",
-  "uvicorn[standard]>=0.32.0"
+  "uvicorn[standard]>=0.32.0",
 ]
 
 [dependency-groups]

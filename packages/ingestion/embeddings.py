@@ -5,9 +5,11 @@ import os
 from collections.abc import Sequence
 from typing import Any, Protocol
 
+from packages.config.env import load_environment
 from packages.db.models import EMBEDDING_DIMENSION
 
 OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+GEMINI_EMBEDDING_MODEL = "gemini-embedding-001"
 BGE_SMALL_EN_MODEL = "BAAI/bge-small-en-v1.5"
 OLLAMA_EMBEDDING_MODEL = "nomic-embed-text"
 
@@ -71,6 +73,58 @@ class OpenAIEmbeddingProvider:
             encoding_format="float",
         )
         return [list(item.embedding) for item in response.data]
+
+
+class GeminiEmbeddingProvider:
+    def __init__(
+        self,
+        *,
+        api_key: str | None = None,
+        dimension: int = EMBEDDING_DIMENSION,
+        model: str = GEMINI_EMBEDDING_MODEL,
+        client: Any | None = None,
+    ) -> None:
+        self.dimension = dimension
+        self.model = model
+        if client is None:
+            try:
+                from google import genai
+            except ImportError as exc:
+                raise RuntimeError(
+                    "Gemini embedding provider requires the 'google-genai' package to be installed"
+                ) from exc
+            client = genai.Client(api_key=api_key)
+        self.client = client
+
+    def embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
+        if not texts:
+            return []
+
+        response = self.client.models.embed_content(
+            model=self.model,
+            contents=list(texts),
+            config={"output_dimensionality": self.dimension},
+        )
+        embeddings = _response_value(response, "embeddings", default=[])
+        return [
+            self._fit_storage_dimension(
+                self._as_float_list(_response_value(embedding, "values", default=[]))
+            )
+            for embedding in embeddings
+        ]
+
+    def _as_float_list(self, embedding: Any) -> list[float]:
+        if hasattr(embedding, "tolist"):
+            embedding = embedding.tolist()
+        return [float(value) for value in embedding]
+
+    def _fit_storage_dimension(self, embedding: list[float]) -> list[float]:
+        if len(embedding) > self.dimension:
+            raise ValueError(
+                f"Gemini embedding dimension {len(embedding)} exceeds configured "
+                f"storage dimension {self.dimension}"
+            )
+        return embedding + ([0.0] * (self.dimension - len(embedding)))
 
 
 class HuggingFaceEmbeddingProvider:
@@ -169,14 +223,25 @@ class OllamaEmbeddingProvider:
 
 
 def build_embedding_provider(provider: str, *, model: str | None = None) -> EmbeddingProvider:
+    load_environment()
     normalized = provider.lower()
     if normalized == "fake":
         return FakeEmbeddingProvider()
+    if normalized == "gemini":
+        if not os.environ.get("GEMINI_API_KEY"):
+            raise RuntimeError("GEMINI_API_KEY is required for the gemini embedding provider")
+        return GeminiEmbeddingProvider(
+            model=model or os.environ.get("GEMINI_EMBEDDING_MODEL", GEMINI_EMBEDDING_MODEL),
+        )
     if normalized == "openai":
         if not os.environ.get("OPENAI_API_KEY"):
             raise RuntimeError("OPENAI_API_KEY is required for the openai embedding provider")
         return OpenAIEmbeddingProvider()
     if normalized == "auto":
+        if os.environ.get("GEMINI_API_KEY"):
+            return GeminiEmbeddingProvider(
+                model=os.environ.get("GEMINI_EMBEDDING_MODEL", GEMINI_EMBEDDING_MODEL),
+            )
         if os.environ.get("OPENAI_API_KEY"):
             return OpenAIEmbeddingProvider()
         return FakeEmbeddingProvider()
@@ -184,4 +249,12 @@ def build_embedding_provider(provider: str, *, model: str | None = None) -> Embe
         return HuggingFaceEmbeddingProvider()
     if normalized in {"ollama", "nomic-embed-text"}:
         return OllamaEmbeddingProvider(model=model or OLLAMA_EMBEDDING_MODEL)
-    raise ValueError("embedding provider must be one of: auto, fake, openai, huggingface, ollama")
+    raise ValueError(
+        "embedding provider must be one of: auto, fake, gemini, openai, huggingface, ollama"
+    )
+
+
+def _response_value(response: Any, key: str, *, default: Any) -> Any:
+    if isinstance(response, dict):
+        return response.get(key, default)
+    return getattr(response, key, default)

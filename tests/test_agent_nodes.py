@@ -1,7 +1,16 @@
 from __future__ import annotations
 
-from packages.agents.nodes import planner_node
+from packages.agents.nodes import planner_node, retrieval_node
 from packages.agents.state import create_initial_state
+
+
+class RecordingAgent:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def run(self, state):
+        self.calls += 1
+        return {"trace": []}
 
 
 def test_planner_node_classifies_decision_questions_with_partial_update() -> None:
@@ -62,3 +71,18 @@ def test_planner_node_uses_retrieval_for_experiment_lookup_questions() -> None:
 
     assert updated["intent"] == "experiment_lookup"
     assert updated["required_agents"] == ["retrieval"]
+
+
+def test_retrieval_node_skips_when_retrieval_is_not_required() -> None:
+    state = create_initial_state("Hello")
+    state["required_agents"] = []
+    agent = RecordingAgent()
+
+    update = retrieval_node(state, retrieval_agent=agent)
+
+    assert agent.calls == 0
+    assert update["retrieved_chunks"] == []
+    assert update["citations"] == []
+    assert update["errors"] == []
+    assert update["trace"][0]["node"] == "retrieval"
+    assert update["trace"][0]["event"] == "skipped"

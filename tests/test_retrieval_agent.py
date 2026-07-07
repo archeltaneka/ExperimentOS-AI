@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import uuid
 
-from packages.agents.retrieval_agent import RetrievalAgent
 from packages.agents.state import create_initial_state
 from packages.retrieval.service import RetrievalMetrics, RetrievalResult
 
@@ -58,6 +57,12 @@ def build_result(*, section: str = "Results") -> RetrievalResult:
     )
 
 
+def build_retrieval_agent(client: StubRetrievalClient):
+    from packages.agents.retrieval_agent import RetrievalAgent
+
+    return RetrievalAgent(client=client)
+
+
 def test_retrieval_agent_maps_results_citations_metrics_and_trace() -> None:
     state = create_initial_state("What happened in the payment recommendation experiment?")
     state["required_agents"] = ["retrieval"]
@@ -76,12 +81,18 @@ def test_retrieval_agent_maps_results_citations_metrics_and_trace() -> None:
         ),
     )
 
-    update = RetrievalAgent(client=client).run(state)
+    # Synchronous facade expected by the LangGraph retrieval node.
+    update = build_retrieval_agent(client).run(state)
 
     assert update["retrieved_chunks"][0]["content"] == (
         "Guardrails passed and conversion improved."
     )
+    assert update["retrieved_chunks"][0]["document_id"] == client.results[0].document_id
+    assert update["retrieved_chunks"][0]["experiment_id"] == client.results[0].experiment_id
     assert update["retrieved_chunks"][0]["score"] == 0.93
+    assert update["citations"][0]["quote"] == "Guardrails passed and conversion improved."
+    assert update["citations"][0]["document_id"] == client.results[0].document_id
+    assert update["citations"][0]["experiment_id"] == client.results[0].experiment_id
     assert update["citations"][0]["section"] == "Results"
     assert update["metrics"]["retrieval"]["retrieved_chunks"] == 1
     assert [entry["event"] for entry in update["trace"]] == ["started", "completed"]
@@ -99,7 +110,7 @@ def test_retrieval_agent_uses_experiment_scoped_search_when_single_experiment_id
 
     client = StubRetrievalClient(results=[build_result()])
 
-    RetrievalAgent(client=client).run(state)
+    build_retrieval_agent(client).run(state)
 
     assert client.calls == [("What happened?", [experiment_id], {})]
 
@@ -108,8 +119,8 @@ def test_retrieval_agent_captures_structured_errors_without_raising() -> None:
     state = create_initial_state("What happened?")
     state["required_agents"] = ["retrieval"]
 
-    update = RetrievalAgent(
-        client=StubRetrievalClient(results=[], failure=RuntimeError("vector search failed"))
+    update = build_retrieval_agent(
+        StubRetrievalClient(results=[], failure=RuntimeError("vector search failed"))
     ).run(state)
 
     assert update["retrieved_chunks"] == []

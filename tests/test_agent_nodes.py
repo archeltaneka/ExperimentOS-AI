@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from packages.agents.nodes import planner_node, retrieval_node
+from packages.agents.nodes import planner_node
 from packages.agents.state import create_initial_state
 
 
@@ -74,6 +74,8 @@ def test_planner_node_uses_retrieval_for_experiment_lookup_questions() -> None:
 
 
 def test_retrieval_node_skips_when_retrieval_is_not_required() -> None:
+    from packages.agents.nodes import retrieval_node
+
     state = create_initial_state("Hello")
     state["required_agents"] = []
     agent = RecordingAgent()

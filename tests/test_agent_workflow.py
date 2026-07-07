@@ -93,6 +93,7 @@ def test_build_agent_workflow_accepts_injected_retrieval_agent() -> None:
 
     assert result["retrieved_chunks"][0]["content"] == "Chunk from retrieval."
     assert [entry["node"] for entry in result["trace"]] == ["planner", "retrieval", "retrieval"]
+    assert [entry["event"] for entry in result["trace"]] == ["planned", "started", "completed"]
 
 
 def test_agent_workflow_service_accepts_injected_retrieval_agent() -> None:

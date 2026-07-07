@@ -28,6 +28,7 @@ The current repository is organized around a small set of backend workflows:
 - `packages/db/` defines SQLAlchemy models, async sessions, and Alembic metadata.
 - `packages/retrieval/` performs semantic search over pgvector-backed chunk embeddings.
 - `packages/qa/` turns retrieved chunks into grounded answers with citations.
+- `packages/agents/` now contains the initial internal LangGraph foundation for future multi-agent orchestration, while the public runtime path remains `POST /ask` through the existing QA service.
 - `apps/api/` exposes `GET /health` and `POST /ask`.
 - `packages/evals/` runs the offline QA evaluation harness over `data/eval/qa_dataset.json`.
 
@@ -73,7 +74,7 @@ See [Architecture](docs/architecture.md) for component boundaries and data flow 
 | Deterministic local runs | Available | Fake embeddings and mock LLMs support offline workflows. |
 | Synthetic dataset | Available | Ten synthetic experiments plus a QA evaluation dataset. |
 | Event ingestion | Planned | `events.csv` is generated today but not ingested yet. |
-| Agent workflows | Planned | Package boundaries exist for future orchestration work. |
+| Agent workflows | Foundation available | Internal LangGraph `START -> planner -> END` flow exists; `POST /ask` remains the active public path. |
 
 ## Repository Structure
 
@@ -91,7 +92,7 @@ docs/
   assets/screenshots/       Placeholder screenshot assets
 migrations/                 Alembic migration scripts
 packages/
-  agents/                   Future agent package boundary
+  agents/                   Internal LangGraph workflow foundation for future agents
   config/                   Environment loading
   db/                       SQLAlchemy models and async session helpers
   evals/                    Offline evaluation harness and report generation

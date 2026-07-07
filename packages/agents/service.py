@@ -1,0 +1,19 @@
+from __future__ import annotations
+
+from packages.agents.state import AgentState
+from packages.agents.workflow import build_agent_workflow
+
+
+class AgentWorkflowInputError(ValueError):
+    pass
+
+
+class AgentWorkflowService:
+    def __init__(self) -> None:
+        self.workflow = build_agent_workflow()
+
+    def run(self, question: str) -> AgentState:
+        normalized_question = question.strip()
+        if not normalized_question:
+            raise AgentWorkflowInputError("question must not be empty")
+        return self.workflow.invoke({"question": normalized_question})

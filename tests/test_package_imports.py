@@ -20,7 +20,14 @@ def test_workspace_packages_import() -> None:
         "RetrievalService",
     }
     assert packages.experiments.__all__ == []
-    assert packages.agents.__all__ == []
+    assert set(packages.agents.__all__) == {
+        "AgentIntent",
+        "AgentState",
+        "AgentWorkflowInputError",
+        "AgentWorkflowService",
+        "build_agent_workflow",
+        "build_initial_state",
+    }
     assert set(packages.evals.__all__) == {
         "EvaluationQuestion",
         "EvaluationRun",
@@ -32,3 +39,11 @@ def test_workspace_packages_import() -> None:
         "load_evaluation_dataset",
         "render_evaluation_report",
     }
+
+
+def test_agents_package_exports_langgraph_foundation() -> None:
+    from packages.agents import AgentWorkflowService, build_agent_workflow, build_initial_state
+
+    assert AgentWorkflowService
+    assert build_agent_workflow
+    assert build_initial_state

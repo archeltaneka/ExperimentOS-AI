@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import uuid
 
+import pytest
+
 from packages.agents.state import create_initial_state
 from packages.retrieval.service import RetrievalMetrics, RetrievalResult
 
@@ -66,6 +68,7 @@ def build_retrieval_agent(client: StubRetrievalClient):
 def test_retrieval_agent_maps_results_citations_metrics_and_trace() -> None:
     state = create_initial_state("What happened in the payment recommendation experiment?")
     state["required_agents"] = ["retrieval"]
+    state["metrics"] = {"planner": {"latency_ms": 12.0}}
     state["experiment_context"] = {
         "experiment_ids": [],
         "filters": {"experiment_hints": ["payment recommendation"]},
@@ -98,6 +101,7 @@ def test_retrieval_agent_maps_results_citations_metrics_and_trace() -> None:
     assert update["metrics"]["retrieval"]["vector_search_time_ms"] == 8.0
     assert update["metrics"]["retrieval"]["retrieved_chunks"] == 1
     assert update["metrics"]["retrieval"]["average_similarity"] == 0.93
+    assert update["metrics"]["planner"] == {"latency_ms": 12.0}
     assert [entry["node"] for entry in update["trace"]] == ["retrieval", "retrieval"]
     assert [entry["event"] for entry in update["trace"]] == ["started", "completed"]
     assert update["errors"] == []
@@ -146,3 +150,29 @@ def test_retrieval_agent_captures_structured_errors_without_raising() -> None:
     assert "vector search failed" in update["errors"][0]["message"]
     assert [entry["node"] for entry in update["trace"]] == ["retrieval", "retrieval"]
     assert [entry["event"] for entry in update["trace"]] == ["started", "failed"]
+
+
+def test_runtime_retrieval_client_builds_provider_before_engine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from packages.agents import retrieval_agent
+
+    engine_created = False
+
+    def fake_build_embedding_provider(provider: str) -> object:
+        raise RuntimeError(f"provider setup failed for {provider}")
+
+    def fake_create_database_engine() -> object:
+        nonlocal engine_created
+        engine_created = True
+        raise AssertionError("engine should not be created before provider succeeds")
+
+    monkeypatch.setattr(retrieval_agent, "build_embedding_provider", fake_build_embedding_provider)
+    monkeypatch.setattr(retrieval_agent, "create_database_engine", fake_create_database_engine)
+
+    client = retrieval_agent.RuntimeRetrievalClient(embedding_provider="fake")
+
+    with pytest.raises(RuntimeError, match="provider setup failed for fake"):
+        retrieval_agent.run_async(client.search("What happened?"))
+
+    assert engine_created is False

@@ -88,9 +88,9 @@ class RuntimeRetrievalClient:
         experiment_id: str | None = None,
         metadata_filter: Mapping[str, object] | None = None,
     ) -> list[RetrievalResult]:
+        provider = build_embedding_provider(self._resolved_embedding_provider())
         engine = create_database_engine()
         session_factory = create_async_session_factory(engine)
-        provider = build_embedding_provider(self._resolved_embedding_provider())
         try:
             async with session_factory() as session:
                 service = RetrievalService(session, provider)
@@ -160,7 +160,7 @@ class RetrievalAgent:
         return {
             "retrieved_chunks": [_result_to_chunk(result) for result in results],
             "citations": [_result_to_citation(result) for result in results],
-            "metrics": {"retrieval": metrics},
+            "metrics": {**state["metrics"], "retrieval": metrics},
             "errors": [],
             "trace": [
                 *trace,

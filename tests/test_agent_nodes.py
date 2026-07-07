@@ -10,7 +10,13 @@ class RecordingAgent:
 
     def run(self, state):
         self.calls += 1
-        return {"trace": []}
+        return {
+            "retrieved_chunks": [],
+            "citations": [],
+            "metrics": {"retrieval": {"retrieved_chunks": 0}},
+            "errors": [],
+            "trace": [],
+        }
 
 
 def test_planner_node_classifies_decision_questions_with_partial_update() -> None:
@@ -88,3 +94,18 @@ def test_retrieval_node_skips_when_retrieval_is_not_required() -> None:
     assert update["errors"] == []
     assert update["trace"][0]["node"] == "retrieval"
     assert update["trace"][0]["event"] == "skipped"
+
+
+def test_retrieval_node_delegates_to_injected_agent_when_required() -> None:
+    from packages.agents.nodes import retrieval_node
+
+    state = create_initial_state("What happened in the payment recommendation experiment?")
+    state["required_agents"] = ["retrieval"]
+    state["metrics"] = {"planner_rule_version": "deterministic_v1"}
+    agent = RecordingAgent()
+
+    update = retrieval_node(state, retrieval_agent=agent)
+
+    assert agent.calls == 1
+    assert update["metrics"] == {"retrieval": {"retrieved_chunks": 0}}
+    assert update["errors"] == []

@@ -31,7 +31,10 @@ class StubGraphRetrievalAgent:
                     "metadata": {"section": "Results"},
                 }
             ],
-            "metrics": {"retrieval": {"retrieved_chunks": 1}},
+            "metrics": {
+                **state["metrics"],
+                "retrieval": {"retrieved_chunks": 1},
+            },
             "trace": [
                 {"node": "retrieval", "event": "started", "at": "2026-07-07T00:00:00Z"},
                 {"node": "retrieval", "event": "completed", "at": "2026-07-07T00:00:01Z"},
@@ -41,7 +44,7 @@ class StubGraphRetrievalAgent:
 
 
 def test_build_agent_workflow_exposes_question_only_input_schema() -> None:
-    graph = build_agent_workflow()
+    graph = build_agent_workflow(retrieval_agent=StubGraphRetrievalAgent())
 
     schema = graph.get_input_schema().model_json_schema()
 
@@ -50,7 +53,7 @@ def test_build_agent_workflow_exposes_question_only_input_schema() -> None:
 
 
 def test_build_agent_workflow_returns_invokable_graph() -> None:
-    graph = build_agent_workflow()
+    graph = build_agent_workflow(retrieval_agent=StubGraphRetrievalAgent())
 
     result = graph.invoke({"question": "Summarize the checkout UX experiment for executives."})
 
@@ -64,14 +67,16 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
         "risk_assessment",
         "executive_summary",
     ]
-    assert result["trace"][0]["node"] == "planner"
-    assert result["trace"][0]["event"] == "planned"
+    assert [entry["node"] for entry in result["trace"]] == ["planner", "retrieval", "retrieval"]
+    assert [entry["event"] for entry in result["trace"]] == ["planned", "started", "completed"]
     assert result["human_approval"]["status"] == "not_requested"
     assert result["run_metadata"]["workflow"] == "phase2_shared_state"
+    assert result["metrics"]["planner_rule_version"] == "deterministic_v1"
+    assert result["metrics"]["retrieval"]["retrieved_chunks"] == 1
 
 
 def test_agent_workflow_service_runs_graph_and_returns_state() -> None:
-    service = AgentWorkflowService()
+    service = AgentWorkflowService(retrieval_agent=StubGraphRetrievalAgent())
 
     result = service.run("What happened in the payment recommendation experiment?")
 
@@ -81,6 +86,8 @@ def test_agent_workflow_service_runs_graph_and_returns_state() -> None:
     assert result["experiment_analysis"]["summary"] == ""
     assert result["errors"] == []
     assert result["tool_calls"] == []
+    assert result["metrics"]["planner_rule_version"] == "deterministic_v1"
+    assert result["metrics"]["retrieval"]["retrieved_chunks"] == 1
 
 
 def test_agent_workflow_service_rejects_blank_question() -> None:
@@ -105,6 +112,11 @@ def test_build_agent_workflow_accepts_injected_retrieval_agent() -> None:
         "experiment_ids": [],
         "filters": {"experiment_hints": ["payment recommendation"]},
     }
+    assert retrieval_agent.calls[0]["metrics"] == {
+        "planner_rule_version": "deterministic_v1",
+        "planner_required_agent_count": 1,
+        "planner_experiment_hint_count": 1,
+    }
 
 
 def test_agent_workflow_service_accepts_injected_retrieval_agent() -> None:
@@ -120,4 +132,22 @@ def test_agent_workflow_service_accepts_injected_retrieval_agent() -> None:
     assert retrieval_agent.calls[0]["experiment_context"] == {
         "experiment_ids": [],
         "filters": {"experiment_hints": ["payment recommendation"]},
+    }
+
+
+def test_build_agent_workflow_skips_retrieval_when_not_required() -> None:
+    retrieval_agent = StubGraphRetrievalAgent()
+    graph = build_agent_workflow(retrieval_agent=retrieval_agent)
+
+    result = graph.invoke({"question": "Hello"})
+
+    assert retrieval_agent.calls == []
+    assert result["required_agents"] == []
+    assert [entry["node"] for entry in result["trace"]] == ["planner", "retrieval"]
+    assert [entry["event"] for entry in result["trace"]] == ["planned", "skipped"]
+    assert result["errors"] == []
+    assert result["metrics"] == {
+        "planner_rule_version": "deterministic_v1",
+        "planner_required_agent_count": 0,
+        "planner_experiment_hint_count": 0,
     }

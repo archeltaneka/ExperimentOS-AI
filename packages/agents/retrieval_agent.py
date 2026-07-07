@@ -175,7 +175,7 @@ class RetrievalAgent:
     async def _search(self, state: AgentState) -> list[RetrievalResult]:
         metadata_filter = _metadata_filter(state)
         experiment_ids = state["experiment_context"]["experiment_ids"]
-        query = state["question"]
+        query = state["request"]["normalized_question"]
         if len(experiment_ids) == 1:
             return await self.client.search_by_experiment(
                 experiment_ids[0],

@@ -119,6 +119,18 @@ def test_retrieval_agent_uses_experiment_scoped_search_when_single_experiment_id
     assert client.calls == [("What happened?", [experiment_id], {})]
 
 
+def test_retrieval_agent_uses_normalized_question_from_request() -> None:
+    state = create_initial_state("  What happened?  ")
+    state["required_agents"] = ["retrieval"]
+    state["request"]["normalized_question"] = "What happened?"
+
+    client = StubRetrievalClient(results=[build_result()])
+
+    build_retrieval_agent(client).run(state)
+
+    assert client.calls == [("What happened?", [], {})]
+
+
 def test_retrieval_agent_captures_structured_errors_without_raising() -> None:
     state = create_initial_state("What happened?")
     state["required_agents"] = ["retrieval"]

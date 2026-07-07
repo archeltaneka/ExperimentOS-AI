@@ -1,21 +1,129 @@
 from __future__ import annotations
 
-from packages.agents.state import build_initial_state
+import json
+
+from packages.agents.state import (
+    append_error,
+    append_trace,
+    build_initial_state,
+    create_initial_state,
+    record_metric,
+    validate_state_shape,
+)
 
 
-def test_build_initial_state_sets_required_defaults() -> None:
-    state = build_initial_state("Why did this experiment ship?")
+def test_create_initial_state_sets_shared_contract_defaults() -> None:
+    state = create_initial_state("Why did this experiment ship?")
 
     assert state["question"] == "Why did this experiment ship?"
+    assert state["request"]["question"] == "Why did this experiment ship?"
+    assert state["request"]["normalized_question"] == "Why did this experiment ship?"
     assert state["intent"] == "unknown"
     assert state["required_agents"] == []
+    assert state["experiment_context"] == {
+        "experiment_ids": [],
+        "filters": {},
+    }
     assert state["retrieved_chunks"] == []
-    assert state["analysis"] == ""
-    assert state["business_impact"] == ""
-    assert state["risks"] == []
-    assert state["decision"] == ""
-    assert state["executive_summary"] == ""
     assert state["citations"] == []
+    assert state["experiment_analysis"] == {
+        "summary": "",
+        "findings": [],
+    }
+    assert state["business_impact"] == {
+        "summary": "",
+        "impacts": [],
+    }
+    assert state["risks"] == []
+    assert state["decision"] == {
+        "recommendation": "",
+        "rationale": "",
+    }
+    assert state["executive_summary"] == {
+        "summary": "",
+    }
+    assert state["human_approval"] == {
+        "status": "not_requested",
+        "reviewer": None,
+        "reviewed_at": None,
+        "notes": "",
+    }
+    assert state["tool_calls"] == []
     assert state["metrics"] == {}
     assert state["errors"] == []
     assert state["trace"] == []
+    assert state["run_metadata"]["state_version"] == 2
+    assert state["run_metadata"]["workflow"] == "phase2_shared_state"
+    assert state["timestamps"]["created_at"]
+    assert state["timestamps"]["updated_at"]
+
+
+def test_build_initial_state_remains_a_compatibility_alias() -> None:
+    state = build_initial_state("Should we ship?")
+
+    assert state["question"] == "Should we ship?"
+    assert state["request"]["normalized_question"] == "Should we ship?"
+    assert state["run_metadata"]["workflow"] == "phase2_shared_state"
+    assert state["timestamps"]["created_at"]
+
+
+def test_append_trace_adds_new_entry_and_updates_timestamp() -> None:
+    state = create_initial_state("What happened?")
+
+    updated = append_trace(
+        state,
+        node="planner",
+        event="classified",
+        details={"intent": "qa"},
+    )
+
+    assert len(updated["trace"]) == 1
+    assert updated["trace"][0]["node"] == "planner"
+    assert updated["trace"][0]["event"] == "classified"
+    assert updated["trace"][0]["details"] == {"intent": "qa"}
+    assert updated["timestamps"]["updated_at"] >= state["timestamps"]["updated_at"]
+
+
+def test_append_error_adds_structured_error_and_updates_timestamp() -> None:
+    state = create_initial_state("What failed?")
+
+    updated = append_error(
+        state,
+        code="planner_failure",
+        message="planner failed",
+        node="planner",
+        details={"reason": "timeout"},
+    )
+
+    assert updated["errors"] == [
+        {
+            "code": "planner_failure",
+            "message": "planner failed",
+            "node": "planner",
+            "details": {"reason": "timeout"},
+            "at": updated["errors"][0]["at"],
+        }
+    ]
+    assert updated["timestamps"]["updated_at"] >= state["timestamps"]["updated_at"]
+
+
+def test_record_metric_sets_named_metric_and_updates_timestamp() -> None:
+    state = create_initial_state("How long did this take?")
+
+    updated = record_metric(state, "planner_latency_ms", 12.5)
+
+    assert updated["metrics"] == {"planner_latency_ms": 12.5}
+    assert updated["timestamps"]["updated_at"] >= state["timestamps"]["updated_at"]
+
+
+def test_state_is_json_serializable_and_validatable() -> None:
+    state = create_initial_state("Summarize this experiment.")
+    state = append_trace(state, node="planner", event="completed")
+    state = append_error(state, code="none", message="no-op")
+    state = record_metric(state, "planner_latency_ms", 1)
+
+    payload = json.loads(json.dumps(state))
+    validated = validate_state_shape(payload)
+
+    assert payload["question"] == "Summarize this experiment."
+    assert validated["question"] == "Summarize this experiment."

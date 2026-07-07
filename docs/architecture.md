@@ -154,6 +154,8 @@ If retrieval returns no chunks, the service returns an "insufficient evidence" a
 
 This path is deterministic scaffolding for future agent orchestration. It runs beside the current `/ask -> QuestionAnsweringService -> RetrievalService -> LLM` flow and does not replace it.
 
+The workflow now uses a structured shared state contract with explicit sections for request metadata, experiment scope, evidence, analysis artifacts, approval status, tool execution records, metrics, errors, trace entries, and run metadata. The shared state exists so future Phase 2 agents can enrich one consistent machine-readable workflow object instead of passing ad hoc intermediate payloads between services.
+
 ### Evaluation Layer
 
 `packages/evals/` turns the QA path into a repeatable offline measurement workflow.

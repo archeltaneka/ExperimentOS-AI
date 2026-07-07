@@ -20,6 +20,7 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
     assert state["request"]["normalized_question"] == "Why did this experiment ship?"
     assert state["intent"] == "unknown"
     assert state["required_agents"] == []
+    assert state["planner_notes"] == ""
     assert state["experiment_context"] == {
         "experiment_ids": [],
         "filters": {},
@@ -52,7 +53,7 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
     assert state["metrics"] == {}
     assert state["errors"] == []
     assert state["trace"] == []
-    assert state["run_metadata"]["state_version"] == 2
+    assert state["run_metadata"]["state_version"] == 3
     assert state["run_metadata"]["workflow"] == "phase2_shared_state"
     assert state["timestamps"]["created_at"]
     assert state["timestamps"]["updated_at"]

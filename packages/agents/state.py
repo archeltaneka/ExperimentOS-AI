@@ -9,15 +9,23 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 from typing_extensions import TypedDict
 
-AgentIntent = Literal["qa", "analysis", "risk", "decision", "summary", "unknown"]
+AgentIntent = Literal[
+    "general_question",
+    "experiment_lookup",
+    "decision_support",
+    "risk_assessment",
+    "business_impact",
+    "executive_summary",
+    "unknown",
+]
 RequiredAgent = Literal[
     "planner",
     "retrieval",
-    "analysis",
+    "experiment_analysis",
     "business_impact",
-    "risk",
+    "risk_assessment",
     "decision",
-    "summary",
+    "executive_summary",
     "human_approval",
 ]
 HumanApprovalStatus = Literal["not_requested", "pending", "approved", "rejected"]
@@ -146,6 +154,7 @@ class AgentState(TypedDict):
     request: AgentRequest
     intent: AgentIntent
     required_agents: list[RequiredAgent]
+    planner_notes: str
     experiment_context: ExperimentContext
     retrieved_chunks: list[RetrievedChunk]
     citations: list[Citation]
@@ -167,6 +176,7 @@ class AgentStateUpdate(TypedDict, total=False):
     request: AgentRequest
     intent: AgentIntent
     required_agents: list[RequiredAgent]
+    planner_notes: str
     experiment_context: ExperimentContext
     retrieved_chunks: list[RetrievedChunk]
     citations: list[Citation]
@@ -246,6 +256,7 @@ def create_initial_state(question: str) -> AgentState:
         },
         "intent": "unknown",
         "required_agents": [],
+        "planner_notes": "",
         "experiment_context": {
             "experiment_ids": [],
             "filters": {},
@@ -285,7 +296,7 @@ def create_initial_state(question: str) -> AgentState:
         "run_metadata": {
             "run_id": str(uuid4()),
             "workflow": "phase2_shared_state",
-            "state_version": 2,
+            "state_version": 3,
         },
     }
 

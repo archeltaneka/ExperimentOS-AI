@@ -46,7 +46,7 @@ def test_build_agent_workflow_exposes_question_only_input_schema() -> None:
 
 
 def test_build_agent_workflow_returns_invokable_graph() -> None:
-    graph = build_agent_workflow(retrieval_agent=StubGraphRetrievalAgent())
+    graph = build_agent_workflow()
 
     result = graph.invoke({"question": "Summarize the checkout UX experiment for executives."})
 
@@ -60,22 +60,21 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
         "risk_assessment",
         "executive_summary",
     ]
-    assert result["retrieved_chunks"][0]["content"] == "Chunk from retrieval."
-    assert [entry["node"] for entry in result["trace"]] == ["planner", "retrieval", "retrieval"]
+    assert result["trace"][0]["node"] == "planner"
+    assert result["trace"][0]["event"] == "planned"
     assert result["human_approval"]["status"] == "not_requested"
     assert result["run_metadata"]["workflow"] == "phase2_shared_state"
 
 
 def test_agent_workflow_service_runs_graph_and_returns_state() -> None:
-    service = AgentWorkflowService(retrieval_agent=StubGraphRetrievalAgent())
+    service = AgentWorkflowService()
 
     result = service.run("What happened in the payment recommendation experiment?")
 
     assert result["question"] == "What happened in the payment recommendation experiment?"
     assert result["intent"] == "experiment_lookup"
     assert result["required_agents"] == ["retrieval"]
-    assert result["citations"][0]["quote"] == "Chunk from retrieval."
-    assert result["metrics"]["retrieval"]["retrieved_chunks"] == 1
+    assert result["experiment_analysis"]["summary"] == ""
     assert result["errors"] == []
     assert result["tool_calls"] == []
 
@@ -85,3 +84,21 @@ def test_agent_workflow_service_rejects_blank_question() -> None:
 
     with pytest.raises(AgentWorkflowInputError, match="question must not be empty"):
         service.run("   ")
+
+
+def test_build_agent_workflow_accepts_injected_retrieval_agent() -> None:
+    graph = build_agent_workflow(retrieval_agent=StubGraphRetrievalAgent())
+
+    result = graph.invoke({"question": "What happened in the payment recommendation experiment?"})
+
+    assert result["retrieved_chunks"][0]["content"] == "Chunk from retrieval."
+    assert [entry["node"] for entry in result["trace"]] == ["planner", "retrieval", "retrieval"]
+
+
+def test_agent_workflow_service_accepts_injected_retrieval_agent() -> None:
+    service = AgentWorkflowService(retrieval_agent=StubGraphRetrievalAgent())
+
+    result = service.run("What happened in the payment recommendation experiment?")
+
+    assert result["citations"][0]["quote"] == "Chunk from retrieval."
+    assert result["metrics"]["retrieval"]["retrieved_chunks"] == 1

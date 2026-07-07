@@ -14,7 +14,13 @@ from packages.config.env import load_environment
 from packages.db.models import Experiment
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.ingestion.embeddings import build_embedding_provider
-from packages.llm.client import GeminiLLMClient, LLMClient, MockLLMClient, OpenAILLMClient
+from packages.llm.client import (
+    GeminiLLMClient,
+    LLMClient,
+    MockLLMClient,
+    OllamaLLMClient,
+    OpenAILLMClient,
+)
 from packages.qa.question_answering_service import (
     EmbeddingFailureError,
     EmptyQuestionError,
@@ -55,6 +61,8 @@ def get_llm_client() -> LLMClient:
     provider = os.environ.get("LLM_PROVIDER", "auto").lower()
     if provider == "mock":
         return MockLLMClient()
+    if provider == "ollama":
+        return OllamaLLMClient(model=os.environ.get("OLLAMA_MODEL", "qwen2.5:7b"))
     if provider == "gemini":
         if not os.environ.get("GEMINI_API_KEY"):
             raise RuntimeError("GEMINI_API_KEY is required for the gemini LLM provider")

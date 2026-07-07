@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from time import perf_counter
 from typing import Any, Protocol
 
+from packages.config.env import get_ollama_base_url
+
 GEMINI_LLM_MODEL = "gemini-3.5-flash"
 OLLAMA_LLM_MODEL = "qwen2.5:7b"
 
@@ -174,15 +176,17 @@ class OllamaLLMClient:
         self,
         *,
         model: str = OLLAMA_LLM_MODEL,
+        base_url: str | None = None,
         client: Any | None = None,
     ) -> None:
         self.model = model
+        base_url = base_url or get_ollama_base_url()
         if client is None:
             try:
                 from ollama import AsyncClient
             except ImportError as exc:
                 raise LLMClientError("Ollama LLM client requires the 'ollama' package") from exc
-            client = AsyncClient()
+            client = AsyncClient(host=base_url) if base_url else AsyncClient()
         self.client = client
 
     async def generate(

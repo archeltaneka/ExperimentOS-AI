@@ -101,6 +101,37 @@ def test_llm_client_loads_dotenv_for_gemini_auto_provider(monkeypatch, tmp_path:
     assert client.model == "gemini-dotenv-model"
 
 
+def test_llm_client_uses_ollama_provider_from_dotenv(monkeypatch, tmp_path: Path) -> None:
+    import apps.api.main as main_module
+
+    class StubOllamaClient:
+        def __init__(self, *, model: str) -> None:
+            self.model = model
+
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text(
+        "\n".join(
+            [
+                "LLM_PROVIDER=ollama",
+                "OLLAMA_MODEL=qwen2.5:7b",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("OLLAMA_MODEL", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(main_module, "OllamaLLMClient", StubOllamaClient)
+
+    client = get_llm_client()
+
+    assert isinstance(client, StubOllamaClient)
+    assert client.model == "qwen2.5:7b"
+
+
 @dataclass
 class StubQuestionAnsweringService:
     response: QAResponse | None = None

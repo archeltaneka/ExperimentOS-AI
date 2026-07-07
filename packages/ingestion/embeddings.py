@@ -5,7 +5,7 @@ import os
 from collections.abc import Sequence
 from typing import Any, Protocol
 
-from packages.config.env import load_environment
+from packages.config.env import get_ollama_base_url, load_environment
 from packages.db.models import EMBEDDING_DIMENSION
 
 OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
@@ -183,18 +183,19 @@ class OllamaEmbeddingProvider:
         *,
         dimension: int = EMBEDDING_DIMENSION,
         model: str = OLLAMA_EMBEDDING_MODEL,
+        base_url: str | None = None,
         client: Any | None = None,
     ) -> None:
         self.dimension = dimension
         self.model = model
         if client is None:
             try:
-                import ollama
+                from ollama import Client
             except ImportError as exc:
                 raise RuntimeError(
                     "Ollama embedding provider requires the 'ollama' package to be installed"
                 ) from exc
-            client = ollama
+            client = Client(host=base_url) if base_url else Client()
         self.client = client
 
     def embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
@@ -248,7 +249,13 @@ def build_embedding_provider(provider: str, *, model: str | None = None) -> Embe
     if normalized in {"huggingface", "hf", "bge-small-en-v1.5"}:
         return HuggingFaceEmbeddingProvider()
     if normalized in {"ollama", "nomic-embed-text"}:
-        return OllamaEmbeddingProvider(model=model or OLLAMA_EMBEDDING_MODEL)
+        kwargs: dict[str, Any] = {
+            "model": model or os.environ.get("OLLAMA_EMBEDDING_MODEL", OLLAMA_EMBEDDING_MODEL)
+        }
+        base_url = get_ollama_base_url()
+        if base_url is not None:
+            kwargs["base_url"] = base_url
+        return OllamaEmbeddingProvider(**kwargs)
     raise ValueError(
         "embedding provider must be one of: auto, fake, gemini, openai, huggingface, ollama"
     )

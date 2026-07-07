@@ -146,6 +146,14 @@ The retrieval layer is shared by both the API and the evaluation harness.
 
 If retrieval returns no chunks, the service returns an "insufficient evidence" answer without calling an external LLM.
 
+### Agent Workflow Foundation
+
+`packages/agents/` now includes the initial internal Phase 2 workflow path:
+
+`AgentWorkflowService -> LangGraph workflow -> planner -> END`
+
+This path is deterministic scaffolding for future agent orchestration. It runs beside the current `/ask -> QuestionAnsweringService -> RetrievalService -> LLM` flow and does not replace it.
+
 ### Evaluation Layer
 
 `packages/evals/` turns the QA path into a repeatable offline measurement workflow.
@@ -200,7 +208,7 @@ Outputs:
 | `packages/qa` | Grounded question answering service and response models |
 | `packages/evals` | Evaluation dataset loading, orchestration, metrics, reports |
 | `packages/experiments` | Reserved boundary for future experiment domain logic |
-| `packages/agents` | Reserved boundary for future agent workflows |
+| `packages/agents` | Internal LangGraph foundation for future agent workflows |
 
 ## Extension Points
 

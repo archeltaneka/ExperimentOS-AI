@@ -84,14 +84,50 @@ def test_retrieval_node_skips_when_retrieval_is_not_required() -> None:
 
     state = create_initial_state("Hello")
     state["required_agents"] = []
+    state["retrieved_chunks"] = [
+        {
+            "document_id": "doc-existing",
+            "experiment_id": "exp-existing",
+            "content": "Existing retrieval chunk.",
+            "score": 0.42,
+            "metadata": {"section": "Existing"},
+        }
+    ]
+    state["citations"] = [
+        {
+            "document_id": "doc-existing",
+            "experiment_id": "exp-existing",
+            "quote": "Existing retrieval chunk.",
+            "section": "Existing",
+            "metadata": {"section": "Existing"},
+        }
+    ]
     agent = RecordingAgent()
 
     update = retrieval_node(state, retrieval_agent=agent)
 
     assert agent.calls == 0
-    assert update["retrieved_chunks"] == []
-    assert update["citations"] == []
-    assert update["errors"] == []
+    assert "retrieved_chunks" not in update
+    assert "citations" not in update
+    assert state["retrieved_chunks"] == [
+        {
+            "document_id": "doc-existing",
+            "experiment_id": "exp-existing",
+            "content": "Existing retrieval chunk.",
+            "score": 0.42,
+            "metadata": {"section": "Existing"},
+        }
+    ]
+    assert state["citations"] == [
+        {
+            "document_id": "doc-existing",
+            "experiment_id": "exp-existing",
+            "quote": "Existing retrieval chunk.",
+            "section": "Existing",
+            "metadata": {"section": "Existing"},
+        }
+    ]
+    assert "errors" not in update
     assert update["trace"][0]["node"] == "retrieval"
     assert update["trace"][0]["event"] == "skipped"
 

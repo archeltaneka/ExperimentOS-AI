@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import pytest
 
+from packages.agents.nodes import retrieval_node
 from packages.agents.service import AgentWorkflowInputError, AgentWorkflowService
+from packages.agents.state import create_initial_state
 from packages.agents.workflow import build_agent_workflow
 
 
@@ -151,3 +153,33 @@ def test_build_agent_workflow_skips_retrieval_when_not_required() -> None:
         "planner_required_agent_count": 0,
         "planner_experiment_hint_count": 0,
     }
+
+
+def test_retrieval_skip_update_does_not_overwrite_existing_outputs() -> None:
+    state = create_initial_state("Hello")
+    state["required_agents"] = []
+    state["retrieved_chunks"] = [
+        {
+            "document_id": "doc-existing",
+            "experiment_id": "exp-existing",
+            "content": "Existing retrieval chunk.",
+            "score": 0.42,
+            "metadata": {"section": "Existing"},
+        }
+    ]
+    state["citations"] = [
+        {
+            "document_id": "doc-existing",
+            "experiment_id": "exp-existing",
+            "quote": "Existing retrieval chunk.",
+            "section": "Existing",
+            "metadata": {"section": "Existing"},
+        }
+    ]
+
+    update = retrieval_node(state, retrieval_agent=StubGraphRetrievalAgent())
+
+    assert "retrieved_chunks" not in update
+    assert "citations" not in update
+    assert "errors" not in update
+    assert update["trace"][0]["event"] == "skipped"

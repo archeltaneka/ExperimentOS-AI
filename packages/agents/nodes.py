@@ -54,9 +54,6 @@ def retrieval_node(
     required_agents: list[RequiredAgent] = state["required_agents"]
     if "retrieval" not in required_agents:
         return {
-            "retrieved_chunks": [],
-            "citations": [],
-            "errors": [],
             "trace": [
                 create_trace_entry(
                     node="retrieval",

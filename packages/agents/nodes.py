@@ -1,28 +1,37 @@
 from __future__ import annotations
 
-from packages.agents.state import AgentInputState, AgentIntent, AgentState, AgentStateUpdate
+from packages.agents.state import (
+    AgentInputState,
+    AgentIntent,
+    AgentState,
+    AgentStateUpdate,
+    RequiredAgent,
+    create_initial_state,
+    create_trace_entry,
+)
 
 
 def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
-    intent = classify_intent(state["question"])
+    question = state["question"]
+    intent = classify_intent(question)
     required_agents = required_agents_for_intent(intent)
-    trace_entry = {
-        "node": "planner",
-        "intent": intent,
-        "required_agents": required_agents,
-    }
+    defaults = create_initial_state(question)
+    trace_entry = create_trace_entry(
+        node="planner",
+        event="classified",
+        details={
+            "intent": intent,
+            "required_agents": required_agents,
+        },
+    )
     return {
+        **{
+            key: value
+            for key, value in defaults.items()
+            if key != "question"
+        },
         "intent": intent,
         "required_agents": required_agents,
-        "retrieved_chunks": [],
-        "analysis": "",
-        "business_impact": "",
-        "risks": [],
-        "decision": "",
-        "executive_summary": "",
-        "citations": [],
-        "metrics": {},
-        "errors": [],
         "trace": [trace_entry],
     }
 
@@ -40,7 +49,7 @@ def classify_intent(question: str) -> AgentIntent:
     return "qa"
 
 
-def required_agents_for_intent(intent: AgentIntent) -> list[str]:
+def required_agents_for_intent(intent: AgentIntent) -> list[RequiredAgent]:
     if intent == "qa":
         return ["retrieval"]
     if intent == "analysis":

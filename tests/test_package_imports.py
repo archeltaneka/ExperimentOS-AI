@@ -25,6 +25,7 @@ def test_workspace_packages_import() -> None:
         "AgentState",
         "AgentWorkflowInputError",
         "AgentWorkflowService",
+        "create_initial_state",
         "build_agent_workflow",
         "build_initial_state",
     }
@@ -42,8 +43,14 @@ def test_workspace_packages_import() -> None:
 
 
 def test_agents_package_exports_langgraph_foundation() -> None:
-    from packages.agents import AgentWorkflowService, build_agent_workflow, build_initial_state
+    from packages.agents import (
+        AgentWorkflowService,
+        build_agent_workflow,
+        build_initial_state,
+        create_initial_state,
+    )
 
     assert AgentWorkflowService
     assert build_agent_workflow
     assert build_initial_state
+    assert create_initial_state

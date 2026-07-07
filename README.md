@@ -1,59 +1,236 @@
 # ExperimentOS AI
 
-ExperimentOS AI is starting as a Python backend workspace. Issue #1 sets up the project skeleton, uv dependency management, a minimal FastAPI API app, package boundaries, tests, and data directories.
+> Turn experiment artifacts into searchable evidence, grounded answers, and repeatable evaluations.
 
-## Local Setup
+ExperimentOS AI is an early-stage Python 3.12 backend for loading experiment reports into Postgres, retrieving relevant evidence with pgvector, and answering questions with traceable citations. The repository is designed for deterministic local development, synthetic experimentation data, and evaluation workflows that can run without live model APIs.
 
-```bash
+## Hero
+
+Experiment teams accumulate analysis across Markdown reports, CSV exports, event logs, and follow-up notes. ExperimentOS AI turns that raw material into a developer-friendly backend surface for ingestion, retrieval, grounded QA, and offline evaluation.
+
+## Motivation
+
+Most experiment knowledge decays because the original evidence is hard to recover. Teams remember the decision, but not the exact metric movement, caveats, rollout constraints, or report sections that justified it.
+
+ExperimentOS AI exists to make that evidence queryable:
+
+- Load experiment artifacts into a local database.
+- Index report chunks for semantic retrieval.
+- Answer questions against experiment-specific context.
+- Evaluate retrieval and QA quality against a fixed dataset.
+- Keep local workflows deterministic with fake embeddings and mock LLMs when needed.
+
+## Architecture Overview
+
+The current repository is organized around a small set of backend workflows:
+
+- `packages/ingestion/` parses synthetic experiment folders and stores reports, metrics, and chunks.
+- `packages/db/` defines SQLAlchemy models, async sessions, and Alembic metadata.
+- `packages/retrieval/` performs semantic search over pgvector-backed chunk embeddings.
+- `packages/qa/` turns retrieved chunks into grounded answers with citations.
+- `apps/api/` exposes `GET /health` and `POST /ask`.
+- `packages/evals/` runs the offline QA evaluation harness over `data/eval/qa_dataset.json`.
+
+### Architecture Diagram
+
+```mermaid
+flowchart LR
+    A[data/synthetic/experiments/*] --> B[Ingestion CLI]
+    A1[metadata.json] --> B
+    A2[metrics.csv] --> B
+    A3[report.md] --> B
+    A4[events.csv<br/>generated, not ingested yet] -.-> B
+
+    B --> C[(Postgres 16 + pgvector)]
+    B --> D[Embedding provider]
+
+    C --> E[Retrieval service]
+    D --> E
+    E --> F[Question answering service]
+    F --> G[LLM provider]
+
+    H[FastAPI app] --> I[GET /health]
+    H --> J[POST /ask]
+    J --> F
+
+    E --> K[Retrieval CLI]
+    L[data/eval/qa_dataset.json] --> M[Offline evaluator]
+    F --> M
+    M --> N[reports/evaluation.md]
+```
+
+See [Architecture](docs/architecture.md) for component boundaries and data flow details.
+
+## Features
+
+| Area | Status | Notes |
+| --- | --- | --- |
+| FastAPI API | Available | `GET /health` and `POST /ask` are implemented. |
+| Experiment ingestion | Available | Loads `metadata.json`, `metrics.csv`, and `report.md`. |
+| pgvector retrieval | Available | Semantic search via CLI and shared service layer. |
+| Grounded QA | Available | Answers include citations, retrieved chunks, and runtime metrics. |
+| Offline evaluation | Available | Runs QA against a fixed dataset and produces a Markdown report. |
+| Deterministic local runs | Available | Fake embeddings and mock LLMs support offline workflows. |
+| Synthetic dataset | Available | Ten synthetic experiments plus a QA evaluation dataset. |
+| Event ingestion | Planned | `events.csv` is generated today but not ingested yet. |
+| Agent workflows | Planned | Package boundaries exist for future orchestration work. |
+
+## Repository Structure
+
+```text
+apps/
+  api/                      FastAPI application entry point and dependency wiring
+data/
+  eval/                     Offline QA evaluation dataset
+  synthetic/experiments/    Generated synthetic experiment corpus
+docs/
+  architecture.md           System architecture and boundaries
+  api.md                    API contract documentation
+  dataset.md                Synthetic dataset reference
+  development.md            Local development and workflow guide
+  assets/screenshots/       Placeholder screenshot assets
+migrations/                 Alembic migration scripts
+packages/
+  agents/                   Future agent package boundary
+  config/                   Environment loading
+  db/                       SQLAlchemy models and async session helpers
+  evals/                    Offline evaluation harness and report generation
+  experiments/              Future experiment domain package boundary
+  ingestion/                Experiment loading, chunking, and embeddings
+  llm/                      LLM client abstractions and providers
+  qa/                       Grounded question answering service
+  retrieval/                Semantic retrieval CLI and service
+reports/                    Generated local evaluation reports
+scripts/                    Utility scripts including synthetic data generation
+tests/                      Unit, API, migration, and integration tests
+```
+
+## Quick Start
+
+Prerequisites:
+
+- Python `3.12`
+- `uv`
+- Docker with Compose support
+
+From the repository root:
+
+```powershell
 uv sync
-copy .env.example .env
+Copy-Item .env.example .env
 docker compose up -d postgres
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run alembic upgrade head
+uv run python scripts/generate_synthetic_experiments.py
+uv run python -m packages.ingestion.load_experiment --experiment-dir data/synthetic/experiments/exp-001-payment-recommendation --embedding-provider fake
 uv run uvicorn apps.api.main:app --reload
 ```
 
-## Local Database
+In another PowerShell session:
 
-The local database runs Postgres with pgvector through Docker Compose.
-
-```bash
-docker compose up -d postgres
-docker compose ps
+```powershell
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/health"
 ```
 
-The database URL in `.env.example` matches the Compose credentials:
-`postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos`.
+## API Example
 
-Run Alembic migrations after Postgres is healthy:
+`/ask` requires the database UUID of an ingested experiment, not the synthetic folder ID. After ingesting data, list experiment IDs with:
 
-```bash
+```powershell
+docker compose exec postgres psql -U experimentos -d experimentos -c "select id, name, config->>'experiment_id' as synthetic_experiment_id from experiments order by name;"
+```
+
+Then call the API:
+
+```powershell
+$body = @{
+    question = "Why was the adaptive payment method recommendation approved for rollout?"
+    experiment_id = "00000000-0000-0000-0000-000000000000"
+    top_k = 3
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+    -Method Post `
+    -Uri "http://127.0.0.1:8000/ask" `
+    -ContentType "application/json" `
+    -Body $body
+```
+
+The response returns:
+
+- `answer`
+- `citations`
+- `retrieved_chunks`
+- `retrieval_metrics`
+- `llm_metrics`
+
+Full request and response documentation lives in [API Reference](docs/api.md).
+
+## Evaluation Example
+
+Run the offline evaluation harness with deterministic local providers:
+
+```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run alembic upgrade head
+uv run python -m packages.evals.run --embedding-provider fake --llm-provider mock --output reports/evaluation.md
+Get-Content reports/evaluation.md
 ```
 
-The initial migration enables the `vector` extension and creates tables for documents,
-document chunks, experiments, and experiment metrics.
+See [Dataset Guide](docs/dataset.md) and [Development Guide](docs/development.md) for dataset setup and workflow details.
 
-## Project Layout
+## Development Workflow
 
-```text
-apps/api/              FastAPI application
-packages/db/           SQLAlchemy models and Alembic metadata
-packages/ingestion/   ingestion package boundary
-packages/retrieval/   retrieval package boundary
-packages/experiments/ experiment domain package boundary
-packages/agents/      future agent package boundary
-packages/evals/       evaluation package boundary
-data/raw/             raw input data
-data/processed/       processed data artifacts
-data/synthetic/       synthetic fixtures
-tests/                automated tests
-```
+Core commands:
 
-Health check: `GET http://127.0.0.1:8000/health`
-
-## Test
-
-```bash
+```powershell
+uv sync
 uv run ruff check .
 uv run pytest
 ```
+
+Database-backed path:
+
+```powershell
+docker compose up -d postgres
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run alembic upgrade head
+uv run pytest tests/test_db_models.py tests/test_ingestion_load_experiment.py tests/test_retrieval_service.py
+```
+
+Focused guides:
+
+- [Development](docs/development.md)
+- [Architecture](docs/architecture.md)
+- [API Reference](docs/api.md)
+- [Dataset Guide](docs/dataset.md)
+
+## Screenshots
+
+Current repository assets are placeholders rather than captured UI screenshots:
+
+![Health Endpoint Placeholder](docs/assets/screenshots/api-health-placeholder.svg)
+![Ask Endpoint Placeholder](docs/assets/screenshots/ask-endpoint-placeholder.svg)
+![Evaluation Report Placeholder](docs/assets/screenshots/evaluation-report-placeholder.svg)
+![Retrieval CLI Placeholder](docs/assets/screenshots/retrieval-cli-placeholder.svg)
+
+## Roadmap
+
+| Milestone | Direction |
+| --- | --- |
+| Retrieval quality | Improve ranking, filtering, and metadata-aware search. |
+| Dataset depth | Expand evaluation coverage and retrieval regression checks. |
+| API hardening | Add production-focused configuration, observability, and error handling. |
+| Event support | Ingest `events.csv` into the experiment knowledge model. |
+| Analysis workflows | Build agent- and evaluation-oriented orchestration on top of current packages. |
+
+## Future Work
+
+- Add real screenshots once the API flows and generated reports stabilize.
+- Publish deployment guidance for containerized or hosted environments.
+- Add richer experiment entities for variants, segments, and event-level evidence.
+- Expose retrieval and QA flows through a user-facing frontend.
+- Expand evaluation scoring beyond retrieval success and citation coverage.
+
+## License
+
+This project is licensed under the terms of the [LICENSE](LICENSE).

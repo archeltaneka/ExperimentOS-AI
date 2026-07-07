@@ -140,9 +140,15 @@ def test_build_embedding_provider_accepts_ollama(monkeypatch) -> None:
     import packages.ingestion.embeddings as embeddings_module
 
     class StubProvider:
-        def __init__(self, *, model: str = OLLAMA_EMBEDDING_MODEL) -> None:
+        def __init__(
+            self,
+            *,
+            model: str = OLLAMA_EMBEDDING_MODEL,
+            base_url: str | None = None,
+        ) -> None:
             self.dimension = EMBEDDING_DIMENSION
             self.model = model
+            self.base_url = base_url
 
     monkeypatch.setattr(embeddings_module, "OllamaEmbeddingProvider", StubProvider)
 

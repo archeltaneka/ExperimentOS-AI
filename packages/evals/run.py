@@ -8,6 +8,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from packages.config.env import resolve_setting
 from packages.db.models import Experiment
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.evals.dataset import DEFAULT_DATASET_PATH, EvaluationQuestion, load_evaluation_dataset
@@ -52,24 +53,24 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--embedding-provider",
         choices=("auto", "fake", "openai", "gemini", "huggingface", "ollama"),
-        default="auto",
+        default=None,
         help="Embedding provider to use for retrieval.",
     )
     parser.add_argument(
         "--embedding-model",
-        default=GEMINI_EMBEDDING_MODEL,
+        default=None,
         help="Embedding model name. Used by --embedding-provider=gemini or ollama.",
     )
     parser.add_argument(
         "--llm-provider",
         choices=("mock", "openai", "gemini", "ollama"),
-        default="mock",
+        default=None,
         help="LLM provider to use for answer generation.",
     )
     parser.add_argument(
         "--llm-model",
-        default=GEMINI_LLM_MODEL,
-        help="LLM model name. Defaults to gemini-3.5-flash.",
+        default=None,
+        help="LLM model name. If omitted, the selected provider resolves its default from .env.",
     )
     parser.add_argument(
         "--input-cost-per-1k-tokens",
@@ -86,7 +87,70 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def resolve_runtime_options(args: argparse.Namespace) -> argparse.Namespace:
+    args.embedding_provider = resolve_setting(
+        args.embedding_provider,
+        env_var="EMBEDDING_PROVIDER",
+        default="auto",
+        lowercase=True,
+    )
+    if args.embedding_provider == "gemini":
+        args.embedding_model = resolve_setting(
+            args.embedding_model,
+            env_var="GEMINI_EMBEDDING_MODEL",
+            default=GEMINI_EMBEDDING_MODEL,
+        )
+    elif args.embedding_provider == "ollama":
+        args.embedding_model = resolve_setting(
+            args.embedding_model,
+            env_var="OLLAMA_EMBEDDING_MODEL",
+            default="nomic-embed-text",
+        )
+    elif args.embedding_provider == "openai":
+        args.embedding_model = OPENAI_EMBEDDING_MODEL
+    elif args.embedding_provider == "huggingface":
+        args.embedding_model = BGE_SMALL_EN_MODEL
+    elif args.embedding_provider == "fake":
+        args.embedding_model = "fake"
+    else:
+        args.embedding_model = "auto"
+
+    args.llm_provider = resolve_setting(
+        args.llm_provider,
+        env_var="LLM_PROVIDER",
+        default="mock",
+        lowercase=True,
+    )
+    if args.llm_provider == "gemini":
+        args.llm_model = resolve_setting(
+            args.llm_model,
+            env_var="GEMINI_MODEL",
+            default=GEMINI_LLM_MODEL,
+        )
+    elif args.llm_provider == "ollama":
+        args.llm_model = resolve_setting(
+            args.llm_model,
+            env_var="OLLAMA_MODEL",
+            default=OLLAMA_LLM_MODEL,
+        )
+    elif args.llm_provider == "openai":
+        args.llm_model = resolve_setting(
+            args.llm_model,
+            env_var="OPENAI_MODEL",
+            default="gpt-4.1-mini",
+        )
+    elif args.llm_provider == "mock":
+        if isinstance(args.llm_model, str) and args.llm_model.strip():
+            args.llm_model = args.llm_model.strip()
+        else:
+            args.llm_model = "mock"
+    else:
+        args.llm_model = args.llm_model or GEMINI_LLM_MODEL
+    return args
+
+
 async def run_evaluation(args: argparse.Namespace) -> str:
+    args = resolve_runtime_options(args)
     questions = load_evaluation_dataset(args.dataset)
     engine = create_database_engine()
     session_factory = create_async_session_factory(engine)
@@ -189,7 +253,7 @@ async def _experiment_exists(session: AsyncSession, experiment_id: str) -> bool:
 
 
 def main() -> None:
-    args = parse_args()
+    args = resolve_runtime_options(parse_args())
     report = run_async(run_evaluation(args))
     print(f"Wrote evaluation report to {args.output}")
     print(report.splitlines()[0])

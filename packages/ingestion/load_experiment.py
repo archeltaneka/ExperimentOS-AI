@@ -15,7 +15,7 @@ from pydantic import BaseModel, ValidationError
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from packages.config.env import load_environment
+from packages.config.env import load_environment, resolve_setting
 from packages.db.models import Document, DocumentChunk, Experiment, ExperimentMetric
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.ingestion.chunking import chunk_markdown_report
@@ -347,12 +347,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--embedding-provider",
         choices=("auto", "fake", "openai", "gemini", "huggingface", "ollama"),
-        default="auto",
+        default=None,
         help=(
-            "Embedding provider to use. 'auto' uses Gemini when GEMINI_API_KEY is set, "
-            "OpenAI when OPENAI_API_KEY is set, otherwise deterministic fake embeddings. "
-            "'gemini' uses gemini-embedding-001 by default. 'huggingface' uses "
-            "BAAI/bge-small-en-v1.5. 'ollama' uses nomic-embed-text."
+            "Embedding provider to use. If omitted, EMBEDDING_PROVIDER from .env is used, "
+            "falling back to 'auto'. Explicit CLI flags override .env."
         ),
     )
     parser.add_argument(
@@ -361,6 +359,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Store chunks with NULL embeddings.",
     )
     return parser.parse_args(argv)
+
+
+def resolve_runtime_options(args: argparse.Namespace) -> argparse.Namespace:
+    args.embedding_provider = resolve_setting(
+        args.embedding_provider,
+        env_var="EMBEDDING_PROVIDER",
+        default="auto",
+        lowercase=True,
+    )
+    return args
 
 
 def run_async(coro: Any) -> Any:
@@ -375,7 +383,7 @@ def run_async(coro: Any) -> Any:
 def main() -> None:
     load_environment()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    args = parse_args()
+    args = resolve_runtime_options(parse_args())
     try:
         run_async(
             _run_cli(

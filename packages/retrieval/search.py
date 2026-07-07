@@ -5,6 +5,7 @@ import json
 import uuid
 from typing import Any
 
+from packages.config.env import resolve_setting
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.ingestion.embeddings import build_embedding_provider
 from packages.ingestion.load_experiment import run_async
@@ -106,19 +107,27 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--embedding-provider",
         choices=("auto", "fake", "openai", "gemini", "huggingface", "ollama"),
-        default="auto",
+        default=None,
         help=(
-            "Embedding provider to use. 'auto' uses Gemini when GEMINI_API_KEY is set, "
-            "OpenAI when OPENAI_API_KEY is set, otherwise deterministic fake embeddings. "
-            "'gemini' uses gemini-embedding-001 by default. 'huggingface' uses "
-            "BAAI/bge-small-en-v1.5. 'ollama' uses nomic-embed-text."
+            "Embedding provider to use. If omitted, EMBEDDING_PROVIDER from .env is used, "
+            "falling back to 'auto'. Explicit CLI flags override .env."
         ),
     )
     return parser.parse_args(argv)
 
 
+def resolve_runtime_options(args: argparse.Namespace) -> argparse.Namespace:
+    args.embedding_provider = resolve_setting(
+        args.embedding_provider,
+        env_var="EMBEDDING_PROVIDER",
+        default="auto",
+        lowercase=True,
+    )
+    return args
+
+
 def main() -> None:
-    args = parse_args()
+    args = resolve_runtime_options(parse_args())
     try:
         metadata_filter = parse_metadata_filter(args.metadata)
         results, metrics = run_async(

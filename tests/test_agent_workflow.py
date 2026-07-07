@@ -7,7 +7,11 @@ from packages.agents.workflow import build_agent_workflow
 
 
 class StubGraphRetrievalAgent:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
     def run(self, state):
+        self.calls.append(state)
         return {
             "retrieved_chunks": [
                 {
@@ -87,19 +91,33 @@ def test_agent_workflow_service_rejects_blank_question() -> None:
 
 
 def test_build_agent_workflow_accepts_injected_retrieval_agent() -> None:
-    graph = build_agent_workflow(retrieval_agent=StubGraphRetrievalAgent())
+    retrieval_agent = StubGraphRetrievalAgent()
+    graph = build_agent_workflow(retrieval_agent=retrieval_agent)
 
     result = graph.invoke({"question": "What happened in the payment recommendation experiment?"})
 
     assert result["retrieved_chunks"][0]["content"] == "Chunk from retrieval."
     assert [entry["node"] for entry in result["trace"]] == ["planner", "retrieval", "retrieval"]
     assert [entry["event"] for entry in result["trace"]] == ["planned", "started", "completed"]
+    assert retrieval_agent.calls[0]["intent"] == "experiment_lookup"
+    assert retrieval_agent.calls[0]["required_agents"] == ["retrieval"]
+    assert retrieval_agent.calls[0]["experiment_context"] == {
+        "experiment_ids": [],
+        "filters": {"experiment_hints": ["payment recommendation"]},
+    }
 
 
 def test_agent_workflow_service_accepts_injected_retrieval_agent() -> None:
-    service = AgentWorkflowService(retrieval_agent=StubGraphRetrievalAgent())
+    retrieval_agent = StubGraphRetrievalAgent()
+    service = AgentWorkflowService(retrieval_agent=retrieval_agent)
 
     result = service.run("What happened in the payment recommendation experiment?")
 
     assert result["citations"][0]["quote"] == "Chunk from retrieval."
     assert result["metrics"]["retrieval"]["retrieved_chunks"] == 1
+    assert retrieval_agent.calls[0]["intent"] == "experiment_lookup"
+    assert retrieval_agent.calls[0]["required_agents"] == ["retrieval"]
+    assert retrieval_agent.calls[0]["experiment_context"] == {
+        "experiment_ids": [],
+        "filters": {"experiment_hints": ["payment recommendation"]},
+    }

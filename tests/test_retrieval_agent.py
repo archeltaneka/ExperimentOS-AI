@@ -94,7 +94,11 @@ def test_retrieval_agent_maps_results_citations_metrics_and_trace() -> None:
     assert update["citations"][0]["document_id"] == client.results[0].document_id
     assert update["citations"][0]["experiment_id"] == client.results[0].experiment_id
     assert update["citations"][0]["section"] == "Results"
+    assert update["metrics"]["retrieval"]["embedding_time_ms"] == 4.0
+    assert update["metrics"]["retrieval"]["vector_search_time_ms"] == 8.0
     assert update["metrics"]["retrieval"]["retrieved_chunks"] == 1
+    assert update["metrics"]["retrieval"]["average_similarity"] == 0.93
+    assert [entry["node"] for entry in update["trace"]] == ["retrieval", "retrieval"]
     assert [entry["event"] for entry in update["trace"]] == ["started", "completed"]
     assert update["errors"] == []
 
@@ -128,4 +132,5 @@ def test_retrieval_agent_captures_structured_errors_without_raising() -> None:
     assert update["errors"][0]["code"] == "retrieval_failed"
     assert update["errors"][0]["node"] == "retrieval"
     assert "vector search failed" in update["errors"][0]["message"]
+    assert [entry["node"] for entry in update["trace"]] == ["retrieval", "retrieval"]
     assert [entry["event"] for entry in update["trace"]] == ["started", "failed"]

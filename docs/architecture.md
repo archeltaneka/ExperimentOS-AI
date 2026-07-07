@@ -156,6 +156,8 @@ This path is deterministic scaffolding for future agent orchestration. It runs b
 
 The workflow now uses a structured shared state contract with explicit sections for request metadata, experiment scope, evidence, analysis artifacts, approval status, tool execution records, metrics, errors, trace entries, and run metadata. The shared state exists so future Phase 2 agents can enrich one consistent machine-readable workflow object instead of passing ad hoc intermediate payloads between services.
 
+The planner node is now a deterministic rule-based Planner Agent. It classifies requests into `general_question`, `experiment_lookup`, `decision_support`, `risk_assessment`, `business_impact`, `executive_summary`, or `unknown`, records planner notes plus trace metadata, and selects the downstream agent set that later Phase 2 issues will implement. The graph shape remains `START -> planner -> END` for now.
+
 ### Evaluation Layer
 
 `packages/evals/` turns the QA path into a repeatable offline measurement workflow.

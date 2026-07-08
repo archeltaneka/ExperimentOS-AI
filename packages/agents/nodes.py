@@ -1,13 +1,21 @@
 from __future__ import annotations
 
+from typing import Protocol
+
 from packages.agents.planner import plan_question
 from packages.agents.state import (
     AgentInputState,
     AgentState,
     AgentStateUpdate,
+    RequiredAgent,
     create_initial_state,
     create_trace_entry,
 )
+
+
+class RetrievalAgentLike(Protocol):
+    def run(self, state: AgentState) -> AgentStateUpdate:
+        pass
 
 
 def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
@@ -36,3 +44,31 @@ def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
         "metrics": plan.metrics,
         "trace": [trace_entry],
     }
+
+
+def retrieval_node(
+    state: AgentState,
+    *,
+    retrieval_agent: RetrievalAgentLike,
+) -> AgentStateUpdate:
+    required_agents: list[RequiredAgent] = state["required_agents"]
+    if "retrieval" not in required_agents:
+        return {
+            "trace": [
+                create_trace_entry(
+                    node="retrieval",
+                    event="skipped",
+                    details={"reason": "not_required"},
+                )
+            ],
+        }
+    update = retrieval_agent.run(state)
+    if "metrics" in update:
+        update = {
+            **update,
+            "metrics": {
+                **state["metrics"],
+                **update["metrics"],
+            },
+        }
+    return update

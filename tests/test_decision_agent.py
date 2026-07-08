@@ -144,6 +144,36 @@ def test_decision_agent_recommends_rollout_for_positive_low_risk_evidence() -> N
     assert [entry["event"] for entry in update["trace"]] == ["started", "completed"]
 
 
+def test_decision_agent_records_evidence_validation_and_confidence_tool_calls() -> None:
+    from packages.agents.decision_agent import DecisionAgent
+
+    state = build_decision_state()
+
+    update = DecisionAgent().run(state)
+
+    assert [call["tool_name"] for call in update["tool_calls"]] == [
+        "validate_required_evidence",
+        "score_decision_confidence",
+    ]
+    assert update["decision"]["confidence"] == "high"
+
+
+def test_decision_agent_uses_evidence_validation_to_block_incomplete_state() -> None:
+    from packages.agents.decision_agent import DecisionAgent
+
+    state = build_decision_state()
+    state["experiment_analysis"]["statistical_significance"] = {}
+    state["citations"] = []
+
+    update = DecisionAgent().run(state)
+
+    assert update["decision"]["decision_status"] in {"needs_more_data", "insufficient_data"}
+    assert update["tool_calls"][0]["tool_name"] == "validate_required_evidence"
+    assert "citations" in update["decision"]["blocking_issues"][0] or update["decision"][
+        "blocking_issues"
+    ]
+
+
 def test_decision_agent_requests_more_data_when_evidence_is_incomplete() -> None:
     from packages.agents.decision_agent import DecisionAgent
 

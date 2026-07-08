@@ -158,6 +158,18 @@ def test_risk_assessment_agent_returns_low_risk_for_strong_positive_evidence() -
     assert update["metrics"]["risk_assessment"]["status"] == "assessed"
 
 
+def test_risk_assessment_agent_records_risk_scoring_tool_call() -> None:
+    from packages.agents.risk_assessment_agent import RiskAssessmentAgent
+
+    state = build_risk_assessment_state()
+
+    update = RiskAssessmentAgent().run(state)
+
+    assert update["tool_calls"][0]["tool_name"] == "score_experiment_risk"
+    assert update["tool_calls"][0]["status"] == "completed"
+    assert update["risk_assessment"]["risk_score"] == 0
+
+
 def test_risk_assessment_agent_flags_missing_statistical_support() -> None:
     from packages.agents.risk_assessment_agent import RiskAssessmentAgent
 

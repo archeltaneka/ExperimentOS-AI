@@ -14,6 +14,7 @@ from packages.agents.state import (
     create_error_entry,
     create_trace_entry,
 )
+from packages.agents.tools import execute_tool
 
 DECISION_NODE = "decision"
 _NEGATIVE_GUARDRAIL_TERMS = (
@@ -54,7 +55,7 @@ class DecisionAgent:
         started_at = perf_counter()
         trace = [create_trace_entry(node=DECISION_NODE, event="started")]
         try:
-            decision = _build_decision(state)
+            decision, tool_calls = _build_decision(state)
         except Exception as exc:
             return {
                 "errors": [
@@ -83,10 +84,12 @@ class DecisionAgent:
                         "blocking_issue_count": 0,
                     },
                 },
+                "tool_calls": [],
             }
 
         return {
             "decision": decision,
+            "tool_calls": tool_calls,
             "errors": [],
             "trace": [
                 *trace,
@@ -115,12 +118,13 @@ class DecisionAgent:
         }
 
 
-def _build_decision(state: AgentState) -> DecisionRecord:
+def _build_decision(state: AgentState) -> tuple[DecisionRecord, list[dict[str, object]]]:
     analysis = state["experiment_analysis"]
     business_impact = state["business_impact"]
     risk_assessment = state["risk_assessment"]
     citations = _decision_citations(state)
     supporting_evidence = _supporting_evidence(state)
+    tool_calls: list[dict[str, object]] = []
     assumptions = _unique(
         [
             *business_impact["assumptions"],
@@ -142,85 +146,120 @@ def _build_decision(state: AgentState) -> DecisionRecord:
             for error in state["errors"]
             if error.get("code") and error.get("message")
         ]
-        return _build_result(
-            state=state,
-            decision_status="blocked",
-            recommendation="needs_more_data",
-            confidence="low",
-            rationale=(
-                "Decision synthesis was blocked because upstream workflow errors were "
-                "recorded in shared state."
+        return (
+            _build_result(
+                state=state,
+                decision_status="blocked",
+                recommendation="needs_more_data",
+                confidence="low",
+                rationale=(
+                    "Decision synthesis was blocked because upstream workflow errors were "
+                    "recorded in shared state."
+                ),
+                supporting_evidence=supporting_evidence,
+                blocking_issues=blocking_issues,
+                recommended_next_actions=[
+                    "Resolve upstream agent errors before making a rollout decision.",
+                    "Re-run the workflow after the blocking failures are fixed.",
+                ],
+                approval_required=False,
+                evidence_citations=citations,
+                assumptions=assumptions,
+                limitations=limitations,
             ),
-            supporting_evidence=supporting_evidence,
-            blocking_issues=blocking_issues,
-            recommended_next_actions=[
-                "Resolve upstream agent errors before making a rollout decision.",
-                "Re-run the workflow after the blocking failures are fixed.",
-            ],
-            approval_required=False,
-            evidence_citations=citations,
-            assumptions=assumptions,
-            limitations=limitations,
+            tool_calls,
         )
 
+    validation_execution = execute_tool(
+        "validate_required_evidence",
+        {
+            "has_experiment_analysis": analysis["status"] == "completed",
+            "has_business_impact": business_impact["impact_status"]
+            not in {"not_required", "insufficient_data"},
+            "has_risk_assessment": risk_assessment["risk_status"]
+            not in {"not_required", "insufficient_data"},
+            "has_statistical_significance": bool(analysis["statistical_significance"]),
+            "citation_count": len(citations),
+        },
+        node=DECISION_NODE,
+    )
+    tool_calls.append(validation_execution.record)
+    validation_output = validation_execution.output
+
     if _insufficient_data(analysis=analysis, business_impact=business_impact, citations=citations):
-        return _build_result(
-            state=state,
-            decision_status="insufficient_data",
-            recommendation="needs_more_data",
-            confidence="unknown",
-            rationale=(
-                "Shared state does not contain enough grounded analysis, business impact, "
-                "or evidence to support a rollout recommendation."
+        return (
+            _build_result(
+                state=state,
+                decision_status="insufficient_data",
+                recommendation="needs_more_data",
+                confidence="unknown",
+                rationale=(
+                    "Shared state does not contain enough grounded analysis, business impact, "
+                    "or evidence to support a rollout recommendation."
+                ),
+                supporting_evidence=supporting_evidence,
+                blocking_issues=[
+                    "Experiment analysis is insufficient or missing.",
+                    "Grounded evidence citations are missing or incomplete.",
+                ],
+                recommended_next_actions=[
+                    "Resolve the target experiment and retrieval evidence.",
+                    "Re-run analysis, business impact, and risk assessment with complete inputs.",
+                ],
+                approval_required=False,
+                evidence_citations=citations,
+                assumptions=assumptions,
+                limitations=limitations,
             ),
-            supporting_evidence=supporting_evidence,
-            blocking_issues=[
-                "Experiment analysis is insufficient or missing.",
-                "Grounded evidence citations are missing or incomplete.",
-            ],
-            recommended_next_actions=[
-                "Resolve the target experiment and retrieval evidence.",
-                "Re-run analysis, business impact, and risk assessment with complete inputs.",
-            ],
-            approval_required=False,
-            evidence_citations=citations,
-            assumptions=assumptions,
-            limitations=limitations,
+            tool_calls,
         )
 
     harmful_guardrails = _harmful_guardrail_issues(state)
     if harmful_guardrails:
-        return _build_result(
-            state=state,
-            decision_status="decided",
-            recommendation="rollback",
-            confidence=_decision_confidence(
-                analysis_confidence=analysis["analysis_confidence"],
-                business_confidence=business_impact["confidence_level"],
-                risk_confidence=risk_assessment["confidence_level"],
-                overall_risk_level=risk_assessment["overall_risk_level"],
-                has_statistical_support=bool(analysis["statistical_significance"]),
-                has_citations=bool(citations),
+        confidence_execution = execute_tool(
+            "score_decision_confidence",
+            {
+                "analysis_confidence": analysis["analysis_confidence"],
+                "business_confidence": business_impact["confidence_level"],
+                "risk_confidence": risk_assessment["confidence_level"],
+                "overall_risk_level": risk_assessment["overall_risk_level"],
+                "has_statistical_support": bool(analysis["statistical_significance"]),
+                "has_citations": bool(citations),
+            },
+            node=DECISION_NODE,
+        )
+        tool_calls.append(confidence_execution.record)
+        return (
+            _build_result(
+                state=state,
+                decision_status="decided",
+                recommendation="rollback",
+                confidence=(
+                    confidence_execution.output.confidence
+                    if confidence_execution.output is not None
+                    else "low"
+                ),
+                rationale=(
+                    "Evidence indicates harmful guardrail deterioration, so rollback is safer "
+                    "than expanding or sustaining the rollout."
+                ),
+                supporting_evidence=supporting_evidence,
+                blocking_issues=harmful_guardrails,
+                recommended_next_actions=_unique(
+                    [
+                        (
+                            "Rollback or keep the feature disabled until the harmful "
+                            "guardrail change is understood."
+                        ),
+                        *risk_assessment["mitigation_actions"],
+                    ]
+                ),
+                approval_required=True,
+                evidence_citations=citations,
+                assumptions=assumptions,
+                limitations=limitations,
             ),
-            rationale=(
-                "Evidence indicates harmful guardrail deterioration, so rollback is safer "
-                "than expanding or sustaining the rollout."
-            ),
-            supporting_evidence=supporting_evidence,
-            blocking_issues=harmful_guardrails,
-            recommended_next_actions=_unique(
-                [
-                    (
-                        "Rollback or keep the feature disabled until the harmful "
-                        "guardrail change is understood."
-                    ),
-                    *risk_assessment["mitigation_actions"],
-                ]
-            ),
-            approval_required=True,
-            evidence_citations=citations,
-            assumptions=assumptions,
-            limitations=limitations,
+            tool_calls,
         )
 
     positive_lift = _lift_direction(analysis, business_impact) == "positive"
@@ -230,36 +269,88 @@ def _build_decision(state: AgentState) -> DecisionRecord:
     overall_risk_level = risk_assessment["overall_risk_level"]
     statistical_significance = analysis["statistical_significance"]
 
+    def score_confidence() -> DecisionConfidence:
+        confidence_execution = execute_tool(
+            "score_decision_confidence",
+            {
+                "analysis_confidence": analysis["analysis_confidence"],
+                "business_confidence": business_impact["confidence_level"],
+                "risk_confidence": risk_assessment["confidence_level"],
+                "overall_risk_level": overall_risk_level,
+                "has_statistical_support": bool(statistical_significance),
+                "has_citations": bool(citations),
+            },
+            node=DECISION_NODE,
+        )
+        tool_calls.append(confidence_execution.record)
+        return (
+            confidence_execution.output.confidence
+            if confidence_execution.output is not None
+            else "low"
+        )
+
     if negative_lift or primary_metric_worsened:
-        return _build_result(
-            state=state,
-            decision_status="decided",
-            recommendation="do_not_rollout",
-            confidence=_decision_confidence(
-                analysis_confidence=analysis["analysis_confidence"],
-                business_confidence=business_impact["confidence_level"],
-                risk_confidence=risk_assessment["confidence_level"],
-                overall_risk_level=overall_risk_level,
-                has_statistical_support=bool(statistical_significance),
-                has_citations=bool(citations),
+        return (
+            _build_result(
+                state=state,
+                decision_status="decided",
+                recommendation="do_not_rollout",
+                confidence=score_confidence(),
+                rationale=(
+                    "The primary metric moved in the wrong direction, so the evidence does not "
+                    "support rollout."
+                ),
+                supporting_evidence=supporting_evidence,
+                blocking_issues=_decision_gaps(state),
+                recommended_next_actions=_unique(
+                    [
+                        "Do not roll out the treatment beyond the current exposure.",
+                        "Investigate the negative metric movement before running a follow-up test.",
+                        *risk_assessment["mitigation_actions"],
+                    ]
+                ),
+                approval_required=True,
+                evidence_citations=citations,
+                assumptions=assumptions,
+                limitations=limitations,
             ),
-            rationale=(
-                "The primary metric moved in the wrong direction, so the evidence does not "
-                "support rollout."
+            tool_calls,
+        )
+
+    if validation_output is not None and not validation_output.is_valid:
+        return (
+            _build_result(
+                state=state,
+                decision_status="needs_more_data",
+                recommendation=(
+                    "continue_experiment"
+                    if positive_lift and business_positive
+                    else "needs_more_data"
+                ),
+                confidence="low",
+                rationale=(
+                    "Evidence is directionally positive but still incomplete, so the experiment "
+                    "should continue before a rollout call is made."
+                    if positive_lift and business_positive
+                    else (
+                        "Evidence is incomplete or uncertain, so a rollout recommendation "
+                        "is not supported."
+                    )
+                ),
+                supporting_evidence=supporting_evidence,
+                blocking_issues=_unique(
+                    [
+                        *validation_output.missing_requirements,
+                        *_decision_gaps(state),
+                    ]
+                ),
+                recommended_next_actions=_needs_more_data_actions(state),
+                approval_required=False,
+                evidence_citations=citations,
+                assumptions=assumptions,
+                limitations=limitations,
             ),
-            supporting_evidence=supporting_evidence,
-            blocking_issues=_decision_gaps(state),
-            recommended_next_actions=_unique(
-                [
-                    "Do not roll out the treatment beyond the current exposure.",
-                    "Investigate the negative metric movement before running a follow-up test.",
-                    *risk_assessment["mitigation_actions"],
-                ]
-            ),
-            approval_required=True,
-            evidence_citations=citations,
-            assumptions=assumptions,
-            limitations=limitations,
+            tool_calls,
         )
 
     if _needs_more_data(state, positive_lift=positive_lift, business_positive=business_positive):
@@ -275,12 +366,61 @@ def _build_decision(state: AgentState) -> DecisionRecord:
                 "is not supported."
             )
         )
-        return _build_result(
+        return (
+            _build_result(
+                state=state,
+                decision_status="needs_more_data",
+                recommendation=recommendation,
+                confidence="low",
+                rationale=rationale,
+                supporting_evidence=supporting_evidence,
+                blocking_issues=_decision_gaps(state),
+                recommended_next_actions=_needs_more_data_actions(state),
+                approval_required=False,
+                evidence_citations=citations,
+                assumptions=assumptions,
+                limitations=limitations,
+            ),
+            tool_calls,
+        )
+
+    if positive_lift and business_positive and overall_risk_level in {"low", "medium"}:
+        return (
+            _build_result(
+                state=state,
+                decision_status="decided",
+                recommendation="rollout",
+                confidence=score_confidence(),
+                rationale=(
+                    "The primary metric improved, business impact is positive, and risk is "
+                    "within a manageable range for rollout."
+                ),
+                supporting_evidence=supporting_evidence,
+                blocking_issues=[],
+                recommended_next_actions=_unique(
+                    [
+                        (
+                            "Roll out gradually and monitor primary and guardrail "
+                            "metrics during the ramp."
+                        ),
+                        *risk_assessment["mitigation_actions"],
+                    ]
+                ),
+                approval_required=True,
+                evidence_citations=citations,
+                assumptions=assumptions,
+                limitations=limitations,
+            ),
+            tool_calls,
+        )
+
+    return (
+        _build_result(
             state=state,
             decision_status="needs_more_data",
-            recommendation=recommendation,
+            recommendation="needs_more_data",
             confidence="low",
-            rationale=rationale,
+            rationale="Available evidence does not support a confident rollout recommendation yet.",
             supporting_evidence=supporting_evidence,
             blocking_issues=_decision_gaps(state),
             recommended_next_actions=_needs_more_data_actions(state),
@@ -288,52 +428,8 @@ def _build_decision(state: AgentState) -> DecisionRecord:
             evidence_citations=citations,
             assumptions=assumptions,
             limitations=limitations,
-        )
-
-    if positive_lift and business_positive and overall_risk_level in {"low", "medium"}:
-        return _build_result(
-            state=state,
-            decision_status="decided",
-            recommendation="rollout",
-            confidence=_decision_confidence(
-                analysis_confidence=analysis["analysis_confidence"],
-                business_confidence=business_impact["confidence_level"],
-                risk_confidence=risk_assessment["confidence_level"],
-                overall_risk_level=overall_risk_level,
-                has_statistical_support=bool(statistical_significance),
-                has_citations=bool(citations),
-            ),
-            rationale=(
-                "The primary metric improved, business impact is positive, and risk is "
-                "within a manageable range for rollout."
-            ),
-            supporting_evidence=supporting_evidence,
-            blocking_issues=[],
-            recommended_next_actions=_unique(
-                [
-                    "Roll out gradually and monitor primary and guardrail metrics during the ramp.",
-                    *risk_assessment["mitigation_actions"],
-                ]
-            ),
-            approval_required=True,
-            evidence_citations=citations,
-            assumptions=assumptions,
-            limitations=limitations,
-        )
-
-    return _build_result(
-        state=state,
-        decision_status="needs_more_data",
-        recommendation="needs_more_data",
-        confidence="low",
-        rationale="Available evidence does not support a confident rollout recommendation yet.",
-        supporting_evidence=supporting_evidence,
-        blocking_issues=_decision_gaps(state),
-        recommended_next_actions=_needs_more_data_actions(state),
-        approval_required=False,
-        evidence_citations=citations,
-        assumptions=assumptions,
-        limitations=limitations,
+        ),
+        tool_calls,
     )
 
 
@@ -567,32 +663,6 @@ def _business_positive(business_impact: dict[str, object]) -> bool:
         except (TypeError, ValueError):
             return False
     return False
-
-
-def _decision_confidence(
-    *,
-    analysis_confidence: str,
-    business_confidence: str,
-    risk_confidence: str,
-    overall_risk_level: str,
-    has_statistical_support: bool,
-    has_citations: bool,
-) -> DecisionConfidence:
-    normalized = {
-        (analysis_confidence or "").strip().lower(),
-        (business_confidence or "").strip().lower(),
-        (risk_confidence or "").strip().lower(),
-    }
-    if (
-        normalized == {"high"}
-        and overall_risk_level == "low"
-        and has_statistical_support
-        and has_citations
-    ):
-        return "high"
-    if "low" in normalized or "unknown" in normalized or overall_risk_level == "high":
-        return "medium"
-    return "medium"
 
 
 def _metric_value(record: dict[str, object] | None, key: str) -> float | None:

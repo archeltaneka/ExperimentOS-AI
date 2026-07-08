@@ -30,6 +30,21 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
     assert state["experiment_analysis"] == {
         "summary": "",
         "findings": [],
+        "status": "not_applicable",
+        "experiment_id": "",
+        "experiment_name": "",
+        "hypothesis": "",
+        "primary_metric": "",
+        "control": {},
+        "treatment": {},
+        "treatment_control_comparison": {},
+        "observed_lift": {},
+        "statistical_significance": {},
+        "confidence_level": {},
+        "guardrail_metrics": [],
+        "limitations": [],
+        "evidence_citations": [],
+        "analysis_confidence": "low",
     }
     assert state["business_impact"] == {
         "summary": "",
@@ -53,10 +68,34 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
     assert state["metrics"] == {}
     assert state["errors"] == []
     assert state["trace"] == []
-    assert state["run_metadata"]["state_version"] == 3
+    assert state["run_metadata"]["state_version"] == 4
     assert state["run_metadata"]["workflow"] == "phase2_shared_state"
     assert state["timestamps"]["created_at"]
     assert state["timestamps"]["updated_at"]
+
+
+def test_create_initial_state_sets_structured_experiment_analysis_defaults() -> None:
+    state = create_initial_state("Analyze the payment recommendation experiment.")
+
+    assert state["experiment_analysis"] == {
+        "summary": "",
+        "findings": [],
+        "status": "not_applicable",
+        "experiment_id": "",
+        "experiment_name": "",
+        "hypothesis": "",
+        "primary_metric": "",
+        "control": {},
+        "treatment": {},
+        "treatment_control_comparison": {},
+        "observed_lift": {},
+        "statistical_significance": {},
+        "confidence_level": {},
+        "guardrail_metrics": [],
+        "limitations": [],
+        "evidence_citations": [],
+        "analysis_confidence": "low",
+    }
 
 
 def test_build_initial_state_remains_a_compatibility_alias() -> None:

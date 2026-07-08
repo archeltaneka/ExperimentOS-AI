@@ -13,6 +13,7 @@ from packages.agents.state import (
     create_error_entry,
     create_trace_entry,
 )
+from packages.agents.tools import execute_tool
 
 RISK_ASSESSMENT_NODE = "risk_assessment"
 _SEVERITY_POINTS = {"low": 1, "medium": 2, "high": 3}
@@ -64,7 +65,7 @@ class RiskAssessmentAgent:
         started_at = perf_counter()
         trace = [create_trace_entry(node=RISK_ASSESSMENT_NODE, event="started")]
         try:
-            risk_assessment, risks = _build_risk_assessment(state)
+            risk_assessment, risks, tool_calls = _build_risk_assessment(state)
         except Exception as exc:
             return {
                 "errors": [
@@ -92,11 +93,13 @@ class RiskAssessmentAgent:
                         "risk_factor_count": 0,
                     },
                 },
+                "tool_calls": [],
             }
 
         return {
             "risk_assessment": risk_assessment,
             "risks": risks,
+            "tool_calls": tool_calls,
             "errors": [],
             "trace": [
                 *trace,
@@ -123,13 +126,16 @@ class RiskAssessmentAgent:
         }
 
 
-def _build_risk_assessment(state: AgentState) -> tuple[RiskAssessment, list[RiskRecord]]:
+def _build_risk_assessment(
+    state: AgentState,
+) -> tuple[RiskAssessment, list[RiskRecord], list[dict[str, object]]]:
     analysis = state["experiment_analysis"]
     business_impact = state["business_impact"]
     citations = list(analysis["evidence_citations"]) or list(state["citations"])
     retrieved_chunks = state["retrieved_chunks"]
     experiment_ids = state["experiment_context"]["experiment_ids"]
     experiment_hints = _experiment_hints(state)
+    tool_calls: list[dict[str, object]] = []
 
     limitations = _unique(
         [
@@ -174,7 +180,7 @@ def _build_risk_assessment(state: AgentState) -> tuple[RiskAssessment, list[Risk
             limitations=limitations,
             confidence_level="low",
         )
-        return risk_assessment, []
+        return risk_assessment, [], tool_calls
 
     risk_factors: list[RiskFactor] = []
     guardrail_concerns: list[str] = []
@@ -385,12 +391,27 @@ def _build_risk_assessment(state: AgentState) -> tuple[RiskAssessment, list[Risk
             mitigation="Honor the documented rollout constraint during ramp planning.",
         )
 
-    risk_score = sum(_SEVERITY_POINTS[factor["severity"]] for factor in risk_factors)
+    risk_execution = execute_tool(
+        "score_experiment_risk",
+        {
+            "risk_factors": [
+                {"severity": str(factor["severity"])}
+                for factor in risk_factors
+            ]
+        },
+        node=RISK_ASSESSMENT_NODE,
+    )
+    tool_calls.append(risk_execution.record)
+    if risk_execution.output is None:
+        risk_score = sum(_SEVERITY_POINTS[factor["severity"]] for factor in risk_factors)
+        overall_risk_level = _overall_risk_level(risk_score)
+    else:
+        risk_score = risk_execution.output.risk_score
+        overall_risk_level = risk_execution.output.overall_risk_level
     risk_status = _risk_status(
         analysis_status=analysis["status"],
         impact_status=business_impact["impact_status"],
     )
-    overall_risk_level = _overall_risk_level(risk_score)
     confidence_level = _confidence_level(
         risk_status=risk_status,
         risk_score=risk_score,
@@ -417,7 +438,7 @@ def _build_risk_assessment(state: AgentState) -> tuple[RiskAssessment, list[Risk
         limitations=_unique(limitations),
         confidence_level=confidence_level,
     )
-    return risk_assessment, [_risk_record(factor) for factor in risk_factors]
+    return risk_assessment, [_risk_record(factor) for factor in risk_factors], tool_calls
 
 
 def _build_result(

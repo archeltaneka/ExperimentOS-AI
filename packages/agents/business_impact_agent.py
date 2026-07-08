@@ -14,6 +14,7 @@ from packages.agents.state import (
     create_error_entry,
     create_trace_entry,
 )
+from packages.agents.tools import execute_tool
 
 BUSINESS_IMPACT_NODE = "business_impact"
 _ANNUALIZED_TEXT_PATTERN = re.compile(
@@ -29,7 +30,7 @@ class BusinessImpactAgent:
         started_at = perf_counter()
         trace = [create_trace_entry(node=BUSINESS_IMPACT_NODE, event="started")]
         try:
-            business_impact = _build_business_impact(state)
+            business_impact, tool_calls = _build_business_impact(state)
         except Exception as exc:
             return {
                 "errors": [
@@ -57,10 +58,12 @@ class BusinessImpactAgent:
                         "has_annualized_impact": False,
                     },
                 },
+                "tool_calls": [],
             }
 
         return {
             "business_impact": business_impact,
+            "tool_calls": tool_calls,
             "errors": [],
             "trace": [
                 *trace,
@@ -84,7 +87,7 @@ class BusinessImpactAgent:
         }
 
 
-def _build_business_impact(state: AgentState) -> BusinessImpact:
+def _build_business_impact(state: AgentState) -> tuple[BusinessImpact, list[dict[str, object]]]:
     analysis = state["experiment_analysis"]
     citations = list(analysis["evidence_citations"]) or list(state["citations"])
     primary_metric = analysis["primary_metric"] or str(
@@ -106,15 +109,38 @@ def _build_business_impact(state: AgentState) -> BusinessImpact:
     absolute_lift: float | None = None
     relative_lift: float | None = None
     impact_status = "insufficient_data"
+    tool_calls: list[dict[str, object]] = []
 
     if baseline is not None and treatment is not None:
-        absolute_lift = round(treatment - baseline, 6)
-        assumptions.append("Absolute lift computed as treatment_value - baseline_value.")
-        if baseline != 0:
-            relative_lift = round(absolute_lift / baseline, 6)
-            assumptions.append("Relative lift computed as absolute_lift / baseline_value.")
-        else:
-            limitations.append("Baseline value was zero, so relative lift was not computed.")
+        absolute_execution = execute_tool(
+            "calculate_absolute_lift",
+            {
+                "baseline_value": baseline,
+                "treatment_value": treatment,
+            },
+            node=BUSINESS_IMPACT_NODE,
+        )
+        tool_calls.append(absolute_execution.record)
+        if absolute_execution.output is not None:
+            absolute_lift = absolute_execution.output.absolute_lift
+            assumptions.append("Absolute lift computed as treatment_value - baseline_value.")
+
+        relative_execution = execute_tool(
+            "calculate_relative_lift",
+            {
+                "baseline_value": baseline,
+                "absolute_lift": absolute_lift,
+                "treatment_value": treatment,
+            },
+            node=BUSINESS_IMPACT_NODE,
+        )
+        tool_calls.append(relative_execution.record)
+        if relative_execution.output is not None:
+            relative_lift = relative_execution.output.relative_lift
+            if relative_execution.output.status == "computed":
+                assumptions.append("Relative lift computed as absolute_lift / baseline_value.")
+            if relative_execution.output.status == "undefined_zero_baseline":
+                limitations.append("Baseline value was zero, so relative lift was not computed.")
         impact_status = "estimated"
     else:
         relative_lift = _metric_value(analysis.get("observed_lift"), "relative_lift")
@@ -178,22 +204,25 @@ def _build_business_impact(state: AgentState) -> BusinessImpact:
         annualized_impact=annualized_impact,
     )
 
-    return {
-        "summary": summary,
-        "impact_status": impact_status,
-        "primary_business_metric": primary_metric,
-        "baseline_value": baseline,
-        "treatment_value": treatment,
-        "absolute_lift": absolute_lift,
-        "relative_lift": relative_lift,
-        "estimated_annualized_impact": annualized_impact,
-        "affected_segment": affected_segment,
-        "operational_savings": operational_savings,
-        "confidence_level": confidence,
-        "assumptions": assumptions,
-        "limitations": limitations,
-        "evidence_citations": citations,
-    }
+    return (
+        {
+            "summary": summary,
+            "impact_status": impact_status,
+            "primary_business_metric": primary_metric,
+            "baseline_value": baseline,
+            "treatment_value": treatment,
+            "absolute_lift": absolute_lift,
+            "relative_lift": relative_lift,
+            "estimated_annualized_impact": annualized_impact,
+            "affected_segment": affected_segment,
+            "operational_savings": operational_savings,
+            "confidence_level": confidence,
+            "assumptions": assumptions,
+            "limitations": limitations,
+            "evidence_citations": citations,
+        },
+        tool_calls,
+    )
 
 
 def _build_summary(

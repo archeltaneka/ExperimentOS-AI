@@ -272,8 +272,10 @@ class HumanApprovalRecord(TypedDict):
 class ToolCallRecord(TypedDict, total=False):
     tool_name: str
     status: ToolCallStatus
-    arguments: dict[str, object]
-    result: dict[str, object]
+    node: str
+    input_summary: dict[str, object]
+    output_summary: dict[str, object]
+    latency_ms: float
     error: str
     at: str
 
@@ -541,7 +543,7 @@ def create_initial_state(question: str) -> AgentState:
         "run_metadata": {
             "run_id": str(uuid4()),
             "workflow": "phase2_shared_state",
-            "state_version": 9,
+            "state_version": 10,
         },
     }
 

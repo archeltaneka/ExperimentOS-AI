@@ -38,6 +38,11 @@ class DecisionAgentLike(Protocol):
         pass
 
 
+class HumanApprovalAgentLike(Protocol):
+    def run(self, state: AgentState) -> AgentStateUpdate:
+        pass
+
+
 class ExecutiveSummaryAgentLike(Protocol):
     def run(self, state: AgentState) -> AgentStateUpdate:
         pass
@@ -228,6 +233,34 @@ def executive_summary_node(
             ],
         }
     update = executive_summary_agent.run(state)
+    if "metrics" in update:
+        update = {
+            **update,
+            "metrics": {
+                **state["metrics"],
+                **update["metrics"],
+            },
+        }
+    return update
+
+
+def human_approval_node(
+    state: AgentState,
+    *,
+    human_approval_agent: HumanApprovalAgentLike,
+) -> AgentStateUpdate:
+    required_agents: list[RequiredAgent] = state["required_agents"]
+    if "human_approval" not in required_agents:
+        return {
+            "trace": [
+                create_trace_entry(
+                    node="human_approval",
+                    event="skipped",
+                    details={"reason": "not_required"},
+                )
+            ],
+        }
+    update = human_approval_agent.run(state)
     if "metrics" in update:
         update = {
             **update,

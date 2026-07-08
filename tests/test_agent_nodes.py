@@ -166,6 +166,27 @@ class RecordingExecutiveSummaryAgent:
         }
 
 
+class RecordingHumanApprovalAgent:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def run(self, state):
+        self.calls += 1
+        return {
+            "human_approval": {
+                **state["human_approval"],
+                "status": "pending",
+                "required": True,
+                "feedback": "",
+                "actor": None,
+                "timestamp": None,
+            },
+            "metrics": {"human_approval": {"status": "pending"}},
+            "errors": [],
+            "trace": [],
+        }
+
+
 def test_planner_node_classifies_decision_questions_with_partial_update() -> None:
     state = {
         "question": "Should we roll out the payment recommendation experiment?",
@@ -526,3 +547,70 @@ def test_executive_summary_node_delegates_to_injected_agent_when_required() -> N
         "executive_summary": {"status": "generated"},
     }
     assert update["errors"] == []
+
+
+def test_human_approval_node_skips_when_not_required() -> None:
+    from packages.agents.nodes import human_approval_node
+
+    state = create_initial_state("Hello")
+    state["required_agents"] = [
+        "retrieval",
+        "experiment_analysis",
+        "business_impact",
+        "risk_assessment",
+        "decision",
+    ]
+    agent = RecordingHumanApprovalAgent()
+
+    update = human_approval_node(state, human_approval_agent=agent)
+
+    assert agent.calls == 0
+    assert "human_approval" not in update
+    assert "errors" not in update
+    assert update["trace"][0]["node"] == "human_approval"
+    assert update["trace"][0]["event"] == "skipped"
+
+
+def test_human_approval_node_delegates_to_injected_agent_when_required() -> None:
+    from packages.agents.nodes import human_approval_node
+
+    state = create_initial_state("Summarize for executives.")
+    state["required_agents"] = [
+        "retrieval",
+        "experiment_analysis",
+        "business_impact",
+        "risk_assessment",
+        "decision",
+        "human_approval",
+        "executive_summary",
+    ]
+    agent = RecordingHumanApprovalAgent()
+
+    update = human_approval_node(state, human_approval_agent=agent)
+
+    assert agent.calls == 1
+    assert update["human_approval"]["status"] == "pending"
+
+
+def test_human_approval_node_merges_metrics_from_state() -> None:
+    from packages.agents.nodes import human_approval_node
+
+    state = create_initial_state("Summarize for executives.")
+    state["required_agents"] = [
+        "retrieval",
+        "experiment_analysis",
+        "business_impact",
+        "risk_assessment",
+        "decision",
+        "human_approval",
+        "executive_summary",
+    ]
+    state["metrics"] = {"planner_rule_version": "deterministic_v1"}
+    agent = RecordingHumanApprovalAgent()
+
+    update = human_approval_node(state, human_approval_agent=agent)
+
+    assert update["metrics"] == {
+        "planner_rule_version": "deterministic_v1",
+        "human_approval": {"status": "pending"},
+    }

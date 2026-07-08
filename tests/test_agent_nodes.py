@@ -76,6 +76,30 @@ class RecordingBusinessImpactAgent:
         }
 
 
+class RecordingRiskAssessmentAgent:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def run(self, state):
+        self.calls += 1
+        return {
+            "risk_assessment": {
+                **state["risk_assessment"],
+                "risk_status": "assessed",
+                "overall_risk_level": "low",
+                "risk_score": 1,
+                "risk_factors": [],
+                "mitigation_actions": ["Monitor rollout metrics during the initial ramp."],
+                "evidence_citations": list(state["citations"]),
+                "confidence_level": "high",
+            },
+            "risks": [],
+            "metrics": {"risk_assessment": {"status": "assessed"}},
+            "errors": [],
+            "trace": [],
+        }
+
+
 def test_planner_node_classifies_decision_questions_with_partial_update() -> None:
     state = {
         "question": "Should we roll out the payment recommendation experiment?",
@@ -273,5 +297,45 @@ def test_business_impact_node_delegates_to_injected_agent_when_required() -> Non
     assert update["metrics"] == {
         "planner_rule_version": "deterministic_v1",
         "business_impact": {"status": "estimated"},
+    }
+    assert update["errors"] == []
+
+
+def test_risk_assessment_node_skips_when_not_required() -> None:
+    from packages.agents.nodes import risk_assessment_node
+
+    state = create_initial_state("Hello")
+    state["required_agents"] = ["retrieval", "experiment_analysis", "business_impact"]
+    agent = RecordingRiskAssessmentAgent()
+
+    update = risk_assessment_node(state, risk_assessment_agent=agent)
+
+    assert agent.calls == 0
+    assert "risk_assessment" not in update
+    assert "errors" not in update
+    assert update["trace"][0]["node"] == "risk_assessment"
+    assert update["trace"][0]["event"] == "skipped"
+
+
+def test_risk_assessment_node_delegates_to_injected_agent_when_required() -> None:
+    from packages.agents.nodes import risk_assessment_node
+
+    state = create_initial_state("What are the rollout risks?")
+    state["required_agents"] = [
+        "retrieval",
+        "experiment_analysis",
+        "business_impact",
+        "risk_assessment",
+    ]
+    state["metrics"] = {"planner_rule_version": "deterministic_v1"}
+    agent = RecordingRiskAssessmentAgent()
+
+    update = risk_assessment_node(state, risk_assessment_agent=agent)
+
+    assert agent.calls == 1
+    assert update["risk_assessment"]["risk_status"] == "assessed"
+    assert update["metrics"] == {
+        "planner_rule_version": "deterministic_v1",
+        "risk_assessment": {"status": "assessed"},
     }
     assert update["errors"] == []

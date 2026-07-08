@@ -36,6 +36,13 @@ BusinessImpactStatus = Literal[
     "insufficient_data",
     "not_required",
 ]
+RiskAssessmentStatus = Literal[
+    "assessed",
+    "partial_assessment",
+    "insufficient_data",
+    "not_required",
+]
+OverallRiskLevel = Literal["low", "medium", "high", "unknown"]
 
 
 class AgentInputState(BaseModel):
@@ -156,6 +163,32 @@ class BusinessImpact(TypedDict):
     evidence_citations: list[Citation]
 
 
+class RiskFactor(TypedDict, total=False):
+    code: str
+    title: str
+    severity: str
+    category: str
+    detail: str
+    mitigation: str
+
+
+class RiskAssessment(TypedDict):
+    risk_status: RiskAssessmentStatus
+    overall_risk_level: OverallRiskLevel
+    risk_score: int | None
+    risk_factors: list[RiskFactor]
+    guardrail_concerns: list[str]
+    data_quality_concerns: list[str]
+    statistical_concerns: list[str]
+    rollout_concerns: list[str]
+    user_or_business_concerns: list[str]
+    mitigation_actions: list[str]
+    assumptions: list[str]
+    limitations: list[str]
+    evidence_citations: list[Citation]
+    confidence_level: str
+
+
 class RiskRecord(TypedDict, total=False):
     title: str
     severity: str
@@ -242,6 +275,7 @@ class AgentState(TypedDict):
     experiment_metadata: ExperimentMetadata
     experiment_metrics: list[ExperimentMetricRecord]
     business_impact: BusinessImpact
+    risk_assessment: RiskAssessment
     risks: list[RiskRecord]
     decision: DecisionRecord
     executive_summary: ExecutiveSummary
@@ -266,6 +300,7 @@ class AgentStateUpdate(TypedDict, total=False):
     experiment_metadata: ExperimentMetadata
     experiment_metrics: list[ExperimentMetricRecord]
     business_impact: BusinessImpact
+    risk_assessment: RiskAssessment
     risks: list[RiskRecord]
     decision: DecisionRecord
     executive_summary: ExecutiveSummary
@@ -384,6 +419,22 @@ def create_initial_state(question: str) -> AgentState:
             "limitations": [],
             "evidence_citations": [],
         },
+        "risk_assessment": {
+            "risk_status": "not_required",
+            "overall_risk_level": "unknown",
+            "risk_score": None,
+            "risk_factors": [],
+            "guardrail_concerns": [],
+            "data_quality_concerns": [],
+            "statistical_concerns": [],
+            "rollout_concerns": [],
+            "user_or_business_concerns": [],
+            "mitigation_actions": [],
+            "assumptions": [],
+            "limitations": [],
+            "evidence_citations": [],
+            "confidence_level": "low",
+        },
         "risks": [],
         "decision": {
             "recommendation": "",
@@ -409,7 +460,7 @@ def create_initial_state(question: str) -> AgentState:
         "run_metadata": {
             "run_id": str(uuid4()),
             "workflow": "phase2_shared_state",
-            "state_version": 5,
+            "state_version": 6,
         },
     }
 

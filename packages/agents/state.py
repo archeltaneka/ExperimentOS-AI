@@ -66,9 +66,44 @@ class Citation(TypedDict, total=False):
     metadata: dict[str, object]
 
 
+class MetricVariantRecord(TypedDict, total=False):
+    metric_name: str
+    variant: str
+    value: float
+    unit: str
+    numerator: float
+    denominator: float
+    notes: str
+
+
+class MetricComparisonRecord(TypedDict, total=False):
+    metric_name: str
+    control_value: float
+    treatment_value: float
+    absolute_delta: float
+    relative_lift: float
+    unit: str
+    p_value: float
+
+
 class ExperimentAnalysis(TypedDict):
     summary: str
     findings: list[str]
+    status: str
+    experiment_id: str
+    experiment_name: str
+    hypothesis: str
+    primary_metric: str
+    control: MetricVariantRecord
+    treatment: MetricVariantRecord
+    treatment_control_comparison: MetricComparisonRecord
+    observed_lift: MetricComparisonRecord
+    statistical_significance: dict[str, object]
+    confidence_level: dict[str, object]
+    guardrail_metrics: list[MetricComparisonRecord]
+    limitations: list[str]
+    evidence_citations: list[Citation]
+    analysis_confidence: str
 
 
 class BusinessImpact(TypedDict):
@@ -266,6 +301,21 @@ def create_initial_state(question: str) -> AgentState:
         "experiment_analysis": {
             "summary": "",
             "findings": [],
+            "status": "not_applicable",
+            "experiment_id": "",
+            "experiment_name": "",
+            "hypothesis": "",
+            "primary_metric": "",
+            "control": {},
+            "treatment": {},
+            "treatment_control_comparison": {},
+            "observed_lift": {},
+            "statistical_significance": {},
+            "confidence_level": {},
+            "guardrail_metrics": [],
+            "limitations": [],
+            "evidence_citations": [],
+            "analysis_confidence": "low",
         },
         "business_impact": {
             "summary": "",
@@ -296,7 +346,7 @@ def create_initial_state(question: str) -> AgentState:
         "run_metadata": {
             "run_id": str(uuid4()),
             "workflow": "phase2_shared_state",
-            "state_version": 3,
+            "state_version": 4,
         },
     }
 

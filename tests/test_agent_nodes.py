@@ -19,6 +19,25 @@ class RecordingAgent:
         }
 
 
+class RecordingExperimentAnalysisAgent:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def run(self, state):
+        self.calls += 1
+        return {
+            "experiment_analysis": {
+                **state["experiment_analysis"],
+                "summary": "Primary metric improved in treatment.",
+                "findings": ["Treatment beat control on the primary metric."],
+                "status": "completed",
+            },
+            "metrics": {"experiment_analysis": {"status": "completed"}},
+            "errors": [],
+            "trace": [],
+        }
+
+
 def test_planner_node_classifies_decision_questions_with_partial_update() -> None:
     state = {
         "question": "Should we roll out the payment recommendation experiment?",
@@ -146,5 +165,40 @@ def test_retrieval_node_delegates_to_injected_agent_when_required() -> None:
     assert update["metrics"] == {
         "planner_rule_version": "deterministic_v1",
         "retrieval": {"retrieved_chunks": 0},
+    }
+    assert update["errors"] == []
+
+
+def test_experiment_analysis_node_skips_when_not_required() -> None:
+    from packages.agents.nodes import experiment_analysis_node
+
+    state = create_initial_state("Hello")
+    state["required_agents"] = ["retrieval"]
+    agent = RecordingExperimentAnalysisAgent()
+
+    update = experiment_analysis_node(state, experiment_analysis_agent=agent)
+
+    assert agent.calls == 0
+    assert "experiment_analysis" not in update
+    assert "errors" not in update
+    assert update["trace"][0]["node"] == "experiment_analysis"
+    assert update["trace"][0]["event"] == "skipped"
+
+
+def test_experiment_analysis_node_delegates_to_injected_agent_when_required() -> None:
+    from packages.agents.nodes import experiment_analysis_node
+
+    state = create_initial_state("Should we ship it?")
+    state["required_agents"] = ["retrieval", "experiment_analysis"]
+    state["metrics"] = {"planner_rule_version": "deterministic_v1"}
+    agent = RecordingExperimentAnalysisAgent()
+
+    update = experiment_analysis_node(state, experiment_analysis_agent=agent)
+
+    assert agent.calls == 1
+    assert update["experiment_analysis"]["status"] == "completed"
+    assert update["metrics"] == {
+        "planner_rule_version": "deterministic_v1",
+        "experiment_analysis": {"status": "completed"},
     }
     assert update["errors"] == []

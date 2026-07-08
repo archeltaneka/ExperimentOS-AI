@@ -249,6 +249,45 @@ class StubGraphDecisionAgent:
         }
 
 
+class StubGraphHumanApprovalAgent:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def run(self, state):
+        self.calls.append(state)
+        return {
+            "human_approval": {
+                **state["human_approval"],
+                "status": "approved",
+                "required": True,
+                "feedback": "Approved for monitored rollout.",
+                "actor": "director@example.com",
+                "timestamp": "2026-07-08T00:00:10Z",
+            },
+            "metrics": {
+                **state["metrics"],
+                "human_approval": {
+                    "status": "approved",
+                    "approval_required": True,
+                    "input_present": True,
+                },
+            },
+            "trace": [
+                {
+                    "node": "human_approval",
+                    "event": "started",
+                    "at": "2026-07-08T00:00:10Z",
+                },
+                {
+                    "node": "human_approval",
+                    "event": "completed",
+                    "at": "2026-07-08T00:00:11Z",
+                },
+            ],
+            "errors": [],
+        }
+
+
 class StubGraphExecutiveSummaryAgent:
     def __init__(self) -> None:
         self.calls: list[dict[str, object]] = []
@@ -307,6 +346,7 @@ def test_build_agent_workflow_exposes_question_only_input_schema() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        human_approval_agent=StubGraphHumanApprovalAgent(),
         executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
@@ -323,6 +363,7 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        human_approval_agent=StubGraphHumanApprovalAgent(),
         executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
@@ -337,6 +378,7 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
         "business_impact",
         "risk_assessment",
         "decision",
+        "human_approval",
         "executive_summary",
     ]
     assert [entry["node"] for entry in result["trace"]] == [
@@ -351,6 +393,8 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
         "risk_assessment",
         "decision",
         "decision",
+        "human_approval",
+        "human_approval",
         "executive_summary",
         "executive_summary",
     ]
@@ -368,8 +412,10 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
         "completed",
         "started",
         "completed",
+        "started",
+        "completed",
     ]
-    assert result["human_approval"]["status"] == "not_requested"
+    assert result["human_approval"]["status"] == "approved"
     assert result["run_metadata"]["workflow"] == "phase2_shared_state"
     assert result["metrics"]["planner_rule_version"] == "deterministic_v1"
     assert result["metrics"]["retrieval"]["retrieved_chunks"] == 1
@@ -377,6 +423,7 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
     assert result["metrics"]["business_impact"]["status"] == "estimated"
     assert result["metrics"]["risk_assessment"]["status"] == "assessed"
     assert result["metrics"]["decision"]["status"] == "decided"
+    assert result["metrics"]["human_approval"]["status"] == "approved"
     assert result["metrics"]["executive_summary"]["status"] == "generated"
     assert result["experiment_analysis"]["status"] == "completed"
     assert result["business_impact"]["impact_status"] == "estimated"
@@ -392,6 +439,7 @@ def test_agent_workflow_service_runs_graph_and_returns_state() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        human_approval_agent=StubGraphHumanApprovalAgent(),
         executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
@@ -427,6 +475,7 @@ def test_build_agent_workflow_accepts_injected_retrieval_agent() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        human_approval_agent=StubGraphHumanApprovalAgent(),
         executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
@@ -441,12 +490,14 @@ def test_build_agent_workflow_accepts_injected_retrieval_agent() -> None:
         "business_impact",
         "risk_assessment",
         "decision",
+        "human_approval",
         "executive_summary",
     ]
     assert [entry["event"] for entry in result["trace"]] == [
         "planned",
         "started",
         "completed",
+        "skipped",
         "skipped",
         "skipped",
         "skipped",
@@ -474,6 +525,7 @@ def test_agent_workflow_service_accepts_injected_retrieval_agent() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        human_approval_agent=StubGraphHumanApprovalAgent(),
         executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
@@ -497,6 +549,7 @@ def test_build_agent_workflow_skips_retrieval_when_not_required() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        human_approval_agent=StubGraphHumanApprovalAgent(),
         executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
@@ -511,10 +564,12 @@ def test_build_agent_workflow_skips_retrieval_when_not_required() -> None:
         "business_impact",
         "risk_assessment",
         "decision",
+        "human_approval",
         "executive_summary",
     ]
     assert [entry["event"] for entry in result["trace"]] == [
         "planned",
+        "skipped",
         "skipped",
         "skipped",
         "skipped",
@@ -567,6 +622,7 @@ def test_build_agent_workflow_runs_experiment_analysis_after_retrieval() -> None
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        human_approval_agent=StubGraphHumanApprovalAgent(),
         executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
@@ -584,6 +640,8 @@ def test_build_agent_workflow_runs_experiment_analysis_after_retrieval() -> None
         "risk_assessment",
         "decision",
         "decision",
+        "human_approval",
+        "human_approval",
         "executive_summary",
         "executive_summary",
     ]
@@ -592,5 +650,38 @@ def test_build_agent_workflow_runs_experiment_analysis_after_retrieval() -> None
     assert result["business_impact"]["evidence_citations"] == result["citations"]
     assert result["risk_assessment"]["evidence_citations"] == result["citations"]
     assert result["decision"]["decision_status"] == "decided"
+    assert result["human_approval"]["status"] == "approved"
     assert result["executive_summary"]["summary_status"] == "generated"
     assert result["executive_summary"]["evidence_citations"] == result["citations"]
+
+
+def test_build_agent_workflow_runs_human_approval_before_executive_summary() -> None:
+    graph = build_agent_workflow(
+        retrieval_agent=StubGraphRetrievalAgent(),
+        experiment_analysis_agent=StubGraphExperimentAnalysisAgent(),
+        business_impact_agent=StubGraphBusinessImpactAgent(),
+        risk_assessment_agent=StubGraphRiskAssessmentAgent(),
+        decision_agent=StubGraphDecisionAgent(),
+        human_approval_agent=StubGraphHumanApprovalAgent(),
+        executive_summary_agent=StubGraphExecutiveSummaryAgent(),
+    )
+
+    result = graph.invoke({"question": "Summarize the checkout UX experiment for executives."})
+
+    assert [entry["node"] for entry in result["trace"]] == [
+        "planner",
+        "retrieval",
+        "retrieval",
+        "experiment_analysis",
+        "experiment_analysis",
+        "business_impact",
+        "business_impact",
+        "risk_assessment",
+        "risk_assessment",
+        "decision",
+        "decision",
+        "human_approval",
+        "human_approval",
+        "executive_summary",
+        "executive_summary",
+    ]

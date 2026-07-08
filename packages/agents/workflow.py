@@ -8,17 +8,20 @@ from packages.agents.business_impact_agent import BusinessImpactAgent
 from packages.agents.decision_agent import DecisionAgent
 from packages.agents.executive_summary_agent import ExecutiveSummaryAgent
 from packages.agents.experiment_analysis_agent import ExperimentAnalysisAgent
+from packages.agents.human_approval_agent import HumanApprovalAgent
 from packages.agents.nodes import (
     BusinessImpactAgentLike,
     DecisionAgentLike,
     ExecutiveSummaryAgentLike,
     ExperimentAnalysisAgentLike,
+    HumanApprovalAgentLike,
     RetrievalAgentLike,
     RiskAssessmentAgentLike,
     business_impact_node,
     decision_node,
     executive_summary_node,
     experiment_analysis_node,
+    human_approval_node,
     planner_node,
     retrieval_node,
     risk_assessment_node,
@@ -35,6 +38,7 @@ def build_agent_workflow(
     business_impact_agent: BusinessImpactAgentLike | None = None,
     risk_assessment_agent: RiskAssessmentAgentLike | None = None,
     decision_agent: DecisionAgentLike | None = None,
+    human_approval_agent: HumanApprovalAgentLike | None = None,
     executive_summary_agent: ExecutiveSummaryAgentLike | None = None,
 ):
     if retrieval_agent is None:
@@ -47,6 +51,8 @@ def build_agent_workflow(
         risk_assessment_agent = RiskAssessmentAgent()
     if decision_agent is None:
         decision_agent = DecisionAgent()
+    if human_approval_agent is None:
+        human_approval_agent = HumanApprovalAgent()
     if executive_summary_agent is None:
         executive_summary_agent = ExecutiveSummaryAgent()
     builder = StateGraph(AgentState, input_schema=AgentInputState)
@@ -84,6 +90,13 @@ def build_agent_workflow(
         ),
     )
     builder.add_node(
+        "human_approval",
+        partial(
+            human_approval_node,
+            human_approval_agent=human_approval_agent,
+        ),
+    )
+    builder.add_node(
         "executive_summary",
         partial(
             executive_summary_node,
@@ -96,6 +109,7 @@ def build_agent_workflow(
     builder.add_edge("experiment_analysis", "business_impact")
     builder.add_edge("business_impact", "risk_assessment")
     builder.add_edge("risk_assessment", "decision")
-    builder.add_edge("decision", "executive_summary")
+    builder.add_edge("decision", "human_approval")
+    builder.add_edge("human_approval", "executive_summary")
     builder.add_edge("executive_summary", END)
     return builder.compile()

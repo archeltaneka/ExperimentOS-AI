@@ -108,20 +108,38 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
         "limitations": [],
         "summary": "",
     }
+    assert state["human_approval_input"] == {}
     assert state["human_approval"] == {
         "status": "not_requested",
-        "reviewer": None,
-        "reviewed_at": None,
-        "notes": "",
+        "required": False,
+        "feedback": "",
+        "actor": None,
+        "timestamp": None,
     }
     assert state["tool_calls"] == []
     assert state["metrics"] == {}
     assert state["errors"] == []
     assert state["trace"] == []
-    assert state["run_metadata"]["state_version"] == 8
+    assert state["run_metadata"]["state_version"] == 9
     assert state["run_metadata"]["workflow"] == "phase2_shared_state"
     assert state["timestamps"]["created_at"]
     assert state["timestamps"]["updated_at"]
+
+
+def test_create_initial_state_sets_human_approval_defaults() -> None:
+    state = create_initial_state(
+        "Should we roll out the payment recommendation experiment?"
+    )
+
+    assert state["human_approval_input"] == {}
+    assert state["human_approval"] == {
+        "status": "not_requested",
+        "required": False,
+        "feedback": "",
+        "actor": None,
+        "timestamp": None,
+    }
+    assert state["run_metadata"]["state_version"] == 9
 
 
 def test_create_initial_state_sets_structured_experiment_analysis_defaults() -> None:

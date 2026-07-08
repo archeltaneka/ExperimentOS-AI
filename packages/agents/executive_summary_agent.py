@@ -88,6 +88,7 @@ class ExecutiveSummaryAgent:
 def _build_executive_summary(state: AgentState) -> ExecutiveSummary:
     analysis = state["experiment_analysis"]
     decision = state["decision"]
+    approval = state["human_approval"]
     citations = _summary_citations(state)
     limitations = _limitations(state)
     summary_status = _summary_status(state, citations)
@@ -136,7 +137,9 @@ def _build_executive_summary(state: AgentState) -> ExecutiveSummary:
             summary_status=summary_status,
             decision_status=str(decision["decision_status"]),
             recommendation=recommendation,
+            approval_status=str(approval["status"]),
         )
+    approval_summary = _approval_summary(state)
 
     summary = _summary_text(
         headline=headline,
@@ -144,6 +147,8 @@ def _build_executive_summary(state: AgentState) -> ExecutiveSummary:
         business_impact_summary=business_impact_summary,
         risk_summary=risk_summary,
         decision_rationale=decision_rationale,
+        approval_summary=approval_summary,
+        approval_feedback=str(approval["feedback"]),
         recommended_next_actions=recommended_next_actions,
     )
 
@@ -201,9 +206,18 @@ def _headline(
     summary_status: ExecutiveSummaryStatus,
     decision_status: str,
     recommendation: str,
+    approval_status: str,
 ) -> str:
     if summary_status == "insufficient_data":
         return "Insufficient evidence to prepare an executive summary."
+    if approval_status == "rejected":
+        return "The recommendation was not approved."
+    if approval_status == "revision_requested":
+        return "Revision was requested before approval."
+    if approval_status == "pending":
+        return "Recommendation is awaiting human approval."
+    if approval_status == "approved" and recommendation == "rollout":
+        return "Rollout is supported and approved."
     if decision_status in {"needs_more_data", "blocked", "insufficient_data"} or recommendation in {
         "continue_experiment",
         "needs_more_data",
@@ -298,6 +312,8 @@ def _summary_text(
     business_impact_summary: str,
     risk_summary: str,
     decision_rationale: str,
+    approval_summary: str,
+    approval_feedback: str,
     recommended_next_actions: list[str],
 ) -> str:
     sentences = [
@@ -306,10 +322,28 @@ def _summary_text(
         business_impact_summary,
         risk_summary,
         decision_rationale,
+        approval_summary,
     ]
+    if approval_feedback:
+        sentences.append(f"Approval feedback: {approval_feedback}")
     if recommended_next_actions:
         sentences.append(f"Next action: {recommended_next_actions[0]}")
     return " ".join(sentence for sentence in sentences if sentence)
+
+
+def _approval_summary(state: AgentState) -> str:
+    approval = state["human_approval"]
+    if approval["status"] == "skipped":
+        return "Approval was not required for this recommendation."
+    if approval["status"] == "pending":
+        return "The recommendation is awaiting human approval."
+    if approval["status"] == "approved":
+        return "The recommendation was approved."
+    if approval["status"] == "rejected":
+        return "The recommendation was not approved."
+    if approval["status"] == "revision_requested":
+        return "Revision was requested before approval."
+    return ""
 
 
 def _summary_citations(state: AgentState) -> list[Citation]:
@@ -358,6 +392,15 @@ def _limitations(state: AgentState) -> list[str]:
         limitations.append("Risk evidence is missing or insufficient.")
     if decision["decision_status"] in {"needs_more_data", "blocked", "insufficient_data"}:
         limitations.extend(decision["blocking_issues"])
+    approval = state["human_approval"]
+    if approval["status"] == "pending":
+        limitations.append("Human approval is still pending.")
+    elif approval["status"] == "rejected":
+        limitations.append("The recommendation was not approved.")
+    elif approval["status"] == "revision_requested":
+        limitations.append("Revision was requested before approval.")
+    if approval["feedback"]:
+        limitations.append(f"Approval feedback: {approval['feedback']}")
     for error in state["errors"]:
         code = str(error.get("code", "")).strip()
         message = str(error.get("message", "")).strip()

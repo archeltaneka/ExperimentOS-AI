@@ -28,7 +28,14 @@ RequiredAgent = Literal[
     "executive_summary",
     "human_approval",
 ]
-HumanApprovalStatus = Literal["not_requested", "pending", "approved", "rejected"]
+HumanApprovalStatus = Literal[
+    "not_requested",
+    "skipped",
+    "pending",
+    "approved",
+    "rejected",
+    "revision_requested",
+]
 ToolCallStatus = Literal["pending", "completed", "failed"]
 BusinessImpactStatus = Literal[
     "estimated",
@@ -247,11 +254,19 @@ class ExecutiveSummary(TypedDict):
     summary: str
 
 
+class HumanApprovalInputRecord(TypedDict, total=False):
+    status: str
+    feedback: object
+    actor: object
+    timestamp: object
+
+
 class HumanApprovalRecord(TypedDict):
     status: HumanApprovalStatus
-    reviewer: str | None
-    reviewed_at: str | None
-    notes: str
+    required: bool
+    feedback: str
+    actor: str | None
+    timestamp: str | None
 
 
 class ToolCallRecord(TypedDict, total=False):
@@ -321,6 +336,7 @@ class AgentState(TypedDict):
     risks: list[RiskRecord]
     decision: DecisionRecord
     executive_summary: ExecutiveSummary
+    human_approval_input: HumanApprovalInputRecord
     human_approval: HumanApprovalRecord
     tool_calls: Annotated[list[ToolCallRecord], append_dict_list]
     metrics: dict[str, object]
@@ -346,6 +362,7 @@ class AgentStateUpdate(TypedDict, total=False):
     risks: list[RiskRecord]
     decision: DecisionRecord
     executive_summary: ExecutiveSummary
+    human_approval_input: HumanApprovalInputRecord
     human_approval: HumanApprovalRecord
     tool_calls: list[ToolCallRecord]
     metrics: dict[str, object]
@@ -505,11 +522,13 @@ def create_initial_state(question: str) -> AgentState:
             "limitations": [],
             "summary": "",
         },
+        "human_approval_input": {},
         "human_approval": {
             "status": "not_requested",
-            "reviewer": None,
-            "reviewed_at": None,
-            "notes": "",
+            "required": False,
+            "feedback": "",
+            "actor": None,
+            "timestamp": None,
         },
         "tool_calls": [],
         "metrics": {},
@@ -522,7 +541,7 @@ def create_initial_state(question: str) -> AgentState:
         "run_metadata": {
             "run_id": str(uuid4()),
             "workflow": "phase2_shared_state",
-            "state_version": 8,
+            "state_version": 9,
         },
     }
 

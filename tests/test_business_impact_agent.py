@@ -216,3 +216,31 @@ def test_business_impact_agent_preserves_citations_and_records_metrics() -> None
     assert update["business_impact"]["evidence_citations"] == state["citations"]
     assert update["metrics"]["business_impact"]["citation_count"] == 1
     assert update["metrics"]["business_impact"]["latency_ms"] >= 0.0
+
+
+def test_business_impact_agent_records_lift_tool_calls() -> None:
+    from packages.agents.business_impact_agent import BusinessImpactAgent
+
+    state = build_business_impact_state()
+
+    update = BusinessImpactAgent().run(state)
+
+    assert [call["tool_name"] for call in update["tool_calls"]] == [
+        "calculate_absolute_lift",
+        "calculate_relative_lift",
+    ]
+    assert all(call["status"] == "completed" for call in update["tool_calls"])
+
+
+def test_business_impact_agent_records_zero_baseline_relative_lift_tool_result() -> None:
+    from packages.agents.business_impact_agent import BusinessImpactAgent
+
+    state = build_business_impact_state()
+    state["experiment_analysis"]["control"]["value"] = 0.0
+    state["experiment_analysis"]["treatment"]["value"] = 0.2
+
+    update = BusinessImpactAgent().run(state)
+
+    assert update["business_impact"]["relative_lift"] is None
+    assert update["tool_calls"][1]["tool_name"] == "calculate_relative_lift"
+    assert update["tool_calls"][1]["output_summary"]["status"] == "undefined_zero_baseline"

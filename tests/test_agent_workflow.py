@@ -65,7 +65,10 @@ class StubGraphExperimentAnalysisAgent:
             },
             "metrics": {
                 **state["metrics"],
-                "experiment_analysis": {"status": "completed", "citation_count": len(state["citations"])},
+                "experiment_analysis": {
+                    "status": "completed",
+                    "citation_count": len(state["citations"]),
+                },
             },
             "trace": [
                 {

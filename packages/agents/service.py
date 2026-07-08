@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from packages.agents.experiment_analysis_agent import ExperimentAnalysisAgent
-from packages.agents.nodes import ExperimentAnalysisAgentLike
-from packages.agents.nodes import RetrievalAgentLike
+from packages.agents.nodes import ExperimentAnalysisAgentLike, RetrievalAgentLike
 from packages.agents.retrieval_agent import RetrievalAgent
 from packages.agents.state import AgentState
 from packages.agents.workflow import build_agent_workflow

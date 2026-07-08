@@ -16,7 +16,6 @@ from packages.agents.state import (
     ExperimentAnalysis,
     MetricComparisonRecord,
     MetricVariantRecord,
-    RetrievedChunk,
     create_error_entry,
     create_trace_entry,
 )
@@ -217,7 +216,10 @@ class ExperimentAnalysisAgent:
         if experiment is None:
             analysis = _build_insufficient_data_analysis(
                 base=state["experiment_analysis"],
-                summary="Insufficient data: no experiment could be resolved from planner or retrieval context.",
+                summary=(
+                    "Insufficient data: no experiment could be resolved from "
+                    "planner or retrieval context."
+                ),
                 findings=["No experiment identifier or hint resolved to a stored experiment."],
                 limitations=["Experiment resolution failed before metric analysis could begin."],
                 evidence_citations=list(state["citations"]),
@@ -271,7 +273,8 @@ def _build_analysis(
 
     if control_metric is None or treatment_metric is None:
         limitations.append(
-            f"Primary metric {primary_metric} is missing control or treatment data in stored metrics."
+            f"Primary metric {primary_metric} is missing control or treatment "
+            "data in stored metrics."
         )
         return _build_insufficient_data_analysis(
             base=base,
@@ -280,7 +283,8 @@ def _build_analysis(
                 "control versus treatment comparison."
             ),
             findings=[
-                f"Experiment resolved to {experiment.name}, but the primary metric comparison is incomplete."
+                f"Experiment resolved to {experiment.name}, but the primary metric "
+                "comparison is incomplete."
             ],
             experiment=experiment,
             limitations=limitations,
@@ -335,7 +339,8 @@ def _build_analysis(
         )
     if "relative_lift" in primary_comparison:
         findings.append(
-            f"Observed lift vs control for {primary_metric}: {primary_comparison['relative_lift']:.4f}."
+            f"Observed lift vs control for {primary_metric}: "
+            f"{primary_comparison['relative_lift']:.4f}."
         )
     if "p_value" in statistical_significance:
         findings.append(

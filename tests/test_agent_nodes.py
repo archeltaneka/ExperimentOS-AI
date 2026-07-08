@@ -181,6 +181,7 @@ def test_planner_node_classifies_decision_questions_with_partial_update() -> Non
         "business_impact",
         "risk_assessment",
         "decision",
+        "human_approval",
         "executive_summary",
     ]
     assert "question" not in updated
@@ -194,6 +195,11 @@ def test_planner_node_classifies_decision_questions_with_partial_update() -> Non
         "filters": {"experiment_hints": ["payment recommendation"]},
     }
     assert updated["human_approval"]["status"] == "not_requested"
+    assert updated["human_approval"]["required"] is False
+    assert updated["human_approval"]["feedback"] == ""
+    assert updated["human_approval"]["actor"] is None
+    assert updated["human_approval"]["timestamp"] is None
+    assert updated["human_approval_input"] == {}
     assert updated["tool_calls"] == []
     assert updated["trace"] == [
         {
@@ -207,6 +213,7 @@ def test_planner_node_classifies_decision_questions_with_partial_update() -> Non
                     "business_impact",
                     "risk_assessment",
                     "decision",
+                    "human_approval",
                     "executive_summary",
                 ],
                 "experiment_hints": ["payment recommendation"],

@@ -13,6 +13,7 @@ def test_plan_question_classifies_decision_support_requests() -> None:
         "business_impact",
         "risk_assessment",
         "decision",
+        "human_approval",
         "executive_summary",
     ]
     assert plan.experiment_context["filters"] == {
@@ -59,6 +60,21 @@ def test_plan_question_classifies_executive_summary_requests() -> None:
         "business_impact",
         "risk_assessment",
         "decision",
+        "human_approval",
+        "executive_summary",
+    ]
+
+
+def test_plan_question_includes_human_approval_for_decision_support() -> None:
+    plan = plan_question("Should we roll out the payment recommendation experiment?")
+
+    assert plan.required_agents == [
+        "retrieval",
+        "experiment_analysis",
+        "business_impact",
+        "risk_assessment",
+        "decision",
+        "human_approval",
         "executive_summary",
     ]
 

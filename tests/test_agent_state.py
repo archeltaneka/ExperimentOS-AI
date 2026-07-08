@@ -62,6 +62,22 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
         "limitations": [],
         "evidence_citations": [],
     }
+    assert state["risk_assessment"] == {
+        "risk_status": "not_required",
+        "overall_risk_level": "unknown",
+        "risk_score": None,
+        "risk_factors": [],
+        "guardrail_concerns": [],
+        "data_quality_concerns": [],
+        "statistical_concerns": [],
+        "rollout_concerns": [],
+        "user_or_business_concerns": [],
+        "mitigation_actions": [],
+        "assumptions": [],
+        "limitations": [],
+        "evidence_citations": [],
+        "confidence_level": "low",
+    }
     assert state["experiment_metadata"] == {}
     assert state["experiment_metrics"] == []
     assert state["risks"] == []
@@ -82,7 +98,7 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
     assert state["metrics"] == {}
     assert state["errors"] == []
     assert state["trace"] == []
-    assert state["run_metadata"]["state_version"] == 5
+    assert state["run_metadata"]["state_version"] == 6
     assert state["run_metadata"]["workflow"] == "phase2_shared_state"
     assert state["timestamps"]["created_at"]
     assert state["timestamps"]["updated_at"]

@@ -147,11 +147,72 @@ class StubGraphBusinessImpactAgent:
         }
 
 
+class StubGraphRiskAssessmentAgent:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def run(self, state):
+        self.calls.append(state)
+        return {
+            "risk_assessment": {
+                **state["risk_assessment"],
+                "risk_status": "assessed",
+                "overall_risk_level": "medium",
+                "risk_score": 4,
+                "risk_factors": [
+                    {
+                        "code": "monitor_rollout",
+                        "title": "Rollout should be monitored during ramp",
+                        "severity": "medium",
+                        "category": "rollout",
+                        "detail": "Initial rollout still depends on monitoring.",
+                        "mitigation": "Ramp gradually and watch primary and guardrail metrics.",
+                    }
+                ],
+                "mitigation_actions": [
+                    "Ramp gradually and watch primary and guardrail metrics."
+                ],
+                "evidence_citations": list(state["citations"]),
+                "confidence_level": "medium",
+            },
+            "risks": [
+                {
+                    "title": "Rollout should be monitored during ramp",
+                    "severity": "medium",
+                    "detail": "Initial rollout still depends on monitoring.",
+                    "mitigation": "Ramp gradually and watch primary and guardrail metrics.",
+                }
+            ],
+            "metrics": {
+                **state["metrics"],
+                "risk_assessment": {
+                    "status": "assessed",
+                    "risk_factor_count": 1,
+                    "citation_count": len(state["citations"]),
+                },
+            },
+            "trace": [
+                {
+                    "node": "risk_assessment",
+                    "event": "started",
+                    "at": "2026-07-08T00:00:06Z",
+                },
+                {
+                    "node": "risk_assessment",
+                    "event": "completed",
+                    "at": "2026-07-08T00:00:07Z",
+                },
+            ],
+            "errors": [],
+        }
+
+
 def test_build_agent_workflow_exposes_question_only_input_schema() -> None:
     graph = build_agent_workflow(
         retrieval_agent=StubGraphRetrievalAgent(),
         experiment_analysis_agent=StubGraphExperimentAnalysisAgent(),
         business_impact_agent=StubGraphBusinessImpactAgent(),
+        risk_assessment_agent=StubGraphRiskAssessmentAgent(),
     )
 
     schema = graph.get_input_schema().model_json_schema()
@@ -164,6 +225,8 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
     graph = build_agent_workflow(
         retrieval_agent=StubGraphRetrievalAgent(),
         experiment_analysis_agent=StubGraphExperimentAnalysisAgent(),
+        business_impact_agent=StubGraphBusinessImpactAgent(),
+        risk_assessment_agent=StubGraphRiskAssessmentAgent(),
     )
 
     result = graph.invoke({"question": "Summarize the checkout UX experiment for executives."})
@@ -186,9 +249,13 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
         "experiment_analysis",
         "business_impact",
         "business_impact",
+        "risk_assessment",
+        "risk_assessment",
     ]
     assert [entry["event"] for entry in result["trace"]] == [
         "planned",
+        "started",
+        "completed",
         "started",
         "completed",
         "started",
@@ -202,8 +269,10 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
     assert result["metrics"]["retrieval"]["retrieved_chunks"] == 1
     assert result["metrics"]["experiment_analysis"]["status"] == "completed"
     assert result["metrics"]["business_impact"]["status"] == "estimated"
+    assert result["metrics"]["risk_assessment"]["status"] == "assessed"
     assert result["experiment_analysis"]["status"] == "completed"
     assert result["business_impact"]["impact_status"] == "estimated"
+    assert result["risk_assessment"]["risk_status"] == "assessed"
 
 
 def test_agent_workflow_service_runs_graph_and_returns_state() -> None:
@@ -211,6 +280,7 @@ def test_agent_workflow_service_runs_graph_and_returns_state() -> None:
         retrieval_agent=StubGraphRetrievalAgent(),
         experiment_analysis_agent=StubGraphExperimentAnalysisAgent(),
         business_impact_agent=StubGraphBusinessImpactAgent(),
+        risk_assessment_agent=StubGraphRiskAssessmentAgent(),
     )
 
     result = service.run("What happened in the payment recommendation experiment?")
@@ -220,6 +290,7 @@ def test_agent_workflow_service_runs_graph_and_returns_state() -> None:
     assert result["required_agents"] == ["retrieval"]
     assert result["experiment_analysis"]["summary"] == ""
     assert result["business_impact"]["impact_status"] == "not_required"
+    assert result["risk_assessment"]["risk_status"] == "not_required"
     assert result["errors"] == []
     assert result["tool_calls"] == []
     assert result["metrics"]["planner_rule_version"] == "deterministic_v1"
@@ -240,6 +311,7 @@ def test_build_agent_workflow_accepts_injected_retrieval_agent() -> None:
         retrieval_agent=retrieval_agent,
         experiment_analysis_agent=experiment_analysis_agent,
         business_impact_agent=StubGraphBusinessImpactAgent(),
+        risk_assessment_agent=StubGraphRiskAssessmentAgent(),
     )
 
     result = graph.invoke({"question": "What happened in the payment recommendation experiment?"})
@@ -251,11 +323,13 @@ def test_build_agent_workflow_accepts_injected_retrieval_agent() -> None:
         "retrieval",
         "experiment_analysis",
         "business_impact",
+        "risk_assessment",
     ]
     assert [entry["event"] for entry in result["trace"]] == [
         "planned",
         "started",
         "completed",
+        "skipped",
         "skipped",
         "skipped",
     ]
@@ -278,6 +352,7 @@ def test_agent_workflow_service_accepts_injected_retrieval_agent() -> None:
         retrieval_agent=retrieval_agent,
         experiment_analysis_agent=StubGraphExperimentAnalysisAgent(),
         business_impact_agent=StubGraphBusinessImpactAgent(),
+        risk_assessment_agent=StubGraphRiskAssessmentAgent(),
     )
 
     result = service.run("What happened in the payment recommendation experiment?")
@@ -298,6 +373,7 @@ def test_build_agent_workflow_skips_retrieval_when_not_required() -> None:
         retrieval_agent=retrieval_agent,
         experiment_analysis_agent=StubGraphExperimentAnalysisAgent(),
         business_impact_agent=StubGraphBusinessImpactAgent(),
+        risk_assessment_agent=StubGraphRiskAssessmentAgent(),
     )
 
     result = graph.invoke({"question": "Hello"})
@@ -309,9 +385,11 @@ def test_build_agent_workflow_skips_retrieval_when_not_required() -> None:
         "retrieval",
         "experiment_analysis",
         "business_impact",
+        "risk_assessment",
     ]
     assert [entry["event"] for entry in result["trace"]] == [
         "planned",
+        "skipped",
         "skipped",
         "skipped",
         "skipped",
@@ -359,6 +437,7 @@ def test_build_agent_workflow_runs_experiment_analysis_after_retrieval() -> None
         retrieval_agent=StubGraphRetrievalAgent(),
         experiment_analysis_agent=StubGraphExperimentAnalysisAgent(),
         business_impact_agent=StubGraphBusinessImpactAgent(),
+        risk_assessment_agent=StubGraphRiskAssessmentAgent(),
     )
 
     result = graph.invoke({"question": "Summarize the checkout UX experiment for executives."})
@@ -371,7 +450,10 @@ def test_build_agent_workflow_runs_experiment_analysis_after_retrieval() -> None
         "experiment_analysis",
         "business_impact",
         "business_impact",
+        "risk_assessment",
+        "risk_assessment",
     ]
     assert result["experiment_analysis"]["status"] == "completed"
     assert result["experiment_analysis"]["evidence_citations"] == result["citations"]
     assert result["business_impact"]["evidence_citations"] == result["citations"]
+    assert result["risk_assessment"]["evidence_citations"] == result["citations"]

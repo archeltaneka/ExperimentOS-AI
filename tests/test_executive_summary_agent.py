@@ -225,3 +225,21 @@ def test_executive_summary_agent_preserves_citations_trace_and_metrics() -> None
     assert update["metrics"]["executive_summary"]["citation_count"] == 1
     assert update["metrics"]["executive_summary"]["latency_ms"] >= 0.0
     assert [entry["event"] for entry in update["trace"]] == ["started", "completed"]
+
+
+def test_executive_summary_agent_reflects_rejected_approval() -> None:
+    from packages.agents.executive_summary_agent import ExecutiveSummaryAgent
+
+    state = build_executive_summary_state()
+    state["human_approval"] = {
+        "status": "rejected",
+        "required": True,
+        "feedback": "Do not proceed until tracking is corrected.",
+        "actor": "director@example.com",
+        "timestamp": "2026-07-08T01:02:03Z",
+    }
+
+    update = ExecutiveSummaryAgent().run(state)
+
+    assert "not approved" in update["executive_summary"]["headline"].lower()
+    assert "tracking is corrected" in update["executive_summary"]["summary"].lower()

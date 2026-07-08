@@ -1,12 +1,28 @@
 from __future__ import annotations
 
-from packages.agents.tools import execute_tool, get_tool
+from packages.agents.tools import (
+    execute_tool,
+    get_tool,
+    list_tools,
+    score_decision_confidence,
+)
+from packages.agents.tools.decision import DecisionConfidenceInput
 
 
 def test_registry_lookup_returns_registered_tool() -> None:
     tool = get_tool("calculate_absolute_lift")
 
     assert tool.name == "calculate_absolute_lift"
+
+
+def test_list_tools_returns_registered_tools_in_sorted_order() -> None:
+    assert list_tools() == [
+        "calculate_absolute_lift",
+        "calculate_relative_lift",
+        "score_decision_confidence",
+        "score_experiment_risk",
+        "validate_required_evidence",
+    ]
 
 
 def test_calculate_absolute_lift_returns_expected_delta() -> None:
@@ -79,3 +95,18 @@ def test_execute_tool_records_structured_failure_for_invalid_payload() -> None:
     assert execution.output is None
     assert execution.record["status"] == "failed"
     assert execution.record["error"]
+
+
+def test_score_decision_confidence_returns_high_when_inputs_support_it() -> None:
+    result = score_decision_confidence(
+        DecisionConfidenceInput(
+            analysis_confidence="high",
+            business_confidence="high",
+            risk_confidence="high",
+            overall_risk_level="low",
+            has_statistical_support=True,
+            has_citations=True,
+        )
+    )
+
+    assert result.confidence == "high"

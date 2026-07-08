@@ -58,3 +58,15 @@ DONE
 
 - No functional blockers.
 - `score_decision_confidence` is implemented to the brief, but the current brief logic only produces `high` or `medium` in practice; `low` and `unknown` remain part of the output type for contract completeness.
+
+## Fix Pass
+
+- Converted `ToolSpec` and `ExecutedToolCall` to generic schema classes so downstream code can use `ToolSpec[...]` and `ExecutedToolCall[...]` with typed payload and result models.
+- Added focused coverage for `list_tools()` and `score_decision_confidence()` in `tests/test_agent_tools.py`.
+
+## Fix Verification
+
+- `uv run pytest tests/test_agent_tools.py -v`
+  - Result: 8 passed
+- `uv run ruff check .`
+  - Result: passed

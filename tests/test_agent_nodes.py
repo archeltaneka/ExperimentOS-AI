@@ -32,7 +32,45 @@ class RecordingExperimentAnalysisAgent:
                 "findings": ["Treatment beat control on the primary metric."],
                 "status": "completed",
             },
+            "experiment_metadata": {"primary_metric": "payment_success_rate"},
+            "experiment_metrics": [
+                {
+                    "metric_name": "payment_success_rate",
+                    "variant": "control",
+                    "value": 0.6760,
+                },
+                {
+                    "metric_name": "payment_success_rate",
+                    "variant": "treatment",
+                    "value": 0.7310,
+                },
+            ],
             "metrics": {"experiment_analysis": {"status": "completed"}},
+            "errors": [],
+            "trace": [],
+        }
+
+
+class RecordingBusinessImpactAgent:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def run(self, state):
+        self.calls += 1
+        return {
+            "business_impact": {
+                **state["business_impact"],
+                "summary": "Treatment increased the primary business metric.",
+                "impact_status": "estimated",
+                "primary_business_metric": "payment_success_rate",
+                "baseline_value": 0.6760,
+                "treatment_value": 0.7310,
+                "absolute_lift": 0.055,
+                "relative_lift": 0.081361,
+                "confidence_level": "high",
+                "evidence_citations": list(state["citations"]),
+            },
+            "metrics": {"business_impact": {"status": "estimated"}},
             "errors": [],
             "trace": [],
         }
@@ -200,5 +238,40 @@ def test_experiment_analysis_node_delegates_to_injected_agent_when_required() ->
     assert update["metrics"] == {
         "planner_rule_version": "deterministic_v1",
         "experiment_analysis": {"status": "completed"},
+    }
+    assert update["errors"] == []
+
+
+def test_business_impact_node_skips_when_not_required() -> None:
+    from packages.agents.nodes import business_impact_node
+
+    state = create_initial_state("Hello")
+    state["required_agents"] = ["retrieval", "experiment_analysis"]
+    agent = RecordingBusinessImpactAgent()
+
+    update = business_impact_node(state, business_impact_agent=agent)
+
+    assert agent.calls == 0
+    assert "business_impact" not in update
+    assert "errors" not in update
+    assert update["trace"][0]["node"] == "business_impact"
+    assert update["trace"][0]["event"] == "skipped"
+
+
+def test_business_impact_node_delegates_to_injected_agent_when_required() -> None:
+    from packages.agents.nodes import business_impact_node
+
+    state = create_initial_state("What is the business impact?")
+    state["required_agents"] = ["retrieval", "experiment_analysis", "business_impact"]
+    state["metrics"] = {"planner_rule_version": "deterministic_v1"}
+    agent = RecordingBusinessImpactAgent()
+
+    update = business_impact_node(state, business_impact_agent=agent)
+
+    assert agent.calls == 1
+    assert update["business_impact"]["impact_status"] == "estimated"
+    assert update["metrics"] == {
+        "planner_rule_version": "deterministic_v1",
+        "business_impact": {"status": "estimated"},
     }
     assert update["errors"] == []

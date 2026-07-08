@@ -30,6 +30,12 @@ RequiredAgent = Literal[
 ]
 HumanApprovalStatus = Literal["not_requested", "pending", "approved", "rejected"]
 ToolCallStatus = Literal["pending", "completed", "failed"]
+BusinessImpactStatus = Literal[
+    "estimated",
+    "partial_estimate",
+    "insufficient_data",
+    "not_required",
+]
 
 
 class AgentInputState(BaseModel):
@@ -106,9 +112,48 @@ class ExperimentAnalysis(TypedDict):
     analysis_confidence: str
 
 
+class ExperimentMetadata(TypedDict, total=False):
+    experiment_id: str
+    name: str
+    area: str
+    hypothesis: str
+    owner: dict[str, object]
+    status: str
+    start_date: str
+    end_date: str
+    primary_metric: str
+    secondary_metrics: list[str]
+    imperfections: list[str]
+    business_decision: str
+
+
+class ExperimentMetricRecord(TypedDict, total=False):
+    metric_name: str
+    variant: str
+    value: float
+    unit: str
+    numerator: float
+    denominator: float
+    notes: str
+    lift_vs_control: float
+    p_value: float
+
+
 class BusinessImpact(TypedDict):
     summary: str
-    impacts: list[str]
+    impact_status: BusinessImpactStatus
+    primary_business_metric: str
+    baseline_value: float | None
+    treatment_value: float | None
+    absolute_lift: float | None
+    relative_lift: float | None
+    estimated_annualized_impact: dict[str, object] | None
+    affected_segment: str
+    operational_savings: dict[str, object] | None
+    confidence_level: str
+    assumptions: list[str]
+    limitations: list[str]
+    evidence_citations: list[Citation]
 
 
 class RiskRecord(TypedDict, total=False):
@@ -194,6 +239,8 @@ class AgentState(TypedDict):
     retrieved_chunks: list[RetrievedChunk]
     citations: list[Citation]
     experiment_analysis: ExperimentAnalysis
+    experiment_metadata: ExperimentMetadata
+    experiment_metrics: list[ExperimentMetricRecord]
     business_impact: BusinessImpact
     risks: list[RiskRecord]
     decision: DecisionRecord
@@ -216,6 +263,8 @@ class AgentStateUpdate(TypedDict, total=False):
     retrieved_chunks: list[RetrievedChunk]
     citations: list[Citation]
     experiment_analysis: ExperimentAnalysis
+    experiment_metadata: ExperimentMetadata
+    experiment_metrics: list[ExperimentMetricRecord]
     business_impact: BusinessImpact
     risks: list[RiskRecord]
     decision: DecisionRecord
@@ -317,9 +366,23 @@ def create_initial_state(question: str) -> AgentState:
             "evidence_citations": [],
             "analysis_confidence": "low",
         },
+        "experiment_metadata": {},
+        "experiment_metrics": [],
         "business_impact": {
             "summary": "",
-            "impacts": [],
+            "impact_status": "not_required",
+            "primary_business_metric": "",
+            "baseline_value": None,
+            "treatment_value": None,
+            "absolute_lift": None,
+            "relative_lift": None,
+            "estimated_annualized_impact": None,
+            "affected_segment": "",
+            "operational_savings": None,
+            "confidence_level": "low",
+            "assumptions": [],
+            "limitations": [],
+            "evidence_citations": [],
         },
         "risks": [],
         "decision": {
@@ -346,7 +409,7 @@ def create_initial_state(question: str) -> AgentState:
         "run_metadata": {
             "run_id": str(uuid4()),
             "workflow": "phase2_shared_state",
-            "state_version": 4,
+            "state_version": 5,
         },
     }
 

@@ -103,6 +103,37 @@ def test_human_approval_agent_records_revision_requested() -> None:
     )
 
 
+def test_human_approval_agent_appends_error_for_unknown_status() -> None:
+    state = build_human_approval_state()
+    state["decision"]["approval_required"] = True
+    state["human_approval_input"] = {
+        "status": "escalated",
+        "feedback": "Needs another pass.",
+        "actor": "director@example.com",
+        "timestamp": "2026-07-08T01:02:03Z",
+    }
+
+    update = HumanApprovalAgent().run(state)
+
+    assert update["human_approval"]["status"] == "pending"
+    assert update["human_approval"]["required"] is True
+    assert update["errors"][0]["code"] == "human_approval_invalid_input"
+    assert update["errors"][0]["node"] == "human_approval"
+
+
+def test_human_approval_agent_appends_error_for_malformed_raw_input() -> None:
+    state = build_human_approval_state()
+    state["decision"]["approval_required"] = True
+    state["human_approval_input"] = "approve now"  # type: ignore[assignment]
+
+    update = HumanApprovalAgent().run(state)  # type: ignore[arg-type]
+
+    assert update["human_approval"]["status"] == "pending"
+    assert update["human_approval"]["required"] is True
+    assert update["errors"][0]["code"] == "human_approval_invalid_input"
+    assert update["errors"][0]["node"] == "human_approval"
+
+
 def test_human_approval_agent_returns_error_when_decision_is_missing() -> None:
     state = build_human_approval_state()
     del state["decision"]

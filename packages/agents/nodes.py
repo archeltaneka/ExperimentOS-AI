@@ -18,6 +18,11 @@ class RetrievalAgentLike(Protocol):
         pass
 
 
+class ExperimentAnalysisAgentLike(Protocol):
+    def run(self, state: AgentState) -> AgentStateUpdate:
+        pass
+
+
 def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
     question = state["question"]
     defaults = create_initial_state(question)
@@ -63,6 +68,34 @@ def retrieval_node(
             ],
         }
     update = retrieval_agent.run(state)
+    if "metrics" in update:
+        update = {
+            **update,
+            "metrics": {
+                **state["metrics"],
+                **update["metrics"],
+            },
+        }
+    return update
+
+
+def experiment_analysis_node(
+    state: AgentState,
+    *,
+    experiment_analysis_agent: ExperimentAnalysisAgentLike,
+) -> AgentStateUpdate:
+    required_agents: list[RequiredAgent] = state["required_agents"]
+    if "experiment_analysis" not in required_agents:
+        return {
+            "trace": [
+                create_trace_entry(
+                    node="experiment_analysis",
+                    event="skipped",
+                    details={"reason": "not_required"},
+                )
+            ],
+        }
+    update = experiment_analysis_agent.run(state)
     if "metrics" in update:
         update = {
             **update,

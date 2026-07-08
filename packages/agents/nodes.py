@@ -23,6 +23,11 @@ class ExperimentAnalysisAgentLike(Protocol):
         pass
 
 
+class BusinessImpactAgentLike(Protocol):
+    def run(self, state: AgentState) -> AgentStateUpdate:
+        pass
+
+
 def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
     question = state["question"]
     defaults = create_initial_state(question)
@@ -96,6 +101,34 @@ def experiment_analysis_node(
             ],
         }
     update = experiment_analysis_agent.run(state)
+    if "metrics" in update:
+        update = {
+            **update,
+            "metrics": {
+                **state["metrics"],
+                **update["metrics"],
+            },
+        }
+    return update
+
+
+def business_impact_node(
+    state: AgentState,
+    *,
+    business_impact_agent: BusinessImpactAgentLike,
+) -> AgentStateUpdate:
+    required_agents: list[RequiredAgent] = state["required_agents"]
+    if "business_impact" not in required_agents:
+        return {
+            "trace": [
+                create_trace_entry(
+                    node="business_impact",
+                    event="skipped",
+                    details={"reason": "not_required"},
+                )
+            ],
+        }
+    update = business_impact_agent.run(state)
     if "metrics" in update:
         update = {
             **update,

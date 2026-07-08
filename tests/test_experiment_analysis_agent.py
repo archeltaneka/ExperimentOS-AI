@@ -14,6 +14,7 @@ class StubExperimentRecord:
     primary_metric: str
     secondary_metrics: list[str]
     imperfections: list[str]
+    metadata: dict[str, object]
 
 
 @dataclass(frozen=True)
@@ -57,6 +58,13 @@ class StubExperimentAnalysisRepository:
                 "Sample ratio mismatch from late allocation rule change in mobile web.",
                 "Japan wallet success events were under-counted for the first 18 hours.",
             ],
+            metadata={
+                "area": "payment recommendation",
+                "business_decision": (
+                    "Roll out to AU, SG, and GB; hold JP pending wallet tracking "
+                    "fix."
+                ),
+            },
         )
         metrics = [
             StubStoredMetricRecord(
@@ -194,6 +202,9 @@ def test_experiment_analysis_agent_builds_analysis_for_known_experiment() -> Non
     )
     assert update["experiment_analysis"]["evidence_citations"] == state["citations"]
     assert update["experiment_analysis"]["analysis_confidence"] == "high"
+    assert update["experiment_metadata"]["primary_metric"] == "payment_success_rate"
+    assert update["experiment_metrics"][0]["metric_name"] == "payment_success_rate"
+    assert update["experiment_metrics"][0]["variant"] == "control"
     assert update["metrics"]["experiment_analysis"]["status"] == "completed"
     assert update["metrics"]["experiment_analysis"]["citation_count"] == 1
     assert [entry["event"] for entry in update["trace"]] == ["started", "completed"]

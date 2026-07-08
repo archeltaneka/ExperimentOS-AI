@@ -48,8 +48,22 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
     }
     assert state["business_impact"] == {
         "summary": "",
-        "impacts": [],
+        "impact_status": "not_required",
+        "primary_business_metric": "",
+        "baseline_value": None,
+        "treatment_value": None,
+        "absolute_lift": None,
+        "relative_lift": None,
+        "estimated_annualized_impact": None,
+        "affected_segment": "",
+        "operational_savings": None,
+        "confidence_level": "low",
+        "assumptions": [],
+        "limitations": [],
+        "evidence_citations": [],
     }
+    assert state["experiment_metadata"] == {}
+    assert state["experiment_metrics"] == []
     assert state["risks"] == []
     assert state["decision"] == {
         "recommendation": "",
@@ -68,7 +82,7 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
     assert state["metrics"] == {}
     assert state["errors"] == []
     assert state["trace"] == []
-    assert state["run_metadata"]["state_version"] == 4
+    assert state["run_metadata"]["state_version"] == 5
     assert state["run_metadata"]["workflow"] == "phase2_shared_state"
     assert state["timestamps"]["created_at"]
     assert state["timestamps"]["updated_at"]

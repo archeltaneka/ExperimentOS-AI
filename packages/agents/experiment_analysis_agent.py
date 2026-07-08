@@ -14,6 +14,8 @@ from packages.agents.state import (
     AgentStateUpdate,
     Citation,
     ExperimentAnalysis,
+    ExperimentMetadata,
+    ExperimentMetricRecord,
     MetricComparisonRecord,
     MetricVariantRecord,
     create_error_entry,
@@ -36,6 +38,7 @@ class ExperimentRecord:
     primary_metric: str
     secondary_metrics: list[str]
     imperfections: list[str]
+    metadata: dict[str, object]
 
 
 @dataclass(frozen=True)
@@ -154,7 +157,9 @@ class ExperimentAnalysisAgent:
         started_at = perf_counter()
         trace = [create_trace_entry(node=EXPERIMENT_ANALYSIS_NODE, event="started")]
         try:
-            analysis, resolved_count = run_async(self._analyze(state))
+            analysis, experiment_metadata, experiment_metrics, resolved_count = run_async(
+                self._analyze(state)
+            )
         except Exception as exc:
             return {
                 "errors": [
@@ -187,6 +192,8 @@ class ExperimentAnalysisAgent:
 
         return {
             "experiment_analysis": analysis,
+            "experiment_metadata": experiment_metadata,
+            "experiment_metrics": experiment_metrics,
             "errors": [],
             "trace": [
                 *trace,
@@ -211,7 +218,10 @@ class ExperimentAnalysisAgent:
             },
         }
 
-    async def _analyze(self, state: AgentState) -> tuple[ExperimentAnalysis, int]:
+    async def _analyze(
+        self,
+        state: AgentState,
+    ) -> tuple[ExperimentAnalysis, ExperimentMetadata, list[ExperimentMetricRecord], int]:
         experiment, resolved_count = await self._resolve_experiment(state)
         if experiment is None:
             analysis = _build_insufficient_data_analysis(
@@ -224,7 +234,7 @@ class ExperimentAnalysisAgent:
                 limitations=["Experiment resolution failed before metric analysis could begin."],
                 evidence_citations=list(state["citations"]),
             )
-            return analysis, resolved_count
+            return analysis, {}, [], resolved_count
 
         metrics = await self.repository.get_metrics(experiment.database_id)
         analysis = _build_analysis(
@@ -233,7 +243,12 @@ class ExperimentAnalysisAgent:
             metrics=metrics,
             evidence_citations=_matching_citations(state["citations"], experiment),
         )
-        return analysis, resolved_count
+        return (
+            analysis,
+            _experiment_state_metadata(experiment),
+            [_stored_metric_state_record(metric) for metric in metrics],
+            resolved_count,
+        )
 
     async def _resolve_experiment(self, state: AgentState) -> tuple[ExperimentRecord | None, int]:
         identifiers = list(_candidate_identifiers(state))
@@ -564,6 +579,7 @@ def _to_experiment_record(experiment: Experiment) -> ExperimentRecord:
         primary_metric=str(config.get("primary_metric", "")),
         secondary_metrics=[str(value) for value in config.get("secondary_metrics", [])],
         imperfections=[str(value) for value in config.get("imperfections", [])],
+        metadata=config,
     )
 
 
@@ -584,6 +600,56 @@ def _experiment_matches_hint(experiment: Experiment, normalized_hint: str) -> bo
 def _split_metric_storage_name(storage_name: str) -> tuple[str, str]:
     metric_name, _, variant = storage_name.partition(":")
     return metric_name, variant
+
+
+def _experiment_state_metadata(experiment: ExperimentRecord) -> ExperimentMetadata:
+    metadata: ExperimentMetadata = {
+        "experiment_id": experiment.external_id or experiment.database_id,
+        "name": experiment.name,
+        "hypothesis": experiment.hypothesis,
+        "primary_metric": experiment.primary_metric,
+        "secondary_metrics": list(experiment.secondary_metrics),
+        "imperfections": list(experiment.imperfections),
+    }
+    for key in (
+        "area",
+        "owner",
+        "status",
+        "start_date",
+        "end_date",
+        "business_decision",
+    ):
+        value = experiment.metadata.get(key)
+        if value not in (None, "", []):
+            metadata[key] = value
+    return metadata
+
+
+def _stored_metric_state_record(metric: StoredMetricRecord) -> ExperimentMetricRecord:
+    record: ExperimentMetricRecord = {
+        "metric_name": metric.metric_name,
+        "variant": metric.variant,
+        "value": metric.value,
+    }
+    unit = _metadata_str(metric.metadata, "unit")
+    if unit:
+        record["unit"] = unit
+    numerator = _metadata_float(metric.metadata, "numerator")
+    if numerator is not None:
+        record["numerator"] = numerator
+    denominator = _metadata_float(metric.metadata, "denominator")
+    if denominator is not None:
+        record["denominator"] = denominator
+    notes = _metadata_str(metric.metadata, "notes")
+    if notes:
+        record["notes"] = notes
+    lift_vs_control = _metadata_float(metric.metadata, "lift_vs_control")
+    if lift_vs_control is not None:
+        record["lift_vs_control"] = lift_vs_control
+    p_value = _metadata_float(metric.metadata, "p_value")
+    if p_value is not None:
+        record["p_value"] = p_value
+    return record
 
 
 def _metadata_float(metadata: dict[str, object], key: str) -> float | None:

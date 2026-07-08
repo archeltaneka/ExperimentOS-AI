@@ -143,5 +143,8 @@ def test_retrieval_node_delegates_to_injected_agent_when_required() -> None:
     update = retrieval_node(state, retrieval_agent=agent)
 
     assert agent.calls == 1
-    assert update["metrics"] == {"retrieval": {"retrieved_chunks": 0}}
+    assert update["metrics"] == {
+        "planner_rule_version": "deterministic_v1",
+        "retrieval": {"retrieved_chunks": 0},
+    }
     assert update["errors"] == []

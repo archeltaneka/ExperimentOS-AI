@@ -62,4 +62,13 @@ def retrieval_node(
                 )
             ],
         }
-    return retrieval_agent.run(state)
+    update = retrieval_agent.run(state)
+    if "metrics" in update:
+        update = {
+            **update,
+            "metrics": {
+                **state["metrics"],
+                **update["metrics"],
+            },
+        }
+    return update

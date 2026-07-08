@@ -13,12 +13,13 @@ def build_agent_workflow(
     *,
     retrieval_agent: RetrievalAgentLike | None = None,
 ):
-    runtime_retrieval_agent = retrieval_agent or RetrievalAgent()
+    if retrieval_agent is None:
+        retrieval_agent = RetrievalAgent()
     builder = StateGraph(AgentState, input_schema=AgentInputState)
     builder.add_node("planner", planner_node)
     builder.add_node(
         "retrieval",
-        partial(retrieval_node, retrieval_agent=runtime_retrieval_agent),
+        partial(retrieval_node, retrieval_agent=retrieval_agent),
     )
     builder.add_edge(START, "planner")
     builder.add_edge("planner", "retrieval")

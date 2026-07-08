@@ -120,7 +120,7 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
     assert state["metrics"] == {}
     assert state["errors"] == []
     assert state["trace"] == []
-    assert state["run_metadata"]["state_version"] == 9
+    assert state["run_metadata"]["state_version"] == 10
     assert state["run_metadata"]["workflow"] == "phase2_shared_state"
     assert state["timestamps"]["created_at"]
     assert state["timestamps"]["updated_at"]
@@ -139,7 +139,39 @@ def test_create_initial_state_sets_human_approval_defaults() -> None:
         "actor": None,
         "timestamp": None,
     }
-    assert state["run_metadata"]["state_version"] == 9
+    assert state["run_metadata"]["state_version"] == 10
+
+
+def test_create_initial_state_keeps_tool_calls_empty_with_new_contract() -> None:
+    state = create_initial_state(
+        "Should we roll out the payment recommendation experiment?"
+    )
+
+    assert state["tool_calls"] == []
+    assert state["run_metadata"]["state_version"] == 10
+
+
+def test_validate_state_shape_accepts_structured_tool_call_records() -> None:
+    state = create_initial_state("What happened?")
+    state["tool_calls"] = [
+        {
+            "tool_name": "calculate_absolute_lift",
+            "status": "completed",
+            "node": "business_impact",
+            "input_summary": {
+                "baseline_value": 0.676,
+                "treatment_value": 0.731,
+            },
+            "output_summary": {"absolute_lift": 0.055},
+            "latency_ms": 0.2,
+            "at": "2026-07-08T00:00:00Z",
+        }
+    ]
+
+    validated = validate_state_shape(state)
+
+    assert validated["tool_calls"][0]["tool_name"] == "calculate_absolute_lift"
+    assert validated["tool_calls"][0]["output_summary"] == {"absolute_lift": 0.055}
 
 
 def test_create_initial_state_sets_structured_experiment_analysis_defaults() -> None:

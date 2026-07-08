@@ -53,30 +53,13 @@ def _build_human_approval(
     decision = state.get("decision")
     input_present = bool(state["human_approval_input"])
     input_errors: list[ErrorRecord] = []
-    if not isinstance(decision, dict) or "approval_required" not in decision:
-        return (
-            {
-                "status": "not_requested",
-                "required": False,
-                "feedback": "",
-                "actor": None,
-                "timestamp": None,
-            },
-            [
-                create_error_entry(
-                    code="human_approval_missing_decision",
-                    message="Human approval could not read decision.approval_required.",
-                    node=HUMAN_APPROVAL_NODE,
-                )
-            ],
-            {
-                "status": "not_requested",
-                "approval_required": False,
-                "input_present": input_present,
-            },
-        )
+    if not isinstance(decision, dict):
+        return _missing_decision_fallback(input_present=input_present)
 
-    approval_required = bool(decision["approval_required"])
+    approval_required = decision.get("approval_required")
+    if not isinstance(approval_required, bool):
+        return _missing_decision_fallback(input_present=input_present)
+
     approval_input = _normalize_input(state["human_approval_input"])
     if approval_input["error"] is not None:
         input_errors.append(approval_input["error"])
@@ -128,6 +111,33 @@ def _build_human_approval(
         {
             "status": status,
             "approval_required": True,
+            "input_present": input_present,
+        },
+    )
+
+
+def _missing_decision_fallback(
+    *,
+    input_present: bool,
+) -> tuple[HumanApprovalRecord, list[ErrorRecord], dict[str, object]]:
+    return (
+        {
+            "status": "not_requested",
+            "required": False,
+            "feedback": "",
+            "actor": None,
+            "timestamp": None,
+        },
+        [
+            create_error_entry(
+                code="human_approval_missing_decision",
+                message="Human approval could not read decision.approval_required.",
+                node=HUMAN_APPROVAL_NODE,
+            )
+        ],
+        {
+            "status": "not_requested",
+            "approval_required": False,
             "input_present": input_present,
         },
     )

@@ -152,6 +152,40 @@ def test_human_approval_agent_returns_error_when_decision_is_missing() -> None:
     assert update["trace"][1]["event"] == "completed"
 
 
+def test_human_approval_agent_returns_error_when_approval_required_is_string() -> None:
+    state = build_human_approval_state()
+    state["decision"]["approval_required"] = "true"  # type: ignore[assignment]
+
+    update = HumanApprovalAgent().run(state)
+
+    assert update["human_approval"] == {
+        "status": "not_requested",
+        "required": False,
+        "feedback": "",
+        "actor": None,
+        "timestamp": None,
+    }
+    assert update["errors"][0]["code"] == "human_approval_missing_decision"
+    assert update["errors"][0]["node"] == "human_approval"
+
+
+def test_human_approval_agent_returns_error_when_approval_required_is_none() -> None:
+    state = build_human_approval_state()
+    state["decision"]["approval_required"] = None  # type: ignore[assignment]
+
+    update = HumanApprovalAgent().run(state)
+
+    assert update["human_approval"] == {
+        "status": "not_requested",
+        "required": False,
+        "feedback": "",
+        "actor": None,
+        "timestamp": None,
+    }
+    assert update["errors"][0]["code"] == "human_approval_missing_decision"
+    assert update["errors"][0]["node"] == "human_approval"
+
+
 def test_human_approval_agent_records_trace_and_metrics() -> None:
     state = build_human_approval_state()
     state["decision"]["approval_required"] = True

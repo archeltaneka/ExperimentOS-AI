@@ -6,15 +6,18 @@ from langgraph.graph import END, START, StateGraph
 
 from packages.agents.business_impact_agent import BusinessImpactAgent
 from packages.agents.decision_agent import DecisionAgent
+from packages.agents.executive_summary_agent import ExecutiveSummaryAgent
 from packages.agents.experiment_analysis_agent import ExperimentAnalysisAgent
 from packages.agents.nodes import (
     BusinessImpactAgentLike,
     DecisionAgentLike,
+    ExecutiveSummaryAgentLike,
     ExperimentAnalysisAgentLike,
     RetrievalAgentLike,
     RiskAssessmentAgentLike,
     business_impact_node,
     decision_node,
+    executive_summary_node,
     experiment_analysis_node,
     planner_node,
     retrieval_node,
@@ -32,6 +35,7 @@ def build_agent_workflow(
     business_impact_agent: BusinessImpactAgentLike | None = None,
     risk_assessment_agent: RiskAssessmentAgentLike | None = None,
     decision_agent: DecisionAgentLike | None = None,
+    executive_summary_agent: ExecutiveSummaryAgentLike | None = None,
 ):
     if retrieval_agent is None:
         retrieval_agent = RetrievalAgent()
@@ -43,6 +47,8 @@ def build_agent_workflow(
         risk_assessment_agent = RiskAssessmentAgent()
     if decision_agent is None:
         decision_agent = DecisionAgent()
+    if executive_summary_agent is None:
+        executive_summary_agent = ExecutiveSummaryAgent()
     builder = StateGraph(AgentState, input_schema=AgentInputState)
     builder.add_node("planner", planner_node)
     builder.add_node(
@@ -77,11 +83,19 @@ def build_agent_workflow(
             decision_agent=decision_agent,
         ),
     )
+    builder.add_node(
+        "executive_summary",
+        partial(
+            executive_summary_node,
+            executive_summary_agent=executive_summary_agent,
+        ),
+    )
     builder.add_edge(START, "planner")
     builder.add_edge("planner", "retrieval")
     builder.add_edge("retrieval", "experiment_analysis")
     builder.add_edge("experiment_analysis", "business_impact")
     builder.add_edge("business_impact", "risk_assessment")
     builder.add_edge("risk_assessment", "decision")
-    builder.add_edge("decision", END)
+    builder.add_edge("decision", "executive_summary")
+    builder.add_edge("executive_summary", END)
     return builder.compile()

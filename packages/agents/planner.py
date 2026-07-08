@@ -108,6 +108,7 @@ _REQUIRED_AGENTS: dict[AgentIntent, list[RequiredAgent]] = {
         "experiment_analysis",
         "business_impact",
         "risk_assessment",
+        "decision",
         "executive_summary",
     ],
     "unknown": [],

@@ -38,6 +38,11 @@ class DecisionAgentLike(Protocol):
         pass
 
 
+class ExecutiveSummaryAgentLike(Protocol):
+    def run(self, state: AgentState) -> AgentStateUpdate:
+        pass
+
+
 def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
     question = state["question"]
     defaults = create_initial_state(question)
@@ -195,6 +200,34 @@ def decision_node(
             ],
         }
     update = decision_agent.run(state)
+    if "metrics" in update:
+        update = {
+            **update,
+            "metrics": {
+                **state["metrics"],
+                **update["metrics"],
+            },
+        }
+    return update
+
+
+def executive_summary_node(
+    state: AgentState,
+    *,
+    executive_summary_agent: ExecutiveSummaryAgentLike,
+) -> AgentStateUpdate:
+    required_agents: list[RequiredAgent] = state["required_agents"]
+    if "executive_summary" not in required_agents:
+        return {
+            "trace": [
+                create_trace_entry(
+                    node="executive_summary",
+                    event="skipped",
+                    details={"reason": "not_required"},
+                )
+            ],
+        }
+    update = executive_summary_agent.run(state)
     if "metrics" in update:
         update = {
             **update,

@@ -59,6 +59,12 @@ DecisionRecommendation = Literal[
     "unknown",
 ]
 DecisionConfidence = Literal["high", "medium", "low", "unknown"]
+ExecutiveSummaryStatus = Literal[
+    "generated",
+    "partial_summary",
+    "insufficient_data",
+    "not_required",
+]
 
 
 class AgentInputState(BaseModel):
@@ -227,6 +233,17 @@ class DecisionRecord(TypedDict):
 
 
 class ExecutiveSummary(TypedDict):
+    summary_status: ExecutiveSummaryStatus
+    headline: str
+    recommendation: str
+    key_findings: list[str]
+    business_impact_summary: str
+    risk_summary: str
+    decision_rationale: str
+    recommended_next_actions: list[str]
+    confidence: DecisionConfidence
+    evidence_citations: list[Citation]
+    limitations: list[str]
     summary: str
 
 
@@ -475,6 +492,17 @@ def create_initial_state(question: str) -> AgentState:
             "limitations": [],
         },
         "executive_summary": {
+            "summary_status": "not_required",
+            "headline": "",
+            "recommendation": "",
+            "key_findings": [],
+            "business_impact_summary": "",
+            "risk_summary": "",
+            "decision_rationale": "",
+            "recommended_next_actions": [],
+            "confidence": "unknown",
+            "evidence_citations": [],
+            "limitations": [],
             "summary": "",
         },
         "human_approval": {
@@ -494,7 +522,7 @@ def create_initial_state(question: str) -> AgentState:
         "run_metadata": {
             "run_id": str(uuid4()),
             "workflow": "phase2_shared_state",
-            "state_version": 7,
+            "state_version": 8,
         },
     }
 

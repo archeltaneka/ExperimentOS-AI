@@ -249,6 +249,57 @@ class StubGraphDecisionAgent:
         }
 
 
+class StubGraphExecutiveSummaryAgent:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def run(self, state):
+        self.calls.append(state)
+        return {
+            "executive_summary": {
+                **state["executive_summary"],
+                "summary_status": "generated",
+                "headline": "Rollout is supported by the current evidence.",
+                "recommendation": str(state["decision"]["recommendation"]),
+                "key_findings": [
+                    "Primary metric improved.",
+                    "Business impact estimate is positive.",
+                ],
+                "business_impact_summary": str(state["business_impact"]["summary"]),
+                "risk_summary": (
+                    "Risk is currently assessed as medium with 1 material factor "
+                    "recorded."
+                ),
+                "decision_rationale": str(state["decision"]["rationale"]),
+                "recommended_next_actions": list(state["decision"]["recommended_next_actions"]),
+                "confidence": str(state["decision"]["confidence"]),
+                "evidence_citations": list(state["citations"]),
+                "limitations": [],
+                "summary": "Rollout is supported by the current evidence.",
+            },
+            "metrics": {
+                **state["metrics"],
+                "executive_summary": {
+                    "status": "generated",
+                    "citation_count": len(state["citations"]),
+                },
+            },
+            "trace": [
+                {
+                    "node": "executive_summary",
+                    "event": "started",
+                    "at": "2026-07-08T00:00:10Z",
+                },
+                {
+                    "node": "executive_summary",
+                    "event": "completed",
+                    "at": "2026-07-08T00:00:11Z",
+                },
+            ],
+            "errors": [],
+        }
+
+
 def test_build_agent_workflow_exposes_question_only_input_schema() -> None:
     graph = build_agent_workflow(
         retrieval_agent=StubGraphRetrievalAgent(),
@@ -256,6 +307,7 @@ def test_build_agent_workflow_exposes_question_only_input_schema() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
     schema = graph.get_input_schema().model_json_schema()
@@ -271,6 +323,7 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
     result = graph.invoke({"question": "Summarize the checkout UX experiment for executives."})
@@ -283,6 +336,7 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
         "experiment_analysis",
         "business_impact",
         "risk_assessment",
+        "decision",
         "executive_summary",
     ]
     assert [entry["node"] for entry in result["trace"]] == [
@@ -296,6 +350,9 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
         "risk_assessment",
         "risk_assessment",
         "decision",
+        "decision",
+        "executive_summary",
+        "executive_summary",
     ]
     assert [entry["event"] for entry in result["trace"]] == [
         "planned",
@@ -307,7 +364,10 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
         "completed",
         "started",
         "completed",
-        "skipped",
+        "started",
+        "completed",
+        "started",
+        "completed",
     ]
     assert result["human_approval"]["status"] == "not_requested"
     assert result["run_metadata"]["workflow"] == "phase2_shared_state"
@@ -316,11 +376,13 @@ def test_build_agent_workflow_returns_invokable_graph() -> None:
     assert result["metrics"]["experiment_analysis"]["status"] == "completed"
     assert result["metrics"]["business_impact"]["status"] == "estimated"
     assert result["metrics"]["risk_assessment"]["status"] == "assessed"
-    assert "decision" not in result["metrics"]
+    assert result["metrics"]["decision"]["status"] == "decided"
+    assert result["metrics"]["executive_summary"]["status"] == "generated"
     assert result["experiment_analysis"]["status"] == "completed"
     assert result["business_impact"]["impact_status"] == "estimated"
     assert result["risk_assessment"]["risk_status"] == "assessed"
-    assert result["decision"]["decision_status"] == "not_required"
+    assert result["decision"]["decision_status"] == "decided"
+    assert result["executive_summary"]["summary_status"] == "generated"
 
 
 def test_agent_workflow_service_runs_graph_and_returns_state() -> None:
@@ -330,6 +392,7 @@ def test_agent_workflow_service_runs_graph_and_returns_state() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
     result = service.run("What happened in the payment recommendation experiment?")
@@ -341,6 +404,7 @@ def test_agent_workflow_service_runs_graph_and_returns_state() -> None:
     assert result["business_impact"]["impact_status"] == "not_required"
     assert result["risk_assessment"]["risk_status"] == "not_required"
     assert result["decision"]["decision_status"] == "not_required"
+    assert result["executive_summary"]["summary_status"] == "not_required"
     assert result["errors"] == []
     assert result["tool_calls"] == []
     assert result["metrics"]["planner_rule_version"] == "deterministic_v1"
@@ -363,6 +427,7 @@ def test_build_agent_workflow_accepts_injected_retrieval_agent() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
     result = graph.invoke({"question": "What happened in the payment recommendation experiment?"})
@@ -376,11 +441,13 @@ def test_build_agent_workflow_accepts_injected_retrieval_agent() -> None:
         "business_impact",
         "risk_assessment",
         "decision",
+        "executive_summary",
     ]
     assert [entry["event"] for entry in result["trace"]] == [
         "planned",
         "started",
         "completed",
+        "skipped",
         "skipped",
         "skipped",
         "skipped",
@@ -407,6 +474,7 @@ def test_agent_workflow_service_accepts_injected_retrieval_agent() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
     result = service.run("What happened in the payment recommendation experiment?")
@@ -429,6 +497,7 @@ def test_build_agent_workflow_skips_retrieval_when_not_required() -> None:
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
     result = graph.invoke({"question": "Hello"})
@@ -442,9 +511,11 @@ def test_build_agent_workflow_skips_retrieval_when_not_required() -> None:
         "business_impact",
         "risk_assessment",
         "decision",
+        "executive_summary",
     ]
     assert [entry["event"] for entry in result["trace"]] == [
         "planned",
+        "skipped",
         "skipped",
         "skipped",
         "skipped",
@@ -496,6 +567,7 @@ def test_build_agent_workflow_runs_experiment_analysis_after_retrieval() -> None
         business_impact_agent=StubGraphBusinessImpactAgent(),
         risk_assessment_agent=StubGraphRiskAssessmentAgent(),
         decision_agent=StubGraphDecisionAgent(),
+        executive_summary_agent=StubGraphExecutiveSummaryAgent(),
     )
 
     result = graph.invoke({"question": "Summarize the checkout UX experiment for executives."})
@@ -511,9 +583,14 @@ def test_build_agent_workflow_runs_experiment_analysis_after_retrieval() -> None
         "risk_assessment",
         "risk_assessment",
         "decision",
+        "decision",
+        "executive_summary",
+        "executive_summary",
     ]
     assert result["experiment_analysis"]["status"] == "completed"
     assert result["experiment_analysis"]["evidence_citations"] == result["citations"]
     assert result["business_impact"]["evidence_citations"] == result["citations"]
     assert result["risk_assessment"]["evidence_citations"] == result["citations"]
-    assert result["decision"]["decision_status"] == "not_required"
+    assert result["decision"]["decision_status"] == "decided"
+    assert result["executive_summary"]["summary_status"] == "generated"
+    assert result["executive_summary"]["evidence_citations"] == result["citations"]

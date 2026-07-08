@@ -95,6 +95,17 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
         "limitations": [],
     }
     assert state["executive_summary"] == {
+        "summary_status": "not_required",
+        "headline": "",
+        "recommendation": "",
+        "key_findings": [],
+        "business_impact_summary": "",
+        "risk_summary": "",
+        "decision_rationale": "",
+        "recommended_next_actions": [],
+        "confidence": "unknown",
+        "evidence_citations": [],
+        "limitations": [],
         "summary": "",
     }
     assert state["human_approval"] == {
@@ -107,7 +118,7 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
     assert state["metrics"] == {}
     assert state["errors"] == []
     assert state["trace"] == []
-    assert state["run_metadata"]["state_version"] == 7
+    assert state["run_metadata"]["state_version"] == 8
     assert state["run_metadata"]["workflow"] == "phase2_shared_state"
     assert state["timestamps"]["created_at"]
     assert state["timestamps"]["updated_at"]
@@ -134,6 +145,25 @@ def test_create_initial_state_sets_structured_experiment_analysis_defaults() -> 
         "limitations": [],
         "evidence_citations": [],
         "analysis_confidence": "low",
+    }
+
+
+def test_create_initial_state_sets_structured_executive_summary_defaults() -> None:
+    state = create_initial_state("Summarize this experiment for executives.")
+
+    assert state["executive_summary"] == {
+        "summary_status": "not_required",
+        "headline": "",
+        "recommendation": "",
+        "key_findings": [],
+        "business_impact_summary": "",
+        "risk_summary": "",
+        "decision_rationale": "",
+        "recommended_next_actions": [],
+        "confidence": "unknown",
+        "evidence_citations": [],
+        "limitations": [],
+        "summary": "",
     }
 
 

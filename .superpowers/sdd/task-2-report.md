@@ -1,72 +1,200 @@
-# Task 2 Report: Add The Tools Package With Registry And Executor
+# Task 2 Report: Human Approval Agent And Node
 
 ## Status
 
-DONE
+Completed.
 
-## Scope Delivered
+## Scope Completed
 
-- Added `packages.agents.tools` as a self-contained deterministic tool layer.
-- Implemented typed tool schemas with `ToolSpec` and `ExecutedToolCall`.
-- Added a static import-time registry with `get_tool`, `list_tools`, and `execute_tool`.
-- Implemented deterministic business, risk, and decision tool handlers:
-  - `calculate_absolute_lift`
-  - `calculate_relative_lift`
-  - `score_experiment_risk`
-  - `validate_required_evidence`
-  - `score_decision_confidence`
-- Added focused tests for registry lookup, execution success paths, zero-baseline handling, evidence validation, and structured failure recording.
+- Added `packages/agents/human_approval_agent.py`.
+- Added `HumanApprovalAgent.run(state)` with deterministic normalization of
+  `human_approval_input` into canonical `human_approval`.
+- Added `HumanApprovalAgentLike` to `packages/agents/nodes.py`.
+- Added `human_approval_node(...)` to `packages/agents/nodes.py`.
+- Added focused coverage in `tests/test_human_approval_agent.py`.
+- Added node coverage in `tests/test_agent_nodes.py`.
 
 ## TDD Record
 
-1. Added `tests/test_agent_tools.py` first.
-2. Ran `uv run pytest tests\test_agent_tools.py -v`.
-3. Confirmed red state from `ModuleNotFoundError: No module named 'packages.agents.tools'`.
-4. Implemented the tools package.
-5. Re-ran the focused test file to confirm green.
+### Red
+
+Added the approval-agent and node tests first:
+
+- `tests/test_human_approval_agent.py`
+- new human-approval node cases in `tests/test_agent_nodes.py`
+
+Then ran:
+
+```powershell
+uv run pytest tests/test_human_approval_agent.py tests/test_agent_nodes.py -v
+```
+
+Observed expected failure during collection:
+
+- `ModuleNotFoundError: No module named 'packages.agents.human_approval_agent'`
+
+This confirmed the tests were failing for the intended missing implementation.
+
+### Green
+
+Implemented the minimal deterministic behavior:
+
+- Missing or unreadable `decision.approval_required` returns canonical
+  `human_approval` with `status="not_requested"` and records
+  `human_approval_missing_decision`.
+- `approval_required=False` returns `status="skipped"` and `required=False`.
+- `approval_required=True` with missing or invalid input returns
+  `status="pending"` and `required=True`.
+- Valid normalized statuses are exactly:
+  - `approved`
+  - `rejected`
+  - `revision_requested`
+- The agent emits `started` and `completed` trace entries.
+- The agent records deterministic metrics for status, latency, approval
+  requirement, input presence, feedback presence, and error count.
+- The node skips when `human_approval` is not required and delegates to the
+  injected agent when it is required.
+- The node merges returned metrics with existing state metrics, matching the
+  established node pattern.
+
+### Refactor
+
+Kept refactoring minimal:
+
+- Extracted `_build_human_approval(...)`.
+- Extracted `_normalize_input(...)`.
+- Extracted `_normalize_optional_string(...)`.
 
 ## Verification
 
-- `uv run pytest tests\test_agent_tools.py -v`
-  - Result: 6 passed
-- `uv run ruff check .`
-  - Result: passed after one import-style fix in `schemas.py`
+Focused tests:
+
+```powershell
+uv run pytest tests/test_human_approval_agent.py tests/test_agent_nodes.py -v
+```
+
+Result:
+
+- `24 passed`
+
+Lint:
+
+```powershell
+uv run ruff check .
+```
+
+Result:
+
+- `All checks passed!`
+
+## Tests Added Or Updated
+
+### `tests/test_human_approval_agent.py`
+
+Covered:
+
+- approval skipped when not required
+- pending when required but no input provided
+- approved normalization
+- rejected normalization with feedback
+- revision requested normalization with feedback
+- missing decision error behavior
+- trace and metrics behavior
+
+### `tests/test_agent_nodes.py`
+
+Covered:
+
+- node skip behavior when `human_approval` is not in `required_agents`
+- delegation to injected approval agent when required
+- metrics merge behavior for approval node updates
 
 ## Self-Review
 
-- Kept the tools package self-contained, including its own UTC timestamp helper.
-- Preserved existing public API surfaces outside the owned files.
-- Avoided model-driven tool calling, network behavior, dynamic discovery, and plugin abstractions.
-- Kept registration static and deterministic via import-time registration in `registry.py`.
-- Confirmed invalid payloads produce structured failed `ToolCallRecord` entries instead of raising from `execute_tool`.
+Checked the implementation against the task brief and constraints:
 
-## Files Changed
+- Did not modify `POST /ask`.
+- Did not change `QuestionAnsweringService`.
+- Did not edit `workflow.py` or `service.py`.
+- Did not add UI, frontend, interrupts, checkpointers, persistence, auth,
+  tool calling, or new LLM calls.
+- Kept the graph input schema unchanged as question-only.
+- Kept implementation deterministic and testable.
+- Limited code changes to the four owned files.
 
-- `packages/agents/tools/__init__.py`
-- `packages/agents/tools/schemas.py`
-- `packages/agents/tools/registry.py`
-- `packages/agents/tools/business.py`
-- `packages/agents/tools/risk.py`
-- `packages/agents/tools/decision.py`
-- `tests/test_agent_tools.py`
+## Notes
+
+- The approval agent intentionally only normalizes state and records status; it
+  does not perform real human interaction or workflow orchestration. That
+  remains deferred to Task 3.
+- A transient Windows sandbox spawn issue occurred on one read-only Git
+  inspection command after the commit, but it had no effect on the code,
+  tests, or repository state.
 
 ## Commit
 
-- `[New Feature] Add deterministic agent tools package`
+- `116067a` `[New Feature] Add deterministic human approval agent`
 
-## Concerns
+## Task 2 Focused Fix: Invalid Human Approval Input
 
-- No functional blockers.
-- `score_decision_confidence` is implemented to the brief, but the current brief logic only produces `high` or `medium` in practice; `low` and `unknown` remain part of the output type for contract completeness.
+### Additional Red-Green Cycle
 
-## Fix Pass
+Added focused failing tests first for the approved spec update:
 
-- Converted `ToolSpec` and `ExecutedToolCall` to generic schema classes so downstream code can use `ToolSpec[...]` and `ExecutedToolCall[...]` with typed payload and result models.
-- Added focused coverage for `list_tools()` and `score_decision_confidence()` in `tests/test_agent_tools.py`.
+- unknown human approval status should append `human_approval_invalid_input`
+- malformed raw `human_approval_input` that is not a mapping should append
+  `human_approval_invalid_input`
 
-## Fix Verification
+Red verification command:
 
-- `uv run pytest tests/test_agent_tools.py -v`
-  - Result: 8 passed
-- `uv run ruff check .`
-  - Result: passed
+```powershell
+uv run pytest tests/test_human_approval_agent.py tests/test_agent_nodes.py -v
+```
+
+Observed expected failures:
+
+- unknown status fell back to `pending` but returned no appended error
+- malformed raw input raised `AttributeError` on `.get(...)`
+
+### Fix Applied
+
+Updated `packages/agents/human_approval_agent.py` so that:
+
+- raw approval input is validated safely before field access
+- non-mapping raw input appends a structured
+  `human_approval_invalid_input` error with deterministic details
+- present input with an unknown status appends the same structured error
+- fallback behavior remains deterministic:
+  - `approval_required=True` -> canonical status `pending`
+  - `approval_required=False` -> canonical status `skipped`
+- invalid-input errors are included in agent `errors` output and therefore in
+  `error_count` metrics
+
+### Tests Added
+
+In `tests/test_human_approval_agent.py`:
+
+- `test_human_approval_agent_appends_error_for_unknown_status`
+- `test_human_approval_agent_appends_error_for_malformed_raw_input`
+
+### Fresh Verification
+
+Focused tests:
+
+```powershell
+uv run pytest tests/test_human_approval_agent.py tests/test_agent_nodes.py -v
+```
+
+Result:
+
+- `26 passed`
+
+Lint:
+
+```powershell
+uv run ruff check .
+```
+
+Result:
+
+- `All checks passed!`

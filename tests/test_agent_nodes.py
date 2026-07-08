@@ -132,6 +132,40 @@ class RecordingDecisionAgent:
         }
 
 
+class RecordingExecutiveSummaryAgent:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def run(self, state):
+        self.calls += 1
+        return {
+            "executive_summary": {
+                **state["executive_summary"],
+                "summary_status": "generated",
+                "headline": "Rollout is supported by the current evidence.",
+                "recommendation": "rollout",
+                "key_findings": [
+                    "Primary metric improved.",
+                    "Risk remained manageable.",
+                ],
+                "business_impact_summary": "Treatment increased the primary business metric.",
+                "risk_summary": (
+                    "Risk is currently assessed as low with no material blocking "
+                    "factors recorded."
+                ),
+                "decision_rationale": "Positive lift, positive business impact, and low risk.",
+                "recommended_next_actions": ["Roll out gradually and monitor guardrails."],
+                "confidence": "high",
+                "evidence_citations": list(state["citations"]),
+                "limitations": [],
+                "summary": "Rollout is supported by the current evidence.",
+            },
+            "metrics": {"executive_summary": {"status": "generated"}},
+            "errors": [],
+            "trace": [],
+        }
+
+
 def test_planner_node_classifies_decision_questions_with_partial_update() -> None:
     state = {
         "question": "Should we roll out the payment recommendation experiment?",
@@ -425,5 +459,63 @@ def test_decision_node_delegates_to_injected_agent_when_required() -> None:
     assert update["metrics"] == {
         "planner_rule_version": "deterministic_v1",
         "decision": {"status": "decided"},
+    }
+    assert update["errors"] == []
+
+
+def test_executive_summary_node_skips_when_not_required() -> None:
+    from packages.agents.nodes import executive_summary_node
+
+    state = create_initial_state("Hello")
+    state["required_agents"] = [
+        "retrieval",
+        "experiment_analysis",
+        "business_impact",
+        "risk_assessment",
+        "decision",
+    ]
+    agent = RecordingExecutiveSummaryAgent()
+
+    update = executive_summary_node(state, executive_summary_agent=agent)
+
+    assert agent.calls == 0
+    assert "executive_summary" not in update
+    assert "errors" not in update
+    assert update["trace"][0]["node"] == "executive_summary"
+    assert update["trace"][0]["event"] == "skipped"
+
+
+def test_executive_summary_node_delegates_to_injected_agent_when_required() -> None:
+    from packages.agents.nodes import executive_summary_node
+
+    state = create_initial_state("Summarize this for executives.")
+    state["required_agents"] = [
+        "retrieval",
+        "experiment_analysis",
+        "business_impact",
+        "risk_assessment",
+        "decision",
+        "executive_summary",
+    ]
+    state["metrics"] = {"planner_rule_version": "deterministic_v1"}
+    state["citations"] = [
+        {
+            "document_id": "doc-1",
+            "experiment_id": "exp-1",
+            "quote": "Treatment improved the primary metric.",
+            "section": "Results",
+            "metadata": {"section": "Results"},
+        }
+    ]
+    agent = RecordingExecutiveSummaryAgent()
+
+    update = executive_summary_node(state, executive_summary_agent=agent)
+
+    assert agent.calls == 1
+    assert update["executive_summary"]["summary_status"] == "generated"
+    assert update["executive_summary"]["recommendation"] == "rollout"
+    assert update["metrics"] == {
+        "planner_rule_version": "deterministic_v1",
+        "executive_summary": {"status": "generated"},
     }
     assert update["errors"] == []

@@ -58,6 +58,7 @@ def test_plan_question_classifies_executive_summary_requests() -> None:
         "experiment_analysis",
         "business_impact",
         "risk_assessment",
+        "decision",
         "executive_summary",
     ]
 

@@ -5,13 +5,16 @@ from functools import partial
 from langgraph.graph import END, START, StateGraph
 
 from packages.agents.business_impact_agent import BusinessImpactAgent
+from packages.agents.decision_agent import DecisionAgent
 from packages.agents.experiment_analysis_agent import ExperimentAnalysisAgent
 from packages.agents.nodes import (
     BusinessImpactAgentLike,
+    DecisionAgentLike,
     ExperimentAnalysisAgentLike,
     RetrievalAgentLike,
     RiskAssessmentAgentLike,
     business_impact_node,
+    decision_node,
     experiment_analysis_node,
     planner_node,
     retrieval_node,
@@ -28,6 +31,7 @@ def build_agent_workflow(
     experiment_analysis_agent: ExperimentAnalysisAgentLike | None = None,
     business_impact_agent: BusinessImpactAgentLike | None = None,
     risk_assessment_agent: RiskAssessmentAgentLike | None = None,
+    decision_agent: DecisionAgentLike | None = None,
 ):
     if retrieval_agent is None:
         retrieval_agent = RetrievalAgent()
@@ -37,6 +41,8 @@ def build_agent_workflow(
         business_impact_agent = BusinessImpactAgent()
     if risk_assessment_agent is None:
         risk_assessment_agent = RiskAssessmentAgent()
+    if decision_agent is None:
+        decision_agent = DecisionAgent()
     builder = StateGraph(AgentState, input_schema=AgentInputState)
     builder.add_node("planner", planner_node)
     builder.add_node(
@@ -64,10 +70,18 @@ def build_agent_workflow(
             risk_assessment_agent=risk_assessment_agent,
         ),
     )
+    builder.add_node(
+        "decision",
+        partial(
+            decision_node,
+            decision_agent=decision_agent,
+        ),
+    )
     builder.add_edge(START, "planner")
     builder.add_edge("planner", "retrieval")
     builder.add_edge("retrieval", "experiment_analysis")
     builder.add_edge("experiment_analysis", "business_impact")
     builder.add_edge("business_impact", "risk_assessment")
-    builder.add_edge("risk_assessment", END)
+    builder.add_edge("risk_assessment", "decision")
+    builder.add_edge("decision", END)
     return builder.compile()

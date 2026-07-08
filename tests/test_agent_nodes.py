@@ -100,6 +100,38 @@ class RecordingRiskAssessmentAgent:
         }
 
 
+class RecordingDecisionAgent:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def run(self, state):
+        self.calls += 1
+        return {
+            "decision": {
+                **state["decision"],
+                "decision_status": "decided",
+                "recommendation": "rollout",
+                "confidence": "high",
+                "rationale": "Positive lift, positive business impact, and low risk.",
+                "supporting_evidence": [
+                    "Primary metric improved.",
+                    "Business impact estimate is positive.",
+                ],
+                "blocking_issues": [],
+                "recommended_next_actions": [
+                    "Roll out gradually and monitor guardrails.",
+                ],
+                "approval_required": True,
+                "evidence_citations": list(state["citations"]),
+                "assumptions": ["Decision uses deterministic rules."],
+                "limitations": [],
+            },
+            "metrics": {"decision": {"status": "decided"}},
+            "errors": [],
+            "trace": [],
+        }
+
+
 def test_planner_node_classifies_decision_questions_with_partial_update() -> None:
     state = {
         "question": "Should we roll out the payment recommendation experiment?",
@@ -337,5 +369,61 @@ def test_risk_assessment_node_delegates_to_injected_agent_when_required() -> Non
     assert update["metrics"] == {
         "planner_rule_version": "deterministic_v1",
         "risk_assessment": {"status": "assessed"},
+    }
+    assert update["errors"] == []
+
+
+def test_decision_node_skips_when_not_required() -> None:
+    from packages.agents.nodes import decision_node
+
+    state = create_initial_state("Hello")
+    state["required_agents"] = [
+        "retrieval",
+        "experiment_analysis",
+        "business_impact",
+        "risk_assessment",
+    ]
+    agent = RecordingDecisionAgent()
+
+    update = decision_node(state, decision_agent=agent)
+
+    assert agent.calls == 0
+    assert "decision" not in update
+    assert "errors" not in update
+    assert update["trace"][0]["node"] == "decision"
+    assert update["trace"][0]["event"] == "skipped"
+
+
+def test_decision_node_delegates_to_injected_agent_when_required() -> None:
+    from packages.agents.nodes import decision_node
+
+    state = create_initial_state("Should we roll out the payment recommendation experiment?")
+    state["required_agents"] = [
+        "retrieval",
+        "experiment_analysis",
+        "business_impact",
+        "risk_assessment",
+        "decision",
+    ]
+    state["metrics"] = {"planner_rule_version": "deterministic_v1"}
+    state["citations"] = [
+        {
+            "document_id": "doc-1",
+            "experiment_id": "exp-1",
+            "quote": "Treatment improved the primary metric.",
+            "section": "Results",
+            "metadata": {"section": "Results"},
+        }
+    ]
+    agent = RecordingDecisionAgent()
+
+    update = decision_node(state, decision_agent=agent)
+
+    assert agent.calls == 1
+    assert update["decision"]["decision_status"] == "decided"
+    assert update["decision"]["recommendation"] == "rollout"
+    assert update["metrics"] == {
+        "planner_rule_version": "deterministic_v1",
+        "decision": {"status": "decided"},
     }
     assert update["errors"] == []

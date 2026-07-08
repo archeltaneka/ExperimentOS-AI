@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from packages.agents.business_impact_agent import BusinessImpactAgent
+from packages.agents.decision_agent import DecisionAgent
 from packages.agents.experiment_analysis_agent import ExperimentAnalysisAgent
 from packages.agents.nodes import (
     BusinessImpactAgentLike,
+    DecisionAgentLike,
     ExperimentAnalysisAgentLike,
     RetrievalAgentLike,
     RiskAssessmentAgentLike,
@@ -25,6 +27,7 @@ class AgentWorkflowService:
         experiment_analysis_agent: ExperimentAnalysisAgentLike | None = None,
         business_impact_agent: BusinessImpactAgentLike | None = None,
         risk_assessment_agent: RiskAssessmentAgentLike | None = None,
+        decision_agent: DecisionAgentLike | None = None,
     ) -> None:
         if retrieval_agent is None:
             retrieval_agent = RetrievalAgent()
@@ -34,11 +37,14 @@ class AgentWorkflowService:
             business_impact_agent = BusinessImpactAgent()
         if risk_assessment_agent is None:
             risk_assessment_agent = RiskAssessmentAgent()
+        if decision_agent is None:
+            decision_agent = DecisionAgent()
         self.workflow = build_agent_workflow(
             retrieval_agent=retrieval_agent,
             experiment_analysis_agent=experiment_analysis_agent,
             business_impact_agent=business_impact_agent,
             risk_assessment_agent=risk_assessment_agent,
+            decision_agent=decision_agent,
         )
 
     def run(self, question: str) -> AgentState:

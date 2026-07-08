@@ -43,6 +43,22 @@ RiskAssessmentStatus = Literal[
     "not_required",
 ]
 OverallRiskLevel = Literal["low", "medium", "high", "unknown"]
+DecisionStatus = Literal[
+    "decided",
+    "needs_more_data",
+    "blocked",
+    "not_required",
+    "insufficient_data",
+]
+DecisionRecommendation = Literal[
+    "rollout",
+    "do_not_rollout",
+    "continue_experiment",
+    "rollback",
+    "needs_more_data",
+    "unknown",
+]
+DecisionConfidence = Literal["high", "medium", "low", "unknown"]
 
 
 class AgentInputState(BaseModel):
@@ -197,8 +213,17 @@ class RiskRecord(TypedDict, total=False):
 
 
 class DecisionRecord(TypedDict):
-    recommendation: str
+    decision_status: DecisionStatus
+    recommendation: DecisionRecommendation
+    confidence: DecisionConfidence
     rationale: str
+    supporting_evidence: list[str]
+    blocking_issues: list[str]
+    recommended_next_actions: list[str]
+    approval_required: bool
+    evidence_citations: list[Citation]
+    assumptions: list[str]
+    limitations: list[str]
 
 
 class ExecutiveSummary(TypedDict):
@@ -437,8 +462,17 @@ def create_initial_state(question: str) -> AgentState:
         },
         "risks": [],
         "decision": {
-            "recommendation": "",
+            "decision_status": "not_required",
+            "recommendation": "unknown",
+            "confidence": "unknown",
             "rationale": "",
+            "supporting_evidence": [],
+            "blocking_issues": [],
+            "recommended_next_actions": [],
+            "approval_required": False,
+            "evidence_citations": [],
+            "assumptions": [],
+            "limitations": [],
         },
         "executive_summary": {
             "summary": "",
@@ -460,7 +494,7 @@ def create_initial_state(question: str) -> AgentState:
         "run_metadata": {
             "run_id": str(uuid4()),
             "workflow": "phase2_shared_state",
-            "state_version": 6,
+            "state_version": 7,
         },
     }
 

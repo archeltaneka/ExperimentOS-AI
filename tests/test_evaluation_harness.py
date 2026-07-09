@@ -311,6 +311,9 @@ def test_report_renderer_includes_summary_and_low_performing_rows() -> None:
             estimated_cost_usd=0.00156,
         ),
         retrieved_documents=("Adaptive Payment Method Recommendation",),
+        retrieved_contexts=(
+            "The recommendation was to roll out with wallet telemetry monitoring.",
+        ),
         error=None,
     )
     run_result = EvaluationRun(

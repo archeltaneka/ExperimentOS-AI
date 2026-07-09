@@ -149,10 +149,44 @@ $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:54
 uv run python -m packages.evals.run --dataset data/eval/qa_dataset.json --output reports/evaluation.md --top-k 5 --embedding-provider fake --llm-provider mock
 ```
 
+Optional RAGAS evaluation lives alongside the custom harness instead of replacing it.
+
+Install the optional dependency group:
+
+```powershell
+uv sync --group eval
+```
+
+Run the default offline-safe RAGAS report:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output reports/phase3/ragas_report.md --json-output reports/phase3/ragas_report.json
+```
+
+Default RAGAS behavior:
+
+- computes `id_based_context_precision`
+- computes `id_based_context_recall`
+- skips judge-backed metrics unless a judge provider is configured
+- writes both Markdown and JSON reports
+
+Judge-backed metrics are opt-in:
+
+- `context_precision`
+- `context_recall`
+- `faithfulness`
+- `answer_relevancy`
+
+To enable judge-backed metrics, set `RAGAS_JUDGE_LLM_PROVIDER` and optionally
+`RAGAS_JUDGE_LLM_MODEL`. `answer_relevancy` also needs `RAGAS_JUDGE_EMBEDDING_PROVIDER` and
+optionally `RAGAS_JUDGE_EMBEDDING_MODEL`. No live OpenAI or Gemini calls are required by default.
+
 ## Phase 3 Baseline
 
 Phase 3 starts with a deterministic local reliability baseline built from the existing
-repository-owned evaluation surfaces. This baseline does not integrate external LLMOps tools yet.
+repository-owned evaluation surfaces. The baseline stays deterministic even though RAGAS is now
+available as a separate optional report path.
 
 Run it with:
 
@@ -175,7 +209,7 @@ Generated outputs:
 - `reports/phase3/baseline_report.md`
 
 See `docs/phase3/reliability_baseline.md` for the current capabilities, gaps, and why external
-LLMOps integrations are intentionally deferred at this stage.
+LLMOps integrations remain optional at this stage.
 
 ## Provider Choices
 

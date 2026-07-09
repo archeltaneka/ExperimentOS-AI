@@ -150,6 +150,14 @@ def resolve_runtime_options(args: argparse.Namespace) -> argparse.Namespace:
 
 
 async def run_evaluation(args: argparse.Namespace) -> str:
+    result = await build_evaluation_run(args)
+    report = render_evaluation_report(result)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(report, encoding="utf-8")
+    return report
+
+
+async def build_evaluation_run(args: argparse.Namespace):
     args = resolve_runtime_options(args)
     questions = load_evaluation_dataset(args.dataset)
     engine = create_database_engine()
@@ -181,14 +189,9 @@ async def run_evaluation(args: argparse.Namespace) -> str:
                 llm_provider=args.llm_provider,
                 llm_model=_llm_model_label(args),
             )
-            result = await evaluator.evaluate()
+            return await evaluator.evaluate()
     finally:
         await engine.dispose()
-
-    report = render_evaluation_report(result)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(report, encoding="utf-8")
-    return report
 
 
 def _build_llm_client(args: argparse.Namespace) -> Any:

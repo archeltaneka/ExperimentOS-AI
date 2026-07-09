@@ -8,7 +8,7 @@
 | Pass count | 3 |
 | Fail count | 0 |
 | Workflow success rate | 100.0% |
-| Average workflow latency | 3.2 ms |
+| Average workflow latency | 21.1 ms |
 | Average trace completeness | 100.0% |
 | Planner intent accuracy | 100.0% |
 | Required agent routing accuracy | 100.0% |
@@ -22,11 +22,11 @@
 | planner | 0.0 |
 | retrieval | 18.0 |
 | experiment_analysis | 0.0 |
-| business_impact | 0.1 |
-| risk_assessment | 0.1 |
-| decision | 0.1 |
+| business_impact | 1.0 |
+| risk_assessment | 0.4 |
+| decision | 16.2 |
 | human_approval | 0.0 |
-| executive_summary | 0.0 |
+| executive_summary | 0.1 |
 
 ## Status Distribution
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from packages.agents.nodes import planner_node
-from packages.agents.state import create_initial_state
+from packages.agents.state import AgentInputState, create_initial_state
 
 
 class RecordingAgent:
@@ -252,6 +252,37 @@ def test_planner_node_uses_retrieval_for_experiment_lookup_questions() -> None:
 
     assert updated["intent"] == "experiment_lookup"
     assert updated["required_agents"] == ["retrieval"]
+
+
+def test_planner_node_preserves_preseeded_experiment_context() -> None:
+    state = create_initial_state(
+        "What happened in the payment recommendation experiment?",
+        experiment_id="00000000-0000-0000-0000-000000000123",
+        top_k=2,
+    )
+
+    update = planner_node(state)
+
+    assert update["request"]["experiment_id"] == "00000000-0000-0000-0000-000000000123"
+    assert update["request"]["top_k"] == 2
+    assert update["experiment_context"]["experiment_ids"] == [
+        "00000000-0000-0000-0000-000000000123"
+    ]
+
+
+def test_planner_node_accepts_agent_input_state_instances() -> None:
+    state = AgentInputState(
+        question="What happened in the payment recommendation experiment?",
+        request={
+            "experiment_id": "00000000-0000-0000-0000-000000000123",
+            "top_k": 2,
+        },
+    )
+
+    update = planner_node(state)
+
+    assert update["request"]["experiment_id"] == "00000000-0000-0000-0000-000000000123"
+    assert update["request"]["top_k"] == 2
 
 
 def test_retrieval_node_skips_when_retrieval_is_not_required() -> None:

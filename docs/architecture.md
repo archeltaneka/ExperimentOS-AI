@@ -1,11 +1,12 @@
 # Architecture
 
-ExperimentOS AI is a backend-first repository for experiment knowledge workflows. Today it focuses on four concrete paths:
+ExperimentOS AI is a backend-first repository for experiment knowledge workflows. Today it focuses on five concrete paths:
 
 1. Ingest experiment artifacts from the synthetic corpus.
 2. Store reports, metrics, and document chunks in Postgres.
 3. Retrieve semantically relevant report chunks with pgvector.
-4. Answer experiment questions and evaluate that QA flow offline.
+4. Run the Phase 2 agentic `/ask` decision workflow.
+5. Evaluate the Phase 1 QA flow and the Phase 2 agent workflow offline.
 
 ## System Diagram
 
@@ -37,14 +38,16 @@ flowchart TD
         J[packages.retrieval.service]
         K[packages.qa.question_answering_service]
         L[packages.llm.client]
-        M[apps.api.main]
+        M[packages.agents.service.AgentWorkflowService]
+        N[packages.agents.workflow]
+        O[apps.api.main]
     end
 
     subgraph Evaluation
-        N[packages.evals.dataset]
-        O[packages.evals.evaluator]
-        P[packages.evals.report]
-        Q[reports/evaluation.md]
+        P[packages.evals.dataset]
+        Q[packages.evals.evaluator]
+        R[packages.evals.report]
+        S[reports/evaluation.md]
     end
 
     A --> C
@@ -60,18 +63,21 @@ flowchart TD
     D --> I
     E --> I
 
-    M --> K
+    O --> M
+    O -. legacy_rag .-> K
+    M --> N
+    N --> J
     K --> J
     K --> L
     J --> I
     J --> F
     J --> H
 
-    B --> N
-    N --> O
-    O --> K
-    O --> P
+    B --> P
     P --> Q
+    Q --> K
+    Q --> R
+    R --> S
 ```
 
 ## Component Boundaries
@@ -85,7 +91,7 @@ Current endpoints:
 - `GET /health`
 - `POST /ask`
 
-The API does not implement ingestion, retrieval, or answer generation itself. It delegates those concerns to package-level services.
+The API does not implement ingestion, retrieval, or answer generation itself. It delegates those concerns to package-level services through a config-selected `/ask` service adapter.
 
 ### Ingestion Layer
 
@@ -146,17 +152,17 @@ The retrieval layer is shared by both the API and the evaluation harness.
 
 If retrieval returns no chunks, the service returns an "insufficient evidence" answer without calling an external LLM.
 
-### Agent Workflow Foundation
+### Agent Workflow Layer
 
-`packages/agents/` now includes the initial internal Phase 2 workflow path:
+`packages/agents/` now provides the default Phase 2 `/ask` path:
 
-`AgentWorkflowService -> LangGraph workflow -> planner -> END`
+`AgentWorkflowService -> LangGraph workflow -> planner -> retrieval -> experiment_analysis -> business_impact -> risk_assessment -> decision -> human_approval -> executive_summary`
 
-This path is deterministic scaffolding for future agent orchestration. It runs beside the current `/ask -> QuestionAnsweringService -> RetrievalService -> LLM` flow and does not replace it.
+This path is deterministic and machine-readable. `POST /ask` now defaults to it through the API-layer `AskService` adapter. The earlier Phase 1 `QuestionAnsweringService` path remains available as a `legacy_rag` fallback and is still used by the existing QA evaluation harness.
 
 The workflow now uses a structured shared state contract with explicit sections for request metadata, experiment scope, evidence, analysis artifacts, approval status, tool execution records, metrics, errors, trace entries, and run metadata. The shared state exists so future Phase 2 agents can enrich one consistent machine-readable workflow object instead of passing ad hoc intermediate payloads between services.
 
-The planner node is now a deterministic rule-based Planner Agent. It classifies requests into `general_question`, `experiment_lookup`, `decision_support`, `risk_assessment`, `business_impact`, `executive_summary`, or `unknown`, records planner notes plus trace metadata, and selects the downstream agent set that later Phase 2 issues will implement. The graph shape remains `START -> planner -> END` for now.
+The planner node is a deterministic rule-based Planner Agent. It classifies requests into `general_question`, `experiment_lookup`, `decision_support`, `risk_assessment`, `business_impact`, `executive_summary`, or `unknown`, records planner notes plus trace metadata, and selects the downstream agent set for retrieval, analysis, decisioning, approval, and executive summary generation.
 
 ### Evaluation Layer
 
@@ -187,17 +193,16 @@ Outputs:
 ### `/ask` Flow
 
 1. FastAPI validates the request body.
-2. The API resolves an async database session.
-3. The QA service validates the supplied experiment UUID.
-4. The retrieval service performs a pgvector similarity search scoped to that experiment.
-5. The QA service builds a grounded prompt and invokes the configured LLM client.
-6. The API returns answer text, citations, retrieved chunks, and metrics.
+2. The API selects an `AskService` implementation from `ASK_MODE`.
+3. In default `agent_workflow` mode, the API validates the supplied experiment UUID, runs the LangGraph workflow, and maps `AgentState` into the public response contract.
+4. In `legacy_rag` mode, the API runs the original `QuestionAnsweringService -> RetrievalService -> LLM` flow.
+5. The API returns the shared response contract with core retrieval fields and optional agent workflow fields.
 
 ### Evaluation Flow
 
 1. The evaluation dataset is loaded from JSON.
 2. The evaluator maps synthetic experiment IDs to database UUIDs through `Experiment.config`.
-3. Each question is answered through the same QA service used by the API.
+3. Each question is answered through the Phase 1 QA service used by `legacy_rag`.
 4. Metrics are aggregated and rendered into a Markdown report.
 
 ## Package Overview
@@ -212,7 +217,7 @@ Outputs:
 | `packages/qa` | Grounded question answering service and response models |
 | `packages/evals` | Evaluation dataset loading, orchestration, metrics, reports |
 | `packages/experiments` | Reserved boundary for future experiment domain logic |
-| `packages/agents` | Internal LangGraph foundation for future agent workflows |
+| `packages/agents` | Phase 2 LangGraph workflow, agents, shared state, and observability |
 
 ## Extension Points
 

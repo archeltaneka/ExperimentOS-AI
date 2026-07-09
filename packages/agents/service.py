@@ -16,7 +16,7 @@ from packages.agents.nodes import (
 )
 from packages.agents.retrieval_agent import RetrievalAgent
 from packages.agents.risk_assessment_agent import RiskAssessmentAgent
-from packages.agents.state import AgentState
+from packages.agents.state import AgentState, create_initial_state
 from packages.agents.workflow import build_agent_workflow
 
 
@@ -59,8 +59,20 @@ class AgentWorkflowService:
             executive_summary_agent=executive_summary_agent,
         )
 
-    def run(self, question: str) -> AgentState:
+    def run(
+        self,
+        question: str,
+        experiment_id: str | None = None,
+        top_k: int = 5,
+        human_approval_input: dict[str, object] | None = None,
+    ) -> AgentState:
         normalized_question = question.strip()
         if not normalized_question:
             raise AgentWorkflowInputError("question must not be empty")
-        return self.workflow.invoke({"question": normalized_question})
+        initial_state = create_initial_state(
+            normalized_question,
+            experiment_id=experiment_id,
+            top_k=top_k,
+            human_approval_input=human_approval_input,
+        )
+        return self.workflow.invoke(initial_state)

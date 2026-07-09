@@ -6,10 +6,19 @@ from functools import lru_cache
 from typing import Annotated, Protocol
 
 from fastapi import Depends, FastAPI, HTTPException, status
-from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from apps.api.ask_service import (
+    AgentWorkflowAskService,
+    AgentWorkflowExecutionError,
+    AskRequest,
+    AskResponse,
+    AskService,
+    LegacyRagAskService,
+    get_ask_mode,
+)
+from packages.agents.service import AgentWorkflowService
 from packages.config.env import load_environment
 from packages.db.models import Experiment
 from packages.db.session import create_async_session_factory, create_database_engine
@@ -34,19 +43,6 @@ from packages.retrieval.service import RetrievalService
 load_environment()
 
 app = FastAPI(title="ExperimentOS AI API", version="0.1.0")
-
-
-class AskRequest(BaseModel):
-    question: str = Field(min_length=1)
-    experiment_id: str = Field(min_length=1)
-    top_k: int = Field(default=5, ge=1, le=20)
-
-    @field_validator("question")
-    @classmethod
-    def validate_question(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("question must not be empty")
-        return value
 
 
 @lru_cache(maxsize=1)
@@ -105,16 +101,6 @@ class DatabaseQuestionAnsweringService:
                 build_embedding_provider(get_embedding_provider_name()),
             )
 
-            async def experiment_exists(candidate_experiment_id: str) -> bool:
-                try:
-                    parsed_experiment_id = uuid.UUID(str(candidate_experiment_id))
-                except ValueError:
-                    return False
-                result = await session.execute(
-                    select(Experiment.id).where(Experiment.id == parsed_experiment_id)
-                )
-                return result.scalar_one_or_none() is not None
-
             service = QuestionAnsweringService(
                 retrieval_service=retrieval_service,
                 llm_client=get_llm_client(),
@@ -131,29 +117,44 @@ def get_question_answering_service() -> QuestionAnsweringDependency:
     return DatabaseQuestionAnsweringService()
 
 
+async def experiment_exists(candidate_experiment_id: str) -> bool:
+    try:
+        parsed_experiment_id = uuid.UUID(str(candidate_experiment_id))
+    except ValueError:
+        return False
+
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        result = await session.execute(
+            select(Experiment.id).where(Experiment.id == parsed_experiment_id)
+        )
+        return result.scalar_one_or_none() is not None
+
+
+def get_ask_service() -> AskService:
+    if get_ask_mode() == "legacy_rag":
+        return LegacyRagAskService(get_question_answering_service())
+    return AgentWorkflowAskService(
+        AgentWorkflowService(),
+        experiment_exists=experiment_exists,
+    )
+
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok", "service": "experimentos-api"}
 
 
-@app.post("/ask", response_model=QAResponse)
+@app.post("/ask", response_model=AskResponse)
 async def ask(
     request: AskRequest,
-    service: Annotated[QuestionAnsweringDependency, Depends(get_question_answering_service)],
-) -> QAResponse:
+    service: Annotated[AskService, Depends(get_ask_service)],
+) -> AskResponse:
     try:
-        response = await service.answer_question(
-            question=request.question,
-            experiment_id=request.experiment_id,
-            top_k=request.top_k,
-        )
+        return await service.answer(request)
     except EmptyQuestionError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except UnknownExperimentError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except EmbeddingFailureError as exc:
+    except (EmbeddingFailureError, LLMGenerationError, AgentWorkflowExecutionError) as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
-    except LLMGenerationError as exc:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
-
-    return response

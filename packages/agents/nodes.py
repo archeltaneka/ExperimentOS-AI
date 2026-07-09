@@ -49,9 +49,23 @@ class ExecutiveSummaryAgentLike(Protocol):
 
 
 def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
-    question = state["question"]
-    defaults = create_initial_state(question)
+    if isinstance(state, dict):
+        question = state["question"]
+        request = state.get("request", {})
+        human_approval_input = state.get("human_approval_input", {})
+    else:
+        question = state.question
+        request = dict(getattr(state, "request", {}))
+        human_approval_input = dict(getattr(state, "human_approval_input", {}))
+    defaults = create_initial_state(
+        question,
+        experiment_id=request.get("experiment_id"),
+        top_k=request.get("top_k", 5),
+        human_approval_input=human_approval_input,
+    )
     plan = plan_question(question)
+    preserved_experiment_ids = list(defaults["experiment_context"]["experiment_ids"])
+    planned_filters = dict(plan.experiment_context["filters"])
     trace_entry = create_trace_entry(
         node="planner",
         event="planned",
@@ -70,7 +84,13 @@ def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
         "intent": plan.intent,
         "required_agents": plan.required_agents,
         "planner_notes": plan.planner_notes,
-        "experiment_context": plan.experiment_context,
+        "experiment_context": {
+            "experiment_ids": preserved_experiment_ids,
+            "filters": {
+                **planned_filters,
+                **defaults["experiment_context"]["filters"],
+            },
+        },
         "metrics": plan.metrics,
         "trace": [trace_entry],
     }

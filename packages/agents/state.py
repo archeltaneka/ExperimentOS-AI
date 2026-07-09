@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 from typing_extensions import TypedDict
 
 AgentIntent = Literal[
@@ -74,15 +74,26 @@ ExecutiveSummaryStatus = Literal[
 ]
 
 
+class AgentRequest(TypedDict, total=False):
+    question: str
+    normalized_question: str
+    experiment_id: str
+    top_k: int
+
+
 class AgentInputState(BaseModel):
     question: str
+    request: dict[str, object] = Field(default_factory=dict)
+    human_approval_input: dict[str, object] = Field(default_factory=dict)
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-
-class AgentRequest(TypedDict):
-    question: str
-    normalized_question: str
+    @classmethod
+    def model_json_schema(cls, *args, **kwargs):  # type: ignore[override]
+        schema = super().model_json_schema(*args, **kwargs)
+        schema["properties"] = {"question": schema["properties"]["question"]}
+        schema["required"] = ["question"]
+        return schema
 
 
 class ExperimentContext(TypedDict):
@@ -425,20 +436,31 @@ def create_error_entry(
     return entry
 
 
-def create_initial_state(question: str) -> AgentState:
+def create_initial_state(
+    question: str,
+    experiment_id: str | None = None,
+    top_k: int = 5,
+    human_approval_input: dict[str, object] | None = None,
+) -> AgentState:
     normalized_question = question.strip()
     now = _utc_now_iso()
+    request: AgentRequest = {
+        "question": question,
+        "normalized_question": normalized_question,
+        "top_k": top_k,
+    }
+    experiment_ids: list[str] = []
+    if experiment_id:
+        request["experiment_id"] = experiment_id
+        experiment_ids.append(experiment_id)
     return {
         "question": question,
-        "request": {
-            "question": question,
-            "normalized_question": normalized_question,
-        },
+        "request": request,
         "intent": "unknown",
         "required_agents": [],
         "planner_notes": "",
         "experiment_context": {
-            "experiment_ids": [],
+            "experiment_ids": experiment_ids,
             "filters": {},
         },
         "retrieved_chunks": [],
@@ -524,7 +546,7 @@ def create_initial_state(question: str) -> AgentState:
             "limitations": [],
             "summary": "",
         },
-        "human_approval_input": {},
+        "human_approval_input": human_approval_input or {},
         "human_approval": {
             "status": "not_requested",
             "required": False,
@@ -548,8 +570,18 @@ def create_initial_state(question: str) -> AgentState:
     }
 
 
-def build_initial_state(question: str) -> AgentState:
-    return create_initial_state(question)
+def build_initial_state(
+    question: str,
+    experiment_id: str | None = None,
+    top_k: int = 5,
+    human_approval_input: dict[str, object] | None = None,
+) -> AgentState:
+    return create_initial_state(
+        question,
+        experiment_id=experiment_id,
+        top_k=top_k,
+        human_approval_input=human_approval_input,
+    )
 
 
 def append_trace(

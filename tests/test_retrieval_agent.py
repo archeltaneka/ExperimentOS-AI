@@ -19,7 +19,7 @@ class StubRetrievalClient:
         self.results = results
         self.failure = failure
         self.last_metrics = metrics
-        self.calls: list[tuple[str, list[str], dict[str, object]]] = []
+        self.calls: list[tuple[str, list[str], int, dict[str, object]]] = []
 
     async def search(
         self,
@@ -28,7 +28,7 @@ class StubRetrievalClient:
         top_k: int = 5,
         metadata_filter: dict[str, object] | None = None,
     ) -> list[RetrievalResult]:
-        self.calls.append((query, [], metadata_filter or {}))
+        self.calls.append((query, [], top_k, metadata_filter or {}))
         if self.failure is not None:
             raise self.failure
         return self.results
@@ -41,7 +41,7 @@ class StubRetrievalClient:
         top_k: int = 5,
         metadata_filter: dict[str, object] | None = None,
     ) -> list[RetrievalResult]:
-        self.calls.append((query, [str(experiment_id)], metadata_filter or {}))
+        self.calls.append((query, [str(experiment_id)], top_k, metadata_filter or {}))
         if self.failure is not None:
             raise self.failure
         return self.results
@@ -120,7 +120,7 @@ def test_retrieval_agent_uses_experiment_scoped_search_when_single_experiment_id
 
     build_retrieval_agent(client).run(state)
 
-    assert client.calls == [("What happened?", [experiment_id], {})]
+    assert client.calls == [("What happened?", [experiment_id], 5, {})]
 
 
 def test_retrieval_agent_uses_normalized_question_from_request() -> None:
@@ -132,7 +132,18 @@ def test_retrieval_agent_uses_normalized_question_from_request() -> None:
 
     build_retrieval_agent(client).run(state)
 
-    assert client.calls == [("What happened?", [], {})]
+    assert client.calls == [("What happened?", [], 5, {})]
+
+
+def test_retrieval_agent_uses_request_scoped_top_k() -> None:
+    state = create_initial_state("What happened?", top_k=2)
+    state["required_agents"] = ["retrieval"]
+
+    client = StubRetrievalClient(results=[build_result()])
+
+    build_retrieval_agent(client).run(state)
+
+    assert client.calls == [("What happened?", [], 2, {})]
 
 
 def test_retrieval_agent_captures_structured_errors_without_raising() -> None:

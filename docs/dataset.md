@@ -117,7 +117,7 @@ The evaluation harness:
 
 1. Loads `data/eval/qa_dataset.json`
 2. Resolves each synthetic experiment ID to the ingested database UUID through `Experiment.config["experiment_id"]`
-3. Runs the same QA flow used by `/ask`
+3. Runs the Phase 1 QA flow that remains available behind `ASK_MODE=legacy_rag`
 4. Aggregates metrics and writes a Markdown report
 
 Run the evaluation locally:

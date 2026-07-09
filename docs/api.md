@@ -233,3 +233,23 @@ uv run python -m packages.ingestion.load_experiment --experiment-dir data/synthe
 docker compose exec postgres psql -U experimentos -d experimentos -c "select id, name, config->>'experiment_id' as synthetic_experiment_id from experiments order by name;"
 uv run uvicorn apps.api.main:app --reload
 ```
+
+## Agent E2E Evaluation
+
+Phase 2 `/ask` validation now has a deterministic API-level E2E harness in addition to the
+workflow-state harness from `packages.evals.run_agent`.
+
+Run it with:
+
+```powershell
+uv run python -m packages.evals.run_agent_e2e --output reports/agent_e2e_evaluation.md
+Get-Content reports/agent_e2e_evaluation.md
+```
+
+The generated report summarizes:
+
+- default `agent_workflow` coverage
+- `legacy_rag` fallback coverage
+- intent and routing accuracy
+- citation, decision, executive summary, and approval coverage
+- average request latency

@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
+import packages.db.session as db_session
 from packages.db.session import (
     create_async_session_factory,
     create_database_engine,
@@ -8,12 +9,14 @@ from packages.db.session import (
 
 
 def test_database_url_comes_from_environment(monkeypatch) -> None:
+    monkeypatch.setattr(db_session, "load_environment", lambda: False)
     monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://user:pass@localhost:5432/app")
 
     assert get_database_url() == "postgresql+psycopg://user:pass@localhost:5432/app"
 
 
 def test_database_url_requires_environment(monkeypatch) -> None:
+    monkeypatch.setattr(db_session, "load_environment", lambda: False)
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
     try:

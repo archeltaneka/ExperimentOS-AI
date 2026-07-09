@@ -6,7 +6,7 @@ ExperimentOS AI is a backend-first repository for experiment knowledge workflows
 2. Store reports, metrics, and document chunks in Postgres.
 3. Retrieve semantically relevant report chunks with pgvector.
 4. Run the Phase 2 agentic `/ask` decision workflow.
-5. Evaluate the Phase 1 QA flow and the Phase 2 agent workflow offline.
+5. Evaluate the Phase 1 QA flow, the Phase 2 workflow state, and the integrated `/ask` API offline.
 
 ## System Diagram
 
@@ -48,6 +48,9 @@ flowchart TD
         Q[packages.evals.evaluator]
         R[packages.evals.report]
         S[reports/evaluation.md]
+        T[packages.evals.agent_e2e]
+        U[packages.evals.agent_e2e_report]
+        V[reports/agent_e2e_evaluation.md]
     end
 
     A --> C
@@ -78,6 +81,9 @@ flowchart TD
     Q --> K
     Q --> R
     R --> S
+    O --> T
+    T --> U
+    U --> V
 ```
 
 ## Component Boundaries
@@ -166,7 +172,8 @@ The planner node is a deterministic rule-based Planner Agent. It classifies requ
 
 ### Evaluation Layer
 
-`packages/evals/` turns the QA path into a repeatable offline measurement workflow.
+`packages/evals/` turns the QA path and the integrated `/ask` path into repeatable offline
+measurement workflows.
 
 Inputs:
 
@@ -179,6 +186,7 @@ Outputs:
 - aggregate retrieval and citation metrics
 - per-question evaluation samples
 - Markdown report written to `reports/evaluation.md` by default
+- deterministic `/ask` API E2E coverage written to `reports/agent_e2e_evaluation.md`
 
 ## Data Flow
 
@@ -204,6 +212,17 @@ Outputs:
 2. The evaluator maps synthetic experiment IDs to database UUIDs through `Experiment.config`.
 3. Each question is answered through the Phase 1 QA service used by `legacy_rag`.
 4. Metrics are aggregated and rendered into a Markdown report.
+
+### Agent E2E Evaluation Flow
+
+1. Deterministic `/ask` E2E cases are loaded from the Phase 2 evaluation helper module.
+2. The harness exercises the real FastAPI route in default `agent_workflow` mode and in
+   `legacy_rag` fallback mode.
+3. Stub workflow and QA services keep the run offline while preserving the public response
+   contract.
+4. Structural coverage is aggregated for routing, citations, decisions, executive summaries,
+   approval state, and fallback behavior.
+5. Results are rendered into `reports/agent_e2e_evaluation.md`.
 
 ## Package Overview
 

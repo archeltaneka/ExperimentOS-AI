@@ -223,6 +223,7 @@ data/*
 !data/eval/
 data/eval/*
 !data/eval/qa_dataset.json
+!data/eval/agent_dataset.json
 
 # Agents markdown
 *AGENTS.md

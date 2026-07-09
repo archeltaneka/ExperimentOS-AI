@@ -1,0 +1,47 @@
+[
+  {
+    "id": "lookup-payment",
+    "question": "What happened in the payment recommendation experiment?",
+    "expected_intent": "experiment_lookup",
+    "expected_required_agents": [
+      "retrieval"
+    ],
+    "expected_min_citations": 2
+  },
+  {
+    "id": "decision-payment",
+    "question": "Should we roll out the payment recommendation experiment?",
+    "expected_intent": "decision_support",
+    "expected_required_agents": [
+      "retrieval",
+      "experiment_analysis",
+      "business_impact",
+      "risk_assessment",
+      "decision",
+      "human_approval",
+      "executive_summary"
+    ],
+    "expected_decision_status": "decided",
+    "expected_recommendation": "rollout",
+    "expected_summary_status": "generated",
+    "expected_min_citations": 2
+  },
+  {
+    "id": "summary-checkout",
+    "question": "Summarize the checkout UX experiment for executives.",
+    "expected_intent": "executive_summary",
+    "expected_required_agents": [
+      "retrieval",
+      "experiment_analysis",
+      "business_impact",
+      "risk_assessment",
+      "decision",
+      "human_approval",
+      "executive_summary"
+    ],
+    "expected_decision_status": "decided",
+    "expected_recommendation": "rollout",
+    "expected_summary_status": "generated",
+    "expected_min_citations": 2
+  }
+]

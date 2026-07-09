@@ -34,6 +34,22 @@ Example response:
 
 Answer a question against a single ingested experiment.
 
+Default runtime mode: `agent_workflow`
+
+Set `ASK_MODE=legacy_rag` to switch back to the original Phase 1 grounded QA path.
+
+Current default path:
+
+```text
+POST /ask -> AskService -> AgentWorkflowService -> LangGraph workflow
+```
+
+Fallback path:
+
+```text
+POST /ask -> AskService -> QuestionAnsweringService -> RetrievalService -> LLM client
+```
+
 ### Request Body
 
 | Field | Type | Required | Constraints | Notes |
@@ -70,53 +86,103 @@ Invoke-RestMethod `
 
 ### Response Shape
 
-Successful responses return:
+Successful responses always return:
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `answer` | string | Final answer text from the QA service |
-| `citations` | array | Compact citation objects derived from retrieved chunks |
+| `answer` | string | Final answer text from the selected `/ask` mode |
+| `citations` | array | Citation objects derived from workflow evidence or retrieved chunks |
 | `retrieved_chunks` | array | Full retrieved chunk objects returned by the retrieval layer |
 | `retrieval_metrics` | object | Retrieval latency and relevance summary |
-| `llm_metrics` | object | LLM model, token counts, and latency |
+| `llm_metrics` | object | LLM model, token counts, and latency. In `agent_workflow` mode this is a deterministic compatibility object. |
+
+Agent workflow responses can also include:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `intent` | string or null | Planner intent selected for the request |
+| `required_agents` | array | Agents selected by the planner |
+| `decision` | object or null | Structured decision artifact when produced |
+| `executive_summary` | object or null | Structured executive summary artifact when produced |
+| `agent_trace` | array | Structured per-node workflow trace entries |
+| `agent_metrics` | object | Structured workflow metrics by node |
+| `approval_status` | string or null | Human approval status when applicable |
 
 Example response:
 
 ```json
 {
-  "answer": "The launch passed guardrails.",
+  "answer": "Rollout is supported by the current evidence.",
   "citations": [
     {
-      "experiment_id": "exp-123",
-      "document": "Launch Report",
-      "similarity": 0.91
+      "experiment_id": "00000000-0000-0000-0000-000000000000",
+      "quote": "Primary metric improved by 8.9% in treatment.",
+      "section": "Results",
+      "metadata": {
+        "section": "Results",
+        "document_name": "Launch Report"
+      }
     }
   ],
   "retrieved_chunks": [
     {
-      "experiment_id": "exp-123",
+      "experiment_id": "00000000-0000-0000-0000-000000000000",
       "metadata": {
         "section": "Decision"
       },
-      "experiment_name": "Payment Recommendation Launch",
+      "experiment_name": "Adaptive Payment Method Recommendation",
       "document_id": "doc-123",
       "document_name": "Launch Report",
-      "chunk_text": "The launch passed guardrails.",
+      "chunk_text": "Primary metric improved by 8.9% in treatment.",
       "similarity": 0.91
     }
   ],
   "retrieval_metrics": {
-    "embedding_time_ms": 3.0,
-    "vector_search_time_ms": 5.0,
+    "embedding_time_ms": 10.0,
+    "vector_search_time_ms": 8.0,
     "retrieved_chunks": 1,
     "average_similarity": 0.91
   },
   "llm_metrics": {
-    "model": "mock-answerer",
-    "input_tokens": 42,
-    "output_tokens": 5,
-    "latency_ms": 1.5
-  }
+    "model": "agent-workflow",
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "latency_ms": 0.0
+  },
+  "intent": "decision_support",
+  "required_agents": [
+    "retrieval",
+    "experiment_analysis",
+    "business_impact",
+    "risk_assessment",
+    "decision",
+    "human_approval",
+    "executive_summary"
+  ],
+  "decision": {
+    "decision_status": "decided",
+    "recommendation": "rollout",
+    "confidence": "medium",
+    "rationale": "Positive lift outweighed manageable rollout risk."
+  },
+  "executive_summary": {
+    "summary_status": "generated",
+    "summary": "Rollout is supported by the current evidence."
+  },
+  "agent_trace": [
+    {
+      "node": "planner",
+      "event": "planned",
+      "at": "2026-07-09T00:00:00Z"
+    }
+  ],
+  "agent_metrics": {
+    "planner_rule_version": "deterministic_v1",
+    "decision": {
+      "status": "decided"
+    }
+  },
+  "approval_status": "pending"
 }
 ```
 
@@ -128,6 +194,8 @@ Example response:
 | `404` | The experiment UUID is unknown | `UnknownExperimentError` |
 | `502` | Embedding generation or retrieval fails | `EmbeddingFailureError` |
 | `502` | LLM generation fails | `LLMGenerationError` |
+
+If the experiment exists but the workflow cannot produce a richer answer, `/ask` still returns `200` with the best available answer content. In the empty-evidence case this falls back to the same insufficient-evidence answer used by the legacy QA path.
 
 Example validation failure:
 

@@ -101,16 +101,6 @@ class DatabaseQuestionAnsweringService:
                 build_embedding_provider(get_embedding_provider_name()),
             )
 
-            async def experiment_exists(candidate_experiment_id: str) -> bool:
-                try:
-                    parsed_experiment_id = uuid.UUID(str(candidate_experiment_id))
-                except ValueError:
-                    return False
-                result = await session.execute(
-                    select(Experiment.id).where(Experiment.id == parsed_experiment_id)
-                )
-                return result.scalar_one_or_none() is not None
-
             service = QuestionAnsweringService(
                 retrieval_service=retrieval_service,
                 llm_client=get_llm_client(),
@@ -127,10 +117,27 @@ def get_question_answering_service() -> QuestionAnsweringDependency:
     return DatabaseQuestionAnsweringService()
 
 
+async def experiment_exists(candidate_experiment_id: str) -> bool:
+    try:
+        parsed_experiment_id = uuid.UUID(str(candidate_experiment_id))
+    except ValueError:
+        return False
+
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        result = await session.execute(
+            select(Experiment.id).where(Experiment.id == parsed_experiment_id)
+        )
+        return result.scalar_one_or_none() is not None
+
+
 def get_ask_service() -> AskService:
     if get_ask_mode() == "legacy_rag":
         return LegacyRagAskService(get_question_answering_service())
-    return AgentWorkflowAskService(AgentWorkflowService())
+    return AgentWorkflowAskService(
+        AgentWorkflowService(),
+        experiment_exists=experiment_exists,
+    )
 
 
 @app.get("/health")

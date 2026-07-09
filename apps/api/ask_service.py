@@ -8,7 +8,11 @@ from pydantic import BaseModel, Field, field_validator
 from packages.agents.service import AgentWorkflowService
 from packages.agents.state import AgentState
 from packages.config.env import resolve_setting
-from packages.qa.question_answering_service import QAResponse, UnknownExperimentError
+from packages.qa.question_answering_service import (
+    INSUFFICIENT_EVIDENCE_ANSWER,
+    QAResponse,
+    UnknownExperimentError,
+)
 
 
 class AskRequest(BaseModel):
@@ -55,6 +59,11 @@ class QuestionAnsweringDependency(Protocol):
         raise NotImplementedError
 
 
+class ExperimentExistsDependency(Protocol):
+    async def __call__(self, experiment_id: str) -> bool:
+        raise NotImplementedError
+
+
 class AgentWorkflowExecutionError(RuntimeError):
     pass
 
@@ -86,10 +95,20 @@ class LegacyRagAskService:
 
 
 class AgentWorkflowAskService:
-    def __init__(self, workflow_service: AgentWorkflowService) -> None:
+    def __init__(
+        self,
+        workflow_service: AgentWorkflowService,
+        *,
+        experiment_exists: ExperimentExistsDependency | None = None,
+    ) -> None:
         self.workflow_service = workflow_service
+        self.experiment_exists = experiment_exists
 
     async def answer(self, request: AskRequest) -> AskResponse:
+        if self.experiment_exists is not None and not await self.experiment_exists(
+            request.experiment_id
+        ):
+            raise UnknownExperimentError(f"experiment {request.experiment_id} was not found")
         try:
             state = self.workflow_service.run(
                 request.question,
@@ -111,16 +130,7 @@ def get_ask_mode() -> str:
 
 
 def map_agent_state_to_ask_response(state: AgentState) -> AskResponse:
-    requested_experiment_id = str(state["request"].get("experiment_id", "")).strip()
-    resolved_experiment_id = str(state["experiment_analysis"].get("experiment_id", "")).strip()
-    if requested_experiment_id and not resolved_experiment_id and not state["retrieved_chunks"]:
-        raise UnknownExperimentError(f"experiment {requested_experiment_id} was not found")
-
-    answer = (
-        state["executive_summary"]["summary"]
-        or state["decision"]["rationale"]
-        or "The workflow completed without a final executive summary."
-    )
+    answer = _resolve_agent_answer(state)
     retrieval_metrics = dict(state["metrics"].get("retrieval", {}))
     llm_metrics = {
         "model": "agent-workflow",
@@ -158,3 +168,17 @@ def map_agent_state_to_ask_response(state: AgentState) -> AskResponse:
         agent_metrics=dict(state["metrics"]),
         approval_status=state["human_approval"]["status"],
     )
+
+
+def _resolve_agent_answer(state: AgentState) -> str:
+    candidate_answers = (
+        state["executive_summary"]["summary"],
+        state["decision"]["rationale"],
+        state["experiment_analysis"]["summary"],
+        state["business_impact"]["summary"],
+        state["retrieved_chunks"][0]["content"] if state["retrieved_chunks"] else "",
+    )
+    for answer in candidate_answers:
+        if str(answer).strip():
+            return str(answer)
+    return INSUFFICIENT_EVIDENCE_ANSWER

@@ -28,7 +28,7 @@ The current repository is organized around a small set of backend workflows:
 - `packages/db/` defines SQLAlchemy models, async sessions, and Alembic metadata.
 - `packages/retrieval/` performs semantic search over pgvector-backed chunk embeddings.
 - `packages/qa/` turns retrieved chunks into grounded answers with citations.
-- `packages/agents/` now contains the initial internal LangGraph foundation for future multi-agent orchestration, while the public runtime path remains `POST /ask` through the existing QA service.
+- `packages/agents/` contains the Phase 2 LangGraph decision workflow that now powers `POST /ask` by default.
 - `apps/api/` exposes `GET /health` and `POST /ask`.
 - `packages/evals/` runs the offline QA evaluation harness over `data/eval/qa_dataset.json`.
 
@@ -52,7 +52,10 @@ flowchart LR
 
     H[FastAPI app] --> I[GET /health]
     H --> J[POST /ask]
-    J --> F
+    J --> O[Ask service adapter]
+    O --> P[Agent workflow service]
+    O -. legacy_rag .-> F
+    P --> Q[LangGraph workflow]
 
     E --> K[Retrieval CLI]
     L[data/eval/qa_dataset.json] --> M[Offline evaluator]
@@ -69,12 +72,12 @@ See [Architecture](docs/architecture.md) for component boundaries and data flow 
 | FastAPI API | Available | `GET /health` and `POST /ask` are implemented. |
 | Experiment ingestion | Available | Loads `metadata.json`, `metrics.csv`, and `report.md`. |
 | pgvector retrieval | Available | Semantic search via CLI and shared service layer. |
-| Grounded QA | Available | Answers include citations, retrieved chunks, and runtime metrics. |
+| Grounded QA | Available | `legacy_rag` mode preserves the original retrieval plus LLM answer path. |
 | Offline evaluation | Available | Runs QA against a fixed dataset and produces a Markdown report. |
 | Deterministic local runs | Available | Fake embeddings and mock LLMs support offline workflows. |
 | Synthetic dataset | Available | Ten synthetic experiments plus a QA evaluation dataset. |
 | Event ingestion | Planned | `events.csv` is generated today but not ingested yet. |
-| Agent workflows | Foundation available | Internal LangGraph `START -> planner -> END` flow exists; `POST /ask` remains the active public path. |
+| Agent workflows | Available | `POST /ask` defaults to the Phase 2 LangGraph workflow; set `ASK_MODE=legacy_rag` to restore the Phase 1 QA path. |
 
 ## Repository Structure
 
@@ -92,7 +95,7 @@ docs/
   assets/screenshots/       Placeholder screenshot assets
 migrations/                 Alembic migration scripts
 packages/
-  agents/                   Internal LangGraph workflow foundation for future agents
+  agents/                   Phase 2 LangGraph workflow and agent modules
   config/                   Environment loading
   db/                       SQLAlchemy models and async session helpers
   evals/                    Offline evaluation harness and report generation
@@ -133,6 +136,12 @@ In another PowerShell session:
 Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/health"
 ```
 
+`/ask` now defaults to the Phase 2 agent workflow. To switch back to the original grounded QA path:
+
+```powershell
+$env:ASK_MODE = "legacy_rag"
+```
+
 ## API Example
 
 `/ask` requires the database UUID of an ingested experiment, not the synthetic folder ID. After ingesting data, list experiment IDs with:
@@ -157,13 +166,23 @@ Invoke-RestMethod `
     -Body $body
 ```
 
-The response returns:
+The response always returns the original core fields:
 
 - `answer`
 - `citations`
 - `retrieved_chunks`
 - `retrieval_metrics`
 - `llm_metrics`
+
+In default `agent_workflow` mode it can also return:
+
+- `intent`
+- `required_agents`
+- `decision`
+- `executive_summary`
+- `agent_trace`
+- `agent_metrics`
+- `approval_status`
 
 Full request and response documentation lives in [API Reference](docs/api.md).
 

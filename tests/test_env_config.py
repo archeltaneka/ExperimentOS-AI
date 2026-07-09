@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from packages.config.env import load_environment
+from packages.db.session import get_database_url
 
 
 def test_load_environment_overrides_stale_shell_values(monkeypatch, tmp_path: Path) -> None:
@@ -18,6 +19,19 @@ def test_load_environment_overrides_stale_shell_values(monkeypatch, tmp_path: Pa
     load_environment()
 
     assert os.environ["LLM_PROVIDER"] == "gemini"
+
+
+def test_get_database_url_loads_dotenv(monkeypatch, tmp_path: Path) -> None:
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text(
+        "DATABASE_URL=postgresql+psycopg://file:pass@localhost:5433/app\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    assert get_database_url() == "postgresql+psycopg://file:pass@localhost:5433/app"
 
 
 def test_ingestion_cli_loads_dotenv_before_running(monkeypatch, tmp_path: Path) -> None:

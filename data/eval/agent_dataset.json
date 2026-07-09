@@ -2,15 +2,18 @@
   {
     "id": "lookup-payment",
     "question": "What happened in the payment recommendation experiment?",
+    "category": "lookup",
     "expected_intent": "experiment_lookup",
     "expected_required_agents": [
       "retrieval"
     ],
-    "expected_min_citations": 2
+    "expected_min_citations": 2,
+    "notes": "Simple lookup coverage for the default retrieval-only workflow."
   },
   {
-    "id": "decision-payment",
-    "question": "Should we roll out the payment recommendation experiment?",
+    "id": "decision-loyalty-rollout",
+    "question": "Should we roll out the loyalty experiment?",
+    "category": "rollout_decision",
     "expected_intent": "decision_support",
     "expected_required_agents": [
       "retrieval",
@@ -24,11 +27,34 @@
     "expected_decision_status": "decided",
     "expected_recommendation": "rollout",
     "expected_summary_status": "generated",
+    "expected_approval_status": "approved",
     "expected_min_citations": 2
   },
   {
-    "id": "summary-checkout",
+    "id": "decision-pricing-do-not-rollout",
+    "question": "Should we roll out the pricing experiment?",
+    "category": "rollout_decision",
+    "expected_intent": "decision_support",
+    "expected_required_agents": [
+      "retrieval",
+      "experiment_analysis",
+      "business_impact",
+      "risk_assessment",
+      "decision",
+      "human_approval",
+      "executive_summary"
+    ],
+    "expected_decision_status": "decided",
+    "expected_recommendation": "do_not_rollout",
+    "expected_summary_status": "generated",
+    "expected_approval_status": "rejected",
+    "expected_min_citations": 2,
+    "notes": "Negative rollout decision should preserve the no-ship recommendation and rejected approval."
+  },
+  {
+    "id": "summary-checkout-pending",
     "question": "Summarize the checkout UX experiment for executives.",
+    "category": "approval_workflow",
     "expected_intent": "executive_summary",
     "expected_required_agents": [
       "retrieval",
@@ -42,6 +68,75 @@
     "expected_decision_status": "decided",
     "expected_recommendation": "rollout",
     "expected_summary_status": "generated",
+    "expected_approval_status": "pending",
     "expected_min_citations": 2
+  },
+  {
+    "id": "summary-loyalty-revision-requested",
+    "question": "Summarize the loyalty experiment for executives and note any approval revisions.",
+    "category": "approval_workflow",
+    "expected_intent": "executive_summary",
+    "expected_required_agents": [
+      "retrieval",
+      "experiment_analysis",
+      "business_impact",
+      "risk_assessment",
+      "decision",
+      "human_approval",
+      "executive_summary"
+    ],
+    "expected_decision_status": "decided",
+    "expected_recommendation": "rollout",
+    "expected_summary_status": "generated",
+    "expected_approval_status": "revision_requested",
+    "expected_min_citations": 2
+  },
+  {
+    "id": "risk-search-filters",
+    "question": "What are the risks of launching the search filters experiment?",
+    "category": "risk_guardrail",
+    "expected_intent": "risk_assessment",
+    "expected_required_agents": [
+      "retrieval",
+      "experiment_analysis",
+      "risk_assessment"
+    ],
+    "expected_approval_status": "not_requested",
+    "expected_min_citations": 2
+  },
+  {
+    "id": "impact-search-ranking",
+    "question": "What is the business impact of the search ranking experiment?",
+    "category": "business_impact",
+    "expected_intent": "business_impact",
+    "expected_required_agents": [
+      "retrieval",
+      "experiment_analysis",
+      "business_impact"
+    ],
+    "expected_approval_status": "not_requested",
+    "expected_min_citations": 2
+  },
+  {
+    "id": "decision-premium-needs-more-data",
+    "question": "Should we roll out the premium subscription experiment?",
+    "category": "insufficient_evidence",
+    "expected_intent": "decision_support",
+    "expected_required_agents": [
+      "retrieval",
+      "experiment_analysis",
+      "business_impact",
+      "risk_assessment",
+      "decision",
+      "human_approval",
+      "executive_summary"
+    ],
+    "expected_decision_status": "needs_more_data",
+    "expected_recommendation": "needs_more_data",
+    "expected_summary_status": "partial_summary",
+    "expected_approval_status": "not_requested",
+    "expected_min_citations": 1,
+    "expected_failure_mode": "insufficient_business_evidence",
+    "notes": "The workflow should avoid inventing ROI, revenue, or significance when the evidence is incomplete."
   }
 ]

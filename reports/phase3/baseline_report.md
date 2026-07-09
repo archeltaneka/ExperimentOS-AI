@@ -1,6 +1,6 @@
 # Phase 3 Reliability Baseline Report
 
-- Generated at: 2026-07-09T10:18:36.039011Z
+- Generated at: 2026-07-09T11:34:58.746269Z
 - Overall status: pass
 
 ## Evaluation Status
@@ -26,11 +26,11 @@
 
 ### Key Metrics
 
-- Questions evaluated: 40
+- Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 1020.7 ms
-- Average LLM latency: 4834.0 ms
+- Average retrieval latency: 941.4 ms
+- Average LLM latency: 4792.5 ms
 
 ### Missing Metrics
 
@@ -55,8 +55,8 @@
 
 ### Key Metrics
 
-- Samples evaluated: 3
-- Pass/fail summary: 3 passed, 0 failed
+- Samples evaluated: 8
+- Pass/fail summary: 8 passed, 0 failed
 - Workflow success rate: 100.0%
 - Routing accuracy: 100.0%
 - Trace completeness: 100.0%
@@ -81,8 +81,8 @@
 
 ### Key Metrics
 
-- Total test/eval cases: 7
-- Pass/fail summary: 7 passed, 0 failed
+- Total test/eval cases: 11
+- Pass/fail summary: 11 passed, 0 failed
 - Default agent workflow coverage: 100.0%
 - Legacy fallback coverage: 100.0%
 - Approval status coverage: 100.0%
@@ -108,6 +108,6 @@
 
 ## Next Recommended Reliability Work
 
-- Expand the evaluation datasets with more edge cases and insufficient-evidence coverage.
-- Add deterministic hallucination and factual grounding checks on top of the existing reports.
-- Define a threshold policy before introducing CI quality gates.
+- Add deterministic factual grounding and unsupported-claim checks on top of the expanded datasets.
+- Define category-specific threshold policies before introducing CI quality gates.
+- Add report-level regression diffs so future baseline runs can compare changed failure cases directly.

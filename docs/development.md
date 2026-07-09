@@ -149,6 +149,34 @@ $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:54
 uv run python -m packages.evals.run --dataset data/eval/qa_dataset.json --output reports/evaluation.md --top-k 5 --embedding-provider fake --llm-provider mock
 ```
 
+## Phase 3 Baseline
+
+Phase 3 starts with a deterministic local reliability baseline built from the existing
+repository-owned evaluation surfaces. This baseline does not integrate external LLMOps tools yet.
+
+Run it with:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run python -m packages.evals.run_baseline --embedding-provider fake --llm-provider mock --output reports/phase3/baseline_report.md
+```
+
+The baseline command coordinates:
+
+- `packages.evals.run`
+- `packages.evals.run_agent`
+- `packages.evals.run_agent_e2e`
+
+Generated outputs:
+
+- `reports/evaluation.md`
+- `reports/agent_evaluation.md`
+- `reports/agent_e2e_evaluation.md`
+- `reports/phase3/baseline_report.md`
+
+See `docs/phase3/reliability_baseline.md` for the current capabilities, gaps, and why external
+LLMOps integrations are intentionally deferred at this stage.
+
 ## Provider Choices
 
 For deterministic local work, prefer:

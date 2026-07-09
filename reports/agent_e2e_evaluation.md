@@ -2,8 +2,8 @@
 
 ## Summary
 
-- Total test/eval cases: 7
-- Pass/fail summary: 7 passed, 0 failed
+- Total test/eval cases: 11
+- Pass/fail summary: 11 passed, 0 failed
 - Default agent workflow coverage: 100.0%
 - Legacy fallback coverage: 100.0%
 - Intent accuracy: 100.0%
@@ -12,7 +12,7 @@
 - Decision coverage: 100.0%
 - Executive summary coverage: 100.0%
 - Approval status coverage: 100.0%
-- Average workflow latency: 9.7 ms
+- Average workflow latency: 11.1 ms
 
 ## Case Results
 
@@ -20,9 +20,13 @@
 | --- | --- | ---: | --- | --- | --- |
 | decision-loyalty-default | agent_workflow | 200 | decision_support | yes |  |
 | summary-payment-default | agent_workflow | 200 | executive_summary | yes |  |
+| lookup-payment-default | agent_workflow | 200 | experiment_lookup | yes |  |
 | lookup-hotel-default | agent_workflow | 200 | experiment_lookup | yes |  |
 | risk-checkout-default | agent_workflow | 200 | risk_assessment | yes |  |
+| decision-pricing-default | agent_workflow | 200 | decision_support | yes |  |
 | impact-search-default | agent_workflow | 200 | business_impact | yes |  |
+| decision-premium-needs-more-data | agent_workflow | 200 | decision_support | yes |  |
+| summary-loyalty-revision-requested | agent_workflow | 200 | executive_summary | yes |  |
 | legacy-fallback | legacy_rag | 200 | None | yes |  |
 | failure-default | agent_workflow | 502 |  | yes |  |
 

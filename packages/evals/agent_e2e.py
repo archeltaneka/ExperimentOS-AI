@@ -64,6 +64,9 @@ class AgentE2ECase:
     expected_intent: str | None = None
     expected_required_agents: tuple[str, ...] = ()
     expected_min_citations: int = 0
+    expected_decision_status: str | None = None
+    expected_recommendation: str | None = None
+    expected_summary_status: str | None = None
     expect_decision: bool = False
     expect_executive_summary: bool = False
     expected_approval_status: str | None = None
@@ -136,19 +139,11 @@ class AgentE2ESummary:
             legacy_fallback_coverage=_average(
                 float(sample.used_legacy_fallback) for sample in legacy_samples
             ),
-            intent_accuracy=_average(
-                _intent_match(sample) for sample in success_samples
-            ),
-            routing_accuracy=_average(
-                _routing_match(sample) for sample in success_samples
-            ),
-            citation_coverage=_average(
-                _citation_score(sample) for sample in success_samples
-            ),
+            intent_accuracy=_average(_intent_match(sample) for sample in success_samples),
+            routing_accuracy=_average(_routing_match(sample) for sample in success_samples),
+            citation_coverage=_average(_citation_score(sample) for sample in success_samples),
             decision_coverage=_average(
-                _decision_score(sample)
-                for sample in success_samples
-                if sample.case.expect_decision
+                _decision_score(sample) for sample in success_samples if sample.case.expect_decision
             ),
             executive_summary_coverage=_average(
                 _executive_summary_score(sample)
@@ -238,8 +233,8 @@ class AgentE2EEvaluator:
                 app.dependency_overrides[get_question_answering_service] = (
                     lambda qa_service=qa_service: qa_service
                 )
-                app.dependency_overrides[get_agent_workflow_service] = (
-                    lambda: StubWorkflowService(failure_message="agent workflow should not run")
+                app.dependency_overrides[get_agent_workflow_service] = lambda: StubWorkflowService(
+                    failure_message="agent workflow should not run"
                 )
             else:
                 os.environ.pop("ASK_MODE", None)
@@ -316,6 +311,9 @@ def build_default_agent_e2e_cases() -> list[AgentE2ECase]:
                 "executive_summary",
             ),
             expected_min_citations=1,
+            expected_decision_status="decided",
+            expected_recommendation="rollout",
+            expected_summary_status="generated",
             expect_decision=True,
             expect_executive_summary=True,
             expected_approval_status="pending",
@@ -338,10 +336,24 @@ def build_default_agent_e2e_cases() -> list[AgentE2ECase]:
                 "executive_summary",
             ),
             expected_min_citations=1,
+            expected_decision_status="decided",
+            expected_recommendation="rollout",
+            expected_summary_status="generated",
             expect_decision=True,
             expect_executive_summary=True,
             expected_approval_status="pending",
             expect_agent_trace=True,
+        ),
+        AgentE2ECase(
+            id="lookup-payment-default",
+            question="What happened in the payment recommendation experiment?",
+            scenario="experiment_lookup",
+            expected_intent="experiment_lookup",
+            expected_required_agents=("retrieval",),
+            expected_min_citations=1,
+            expected_approval_status="not_requested",
+            expect_agent_trace=True,
+            expected_trace_nodes=LOOKUP_TRACE_NODES,
         ),
         AgentE2ECase(
             id="lookup-hotel-default",
@@ -365,6 +377,31 @@ def build_default_agent_e2e_cases() -> list[AgentE2ECase]:
             expect_agent_trace=True,
         ),
         AgentE2ECase(
+            id="decision-pricing-default",
+            question="Should we roll out the pricing experiment?",
+            scenario="decision_support",
+            expected_intent="decision_support",
+            expected_required_agents=(
+                "retrieval",
+                "experiment_analysis",
+                "business_impact",
+                "risk_assessment",
+                "decision",
+                "human_approval",
+                "executive_summary",
+            ),
+            expected_min_citations=2,
+            expected_decision_status="decided",
+            expected_recommendation="do_not_rollout",
+            expected_summary_status="generated",
+            expect_decision=True,
+            expect_executive_summary=True,
+            expected_approval_status="rejected",
+            expect_agent_trace=True,
+            expected_trace_nodes=FULL_AGENT_TRACE_NODES,
+            expect_agent_metrics=True,
+        ),
+        AgentE2ECase(
             id="impact-search-default",
             question="What is the business impact of the search ranking experiment?",
             scenario="business_impact",
@@ -372,6 +409,57 @@ def build_default_agent_e2e_cases() -> list[AgentE2ECase]:
             expected_required_agents=("retrieval", "experiment_analysis", "business_impact"),
             expected_min_citations=1,
             expected_approval_status="not_requested",
+            expect_agent_trace=True,
+        ),
+        AgentE2ECase(
+            id="decision-premium-needs-more-data",
+            question="Should we roll out the premium subscription experiment?",
+            scenario="decision_support",
+            expected_intent="decision_support",
+            expected_required_agents=(
+                "retrieval",
+                "experiment_analysis",
+                "business_impact",
+                "risk_assessment",
+                "decision",
+                "human_approval",
+                "executive_summary",
+            ),
+            expected_min_citations=1,
+            expected_decision_status="needs_more_data",
+            expected_recommendation="needs_more_data",
+            expected_summary_status="partial_summary",
+            expect_decision=True,
+            expect_executive_summary=True,
+            expected_approval_status="not_requested",
+            expect_agent_trace=True,
+            expected_trace_nodes=FULL_AGENT_TRACE_NODES,
+            expect_agent_metrics=True,
+        ),
+        AgentE2ECase(
+            id="summary-loyalty-revision-requested",
+            question=(
+                "Summarize the loyalty tier progress nudges experiment for executives "
+                "and include approval revisions."
+            ),
+            scenario="executive_summary",
+            expected_intent="executive_summary",
+            expected_required_agents=(
+                "retrieval",
+                "experiment_analysis",
+                "business_impact",
+                "risk_assessment",
+                "decision",
+                "human_approval",
+                "executive_summary",
+            ),
+            expected_min_citations=1,
+            expected_decision_status="decided",
+            expected_recommendation="rollout",
+            expected_summary_status="generated",
+            expect_decision=True,
+            expect_executive_summary=True,
+            expected_approval_status="revision_requested",
             expect_agent_trace=True,
         ),
         AgentE2ECase(
@@ -410,6 +498,7 @@ def _build_state_for_case(case: AgentE2ECase) -> AgentState:
 
 
 def _build_decision_support_state(question: str, experiment_id: str, top_k: int) -> AgentState:
+    normalized = question.lower()
     state = create_initial_state(question, experiment_id=experiment_id, top_k=top_k)
     state["intent"] = "decision_support"
     state["required_agents"] = [
@@ -421,22 +510,364 @@ def _build_decision_support_state(question: str, experiment_id: str, top_k: int)
         "human_approval",
         "executive_summary",
     ]
+
+    if "pricing" in normalized:
+        state["retrieved_chunks"] = [
+            {
+                "document_id": "doc-pricing-1",
+                "experiment_id": experiment_id,
+                "content": (
+                    "Gross margin declined in treatment and the team recommended not "
+                    "rolling out the variant."
+                ),
+                "score": 0.91,
+                "metadata": {"section": "Results", "document_name": "Pricing Report"},
+            },
+            {
+                "document_id": "doc-pricing-2",
+                "experiment_id": experiment_id,
+                "content": "Margin dilution outweighed the conversion gain.",
+                "score": 0.9,
+                "metadata": {"section": "Recommendation", "document_name": "Pricing Report"},
+            },
+        ]
+        state["citations"] = [
+            {
+                "document_id": "doc-pricing-1",
+                "experiment_id": experiment_id,
+                "quote": (
+                    "Gross margin declined in treatment and the team recommended not "
+                    "rolling out the variant."
+                ),
+                "section": "Results",
+                "metadata": {"section": "Results", "document_name": "Pricing Report"},
+            },
+            {
+                "document_id": "doc-pricing-2",
+                "experiment_id": experiment_id,
+                "quote": "Margin dilution outweighed the conversion gain.",
+                "section": "Recommendation",
+                "metadata": {"section": "Recommendation", "document_name": "Pricing Report"},
+            },
+        ]
+        state["experiment_analysis"] = {
+            **state["experiment_analysis"],
+            "summary": "The pricing treatment worsened gross margin per visitor.",
+            "status": "completed",
+            "experiment_id": experiment_id,
+            "experiment_name": "Transparent Discount Price Framing",
+            "primary_metric": "gross_margin_per_visitor",
+            "evidence_citations": list(state["citations"]),
+            "analysis_confidence": "high",
+        }
+        state["business_impact"] = {
+            **state["business_impact"],
+            "summary": (
+                "Projected business impact is negative because the treatment diluted "
+                "margin."
+            ),
+            "impact_status": "estimated",
+            "relative_lift": -0.031,
+            "evidence_citations": list(state["citations"]),
+            "confidence_level": "high",
+        }
+        state["risk_assessment"] = {
+            **state["risk_assessment"],
+            "risk_status": "assessed",
+            "overall_risk_level": "high",
+            "risk_score": 3,
+            "risk_factors": [
+                {
+                    "code": "margin_dilution",
+                    "title": "Margin dilution",
+                    "severity": "high",
+                    "category": "user_or_business",
+                    "detail": "Margin dilution outweighs the observed conversion gain.",
+                    "mitigation": "Do not expand rollout until a safer pricing design is tested.",
+                }
+            ],
+            "mitigation_actions": ["Do not expand rollout until a safer pricing design is tested."],
+            "evidence_citations": list(state["citations"]),
+            "confidence_level": "high",
+        }
+        state["decision"] = {
+            **state["decision"],
+            "decision_status": "decided",
+            "recommendation": "do_not_rollout",
+            "confidence": "high",
+            "rationale": "The negative margin movement outweighs the conversion upside.",
+            "supporting_evidence": ["Gross margin worsened in treatment."],
+            "recommended_next_actions": [
+                "Retest with clearer savings copy but no deeper discounts."
+            ],
+            "approval_required": True,
+            "evidence_citations": list(state["citations"]),
+        }
+        state["human_approval"] = {
+            **state["human_approval"],
+            "status": "rejected",
+            "required": True,
+        }
+        state["executive_summary"] = {
+            **state["executive_summary"],
+            "summary_status": "generated",
+            "headline": "The recommendation was not approved.",
+            "recommendation": "do_not_rollout",
+            "summary": "Do not roll out based on the current evidence and approval outcome.",
+            "evidence_citations": list(state["citations"]),
+        }
+        state["metrics"] = {
+            "planner_rule_version": "deterministic_v1",
+            "planner": {"status": "planned", "latency_ms": 1.0},
+            "retrieval": {
+                "embedding_time_ms": 10.0,
+                "vector_search_time_ms": 8.0,
+                "retrieved_chunks": 2,
+                "average_similarity": 0.905,
+            },
+            "experiment_analysis": {"status": "completed", "latency_ms": 11.0},
+            "business_impact": {"status": "estimated", "latency_ms": 12.0},
+            "risk_assessment": {"status": "assessed", "latency_ms": 13.0},
+            "decision": {"status": "decided", "latency_ms": 14.0},
+            "human_approval": {"status": "rejected", "latency_ms": 15.0},
+            "executive_summary": {"status": "generated", "latency_ms": 16.0},
+        }
+        state["trace"] = _full_trace()
+        return state
+
+    if "premium subscription" in normalized:
+        state["retrieved_chunks"] = [
+            {
+                "document_id": "doc-premium-1",
+                "experiment_id": experiment_id,
+                "content": (
+                    "Trial-start tracking lagged for Apple in-app subscriptions, so "
+                    "the business read remains incomplete."
+                ),
+                "score": 0.89,
+                "metadata": {"section": "Limitations", "document_name": "Premium Report"},
+            }
+        ]
+        state["citations"] = [
+            {
+                "document_id": "doc-premium-1",
+                "experiment_id": experiment_id,
+                "quote": (
+                    "Trial-start tracking lagged for Apple in-app subscriptions, so "
+                    "the business read remains incomplete."
+                ),
+                "section": "Limitations",
+                "metadata": {"section": "Limitations", "document_name": "Premium Report"},
+            }
+        ]
+        state["experiment_analysis"] = {
+            **state["experiment_analysis"],
+            "summary": (
+                "The premium trial experiment showed directional movement, but the "
+                "evidence is incomplete."
+            ),
+            "status": "completed",
+            "experiment_id": experiment_id,
+            "experiment_name": "Premium Subscription Trial Offer",
+            "primary_metric": "trial_start_rate",
+            "evidence_citations": list(state["citations"]),
+            "analysis_confidence": "medium",
+        }
+        state["business_impact"] = {
+            **state["business_impact"],
+            "summary": (
+                "Business impact could not be estimated cleanly from the available "
+                "evidence."
+            ),
+            "impact_status": "insufficient_data",
+            "evidence_citations": list(state["citations"]),
+            "confidence_level": "medium",
+        }
+        state["risk_assessment"] = {
+            **state["risk_assessment"],
+            "risk_status": "partial_assessment",
+            "overall_risk_level": "unknown",
+            "risk_score": None,
+            "risk_factors": [],
+            "mitigation_actions": [
+                "Resolve annual-plan cannibalization and billing telemetry before rollout."
+            ],
+            "evidence_citations": list(state["citations"]),
+            "confidence_level": "low",
+        }
+        state["decision"] = {
+            **state["decision"],
+            "decision_status": "needs_more_data",
+            "recommendation": "needs_more_data",
+            "confidence": "low",
+            "rationale": "The business impact and statistical evidence are incomplete.",
+            "supporting_evidence": ["Tracking gaps block a grounded rollout call."],
+            "blocking_issues": ["Business impact is insufficient for a rollout decision."],
+            "recommended_next_actions": [
+                "Resolve annual-plan cannibalization and billing telemetry before rollout."
+            ],
+            "approval_required": False,
+            "evidence_citations": list(state["citations"]),
+        }
+        state["human_approval"] = {
+            **state["human_approval"],
+            "status": "not_requested",
+            "required": False,
+        }
+        state["executive_summary"] = {
+            **state["executive_summary"],
+            "summary_status": "partial_summary",
+            "headline": "Rollout is not ready; more evidence is required.",
+            "recommendation": "needs_more_data",
+            "summary": "More data is required before a rollout-sensitive decision can be approved.",
+            "evidence_citations": list(state["citations"]),
+        }
+        state["metrics"] = {
+            "planner_rule_version": "deterministic_v1",
+            "planner": {"status": "planned", "latency_ms": 1.0},
+            "retrieval": {
+                "embedding_time_ms": 10.0,
+                "vector_search_time_ms": 8.0,
+                "retrieved_chunks": 1,
+                "average_similarity": 0.89,
+            },
+            "experiment_analysis": {"status": "completed", "latency_ms": 11.0},
+            "business_impact": {"status": "insufficient_data", "latency_ms": 12.0},
+            "risk_assessment": {"status": "partial_assessment", "latency_ms": 13.0},
+            "decision": {"status": "needs_more_data", "latency_ms": 14.0},
+            "human_approval": {"status": "not_requested", "latency_ms": 15.0},
+            "executive_summary": {"status": "partial_summary", "latency_ms": 16.0},
+        }
+        state["trace"] = _full_trace()
+        return state
+
+    if "payment recommendation" in normalized:
+        state["retrieved_chunks"] = [
+            {
+                "document_id": "doc-payment-1",
+                "experiment_id": experiment_id,
+                "content": (
+                    "Payment success improved in treatment and the rollout should stay "
+                    "limited to clean-telemetry markets."
+                ),
+                "score": 0.91,
+                "metadata": {"section": "Results", "document_name": "Payment Report"},
+            }
+        ]
+        state["citations"] = [
+            {
+                "document_id": "doc-payment-1",
+                "experiment_id": experiment_id,
+                "quote": (
+                    "Payment success improved in treatment and the rollout should stay "
+                    "limited to clean-telemetry markets."
+                ),
+                "section": "Results",
+                "metadata": {"section": "Results", "document_name": "Payment Report"},
+            }
+        ]
+        state["experiment_analysis"] = {
+            **state["experiment_analysis"],
+            "summary": "Payment success improved in treatment.",
+            "status": "completed",
+            "experiment_id": experiment_id,
+            "experiment_name": "Adaptive Payment Method Recommendation",
+            "primary_metric": "payment_success_rate",
+            "evidence_citations": list(state["citations"]),
+            "analysis_confidence": "high",
+        }
+        state["business_impact"] = {
+            **state["business_impact"],
+            "summary": "Projected incremental payment success is material.",
+            "impact_status": "estimated",
+            "relative_lift": 0.089,
+            "evidence_citations": list(state["citations"]),
+            "confidence_level": "high",
+        }
+        state["risk_assessment"] = {
+            **state["risk_assessment"],
+            "risk_status": "assessed",
+            "overall_risk_level": "medium",
+            "risk_score": 2,
+            "risk_factors": [
+                {
+                    "code": "monitor_rollout",
+                    "title": "Monitor ramp",
+                    "severity": "medium",
+                    "category": "rollout",
+                    "detail": "Monitor telemetry during ramp.",
+                    "mitigation": "Ramp gradually.",
+                }
+            ],
+            "mitigation_actions": ["Ramp gradually."],
+            "evidence_citations": list(state["citations"]),
+            "confidence_level": "high",
+        }
+        state["decision"] = {
+            **state["decision"],
+            "decision_status": "decided",
+            "recommendation": "rollout",
+            "confidence": "high",
+            "rationale": "Positive lift outweighed manageable rollout risk.",
+            "supporting_evidence": ["Primary metric improved."],
+            "recommended_next_actions": ["Roll out gradually."],
+            "approval_required": True,
+            "evidence_citations": list(state["citations"]),
+        }
+        state["human_approval"] = {
+            **state["human_approval"],
+            "status": "approved",
+            "required": True,
+        }
+        state["executive_summary"] = {
+            **state["executive_summary"],
+            "summary_status": "generated",
+            "headline": "Rollout is supported by the current evidence.",
+            "recommendation": "rollout",
+            "summary": "Rollout is supported by the current evidence.",
+            "evidence_citations": list(state["citations"]),
+        }
+        state["metrics"] = {
+            "planner_rule_version": "deterministic_v1",
+            "planner": {"status": "planned", "latency_ms": 1.0},
+            "retrieval": {
+                "embedding_time_ms": 10.0,
+                "vector_search_time_ms": 8.0,
+                "retrieved_chunks": 1,
+                "average_similarity": 0.91,
+            },
+            "experiment_analysis": {"status": "completed", "latency_ms": 11.0},
+            "business_impact": {"status": "estimated", "latency_ms": 12.0},
+            "risk_assessment": {"status": "assessed", "latency_ms": 13.0},
+            "decision": {"status": "decided", "latency_ms": 14.0},
+            "human_approval": {"status": "approved", "latency_ms": 15.0},
+            "executive_summary": {"status": "generated", "latency_ms": 16.0},
+        }
+        state["trace"] = _full_trace()
+        return state
+
     state["retrieved_chunks"] = [
         {
             "document_id": "doc-1",
             "experiment_id": experiment_id,
-            "content": "Primary metric improved by 8.9% in treatment.",
+            "content": (
+                "Primary metric improved for loyalty members and the rollout should "
+                "stay monitored."
+            ),
             "score": 0.91,
-            "metadata": {"section": "Results", "document_name": "Launch Report"},
+            "metadata": {"section": "Results", "document_name": "Loyalty Report"},
         }
     ]
     state["citations"] = [
         {
             "document_id": "doc-1",
             "experiment_id": experiment_id,
-            "quote": "Primary metric improved by 8.9% in treatment.",
+            "quote": (
+                "Primary metric improved for loyalty members and the rollout should "
+                "stay monitored."
+            ),
             "section": "Results",
-            "metadata": {"section": "Results", "document_name": "Launch Report"},
+            "metadata": {"section": "Results", "document_name": "Loyalty Report"},
         }
     ]
     state["experiment_analysis"] = {
@@ -444,14 +875,14 @@ def _build_decision_support_state(question: str, experiment_id: str, top_k: int)
         "summary": "Treatment beat control on the primary metric.",
         "status": "completed",
         "experiment_id": experiment_id,
-        "experiment_name": "Adaptive Payment Method Recommendation",
-        "primary_metric": "payment_success_rate",
+        "experiment_name": "Loyalty Tier Progress Nudges",
+        "primary_metric": "repeat_session_rate_14d",
         "evidence_citations": list(state["citations"]),
         "analysis_confidence": "high",
     }
     state["business_impact"] = {
         **state["business_impact"],
-        "summary": "Projected incremental payment success is material.",
+        "summary": "Projected incremental loyalty engagement is material.",
         "impact_status": "estimated",
         "relative_lift": 0.089,
         "evidence_citations": list(state["citations"]),
@@ -465,10 +896,10 @@ def _build_decision_support_state(question: str, experiment_id: str, top_k: int)
         "risk_factors": [
             {
                 "code": "monitor_rollout",
-                "title": "Monitor ramp",
+                "title": "Monitor frequency caps",
                 "severity": "medium",
                 "category": "rollout",
-                "detail": "Monitor telemetry during ramp.",
+                "detail": "Monitor unsubscribe rates during ramp.",
                 "mitigation": "Ramp gradually.",
             }
         ],
@@ -490,9 +921,9 @@ def _build_decision_support_state(question: str, experiment_id: str, top_k: int)
     state["executive_summary"] = {
         **state["executive_summary"],
         "summary_status": "generated",
-        "headline": "Rollout is supported by the current evidence.",
+        "headline": "Recommendation is awaiting human approval.",
         "recommendation": "rollout",
-        "summary": "Rollout is supported by the current evidence.",
+        "summary": "Rollout is supported but approval is still pending.",
         "evidence_citations": list(state["citations"]),
     }
     state["human_approval"] = {
@@ -523,10 +954,36 @@ def _build_decision_support_state(question: str, experiment_id: str, top_k: int)
 def _build_executive_summary_state(question: str, experiment_id: str, top_k: int) -> AgentState:
     state = _build_decision_support_state(question, experiment_id, top_k)
     state["intent"] = "executive_summary"
-    state["executive_summary"] = {
-        **state["executive_summary"],
-        "summary": "Executives should proceed with a monitored rollout.",
-    }
+    normalized = question.lower()
+    if "revision" in normalized:
+        state["human_approval"] = {
+            **state["human_approval"],
+            "status": "revision_requested",
+            "required": True,
+        }
+        state["executive_summary"] = {
+            **state["executive_summary"],
+            "headline": "Revision was requested before approval.",
+            "summary": "The rollout recommendation needs revision before approval.",
+        }
+        state["metrics"]["human_approval"] = {"status": "revision_requested", "latency_ms": 15.0}
+    elif "payment recommendation" in normalized:
+        state["human_approval"] = {
+            **state["human_approval"],
+            "status": "pending",
+            "required": True,
+        }
+        state["executive_summary"] = {
+            **state["executive_summary"],
+            "headline": "Recommendation is awaiting human approval.",
+            "summary": "Executives should proceed with a monitored rollout after approval.",
+        }
+        state["metrics"]["human_approval"] = {"status": "pending", "latency_ms": 15.0}
+    else:
+        state["executive_summary"] = {
+            **state["executive_summary"],
+            "summary": "Executives should proceed with a monitored rollout.",
+        }
     return state
 
 
@@ -534,24 +991,50 @@ def _build_lookup_state(question: str, experiment_id: str, top_k: int) -> AgentS
     state = create_initial_state(question, experiment_id=experiment_id, top_k=top_k)
     state["intent"] = "experiment_lookup"
     state["required_agents"] = ["retrieval"]
-    state["retrieved_chunks"] = [
-        {
-            "document_id": "doc-lookup-1",
-            "experiment_id": experiment_id,
-            "content": "Hotel image quality treatment improved booking conversion.",
-            "score": 0.88,
-            "metadata": {"section": "Results", "document_name": "Hotel Report"},
-        }
-    ]
-    state["citations"] = [
-        {
-            "document_id": "doc-lookup-1",
-            "experiment_id": experiment_id,
-            "quote": "Hotel image quality treatment improved booking conversion.",
-            "section": "Results",
-            "metadata": {"section": "Results", "document_name": "Hotel Report"},
-        }
-    ]
+    if "payment recommendation" in question.lower():
+        state["retrieved_chunks"] = [
+            {
+                "document_id": "doc-lookup-payment-1",
+                "experiment_id": experiment_id,
+                "content": (
+                    "Payment recommendation improved completion while keeping Japan "
+                    "behind monitoring."
+                ),
+                "score": 0.89,
+                "metadata": {"section": "Results", "document_name": "Payment Report"},
+            }
+        ]
+        state["citations"] = [
+            {
+                "document_id": "doc-lookup-payment-1",
+                "experiment_id": experiment_id,
+                "quote": (
+                    "Payment recommendation improved completion while keeping Japan "
+                    "behind monitoring."
+                ),
+                "section": "Results",
+                "metadata": {"section": "Results", "document_name": "Payment Report"},
+            }
+        ]
+    else:
+        state["retrieved_chunks"] = [
+            {
+                "document_id": "doc-lookup-1",
+                "experiment_id": experiment_id,
+                "content": "Hotel image quality treatment improved booking conversion.",
+                "score": 0.88,
+                "metadata": {"section": "Results", "document_name": "Hotel Report"},
+            }
+        ]
+        state["citations"] = [
+            {
+                "document_id": "doc-lookup-1",
+                "experiment_id": experiment_id,
+                "quote": "Hotel image quality treatment improved booking conversion.",
+                "section": "Results",
+                "metadata": {"section": "Results", "document_name": "Hotel Report"},
+            }
+        ]
     state["metrics"] = {
         "planner_rule_version": "deterministic_v1",
         "retrieval": {
@@ -774,9 +1257,7 @@ def _validate_sample(
 ) -> list[str]:
     failures: list[str] = []
     if status_code != case.expected_status_code:
-        failures.append(
-            f"status mismatch: expected {case.expected_status_code}, got {status_code}"
-        )
+        failures.append(f"status mismatch: expected {case.expected_status_code}, got {status_code}")
 
     if case.ask_mode == "agent_workflow" and not used_agent_workflow:
         failures.append("default agent_workflow route was not selected")
@@ -808,15 +1289,11 @@ def _validate_sample(
 
     if case.expected_intent is not None and response_json.get("intent") != case.expected_intent:
         failures.append(
-            f"intent mismatch: expected {case.expected_intent}, "
-            f"got {response_json.get('intent')}"
+            f"intent mismatch: expected {case.expected_intent}, got {response_json.get('intent')}"
         )
 
     actual_required_agents = tuple(response_json.get("required_agents", []))
-    if (
-        case.expected_required_agents
-        and actual_required_agents != case.expected_required_agents
-    ):
+    if case.expected_required_agents and actual_required_agents != case.expected_required_agents:
         failures.append(
             "routing mismatch: expected "
             f"{list(case.expected_required_agents)}, got {list(actual_required_agents)}"
@@ -826,9 +1303,7 @@ def _validate_sample(
     if not isinstance(citations, list):
         failures.append("citations should be a list")
     elif len(citations) < case.expected_min_citations:
-        failures.append(
-            f"citation coverage below expectation: {len(citations)} citations returned"
-        )
+        failures.append(f"citation coverage below expectation: {len(citations)} citations returned")
 
     decision = response_json.get("decision")
     if case.expect_decision:
@@ -836,6 +1311,23 @@ def _validate_sample(
             failures.append("decision artifact was not returned")
         elif decision.get("decision_status") in {"", "not_required", "unknown"}:
             failures.append("decision artifact did not contain a real decision status")
+        elif (
+            case.expected_decision_status is not None
+            and decision.get("decision_status") != case.expected_decision_status
+        ):
+            failures.append(
+                "decision status mismatch: expected "
+                f"{case.expected_decision_status}, got {decision.get('decision_status')}"
+            )
+        if (
+            isinstance(decision, dict)
+            and case.expected_recommendation is not None
+            and decision.get("recommendation") != case.expected_recommendation
+        ):
+            failures.append(
+                "decision recommendation mismatch: expected "
+                f"{case.expected_recommendation}, got {decision.get('recommendation')}"
+            )
 
     executive_summary = response_json.get("executive_summary")
     if case.expect_executive_summary:
@@ -843,6 +1335,14 @@ def _validate_sample(
             failures.append("executive summary artifact was not returned")
         elif executive_summary.get("summary_status") in {"", "not_required"}:
             failures.append("executive summary artifact was not generated")
+        elif (
+            case.expected_summary_status is not None
+            and executive_summary.get("summary_status") != case.expected_summary_status
+        ):
+            failures.append(
+                "summary status mismatch: expected "
+                f"{case.expected_summary_status}, got {executive_summary.get('summary_status')}"
+            )
 
     if (
         case.expected_approval_status is not None
@@ -935,8 +1435,7 @@ def _approval_status_score(sample: AgentE2ESampleResult) -> float:
     if sample.case.expected_approval_status is None:
         return 1.0
     return float(
-        sample.response_json.get("approval_status")
-        == sample.case.expected_approval_status
+        sample.response_json.get("approval_status") == sample.case.expected_approval_status
     )
 
 

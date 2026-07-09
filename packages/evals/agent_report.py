@@ -65,19 +65,22 @@ def render_agent_evaluation_report(run: AgentEvaluationRun) -> str:
             "",
             "## Sample Results",
             "",
-            "| ID | Intent | Routing | Citations | Recommendation | Workflow | Pass | Error |",
-            "| --- | --- | ---: | ---: | --- | --- | --- | --- |",
+            (
+                "| ID | Category | Intent | Routing | Citations | Recommendation | "
+                "Workflow | Pass | Error |"
+            ),
+            "| --- | --- | --- | ---: | ---: | --- | --- | --- | --- |",
         ]
     )
     for sample in run.samples:
         if sample.metrics is None or sample.observation is None:
             lines.append(
-                f"| {sample.case.id} | {sample.case.expected_intent} | 0.0% | 0.0% | "
-                f"n/a | failed | no | {sample.error or ''} |"
+                f"| {sample.case.id} | {sample.case.category} | {sample.case.expected_intent} | "
+                f"0.0% | 0.0% | n/a | failed | no | {sample.error or ''} |"
             )
             continue
         lines.append(
-            f"| {sample.case.id} | {sample.observation.intent} | "
+            f"| {sample.case.id} | {sample.case.category} | {sample.observation.intent} | "
             f"{_percent(sample.metrics.routing_accuracy)} | "
             f"{_percent(sample.metrics.citation_coverage)} | "
             f"{sample.observation.final_recommendation} | "

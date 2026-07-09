@@ -9,68 +9,93 @@
 
 ## Summary
 
-- Questions evaluated: 40
+- Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 1020.7 ms
-- Average LLM latency: 4834.0 ms
-- Average similarity: 0.669
-- Token usage: 45261 total (41532 input, 3729 output)
+- Average retrieval latency: 941.4 ms
+- Average LLM latency: 4792.5 ms
+- Average similarity: 0.664
+- Token usage: 72437 total (66623 input, 5814 output)
 - Estimated cost: $0.000000
 
 ## Category Coverage
 
 | Category | Questions | Retrieval Success | Avg Citation Coverage |
 | --- | ---: | ---: | ---: |
-| caveat | 10 | 100.0% | 100.0% |
-| decision | 10 | 100.0% | 100.0% |
-| metric | 10 | 100.0% | 100.0% |
-| risk | 10 | 100.0% | 100.0% |
+| business_impact | 10 | 100.0% | 100.0% |
+| factual_retrieval | 10 | 100.0% | 100.0% |
+| insufficient_evidence | 10 | 100.0% | 100.0% |
+| legacy_rag_fallback | 2 | 100.0% | 100.0% |
+| result_interpretation | 10 | 100.0% | 100.0% |
+| risk_guardrail | 10 | 100.0% | 100.0% |
+| rollout_decision | 10 | 100.0% | 100.0% |
 
 ## Sample Results
 
 | ID | Experiment | Category | Retrieval | Citation Coverage | Avg Similarity | Error |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| exp-001-decision | exp-001-payment-recommendation | decision | yes | 100.0% | 0.668 |  |
-| exp-001-primary-metric | exp-001-payment-recommendation | metric | yes | 100.0% | 0.706 |  |
-| exp-001-caveat | exp-001-payment-recommendation | caveat | yes | 100.0% | 0.662 |  |
-| exp-001-risk | exp-001-payment-recommendation | risk | yes | 100.0% | 0.655 |  |
-| exp-002-decision | exp-002-hotel-image-quality | decision | yes | 100.0% | 0.717 |  |
-| exp-002-primary-metric | exp-002-hotel-image-quality | metric | yes | 100.0% | 0.707 |  |
-| exp-002-caveat | exp-002-hotel-image-quality | caveat | yes | 100.0% | 0.722 |  |
-| exp-002-risk | exp-002-hotel-image-quality | risk | yes | 100.0% | 0.693 |  |
-| exp-003-decision | exp-003-search-ranking | decision | yes | 100.0% | 0.716 |  |
-| exp-003-primary-metric | exp-003-search-ranking | metric | yes | 100.0% | 0.679 |  |
-| exp-003-caveat | exp-003-search-ranking | caveat | yes | 100.0% | 0.647 |  |
-| exp-003-risk | exp-003-search-ranking | risk | yes | 100.0% | 0.664 |  |
-| exp-004-decision | exp-004-checkout-ux | decision | yes | 100.0% | 0.629 |  |
-| exp-004-primary-metric | exp-004-checkout-ux | metric | yes | 100.0% | 0.716 |  |
-| exp-004-caveat | exp-004-checkout-ux | caveat | yes | 100.0% | 0.684 |  |
-| exp-004-risk | exp-004-checkout-ux | risk | yes | 100.0% | 0.626 |  |
-| exp-005-decision | exp-005-pricing | decision | yes | 100.0% | 0.653 |  |
-| exp-005-primary-metric | exp-005-pricing | metric | yes | 100.0% | 0.628 |  |
-| exp-005-caveat | exp-005-pricing | caveat | yes | 100.0% | 0.611 |  |
-| exp-005-risk | exp-005-pricing | risk | yes | 100.0% | 0.679 |  |
-| exp-006-decision | exp-006-loyalty | decision | yes | 100.0% | 0.729 |  |
-| exp-006-primary-metric | exp-006-loyalty | metric | yes | 100.0% | 0.690 |  |
-| exp-006-caveat | exp-006-loyalty | caveat | yes | 100.0% | 0.676 |  |
-| exp-006-risk | exp-006-loyalty | risk | yes | 100.0% | 0.632 |  |
-| exp-007-decision | exp-007-crm-notifications | decision | yes | 100.0% | 0.666 |  |
-| exp-007-primary-metric | exp-007-crm-notifications | metric | yes | 100.0% | 0.672 |  |
-| exp-007-caveat | exp-007-crm-notifications | caveat | yes | 100.0% | 0.691 |  |
-| exp-007-risk | exp-007-crm-notifications | risk | yes | 100.0% | 0.691 |  |
-| exp-008-decision | exp-008-recommendation-systems | decision | yes | 100.0% | 0.681 |  |
-| exp-008-primary-metric | exp-008-recommendation-systems | metric | yes | 100.0% | 0.669 |  |
-| exp-008-caveat | exp-008-recommendation-systems | caveat | yes | 100.0% | 0.594 |  |
-| exp-008-risk | exp-008-recommendation-systems | risk | yes | 100.0% | 0.603 |  |
-| exp-009-decision | exp-009-search-filters | decision | yes | 100.0% | 0.699 |  |
-| exp-009-primary-metric | exp-009-search-filters | metric | yes | 100.0% | 0.663 |  |
-| exp-009-caveat | exp-009-search-filters | caveat | yes | 100.0% | 0.633 |  |
-| exp-009-risk | exp-009-search-filters | risk | yes | 100.0% | 0.657 |  |
-| exp-010-decision | exp-010-premium-subscriptions | decision | yes | 100.0% | 0.639 |  |
-| exp-010-primary-metric | exp-010-premium-subscriptions | metric | yes | 100.0% | 0.674 |  |
-| exp-010-caveat | exp-010-premium-subscriptions | caveat | yes | 100.0% | 0.652 |  |
-| exp-010-risk | exp-010-premium-subscriptions | risk | yes | 100.0% | 0.669 |  |
+| exp-001-rollout-decision | exp-001-payment-recommendation | rollout_decision | yes | 100.0% | 0.712 |  |
+| exp-001-factual-retrieval | exp-001-payment-recommendation | factual_retrieval | yes | 100.0% | 0.706 |  |
+| exp-001-result-interpretation | exp-001-payment-recommendation | result_interpretation | yes | 100.0% | 0.636 |  |
+| exp-001-risk-guardrail | exp-001-payment-recommendation | risk_guardrail | yes | 100.0% | 0.657 |  |
+| exp-001-business-impact | exp-001-payment-recommendation | business_impact | yes | 100.0% | 0.672 |  |
+| exp-001-insufficient-evidence | exp-001-payment-recommendation | insufficient_evidence | yes | 100.0% | 0.621 |  |
+| exp-002-rollout-decision | exp-002-hotel-image-quality | rollout_decision | yes | 100.0% | 0.731 |  |
+| exp-002-factual-retrieval | exp-002-hotel-image-quality | factual_retrieval | yes | 100.0% | 0.715 |  |
+| exp-002-result-interpretation | exp-002-hotel-image-quality | result_interpretation | yes | 100.0% | 0.704 |  |
+| exp-002-risk-guardrail | exp-002-hotel-image-quality | risk_guardrail | yes | 100.0% | 0.647 |  |
+| exp-002-business-impact | exp-002-hotel-image-quality | business_impact | yes | 100.0% | 0.696 |  |
+| exp-002-insufficient-evidence | exp-002-hotel-image-quality | insufficient_evidence | yes | 100.0% | 0.674 |  |
+| exp-003-rollout-decision | exp-003-search-ranking | rollout_decision | yes | 100.0% | 0.707 |  |
+| exp-003-factual-retrieval | exp-003-search-ranking | factual_retrieval | yes | 100.0% | 0.680 |  |
+| exp-003-result-interpretation | exp-003-search-ranking | result_interpretation | yes | 100.0% | 0.650 |  |
+| exp-003-risk-guardrail | exp-003-search-ranking | risk_guardrail | yes | 100.0% | 0.628 |  |
+| exp-003-business-impact | exp-003-search-ranking | business_impact | yes | 100.0% | 0.672 |  |
+| exp-003-insufficient-evidence | exp-003-search-ranking | insufficient_evidence | yes | 100.0% | 0.631 |  |
+| exp-004-rollout-decision | exp-004-checkout-ux | rollout_decision | yes | 100.0% | 0.736 |  |
+| exp-004-factual-retrieval | exp-004-checkout-ux | factual_retrieval | yes | 100.0% | 0.691 |  |
+| exp-004-result-interpretation | exp-004-checkout-ux | result_interpretation | yes | 100.0% | 0.677 |  |
+| exp-004-risk-guardrail | exp-004-checkout-ux | risk_guardrail | yes | 100.0% | 0.612 |  |
+| exp-004-business-impact | exp-004-checkout-ux | business_impact | yes | 100.0% | 0.683 |  |
+| exp-004-insufficient-evidence | exp-004-checkout-ux | insufficient_evidence | yes | 100.0% | 0.648 |  |
+| exp-005-rollout-decision | exp-005-pricing | rollout_decision | yes | 100.0% | 0.671 |  |
+| exp-005-factual-retrieval | exp-005-pricing | factual_retrieval | yes | 100.0% | 0.650 |  |
+| exp-005-result-interpretation | exp-005-pricing | result_interpretation | yes | 100.0% | 0.622 |  |
+| exp-005-risk-guardrail | exp-005-pricing | risk_guardrail | yes | 100.0% | 0.635 |  |
+| exp-005-business-impact | exp-005-pricing | business_impact | yes | 100.0% | 0.640 |  |
+| exp-005-insufficient-evidence | exp-005-pricing | insufficient_evidence | yes | 100.0% | 0.609 |  |
+| exp-006-rollout-decision | exp-006-loyalty | rollout_decision | yes | 100.0% | 0.703 |  |
+| exp-006-factual-retrieval | exp-006-loyalty | factual_retrieval | yes | 100.0% | 0.673 |  |
+| exp-006-result-interpretation | exp-006-loyalty | result_interpretation | yes | 100.0% | 0.659 |  |
+| exp-006-risk-guardrail | exp-006-loyalty | risk_guardrail | yes | 100.0% | 0.634 |  |
+| exp-006-business-impact | exp-006-loyalty | business_impact | yes | 100.0% | 0.670 |  |
+| exp-006-insufficient-evidence | exp-006-loyalty | insufficient_evidence | yes | 100.0% | 0.641 |  |
+| exp-007-rollout-decision | exp-007-crm-notifications | rollout_decision | yes | 100.0% | 0.731 |  |
+| exp-007-factual-retrieval | exp-007-crm-notifications | factual_retrieval | yes | 100.0% | 0.697 |  |
+| exp-007-result-interpretation | exp-007-crm-notifications | result_interpretation | yes | 100.0% | 0.645 |  |
+| exp-007-risk-guardrail | exp-007-crm-notifications | risk_guardrail | yes | 100.0% | 0.632 |  |
+| exp-007-business-impact | exp-007-crm-notifications | business_impact | yes | 100.0% | 0.690 |  |
+| exp-007-insufficient-evidence | exp-007-crm-notifications | insufficient_evidence | yes | 100.0% | 0.647 |  |
+| exp-008-rollout-decision | exp-008-recommendation-systems | rollout_decision | yes | 100.0% | 0.684 |  |
+| exp-008-factual-retrieval | exp-008-recommendation-systems | factual_retrieval | yes | 100.0% | 0.672 |  |
+| exp-008-result-interpretation | exp-008-recommendation-systems | result_interpretation | yes | 100.0% | 0.629 |  |
+| exp-008-risk-guardrail | exp-008-recommendation-systems | risk_guardrail | yes | 100.0% | 0.591 |  |
+| exp-008-business-impact | exp-008-recommendation-systems | business_impact | yes | 100.0% | 0.632 |  |
+| exp-008-insufficient-evidence | exp-008-recommendation-systems | insufficient_evidence | yes | 100.0% | 0.620 |  |
+| exp-009-rollout-decision | exp-009-search-filters | rollout_decision | yes | 100.0% | 0.695 |  |
+| exp-009-factual-retrieval | exp-009-search-filters | factual_retrieval | yes | 100.0% | 0.676 |  |
+| exp-009-result-interpretation | exp-009-search-filters | result_interpretation | yes | 100.0% | 0.640 |  |
+| exp-009-risk-guardrail | exp-009-search-filters | risk_guardrail | yes | 100.0% | 0.608 |  |
+| exp-009-business-impact | exp-009-search-filters | business_impact | yes | 100.0% | 0.676 |  |
+| exp-009-insufficient-evidence | exp-009-search-filters | insufficient_evidence | yes | 100.0% | 0.633 |  |
+| exp-010-rollout-decision | exp-010-premium-subscriptions | rollout_decision | yes | 100.0% | 0.731 |  |
+| exp-010-factual-retrieval | exp-010-premium-subscriptions | factual_retrieval | yes | 100.0% | 0.692 |  |
+| exp-010-result-interpretation | exp-010-premium-subscriptions | result_interpretation | yes | 100.0% | 0.645 |  |
+| exp-010-risk-guardrail | exp-010-premium-subscriptions | risk_guardrail | yes | 100.0% | 0.622 |  |
+| exp-010-business-impact | exp-010-premium-subscriptions | business_impact | yes | 100.0% | 0.662 |  |
+| exp-010-insufficient-evidence | exp-010-premium-subscriptions | insufficient_evidence | yes | 100.0% | 0.660 |  |
+| exp-001-legacy-rag-lookup | exp-001-payment-recommendation | legacy_rag_fallback | yes | 100.0% | 0.686 |  |
+| exp-004-legacy-rag-lookup | exp-004-checkout-ux | legacy_rag_fallback | yes | 100.0% | 0.701 |  |
 
 ## Follow-Up Candidates
 

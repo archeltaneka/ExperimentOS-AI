@@ -18,6 +18,9 @@ class EvaluationQuestion:
     category: str
     difficulty: str
     reference_answer: str
+    expected_citation_required: bool = True
+    expected_failure_mode: str | None = None
+    notes: str | None = None
 
 
 def load_evaluation_dataset(path: Path = DEFAULT_DATASET_PATH) -> list[EvaluationQuestion]:
@@ -65,6 +68,14 @@ def _question_from_mapping(item: Any, *, index: int) -> EvaluationQuestion:
         category=_required_string(item, "category", index=index),
         difficulty=_required_string(item, "difficulty", index=index),
         reference_answer=_required_string(item, "reference_answer", index=index),
+        expected_citation_required=_optional_bool(
+            item,
+            "expected_citation_required",
+            index=index,
+            default=True,
+        ),
+        expected_failure_mode=_optional_string(item, "expected_failure_mode", index=index),
+        notes=_optional_string(item, "notes", index=index),
     )
 
 
@@ -88,3 +99,27 @@ def _required_string_tuple(item: dict[str, Any], key: str, *, index: int) -> tup
             )
         strings.append(entry.strip())
     return tuple(strings)
+
+
+def _optional_string(item: dict[str, Any], key: str, *, index: int) -> str | None:
+    value = item.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"evaluation dataset item {index} field {key!r} must be a string")
+    return value.strip()
+
+
+def _optional_bool(
+    item: dict[str, Any],
+    key: str,
+    *,
+    index: int,
+    default: bool,
+) -> bool:
+    value = item.get(key)
+    if value is None:
+        return default
+    if not isinstance(value, bool):
+        raise ValueError(f"evaluation dataset item {index} field {key!r} must be a boolean")
+    return value

@@ -187,6 +187,14 @@ def calculate_agent_sample_metrics(
             f"{case.expected_recommendation}, got {observation.final_recommendation}"
         )
     if (
+        case.expected_approval_status is not None
+        and observation.approval_status != case.expected_approval_status
+    ):
+        failure_reasons.append(
+            "approval status mismatch: expected "
+            f"{case.expected_approval_status}, got {observation.approval_status}"
+        )
+    if (
         case.expected_summary_status is not None
         and observation.summary_status != case.expected_summary_status
     ):

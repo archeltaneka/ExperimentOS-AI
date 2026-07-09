@@ -48,9 +48,15 @@ BASELINE_KNOWN_GAPS = (
 )
 
 BASELINE_NEXT_WORK = (
-    "Expand the evaluation datasets with more edge cases and insufficient-evidence coverage.",
-    "Add deterministic hallucination and factual grounding checks on top of the existing reports.",
-    "Define a threshold policy before introducing CI quality gates.",
+    (
+        "Add deterministic factual grounding and unsupported-claim checks on top of "
+        "the expanded datasets."
+    ),
+    "Define category-specific threshold policies before introducing CI quality gates.",
+    (
+        "Add report-level regression diffs so future baseline runs can compare changed "
+        "failure cases directly."
+    ),
 )
 
 

@@ -1,9 +1,15 @@
 # Dataset Guide
 
-ExperimentOS AI uses two local datasets:
+ExperimentOS AI uses three repository-owned evaluation assets plus the synthetic experiment corpus:
 
-1. A synthetic experiment corpus under `data/synthetic/experiments/`
-2. An offline QA evaluation dataset at `data/eval/qa_dataset.json`
+1. `data/synthetic/experiments/`
+2. `data/eval/qa_dataset.json`
+3. `data/eval/agent_dataset.json`
+4. deterministic `/ask` E2E cases in `packages/evals/agent_e2e.py`
+
+The synthetic corpus is the shared evidence source. The QA dataset exercises `legacy_rag`, the
+agent dataset exercises the deterministic workflow service, and the E2E cases exercise the `/ask`
+API contract in both default `agent_workflow` mode and `ASK_MODE=legacy_rag`.
 
 ## Synthetic Experiment Corpus
 
@@ -34,22 +40,22 @@ Each folder contains:
 - high-level experiment metadata
 - owner and team information
 - hypothesis, status, dates, variants, and business decision
-- the synthetic experiment ID that is preserved in the database config
+- the synthetic experiment ID preserved in the database config
 
 `metrics.csv`
 
-- experiment metric rows for control and treatment variants
-- includes metric name, variant, value, numerator, denominator, lift, p-value, and notes
-- must include the same `experiment_id` as the metadata file
+- control and treatment metric rows
+- primary and secondary metrics, sample sizes, lift, p-value, and notes
+- the same `experiment_id` used by `metadata.json`
 
 `report.md`
 
-- the narrative analysis document used for chunking and retrieval
-- contains decisions, caveats, risks, and metric interpretation
+- the narrative analysis used for chunking and retrieval
+- decisions, risks, caveats, and interpretation guidance
 
 `events.csv`
 
-- generated as future-facing evidence for event-level workflows
+- future-facing event-level evidence
 - currently not ingested by `packages.ingestion.load_experiment`
 
 ## Generating The Corpus
@@ -62,7 +68,7 @@ uv run python scripts/generate_synthetic_experiments.py
 
 Warning:
 
-- This command deletes and recreates `data/synthetic/experiments`.
+- This deletes and recreates `data/synthetic/experiments`.
 - Do not run it if you need to preserve local edits in that directory.
 
 ## Ingesting Synthetic Experiments
@@ -80,62 +86,204 @@ The ingestion pipeline currently requires:
 - `metrics.csv`
 - `report.md`
 
-The ingestion command stores:
+The command stores:
 
 - one `experiments` row
 - multiple `experiment_metrics` rows
 - one `documents` row for `report.md`
-- multiple `document_chunks` rows, with or without embeddings
+- multiple `document_chunks` rows
 
-## Offline Evaluation Dataset
+## QA Evaluation Dataset
 
-`data/eval/qa_dataset.json` is a JSON list of evaluation records used by `packages.evals.run`.
+`data/eval/qa_dataset.json` is the Phase 1 offline QA dataset used by `packages.evals.run`.
 
-Each record includes:
+It is loaded by `packages.evals.dataset.load_evaluation_dataset`.
+
+### QA Schema
+
+Required fields:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `id` | string | Stable question identifier |
+| `id` | string | Stable case identifier |
 | `experiment_id` | string | Synthetic experiment ID, not DB UUID |
 | `question` | string | Evaluation prompt |
-| `expected_documents` | list of strings | Expected document titles |
+| `expected_documents` | list of strings | Expected supporting document titles |
 | `expected_keywords` | list of strings | Retrieval and answer clues |
-| `category` | string | Category such as `decision`, `metric`, `caveat`, or `risk` |
+| `category` | string | Coverage bucket for reporting |
 | `difficulty` | string | Difficulty label |
-| `reference_answer` | string | Human-written expected answer |
+| `reference_answer` | string | Human-written grounded answer |
 
-Current dataset characteristics:
+Optional fields:
 
-- covers all 10 synthetic experiments
-- includes 4 questions per experiment
-- focuses on `decision`, `metric`, `caveat`, and `risk` categories
-- is validated by `packages.evals.dataset.load_evaluation_dataset`
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `expected_citation_required` | boolean | Whether grounded citation behavior is required |
+| `expected_failure_mode` | string | Future-facing tag for unsupported-claim or retrieval-miss cases |
+| `notes` | string | Author note for future dataset maintainers |
 
-## How Evaluation Uses The Dataset
+### QA Categories
 
-The evaluation harness:
+The expanded QA dataset covers:
 
-1. Loads `data/eval/qa_dataset.json`
-2. Resolves each synthetic experiment ID to the ingested database UUID through `Experiment.config["experiment_id"]`
-3. Runs the Phase 1 QA flow that remains available behind `ASK_MODE=legacy_rag`
-4. Aggregates metrics and writes a Markdown report
+- `rollout_decision`
+- `factual_retrieval`
+- `result_interpretation`
+- `risk_guardrail`
+- `business_impact`
+- `insufficient_evidence`
+- `legacy_rag_fallback`
 
-Run the evaluation locally:
+The current corpus intentionally includes negative cases where a future evaluator should refuse or
+qualify unsupported claims about:
+
+- definitive statistical significance
+- ROI or revenue not grounded in the report
+- business impact where evidence is incomplete
+
+### How QA Evaluation Uses The Dataset
+
+The harness:
+
+1. loads `data/eval/qa_dataset.json`
+2. resolves each synthetic experiment ID to the ingested database UUID through
+   `Experiment.config["experiment_id"]`
+3. runs the Phase 1 QA flow that remains available behind `ASK_MODE=legacy_rag`
+4. aggregates retrieval, citation, latency, token, and category coverage metrics
+5. writes `reports/evaluation.md`
+
+Run it locally:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
 uv run python -m packages.evals.run --embedding-provider fake --llm-provider mock --output reports/evaluation.md
 ```
 
-Read the report:
+## Agent Workflow Evaluation Dataset
+
+`data/eval/agent_dataset.json` is the deterministic workflow-state dataset used by
+`packages.evals.run_agent`.
+
+It is loaded by `packages.evals.agent_dataset.load_agent_evaluation_dataset`.
+
+### Agent Dataset Schema
+
+Required fields:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `id` | string | Stable case identifier |
+| `question` | string | Workflow prompt |
+| `category` | string | Coverage bucket |
+| `expected_intent` | string | Expected planner intent |
+| `expected_required_agents` | list of strings | Expected routed agents |
+
+Optional fields:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `expected_decision_status` | string | Expected decision artifact status |
+| `expected_recommendation` | string | Expected decision recommendation |
+| `expected_summary_status` | string | Expected executive summary artifact status |
+| `expected_approval_status` | string | Expected approval state such as `pending`, `rejected`, or `revision_requested` |
+| `expected_min_citations` | integer | Minimum expected citation count |
+| `expected_failure_mode` | string | Future-facing tag for insufficient-evidence or approval-path cases |
+| `notes` | string | Author note for future maintainers |
+
+### Agent Dataset Categories
+
+The expanded agent dataset covers:
+
+- `lookup`
+- `rollout_decision`
+- `business_impact`
+- `risk_guardrail`
+- `approval_workflow`
+- `insufficient_evidence`
+
+These cases are deterministic and repository-local. They should remain compatible with fake
+embeddings, mock LLMs, and in-process workflow fixtures.
+
+### How Agent Evaluation Uses The Dataset
+
+The harness:
+
+1. loads `data/eval/agent_dataset.json`
+2. runs each prompt through `build_default_agent_workflow_service()`
+3. checks planner intent, required-agent routing, citation coverage, decision outputs, approval
+   status, and trace completeness
+4. writes `reports/agent_evaluation.md`
+
+Run it locally:
 
 ```powershell
-Get-Content reports/evaluation.md
+uv run python -m packages.evals.run_agent --dataset data/eval/agent_dataset.json --output reports/agent_evaluation.md
 ```
 
-## Practical Notes
+## `/ask` End-To-End Evaluation Cases
 
-- Use `--embedding-provider fake` for deterministic local retrieval behavior.
-- Use `--llm-provider mock` for deterministic local answer generation in evaluation.
-- `/ask` expects a database UUID, while the evaluation dataset stores synthetic experiment IDs and resolves them internally.
-- If you regenerate the synthetic corpus, re-ingest experiments before running retrieval or evaluation workflows against a fresh database.
+The API E2E coverage is code-defined in `packages/evals/agent_e2e.py`.
+
+This layer is not JSON-backed today because it validates the full `/ask` response contract, route
+selection, fallback behavior, and structured artifacts directly.
+
+Current E2E coverage includes:
+
+- default `agent_workflow` decision-support cases
+- executive-summary cases
+- lookup-only cases
+- risk-only and business-impact-only cases
+- rejected and revision-requested approval scenarios
+- insufficient-evidence decision scenarios
+- `legacy_rag` fallback behavior
+- structured failure surfacing
+
+Run it locally:
+
+```powershell
+uv run python -m packages.evals.run_agent_e2e --output reports/agent_e2e_evaluation.md
+```
+
+## Phase 3 Baseline
+
+The aggregate deterministic baseline combines all three evaluation surfaces:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run python -m packages.evals.run_baseline --embedding-provider fake --llm-provider mock --output reports/phase3/baseline_report.md
+```
+
+This writes:
+
+- `reports/evaluation.md`
+- `reports/agent_evaluation.md`
+- `reports/agent_e2e_evaluation.md`
+- `reports/phase3/baseline_report.md`
+
+## How To Add Future Cases
+
+When adding QA cases:
+
+- stay tied to the existing synthetic experiment corpus
+- prefer grounded prompts over invented business facts
+- add `expected_failure_mode` when the case exists to catch unsupported claims
+- keep `expected_documents` and `expected_keywords` small and specific
+
+When adding agent dataset cases:
+
+- choose one primary category per case
+- only set optional expectation fields that the current harness can validate cleanly
+- keep approval expectations aligned with the deterministic workflow fixture behavior
+
+When adding E2E cases:
+
+- add them in `packages/evals/agent_e2e.py`
+- prefer the smallest contract assertion that proves the route or artifact behavior
+- keep `legacy_rag` compatibility explicit when the question is meant to compare both modes
+
+General guidance:
+
+- keep cases deterministic and repository-local
+- do not require live OpenAI calls
+- do not change `/ask` production behavior just to satisfy a dataset row
+- update loader or contract tests when the schema changes

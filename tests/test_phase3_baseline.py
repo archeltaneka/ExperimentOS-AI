@@ -35,9 +35,7 @@ def test_render_phase3_baseline_report_includes_sections_metrics_and_gaps() -> N
                     "hallucination risk",
                     "regression stability",
                 ),
-                known_limitations=(
-                    "No direct hallucination score is calculated yet.",
-                ),
+                known_limitations=("No direct hallucination score is calculated yet.",),
             ),
             Phase3BaselineSection(
                 name="Agent Workflow E2E Evaluation",
@@ -181,6 +179,7 @@ def test_run_phase3_baseline_writes_aggregate_report(tmp_path: Path, monkeypatch
     agent_case = AgentEvaluationCase(
         id="payment-rollout",
         question="Should we roll out the payment recommendation experiment?",
+        category="rollout_decision",
         expected_intent="decision_support",
         expected_required_agents=("retrieval", "decision"),
         expected_recommendation="rollout",

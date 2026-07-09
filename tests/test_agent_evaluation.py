@@ -214,9 +214,7 @@ def test_trace_completeness_uses_expected_phase2_workflow_nodes() -> None:
     from packages.agents.observability import calculate_trace_completeness
 
     state = build_sample_agent_state()
-    state["trace"] = [
-        entry for entry in state["trace"] if entry["node"] != "executive_summary"
-    ]
+    state["trace"] = [entry for entry in state["trace"] if entry["node"] != "executive_summary"]
 
     completeness = calculate_trace_completeness(state)
 
@@ -231,6 +229,7 @@ def test_agent_sample_metrics_calculate_routing_citation_and_recommendation_cove
     case = AgentEvaluationCase(
         id="payment-rollout",
         question="Should we roll out the payment recommendation experiment?",
+        category="rollout_decision",
         expected_intent="decision_support",
         expected_required_agents=(
             "retrieval",
@@ -268,6 +267,7 @@ def test_agent_sample_metrics_detect_recommendation_miss() -> None:
     case = AgentEvaluationCase(
         id="payment-no-rollout",
         question="Should we roll out the payment recommendation experiment?",
+        category="rollout_decision",
         expected_intent="decision_support",
         expected_required_agents=("retrieval", "decision"),
         expected_recommendation="do_not_rollout",
@@ -283,6 +283,30 @@ def test_agent_sample_metrics_detect_recommendation_miss() -> None:
     assert "recommendation" in " ".join(metrics.failure_reasons).lower()
 
 
+def test_agent_sample_metrics_detect_approval_status_miss() -> None:
+    from packages.agents.observability import extract_workflow_observation
+    from packages.evals.agent_dataset import AgentEvaluationCase
+    from packages.evals.agent_metrics import calculate_agent_sample_metrics
+
+    case = AgentEvaluationCase(
+        id="payment-approval-rejected",
+        question="Should we roll out the payment recommendation experiment?",
+        category="approval_workflow",
+        expected_intent="decision_support",
+        expected_required_agents=("retrieval", "decision", "human_approval"),
+        expected_recommendation="rollout",
+        expected_approval_status="rejected",
+    )
+
+    metrics = calculate_agent_sample_metrics(
+        case=case,
+        observation=extract_workflow_observation(build_sample_agent_state()),
+    )
+
+    assert metrics.passed is False
+    assert "approval status mismatch" in " ".join(metrics.failure_reasons).lower()
+
+
 def test_load_agent_evaluation_dataset_validates_records(tmp_path: Path) -> None:
     from packages.evals.agent_dataset import load_agent_evaluation_dataset
 
@@ -293,6 +317,7 @@ def test_load_agent_evaluation_dataset_validates_records(tmp_path: Path) -> None
                 {
                     "id": "lookup-payment",
                     "question": "What happened in the payment recommendation experiment?",
+                    "category": "lookup",
                     "expected_intent": "experiment_lookup",
                     "expected_required_agents": ["retrieval"],
                     "expected_min_citations": 1,
@@ -306,7 +331,78 @@ def test_load_agent_evaluation_dataset_validates_records(tmp_path: Path) -> None
 
     assert len(dataset) == 1
     assert dataset[0].id == "lookup-payment"
+    assert dataset[0].category == "lookup"
     assert dataset[0].expected_required_agents == ("retrieval",)
+    assert dataset[0].expected_approval_status is None
+    assert dataset[0].expected_failure_mode is None
+    assert dataset[0].notes is None
+
+
+def test_load_agent_evaluation_dataset_supports_optional_metadata_fields(tmp_path: Path) -> None:
+    from packages.evals.agent_dataset import load_agent_evaluation_dataset
+
+    dataset_path = tmp_path / "agent_dataset.json"
+    dataset_path.write_text(
+        json.dumps(
+            [
+                {
+                    "id": "premium-needs-more-data",
+                    "question": "Should we roll out the premium subscription experiment?",
+                    "category": "insufficient_evidence",
+                    "expected_intent": "decision_support",
+                    "expected_required_agents": [
+                        "retrieval",
+                        "experiment_analysis",
+                        "business_impact",
+                        "risk_assessment",
+                        "decision",
+                        "human_approval",
+                        "executive_summary",
+                    ],
+                    "expected_decision_status": "needs_more_data",
+                    "expected_recommendation": "needs_more_data",
+                    "expected_summary_status": "generated",
+                    "expected_approval_status": "revision_requested",
+                    "expected_min_citations": 1,
+                    "expected_failure_mode": "insufficient_business_evidence",
+                    "notes": "Do not invent revenue, ROI, or statistical significance.",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    dataset = load_agent_evaluation_dataset(dataset_path)
+
+    assert len(dataset) == 1
+    assert dataset[0].category == "insufficient_evidence"
+    assert dataset[0].expected_approval_status == "revision_requested"
+    assert dataset[0].expected_failure_mode == "insufficient_business_evidence"
+    assert dataset[0].notes == "Do not invent revenue, ROI, or statistical significance."
+
+
+def test_load_agent_evaluation_dataset_rejects_invalid_optional_metadata(tmp_path: Path) -> None:
+    from packages.evals.agent_dataset import load_agent_evaluation_dataset
+
+    dataset_path = tmp_path / "agent_dataset.json"
+    dataset_path.write_text(
+        json.dumps(
+            [
+                {
+                    "id": "payment-invalid-approval-status",
+                    "question": "Should we roll out the payment recommendation experiment?",
+                    "category": "rollout_decision",
+                    "expected_intent": "decision_support",
+                    "expected_required_agents": ["retrieval", "decision"],
+                    "expected_approval_status": "ship_it",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="expected_approval_status"):
+        load_agent_evaluation_dataset(dataset_path)
 
 
 def test_render_agent_evaluation_report_includes_summary_tables() -> None:
@@ -319,6 +415,7 @@ def test_render_agent_evaluation_report_includes_summary_tables() -> None:
     case = AgentEvaluationCase(
         id="payment-rollout",
         question="Should we roll out the payment recommendation experiment?",
+        category="rollout_decision",
         expected_intent="decision_support",
         expected_required_agents=(
             "retrieval",
@@ -378,12 +475,20 @@ def test_agent_evaluator_runs_small_fake_dataset() -> None:
 
     run_result = evaluator.evaluate()
 
-    assert len(run_result.samples) == 3
-    assert run_result.summary.sample_count == 3
-    assert run_result.summary.pass_count == 3
+    assert len(run_result.samples) >= 8
+    assert run_result.summary.sample_count >= 8
+    assert run_result.summary.pass_count == run_result.summary.sample_count
     assert run_result.summary.planner_intent_accuracy == pytest.approx(1.0)
     assert run_result.summary.routing_accuracy == pytest.approx(1.0)
     assert run_result.summary.citation_coverage >= 1.0
+    assert {
+        "lookup",
+        "rollout_decision",
+        "business_impact",
+        "risk_guardrail",
+        "approval_workflow",
+        "insufficient_evidence",
+    }.issubset({case.category for case in cases})
 
 
 def test_agent_cli_parser_accepts_dataset_and_output() -> None:
@@ -409,7 +514,7 @@ def test_agent_e2e_evaluator_runs_default_and_fallback_cases() -> None:
 
     run_result = evaluator.evaluate()
 
-    assert run_result.summary.sample_count >= 6
+    assert run_result.summary.sample_count >= 10
     assert run_result.summary.pass_count == run_result.summary.sample_count
     assert run_result.summary.default_agent_workflow_coverage == pytest.approx(1.0)
     assert run_result.summary.legacy_fallback_coverage == pytest.approx(1.0)

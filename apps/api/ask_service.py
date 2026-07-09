@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import asdict
 from typing import Protocol
 
@@ -110,7 +111,8 @@ class AgentWorkflowAskService:
         ):
             raise UnknownExperimentError(f"experiment {request.experiment_id} was not found")
         try:
-            state = self.workflow_service.run(
+            state = await asyncio.to_thread(
+                self.workflow_service.run,
                 request.question,
                 experiment_id=request.experiment_id,
                 top_k=request.top_k,

@@ -44,6 +44,15 @@ class StubWorkflowService:
         return self.state
 
 
+class AsyncioRunWorkflowService:
+    def __init__(self, state: dict[str, object]) -> None:
+        self.state = state
+
+    def run(self, question: str, experiment_id: str | None = None, top_k: int = 5):
+        asyncio.run(asyncio.sleep(0))
+        return self.state
+
+
 def build_agent_state(
     *,
     question: str = "Should we roll out the payment recommendation experiment?",
@@ -404,6 +413,28 @@ def test_agent_workflow_ask_service_returns_404_for_unknown_experiment() -> None
                 )
             )
         )
+
+
+def test_agent_workflow_ask_service_supports_workflow_using_asyncio_run() -> None:
+    async def experiment_exists(_: str) -> bool:
+        return True
+
+    service = AgentWorkflowAskService(
+        AsyncioRunWorkflowService(build_agent_state()),
+        experiment_exists=experiment_exists,
+    )
+
+    response = asyncio.run(
+        service.answer(
+            AskRequest(
+                question="What happened?",
+                experiment_id="00000000-0000-0000-0000-000000000123",
+                top_k=3,
+            )
+        )
+    )
+
+    assert response.answer == "Rollout is supported by the current evidence."
 
 
 def test_get_ask_mode_defaults_to_agent_workflow(monkeypatch) -> None:

@@ -1,200 +1,85 @@
-# Task 2 Report: Human Approval Agent And Node
+# Task 2 Report
 
-## Status
+## What I implemented
 
-Completed.
+- Added [`apps/api/ask_service.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/apps/api/ask_service.py) with:
+  - `AskRequest`
+  - unified `AskResponse`
+  - `AskService` protocol
+  - `LegacyRagAskService`
+  - `AgentWorkflowAskService`
+  - `get_ask_mode()`
+  - `map_agent_state_to_ask_response()`
+  - `AgentWorkflowExecutionError`
+- Updated [`apps/api/main.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/apps/api/main.py) so `POST /ask` depends on `get_ask_service()` and returns the unified `AskResponse`.
+- Split `/ask` endpoint coverage into a dedicated [`tests/test_api_ask.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_api_ask.py).
+- Trimmed [`tests/test_api_health.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_api_health.py) back to health/config helper coverage.
 
-## Scope Completed
+## What I tested and results
 
-- Added `packages/agents/human_approval_agent.py`.
-- Added `HumanApprovalAgent.run(state)` with deterministic normalization of
-  `human_approval_input` into canonical `human_approval`.
-- Added `HumanApprovalAgentLike` to `packages/agents/nodes.py`.
-- Added `human_approval_node(...)` to `packages/agents/nodes.py`.
-- Added focused coverage in `tests/test_human_approval_agent.py`.
-- Added node coverage in `tests/test_agent_nodes.py`.
+- `uv run pytest tests/test_api_health.py tests/test_api_ask.py -v`
+  - Result: passed
+  - Summary: `11 passed in 1.47s`
+- `uv run ruff check .`
+  - Result: passed
+  - Summary: `All checks passed!`
 
-## TDD Record
+## TDD evidence
 
-### Red
+### RED
 
-Added the approval-agent and node tests first:
-
-- `tests/test_human_approval_agent.py`
-- new human-approval node cases in `tests/test_agent_nodes.py`
-
-Then ran:
-
-```powershell
-uv run pytest tests/test_human_approval_agent.py tests/test_agent_nodes.py -v
-```
-
-Observed expected failure during collection:
-
-- `ModuleNotFoundError: No module named 'packages.agents.human_approval_agent'`
-
-This confirmed the tests were failing for the intended missing implementation.
-
-### Green
-
-Implemented the minimal deterministic behavior:
-
-- Missing or unreadable `decision.approval_required` returns canonical
-  `human_approval` with `status="not_requested"` and records
-  `human_approval_missing_decision`.
-- `approval_required=False` returns `status="skipped"` and `required=False`.
-- `approval_required=True` with missing or invalid input returns
-  `status="pending"` and `required=True`.
-- Valid normalized statuses are exactly:
-  - `approved`
-  - `rejected`
-  - `revision_requested`
-- The agent emits `started` and `completed` trace entries.
-- The agent records deterministic metrics for status, latency, approval
-  requirement, input presence, feedback presence, and error count.
-- The node skips when `human_approval` is not required and delegates to the
-  injected agent when it is required.
-- The node merges returned metrics with existing state metrics, matching the
-  established node pattern.
-
-### Refactor
-
-Kept refactoring minimal:
-
-- Extracted `_build_human_approval(...)`.
-- Extracted `_normalize_input(...)`.
-- Extracted `_normalize_optional_string(...)`.
-
-## Verification
-
-Focused tests:
+Command:
 
 ```powershell
-uv run pytest tests/test_human_approval_agent.py tests/test_agent_nodes.py -v
+uv run pytest tests/test_api_health.py tests/test_api_ask.py -v
 ```
 
-Result:
+Relevant output:
 
-- `24 passed`
+```text
+ERROR tests/test_api_ask.py
+ModuleNotFoundError: No module named 'apps.api.ask_service'
+```
 
-Lint:
+### GREEN
+
+Command:
 
 ```powershell
-uv run ruff check .
+uv run pytest tests/test_api_health.py tests/test_api_ask.py -v
 ```
 
-Result:
+Relevant output:
 
-- `All checks passed!`
+```text
+tests/test_api_health.py::test_health_endpoint_returns_ok PASSED
+tests/test_api_health.py::test_embedding_provider_name_uses_dotenv PASSED
+tests/test_api_health.py::test_llm_client_auto_prefers_gemini_when_api_key_is_set PASSED
+tests/test_api_health.py::test_llm_client_loads_dotenv_for_gemini_auto_provider PASSED
+tests/test_api_health.py::test_llm_client_uses_ollama_provider_from_dotenv PASSED
+tests/test_api_ask.py::test_ask_endpoint_defaults_to_agent_workflow_response PASSED
+tests/test_api_ask.py::test_ask_endpoint_uses_legacy_rag_when_configured PASSED
+tests/test_api_ask.py::test_ask_endpoint_rejects_empty_question PASSED
+tests/test_api_ask.py::test_ask_endpoint_returns_404_for_unknown_experiment PASSED
+tests/test_api_ask.py::test_ask_endpoint_returns_502_for_embedding_failure PASSED
+tests/test_api_ask.py::test_ask_endpoint_returns_502_for_llm_failure PASSED
 
-## Tests Added Or Updated
-
-### `tests/test_human_approval_agent.py`
-
-Covered:
-
-- approval skipped when not required
-- pending when required but no input provided
-- approved normalization
-- rejected normalization with feedback
-- revision requested normalization with feedback
-- missing decision error behavior
-- trace and metrics behavior
-
-### `tests/test_agent_nodes.py`
-
-Covered:
-
-- node skip behavior when `human_approval` is not in `required_agents`
-- delegation to injected approval agent when required
-- metrics merge behavior for approval node updates
-
-## Self-Review
-
-Checked the implementation against the task brief and constraints:
-
-- Did not modify `POST /ask`.
-- Did not change `QuestionAnsweringService`.
-- Did not edit `workflow.py` or `service.py`.
-- Did not add UI, frontend, interrupts, checkpointers, persistence, auth,
-  tool calling, or new LLM calls.
-- Kept the graph input schema unchanged as question-only.
-- Kept implementation deterministic and testable.
-- Limited code changes to the four owned files.
-
-## Notes
-
-- The approval agent intentionally only normalizes state and records status; it
-  does not perform real human interaction or workflow orchestration. That
-  remains deferred to Task 3.
-- A transient Windows sandbox spawn issue occurred on one read-only Git
-  inspection command after the commit, but it had no effect on the code,
-  tests, or repository state.
-
-## Commit
-
-- `116067a` `[New Feature] Add deterministic human approval agent`
-
-## Task 2 Focused Fix: Invalid Human Approval Input
-
-### Additional Red-Green Cycle
-
-Added focused failing tests first for the approved spec update:
-
-- unknown human approval status should append `human_approval_invalid_input`
-- malformed raw `human_approval_input` that is not a mapping should append
-  `human_approval_invalid_input`
-
-Red verification command:
-
-```powershell
-uv run pytest tests/test_human_approval_agent.py tests/test_agent_nodes.py -v
+11 passed in 1.47s
 ```
 
-Observed expected failures:
+## Files changed
 
-- unknown status fell back to `pending` but returned no appended error
-- malformed raw input raised `AttributeError` on `.get(...)`
+- [`apps/api/ask_service.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/apps/api/ask_service.py)
+- [`apps/api/main.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/apps/api/main.py)
+- [`tests/test_api_health.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_api_health.py)
+- [`tests/test_api_ask.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_api_ask.py)
 
-### Fix Applied
+## Self-review findings
 
-Updated `packages/agents/human_approval_agent.py` so that:
+- The route now exposes one stable response model for both runtime modes and keeps existing QA dependency construction intact behind the adapter boundary.
+- The legacy adapter uses dataclass serialization for `retrieved_chunks`, `retrieval_metrics`, and `llm_metrics` because those runtime objects are dataclasses in the current codebase rather than Pydantic models.
+- The agent-workflow adapter converts unexpected workflow exceptions into `AgentWorkflowExecutionError` so the route can consistently surface them as `502`.
 
-- raw approval input is validated safely before field access
-- non-mapping raw input appends a structured
-  `human_approval_invalid_input` error with deterministic details
-- present input with an unknown status appends the same structured error
-- fallback behavior remains deterministic:
-  - `approval_required=True` -> canonical status `pending`
-  - `approval_required=False` -> canonical status `skipped`
-- invalid-input errors are included in agent `errors` output and therefore in
-  `error_count` metrics
+## Any concerns
 
-### Tests Added
-
-In `tests/test_human_approval_agent.py`:
-
-- `test_human_approval_agent_appends_error_for_unknown_status`
-- `test_human_approval_agent_appends_error_for_malformed_raw_input`
-
-### Fresh Verification
-
-Focused tests:
-
-```powershell
-uv run pytest tests/test_human_approval_agent.py tests/test_agent_nodes.py -v
-```
-
-Result:
-
-- `26 passed`
-
-Lint:
-
-```powershell
-uv run ruff check .
-```
-
-Result:
-
-- `All checks passed!`
+- `map_agent_state_to_ask_response()` is included here because the agent-workflow adapter needs a concrete API response mapper to function. Task 3 may add deeper mapper-specific test coverage and could refine this mapping further, but the current implementation already matches the response contract needed for Task 2.

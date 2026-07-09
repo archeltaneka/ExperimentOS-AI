@@ -50,12 +50,13 @@ class ExecutiveSummaryAgentLike(Protocol):
 
 def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
     if isinstance(state, dict):
+        question = state["question"]
         request = state.get("request", {})
         human_approval_input = state.get("human_approval_input", {})
     else:
+        question = state.question
         request = dict(getattr(state, "request", {}))
         human_approval_input = dict(getattr(state, "human_approval_input", {}))
-    question = state["question"]
     defaults = create_initial_state(
         question,
         experiment_id=request.get("experiment_id"),

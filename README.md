@@ -210,6 +210,18 @@ uv run python -m packages.evals.run_agent_e2e --output reports/agent_e2e_evaluat
 Get-Content reports/agent_e2e_evaluation.md
 ```
 
+Run the Phase 3 reliability baseline without external LLMOps tooling:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run python -m packages.evals.run_baseline --embedding-provider fake --llm-provider mock --output reports/phase3/baseline_report.md
+Get-Content reports/phase3/baseline_report.md
+```
+
+This baseline coordinates the existing repository-local QA, agent workflow, and `/ask` E2E
+evaluations. It intentionally does not integrate RAGAS, DeepEval, LangSmith, Phoenix, or
+OpenTelemetry yet. See [Phase 3 Reliability Baseline](docs/phase3/reliability_baseline.md).
+
 ## Development Workflow
 
 Core commands:

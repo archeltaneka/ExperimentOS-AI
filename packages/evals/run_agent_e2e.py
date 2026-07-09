@@ -23,12 +23,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def run_evaluation(args: argparse.Namespace) -> str:
-    evaluator = AgentE2EEvaluator(cases=build_default_agent_e2e_cases())
-    result = evaluator.evaluate()
+    result = build_evaluation_run(args)
     report = render_agent_e2e_report(result)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(report, encoding="utf-8")
     return report
+
+
+def build_evaluation_run(args: argparse.Namespace):
+    evaluator = AgentE2EEvaluator(cases=build_default_agent_e2e_cases())
+    return evaluator.evaluate()
 
 
 def main() -> None:

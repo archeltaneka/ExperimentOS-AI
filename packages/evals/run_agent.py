@@ -36,16 +36,20 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def run_evaluation(args: argparse.Namespace) -> str:
+    result = build_evaluation_run(args)
+    report = render_agent_evaluation_report(result)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(report, encoding="utf-8")
+    return report
+
+
+def build_evaluation_run(args: argparse.Namespace):
     cases = load_agent_evaluation_dataset(args.dataset)
     evaluator = AgentWorkflowEvaluator(
         workflow_service=build_default_agent_workflow_service(),
         cases=cases,
     )
-    result = evaluator.evaluate()
-    report = render_agent_evaluation_report(result)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(report, encoding="utf-8")
-    return report
+    return evaluator.evaluate()
 
 
 def main() -> None:

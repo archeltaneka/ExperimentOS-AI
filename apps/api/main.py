@@ -15,6 +15,7 @@ from apps.api.ask_service import (
     AskRequest,
     AskResponse,
     AskService,
+    ExperimentExistsDependency,
     LegacyRagAskService,
     get_ask_mode,
 )
@@ -117,6 +118,14 @@ def get_question_answering_service() -> QuestionAnsweringDependency:
     return DatabaseQuestionAnsweringService()
 
 
+def get_agent_workflow_service() -> AgentWorkflowService:
+    return AgentWorkflowService()
+
+
+def get_experiment_exists_dependency() -> ExperimentExistsDependency:
+    return experiment_exists
+
+
 async def experiment_exists(candidate_experiment_id: str) -> bool:
     try:
         parsed_experiment_id = uuid.UUID(str(candidate_experiment_id))
@@ -131,12 +140,25 @@ async def experiment_exists(candidate_experiment_id: str) -> bool:
         return result.scalar_one_or_none() is not None
 
 
-def get_ask_service() -> AskService:
+def get_ask_service(
+    workflow_service: Annotated[
+        AgentWorkflowService,
+        Depends(get_agent_workflow_service),
+    ],
+    qa_service: Annotated[
+        QuestionAnsweringDependency,
+        Depends(get_question_answering_service),
+    ],
+    experiment_exists_dependency: Annotated[
+        ExperimentExistsDependency,
+        Depends(get_experiment_exists_dependency),
+    ],
+) -> AskService:
     if get_ask_mode() == "legacy_rag":
-        return LegacyRagAskService(get_question_answering_service())
+        return LegacyRagAskService(qa_service)
     return AgentWorkflowAskService(
-        AgentWorkflowService(),
-        experiment_exists=experiment_exists,
+        workflow_service,
+        experiment_exists=experiment_exists_dependency,
     )
 
 

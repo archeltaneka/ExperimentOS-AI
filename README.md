@@ -30,7 +30,7 @@ The current repository is organized around a small set of backend workflows:
 - `packages/qa/` turns retrieved chunks into grounded answers with citations.
 - `packages/agents/` contains the Phase 2 LangGraph decision workflow that now powers `POST /ask` by default.
 - `apps/api/` exposes `GET /health` and `POST /ask`.
-- `packages/evals/` runs the offline QA evaluation harness over `data/eval/qa_dataset.json`.
+- `packages/evals/` runs the offline QA harness and the integrated `/ask` agent E2E harness.
 
 ### Architecture Diagram
 
@@ -65,6 +65,10 @@ flowchart LR
 
 See [Architecture](docs/architecture.md) for component boundaries and data flow details.
 
+Phase 2 is now complete at the API validation layer: `/ask` defaults to the LangGraph
+workflow, and the repository includes both workflow-state evaluation and integrated `/ask`
+E2E evaluation coverage.
+
 ## Features
 
 | Area | Status | Notes |
@@ -73,7 +77,8 @@ See [Architecture](docs/architecture.md) for component boundaries and data flow 
 | Experiment ingestion | Available | Loads `metadata.json`, `metrics.csv`, and `report.md`. |
 | pgvector retrieval | Available | Semantic search via CLI and shared service layer. |
 | Grounded QA | Available | `legacy_rag` mode preserves the original retrieval plus LLM answer path. |
-| Offline evaluation | Available | Runs QA against a fixed dataset and produces a Markdown report. |
+| Offline evaluation | Available | Runs the Phase 1 QA dataset and produces a Markdown report. |
+| Agent E2E evaluation | Available | Validates the integrated `/ask` contract, routing, trace, metrics, citations, approval, and fallback behavior. |
 | Deterministic local runs | Available | Fake embeddings and mock LLMs support offline workflows. |
 | Synthetic dataset | Available | Ten synthetic experiments plus a QA evaluation dataset. |
 | Event ingestion | Planned | `events.csv` is generated today but not ingested yet. |
@@ -197,6 +202,13 @@ Get-Content reports/evaluation.md
 ```
 
 See [Dataset Guide](docs/dataset.md) and [Development Guide](docs/development.md) for dataset setup and workflow details.
+
+Run the integrated `/ask` E2E evaluation:
+
+```powershell
+uv run python -m packages.evals.run_agent_e2e --output reports/agent_e2e_evaluation.md
+Get-Content reports/agent_e2e_evaluation.md
+```
 
 ## Development Workflow
 

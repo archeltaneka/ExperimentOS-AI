@@ -400,3 +400,47 @@ def test_agent_cli_parser_accepts_dataset_and_output() -> None:
 
     assert args.dataset == Path("data/eval/agent_dataset.json")
     assert args.output == Path("reports/agent_evaluation.md")
+
+
+def test_agent_e2e_evaluator_runs_default_and_fallback_cases() -> None:
+    from packages.evals.agent_e2e import AgentE2EEvaluator, build_default_agent_e2e_cases
+
+    evaluator = AgentE2EEvaluator(cases=build_default_agent_e2e_cases())
+
+    run_result = evaluator.evaluate()
+
+    assert run_result.summary.sample_count >= 6
+    assert run_result.summary.pass_count == run_result.summary.sample_count
+    assert run_result.summary.default_agent_workflow_coverage == pytest.approx(1.0)
+    assert run_result.summary.legacy_fallback_coverage == pytest.approx(1.0)
+    assert run_result.summary.intent_accuracy == pytest.approx(1.0)
+    assert run_result.summary.routing_accuracy == pytest.approx(1.0)
+    assert run_result.summary.citation_coverage == pytest.approx(1.0)
+    assert run_result.summary.decision_coverage == pytest.approx(1.0)
+    assert run_result.summary.executive_summary_coverage == pytest.approx(1.0)
+    assert run_result.summary.approval_status_coverage == pytest.approx(1.0)
+
+
+def test_render_agent_e2e_report_includes_phase2_metrics() -> None:
+    from packages.evals.agent_e2e import AgentE2EEvaluator, build_default_agent_e2e_cases
+    from packages.evals.agent_e2e_report import render_agent_e2e_report
+
+    run_result = AgentE2EEvaluator(cases=build_default_agent_e2e_cases()).evaluate()
+
+    markdown = render_agent_e2e_report(run_result)
+
+    assert "# Agent Workflow E2E Evaluation Report" in markdown
+    assert "Intent accuracy" in markdown
+    assert "Required agent routing accuracy" in markdown
+    assert "Decision coverage" in markdown
+    assert "Executive summary coverage" in markdown
+    assert "Approval status coverage" in markdown
+    assert "Phase 3 Next Steps" in markdown
+
+
+def test_agent_e2e_cli_parser_accepts_output() -> None:
+    from packages.evals.run_agent_e2e import parse_args
+
+    args = parse_args(["--output", "reports/agent_e2e_evaluation.md"])
+
+    assert args.output == Path("reports/agent_e2e_evaluation.md")

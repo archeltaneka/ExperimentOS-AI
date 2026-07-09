@@ -165,6 +165,7 @@ def test_run_phase3_baseline_writes_aggregate_report(tmp_path: Path, monkeypatch
             estimated_cost_usd=0.0,
         ),
         retrieved_documents=("Adaptive Payment Method Recommendation",),
+        retrieved_contexts=("Roll out with telemetry monitoring.",),
         error=None,
     )
     qa_run = EvaluationRun(

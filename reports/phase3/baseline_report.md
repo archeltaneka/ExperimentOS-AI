@@ -1,6 +1,6 @@
 # Phase 3 Reliability Baseline Report
 
-- Generated at: 2026-07-09T11:34:58.746269Z
+- Generated at: 2026-07-09T12:07:24.424745Z
 - Overall status: pass
 
 ## Evaluation Status
@@ -13,7 +13,7 @@
 
 ## Commands Run
 
-- `uv run python -m packages.evals.run --dataset data\eval\qa_dataset.json --output reports\evaluation.md --top-k 5 --embedding-provider ollama --embedding-model nomic-embed-text --llm-provider ollama --llm-model qwen2.5:7b`
+- `uv run python -m packages.evals.run --dataset data\eval\qa_dataset.json --output reports\evaluation.md --top-k 5 --embedding-provider fake --embedding-model fake --llm-provider mock --llm-model mock`
 - `uv run python -m packages.evals.run_agent --dataset data\eval\agent_dataset.json --output reports\agent_evaluation.md`
 - `uv run python -m packages.evals.run_agent_e2e --output reports\agent_e2e_evaluation.md`
 
@@ -29,8 +29,8 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 941.4 ms
-- Average LLM latency: 4792.5 ms
+- Average retrieval latency: 54.7 ms
+- Average LLM latency: 0.0 ms
 
 ### Missing Metrics
 

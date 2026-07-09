@@ -26,6 +26,7 @@ class EvaluationSampleResult:
     answer: str
     metrics: SampleMetrics | None
     retrieved_documents: tuple[str, ...]
+    retrieved_contexts: tuple[str, ...]
     error: str | None
 
 
@@ -95,6 +96,9 @@ class OfflineEvaluator:
                                 chunk.document_name for chunk in response.retrieved_chunks
                             )
                         ),
+                        retrieved_contexts=tuple(
+                            chunk.chunk_text for chunk in response.retrieved_chunks
+                        ),
                         error=None,
                     )
                 )
@@ -105,6 +109,7 @@ class OfflineEvaluator:
                         answer="",
                         metrics=None,
                         retrieved_documents=(),
+                        retrieved_contexts=(),
                         error=f"{type(exc).__name__}: {exc}",
                     )
                 )

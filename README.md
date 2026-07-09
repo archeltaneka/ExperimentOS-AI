@@ -78,6 +78,7 @@ E2E evaluation coverage.
 | pgvector retrieval | Available | Semantic search via CLI and shared service layer. |
 | Grounded QA | Available | `legacy_rag` mode preserves the original retrieval plus LLM answer path. |
 | Offline evaluation | Available | Runs the Phase 1 QA dataset and produces a Markdown report. |
+| Optional RAGAS evaluation | Available | Adds framework-backed retrieval and answer-quality scoring without replacing the custom evaluator. |
 | Agent E2E evaluation | Available | Validates the integrated `/ask` contract, routing, trace, metrics, citations, approval, and fallback behavior. |
 | Deterministic local runs | Available | Fake embeddings and mock LLMs support offline workflows. |
 | Synthetic dataset | Available | Ten synthetic experiments plus a QA evaluation dataset. |
@@ -201,6 +202,20 @@ uv run python -m packages.evals.run --embedding-provider fake --llm-provider moc
 Get-Content reports/evaluation.md
 ```
 
+Enable the optional RAGAS integration and run the offline-safe report:
+
+```powershell
+uv sync --group eval
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output reports/phase3/ragas_report.md --json-output reports/phase3/ragas_report.json
+Get-Content reports/phase3/ragas_report.md
+```
+
+By default this RAGAS path computes offline-safe ID-based context precision and recall from the
+repository dataset. Judge-backed metrics such as `faithfulness`, `context_precision`,
+`context_recall`, and `answer_relevancy` are opt-in and are skipped unless you configure a judge
+LLM and, for `answer_relevancy`, judge embeddings.
+
 See [Dataset Guide](docs/dataset.md) and [Development Guide](docs/development.md) for dataset setup and workflow details.
 
 Run the integrated `/ask` E2E evaluation:
@@ -219,8 +234,9 @@ Get-Content reports/phase3/baseline_report.md
 ```
 
 This baseline coordinates the existing repository-local QA, agent workflow, and `/ask` E2E
-evaluations. It intentionally does not integrate RAGAS, DeepEval, LangSmith, Phoenix, or
-OpenTelemetry yet. See [Phase 3 Reliability Baseline](docs/phase3/reliability_baseline.md).
+evaluations. The baseline remains deterministic and repository-owned; optional RAGAS reporting now
+lives beside it rather than replacing it. DeepEval, LangSmith, Phoenix, and OpenTelemetry are still
+out of scope. See [Phase 3 Reliability Baseline](docs/phase3/reliability_baseline.md).
 
 ## Development Workflow
 

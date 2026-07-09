@@ -1,0 +1,885 @@
+{
+  "generated_at": "2026-07-09T12:09:39.318239Z",
+  "dataset_path": "data\\eval\\qa_dataset.json",
+  "dataset_size": 62,
+  "eligible_sample_count": 62,
+  "excluded_sample_count": 0,
+  "ragas_available": true,
+  "ragas_version": "0.4.3",
+  "ragas_import_note": "Applied a local VertexAI import shim because ragas imports that optional integration eagerly in this environment.",
+  "qa_embedding_provider": "fake",
+  "qa_embedding_model": "fake",
+  "qa_llm_provider": "mock",
+  "qa_llm_model": "mock",
+  "judge_llm_provider": "none",
+  "judge_llm_model": "none",
+  "judge_embedding_provider": "none",
+  "judge_embedding_model": "none",
+  "metrics_requested": [
+    "id_based_context_precision",
+    "id_based_context_recall",
+    "context_precision",
+    "context_recall",
+    "faithfulness",
+    "answer_relevancy"
+  ],
+  "metrics_run": [
+    "id_based_context_precision",
+    "id_based_context_recall"
+  ],
+  "metric_results": [
+    {
+      "name": "id_based_context_precision",
+      "status": "computed",
+      "average_score": 1.0,
+      "reason": null,
+      "description": "Offline-safe context precision using retrieved and expected document IDs."
+    },
+    {
+      "name": "id_based_context_recall",
+      "status": "computed",
+      "average_score": 1.0,
+      "reason": null,
+      "description": "Offline-safe context recall using retrieved and expected document IDs."
+    },
+    {
+      "name": "context_precision",
+      "status": "skipped",
+      "average_score": null,
+      "reason": "judge llm provider `none` does not enable RAGAS judge metrics",
+      "description": "Judge-LLM context precision using the retrieved contexts and reference answer."
+    },
+    {
+      "name": "context_recall",
+      "status": "skipped",
+      "average_score": null,
+      "reason": "judge llm provider `none` does not enable RAGAS judge metrics",
+      "description": "Judge-LLM context recall using the retrieved contexts and reference answer."
+    },
+    {
+      "name": "faithfulness",
+      "status": "skipped",
+      "average_score": null,
+      "reason": "judge llm provider `none` does not enable RAGAS judge metrics",
+      "description": "Judge-LLM faithfulness between the answer and retrieved contexts."
+    },
+    {
+      "name": "answer_relevancy",
+      "status": "skipped",
+      "average_score": null,
+      "reason": "judge llm provider `none` does not enable RAGAS judge metrics",
+      "description": "Judge-LLM and embedding based answer relevancy."
+    }
+  ],
+  "case_results": [
+    {
+      "question_id": "exp-001-rollout-decision",
+      "experiment_id": "exp-001-payment-recommendation",
+      "category": "rollout_decision",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-001-factual-retrieval",
+      "experiment_id": "exp-001-payment-recommendation",
+      "category": "factual_retrieval",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-001-result-interpretation",
+      "experiment_id": "exp-001-payment-recommendation",
+      "category": "result_interpretation",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-001-risk-guardrail",
+      "experiment_id": "exp-001-payment-recommendation",
+      "category": "risk_guardrail",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-001-business-impact",
+      "experiment_id": "exp-001-payment-recommendation",
+      "category": "business_impact",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-001-insufficient-evidence",
+      "experiment_id": "exp-001-payment-recommendation",
+      "category": "insufficient_evidence",
+      "difficulty": "hard",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-002-rollout-decision",
+      "experiment_id": "exp-002-hotel-image-quality",
+      "category": "rollout_decision",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-002-factual-retrieval",
+      "experiment_id": "exp-002-hotel-image-quality",
+      "category": "factual_retrieval",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-002-result-interpretation",
+      "experiment_id": "exp-002-hotel-image-quality",
+      "category": "result_interpretation",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-002-risk-guardrail",
+      "experiment_id": "exp-002-hotel-image-quality",
+      "category": "risk_guardrail",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-002-business-impact",
+      "experiment_id": "exp-002-hotel-image-quality",
+      "category": "business_impact",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-002-insufficient-evidence",
+      "experiment_id": "exp-002-hotel-image-quality",
+      "category": "insufficient_evidence",
+      "difficulty": "hard",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-003-rollout-decision",
+      "experiment_id": "exp-003-search-ranking",
+      "category": "rollout_decision",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-003-factual-retrieval",
+      "experiment_id": "exp-003-search-ranking",
+      "category": "factual_retrieval",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-003-result-interpretation",
+      "experiment_id": "exp-003-search-ranking",
+      "category": "result_interpretation",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-003-risk-guardrail",
+      "experiment_id": "exp-003-search-ranking",
+      "category": "risk_guardrail",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-003-business-impact",
+      "experiment_id": "exp-003-search-ranking",
+      "category": "business_impact",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-003-insufficient-evidence",
+      "experiment_id": "exp-003-search-ranking",
+      "category": "insufficient_evidence",
+      "difficulty": "hard",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-004-rollout-decision",
+      "experiment_id": "exp-004-checkout-ux",
+      "category": "rollout_decision",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-004-factual-retrieval",
+      "experiment_id": "exp-004-checkout-ux",
+      "category": "factual_retrieval",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-004-result-interpretation",
+      "experiment_id": "exp-004-checkout-ux",
+      "category": "result_interpretation",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-004-risk-guardrail",
+      "experiment_id": "exp-004-checkout-ux",
+      "category": "risk_guardrail",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-004-business-impact",
+      "experiment_id": "exp-004-checkout-ux",
+      "category": "business_impact",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-004-insufficient-evidence",
+      "experiment_id": "exp-004-checkout-ux",
+      "category": "insufficient_evidence",
+      "difficulty": "hard",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-005-rollout-decision",
+      "experiment_id": "exp-005-pricing",
+      "category": "rollout_decision",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-005-factual-retrieval",
+      "experiment_id": "exp-005-pricing",
+      "category": "factual_retrieval",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-005-result-interpretation",
+      "experiment_id": "exp-005-pricing",
+      "category": "result_interpretation",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-005-risk-guardrail",
+      "experiment_id": "exp-005-pricing",
+      "category": "risk_guardrail",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-005-business-impact",
+      "experiment_id": "exp-005-pricing",
+      "category": "business_impact",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-005-insufficient-evidence",
+      "experiment_id": "exp-005-pricing",
+      "category": "insufficient_evidence",
+      "difficulty": "hard",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-006-rollout-decision",
+      "experiment_id": "exp-006-loyalty",
+      "category": "rollout_decision",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-006-factual-retrieval",
+      "experiment_id": "exp-006-loyalty",
+      "category": "factual_retrieval",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-006-result-interpretation",
+      "experiment_id": "exp-006-loyalty",
+      "category": "result_interpretation",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-006-risk-guardrail",
+      "experiment_id": "exp-006-loyalty",
+      "category": "risk_guardrail",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-006-business-impact",
+      "experiment_id": "exp-006-loyalty",
+      "category": "business_impact",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-006-insufficient-evidence",
+      "experiment_id": "exp-006-loyalty",
+      "category": "insufficient_evidence",
+      "difficulty": "hard",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-007-rollout-decision",
+      "experiment_id": "exp-007-crm-notifications",
+      "category": "rollout_decision",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-007-factual-retrieval",
+      "experiment_id": "exp-007-crm-notifications",
+      "category": "factual_retrieval",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-007-result-interpretation",
+      "experiment_id": "exp-007-crm-notifications",
+      "category": "result_interpretation",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-007-risk-guardrail",
+      "experiment_id": "exp-007-crm-notifications",
+      "category": "risk_guardrail",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-007-business-impact",
+      "experiment_id": "exp-007-crm-notifications",
+      "category": "business_impact",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-007-insufficient-evidence",
+      "experiment_id": "exp-007-crm-notifications",
+      "category": "insufficient_evidence",
+      "difficulty": "hard",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-008-rollout-decision",
+      "experiment_id": "exp-008-recommendation-systems",
+      "category": "rollout_decision",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-008-factual-retrieval",
+      "experiment_id": "exp-008-recommendation-systems",
+      "category": "factual_retrieval",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-008-result-interpretation",
+      "experiment_id": "exp-008-recommendation-systems",
+      "category": "result_interpretation",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-008-risk-guardrail",
+      "experiment_id": "exp-008-recommendation-systems",
+      "category": "risk_guardrail",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-008-business-impact",
+      "experiment_id": "exp-008-recommendation-systems",
+      "category": "business_impact",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-008-insufficient-evidence",
+      "experiment_id": "exp-008-recommendation-systems",
+      "category": "insufficient_evidence",
+      "difficulty": "hard",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-009-rollout-decision",
+      "experiment_id": "exp-009-search-filters",
+      "category": "rollout_decision",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-009-factual-retrieval",
+      "experiment_id": "exp-009-search-filters",
+      "category": "factual_retrieval",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-009-result-interpretation",
+      "experiment_id": "exp-009-search-filters",
+      "category": "result_interpretation",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-009-risk-guardrail",
+      "experiment_id": "exp-009-search-filters",
+      "category": "risk_guardrail",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-009-business-impact",
+      "experiment_id": "exp-009-search-filters",
+      "category": "business_impact",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-009-insufficient-evidence",
+      "experiment_id": "exp-009-search-filters",
+      "category": "insufficient_evidence",
+      "difficulty": "hard",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-010-rollout-decision",
+      "experiment_id": "exp-010-premium-subscriptions",
+      "category": "rollout_decision",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-010-factual-retrieval",
+      "experiment_id": "exp-010-premium-subscriptions",
+      "category": "factual_retrieval",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-010-result-interpretation",
+      "experiment_id": "exp-010-premium-subscriptions",
+      "category": "result_interpretation",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-010-risk-guardrail",
+      "experiment_id": "exp-010-premium-subscriptions",
+      "category": "risk_guardrail",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-010-business-impact",
+      "experiment_id": "exp-010-premium-subscriptions",
+      "category": "business_impact",
+      "difficulty": "medium",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-010-insufficient-evidence",
+      "experiment_id": "exp-010-premium-subscriptions",
+      "category": "insufficient_evidence",
+      "difficulty": "hard",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-001-legacy-rag-lookup",
+      "experiment_id": "exp-001-payment-recommendation",
+      "category": "legacy_rag_fallback",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    },
+    {
+      "question_id": "exp-004-legacy-rag-lookup",
+      "experiment_id": "exp-004-checkout-ux",
+      "category": "legacy_rag_fallback",
+      "difficulty": "easy",
+      "retrieved_context_count": 5,
+      "retrieved_document_count": 1,
+      "source_error": null,
+      "metric_scores": {
+        "id_based_context_precision": 1.0,
+        "id_based_context_recall": 1.0
+      }
+    }
+  ],
+  "limitations": [
+    "Judge-backed metrics are opt-in. This run used no judge LLM, so model-backed RAGAS metrics were skipped by design."
+  ]
+}

@@ -96,6 +96,7 @@ The command stores:
 ## QA Evaluation Dataset
 
 `data/eval/qa_dataset.json` is the Phase 1 offline QA dataset used by `packages.evals.run`.
+It is also the single source of truth for the optional `packages.evals.run_ragas` adapter.
 
 It is loaded by `packages.evals.dataset.load_evaluation_dataset`.
 
@@ -152,11 +153,23 @@ The harness:
 4. aggregates retrieval, citation, latency, token, and category coverage metrics
 5. writes `reports/evaluation.md`
 
+The optional RAGAS path reuses the same dataset rows, generated answers, and retrieved contexts.
+Its offline-safe context metrics also map `expected_documents` into RAGAS
+`reference_context_ids`.
+
 Run it locally:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
 uv run python -m packages.evals.run --embedding-provider fake --llm-provider mock --output reports/evaluation.md
+```
+
+Run the optional RAGAS report against the same dataset:
+
+```powershell
+uv sync --group eval
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output reports/phase3/ragas_report.md --json-output reports/phase3/ragas_report.json
 ```
 
 ## Agent Workflow Evaluation Dataset

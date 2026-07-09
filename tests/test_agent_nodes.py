@@ -254,6 +254,22 @@ def test_planner_node_uses_retrieval_for_experiment_lookup_questions() -> None:
     assert updated["required_agents"] == ["retrieval"]
 
 
+def test_planner_node_preserves_preseeded_experiment_context() -> None:
+    state = create_initial_state(
+        "What happened in the payment recommendation experiment?",
+        experiment_id="00000000-0000-0000-0000-000000000123",
+        top_k=2,
+    )
+
+    update = planner_node(state)
+
+    assert update["request"]["experiment_id"] == "00000000-0000-0000-0000-000000000123"
+    assert update["request"]["top_k"] == 2
+    assert update["experiment_context"]["experiment_ids"] == [
+        "00000000-0000-0000-0000-000000000123"
+    ]
+
+
 def test_retrieval_node_skips_when_retrieval_is_not_required() -> None:
     from packages.agents.nodes import retrieval_node
 

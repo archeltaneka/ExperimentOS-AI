@@ -459,6 +459,19 @@ def test_agent_workflow_service_runs_graph_and_returns_state() -> None:
     assert result["metrics"]["retrieval"]["retrieved_chunks"] == 1
 
 
+def test_agent_workflow_service_passes_experiment_id_and_top_k() -> None:
+    service = AgentWorkflowService(retrieval_agent=StubGraphRetrievalAgent())
+
+    result = service.run(
+        "What happened in the payment recommendation experiment?",
+        experiment_id="00000000-0000-0000-0000-000000000123",
+        top_k=2,
+    )
+
+    assert result["request"]["experiment_id"] == "00000000-0000-0000-0000-000000000123"
+    assert result["request"]["top_k"] == 2
+
+
 def test_agent_workflow_service_rejects_blank_question() -> None:
     service = AgentWorkflowService()
 

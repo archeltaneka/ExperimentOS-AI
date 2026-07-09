@@ -176,16 +176,17 @@ class RetrievalAgent:
         metadata_filter = _metadata_filter(state)
         experiment_ids = state["experiment_context"]["experiment_ids"]
         query = state["request"]["normalized_question"]
+        top_k = int(state["request"].get("top_k", self.top_k))
         if len(experiment_ids) == 1:
             return await self.client.search_by_experiment(
                 experiment_ids[0],
                 query,
-                top_k=self.top_k,
+                top_k=top_k,
                 metadata_filter=metadata_filter,
             )
         return await self.client.search(
             query,
-            top_k=self.top_k,
+            top_k=top_k,
             metadata_filter=metadata_filter,
         )
 

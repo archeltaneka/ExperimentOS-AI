@@ -1,0 +1,108 @@
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+DEFAULT_AGENT_DATASET_PATH = Path("data/eval/agent_dataset.json")
+
+
+@dataclass(frozen=True)
+class AgentEvaluationCase:
+    id: str
+    question: str
+    expected_intent: str
+    expected_required_agents: tuple[str, ...]
+    expected_decision_status: str | None = None
+    expected_recommendation: str | None = None
+    expected_summary_status: str | None = None
+    expected_min_citations: int | None = None
+
+
+def load_agent_evaluation_dataset(
+    path: Path = DEFAULT_AGENT_DATASET_PATH,
+) -> list[AgentEvaluationCase]:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ValueError(f"unable to read agent evaluation dataset: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"agent evaluation dataset is not valid JSON: {path}") from exc
+
+    if not isinstance(raw, list):
+        raise ValueError("agent evaluation dataset must be a JSON list")
+
+    cases = [_case_from_mapping(item, index=index) for index, item in enumerate(raw)]
+    case_ids = [case.id for case in cases]
+    if len(case_ids) != len(set(case_ids)):
+        raise ValueError("agent evaluation dataset contains duplicate case ids")
+    return cases
+
+
+def _case_from_mapping(item: Any, *, index: int) -> AgentEvaluationCase:
+    if not isinstance(item, dict):
+        raise ValueError(f"agent evaluation dataset item {index} must be an object")
+
+    required = {"id", "question", "expected_intent", "expected_required_agents"}
+    missing = sorted(required - set(item))
+    if missing:
+        raise ValueError(f"agent evaluation dataset item {index} is missing: {', '.join(missing)}")
+
+    expected_min_citations = item.get("expected_min_citations")
+    if expected_min_citations is not None and (
+        not isinstance(expected_min_citations, int) or expected_min_citations < 0
+    ):
+        raise ValueError(
+            f"agent evaluation dataset item {index} field 'expected_min_citations' "
+            "must be a non-negative integer"
+        )
+
+    return AgentEvaluationCase(
+        id=_required_string(item, "id", index=index),
+        question=_required_string(item, "question", index=index),
+        expected_intent=_required_string(item, "expected_intent", index=index),
+        expected_required_agents=_required_string_tuple(
+            item,
+            "expected_required_agents",
+            index=index,
+        ),
+        expected_decision_status=_optional_string(item, "expected_decision_status"),
+        expected_recommendation=_optional_string(item, "expected_recommendation"),
+        expected_summary_status=_optional_string(item, "expected_summary_status"),
+        expected_min_citations=expected_min_citations,
+    )
+
+
+def _required_string(item: dict[str, Any], key: str, *, index: int) -> str:
+    value = item[key]
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"agent evaluation dataset item {index} field {key!r} must be a string")
+    return value.strip()
+
+
+def _required_string_tuple(item: dict[str, Any], key: str, *, index: int) -> tuple[str, ...]:
+    value = item[key]
+    if not isinstance(value, list) or not value:
+        raise ValueError(
+            f"agent evaluation dataset item {index} field {key!r} "
+            "must be a non-empty list"
+        )
+    entries: list[str] = []
+    for offset, entry in enumerate(value):
+        if not isinstance(entry, str) or not entry.strip():
+            raise ValueError(
+                f"agent evaluation dataset item {index} field {key!r} entry {offset} "
+                "must be a string"
+            )
+        entries.append(entry.strip())
+    return tuple(entries)
+
+
+def _optional_string(item: dict[str, Any], key: str) -> str | None:
+    value = item.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"agent evaluation dataset field {key!r} must be a string when present")
+    return value.strip()

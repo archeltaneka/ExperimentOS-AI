@@ -91,6 +91,73 @@ def test_load_evaluation_dataset_validates_records(tmp_path: Path) -> None:
     assert dataset[0].experiment_id == "exp-001-payment-recommendation"
     assert dataset[0].expected_documents == ("Adaptive Payment Method Recommendation",)
     assert dataset[0].expected_keywords == ("roll out", "wallet telemetry")
+    assert dataset[0].expected_citation_required is True
+    assert dataset[0].expected_failure_mode is None
+    assert dataset[0].notes is None
+
+
+def test_load_evaluation_dataset_supports_optional_metadata_fields(tmp_path: Path) -> None:
+    from packages.evals.dataset import load_evaluation_dataset
+
+    dataset_path = tmp_path / "dataset.json"
+    dataset_path.write_text(
+        json.dumps(
+            [
+                {
+                    "id": "payment-insufficient-evidence",
+                    "experiment_id": "exp-001-payment-recommendation",
+                    "question": "What ROI should we expect from payment recommendations in Japan?",
+                    "expected_documents": ["Adaptive Payment Method Recommendation"],
+                    "expected_keywords": ["under-counted", "Japan wallet", "needs more data"],
+                    "category": "insufficient_evidence",
+                    "difficulty": "medium",
+                    "reference_answer": (
+                        "The report does not support a grounded ROI estimate for Japan because "
+                        "wallet success telemetry was under-counted."
+                    ),
+                    "expected_citation_required": True,
+                    "expected_failure_mode": "unsupported_business_estimate",
+                    "notes": "Avoid inventing ROI or revenue where the report only flags gaps.",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    dataset = load_evaluation_dataset(dataset_path)
+
+    assert len(dataset) == 1
+    assert dataset[0].category == "insufficient_evidence"
+    assert dataset[0].expected_citation_required is True
+    assert dataset[0].expected_failure_mode == "unsupported_business_estimate"
+    assert dataset[0].notes == "Avoid inventing ROI or revenue where the report only flags gaps."
+
+
+def test_load_evaluation_dataset_rejects_invalid_optional_metadata(tmp_path: Path) -> None:
+    from packages.evals.dataset import load_evaluation_dataset
+
+    dataset_path = tmp_path / "dataset.json"
+    dataset_path.write_text(
+        json.dumps(
+            [
+                {
+                    "id": "payment-invalid-optional-fields",
+                    "experiment_id": "exp-001-payment-recommendation",
+                    "question": "Why did the payment recommendation ship?",
+                    "expected_documents": ["Adaptive Payment Method Recommendation"],
+                    "expected_keywords": ["roll out"],
+                    "category": "rollout_decision",
+                    "difficulty": "easy",
+                    "reference_answer": "Roll out to clean markets while monitoring telemetry.",
+                    "expected_citation_required": "yes",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="expected_citation_required"):
+        load_evaluation_dataset(dataset_path)
 
 
 def test_golden_dataset_covers_all_synthetic_experiments() -> None:
@@ -101,7 +168,7 @@ def test_golden_dataset_covers_all_synthetic_experiments() -> None:
 
     dataset = load_evaluation_dataset(DEFAULT_DATASET_PATH)
 
-    assert 40 <= len(dataset) <= 50
+    assert len(dataset) >= 60
     assert {item.experiment_id for item in dataset} == {
         "exp-001-payment-recommendation",
         "exp-002-hotel-image-quality",
@@ -114,6 +181,15 @@ def test_golden_dataset_covers_all_synthetic_experiments() -> None:
         "exp-009-search-filters",
         "exp-010-premium-subscriptions",
     }
+    assert {
+        "factual_retrieval",
+        "result_interpretation",
+        "business_impact",
+        "risk_guardrail",
+        "rollout_decision",
+        "insufficient_evidence",
+        "legacy_rag_fallback",
+    }.issubset({item.category for item in dataset})
 
 
 def test_sample_metrics_capture_latency_tokens_coverage_and_cost() -> None:

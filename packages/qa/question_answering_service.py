@@ -5,7 +5,7 @@ from collections.abc import Awaitable, Callable
 from pydantic import BaseModel, ConfigDict
 
 from packages.llm.client import LLMClient, LLMClientError, LLMMetrics
-from packages.llm.prompts import build_grounded_prompt
+from packages.llm.prompts import GroundedPrompt, build_grounded_prompt
 from packages.retrieval.service import RetrievalMetrics, RetrievalResult, RetrievalService
 
 INSUFFICIENT_EVIDENCE_ANSWER = "Insufficient evidence exists to answer the question."
@@ -32,6 +32,7 @@ class LLMGenerationError(QuestionAnsweringServiceError):
 
 
 ExperimentExists = Callable[[str], Awaitable[bool]]
+PromptBuilder = Callable[..., GroundedPrompt]
 
 
 class Citation(BaseModel):
@@ -64,10 +65,12 @@ class QuestionAnsweringService:
         retrieval_service: RetrievalService,
         llm_client: LLMClient,
         experiment_exists: ExperimentExists | None = None,
+        prompt_builder: PromptBuilder = build_grounded_prompt,
     ) -> None:
         self.retrieval_service = retrieval_service
         self.llm_client = llm_client
         self.experiment_exists = experiment_exists
+        self.prompt_builder = prompt_builder
 
     async def answer_question(
         self,
@@ -112,7 +115,7 @@ class QuestionAnsweringService:
                 ),
             )
 
-        prompt = build_grounded_prompt(question=normalized_question, retrieved_chunks=results)
+        prompt = self.prompt_builder(question=normalized_question, retrieved_chunks=results)
         try:
             llm_response = await self.llm_client.generate(
                 prompt=prompt.prompt,

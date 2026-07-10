@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from packages.llm.prompt_registry import get_prompt_registry
+from packages.llm.prompt_registry import PromptRegistry, get_prompt_registry
 from packages.retrieval.service import RetrievalResult
 
 _PROMPT_REGISTRY = get_prompt_registry()
@@ -31,7 +31,11 @@ def build_grounded_prompt(
     *,
     question: str,
     retrieved_chunks: list[RetrievalResult],
+    version: str | None = None,
+    registry: PromptRegistry | None = None,
+    prompt_id: str = "rag.answer",
 ) -> GroundedPrompt:
+    prompt_registry = registry or _PROMPT_REGISTRY
     context_blocks = [
         "\n".join(
             [
@@ -47,12 +51,13 @@ def build_grounded_prompt(
         )
         for index, chunk in enumerate(retrieved_chunks, start=1)
     ]
-    rendered = _PROMPT_REGISTRY.render(
-        "rag.answer",
+    rendered = prompt_registry.render(
+        prompt_id,
         {
             "question": question.strip(),
             "context": "\n\n".join(context_blocks),
         },
+        version=version,
     )
     return GroundedPrompt(
         system_instruction=rendered.system_prompt,

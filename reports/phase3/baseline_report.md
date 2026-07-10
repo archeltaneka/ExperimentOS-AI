@@ -1,6 +1,6 @@
 # Phase 3 Reliability Baseline Report
 
-- Generated at: 2026-07-10T03:35:50.836633Z
+- Generated at: 2026-07-10T04:07:23.563055Z
 - Overall status: pass
 
 ## Evaluation Status
@@ -13,7 +13,7 @@
 
 ## Commands Run
 
-- `uv run python -m packages.evals.run --dataset data\eval\qa_dataset.json --output reports\evaluation.md --top-k 5 --embedding-provider ollama --embedding-model nomic-embed-text --llm-provider ollama --llm-model qwen2.5:7b`
+- `uv run python -m packages.evals.run --dataset data\eval\qa_dataset.json --output reports\evaluation.md --top-k 5 --embedding-provider fake --embedding-model fake --llm-provider mock --llm-model mock`
 - `uv run python -m packages.evals.run_agent --dataset data\eval\agent_dataset.json --output reports\agent_evaluation.md`
 - `uv run python -m packages.evals.run_agent_e2e --output reports\agent_e2e_evaluation.md`
 
@@ -29,8 +29,8 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 517.1 ms
-- Average LLM latency: 4151.6 ms
+- Average retrieval latency: 49.8 ms
+- Average LLM latency: 0.0 ms
 
 ### Missing Metrics
 
@@ -119,6 +119,17 @@
 - legacy_rag responses expose prompt_id and prompt_version metadata.
 - offline QA evaluation samples and reports carry prompt provenance when available.
 - agent_workflow remains prompt-free until an LLM-backed surface exists.
+
+## Prompt Regression Coverage
+
+- Prompt regression compares prompt versions over the existing legacy_rag QA dataset.
+- Prompt regression reuses a prompt-backed legacy /ask surface through the existing ask adapter.
+- Offline mode stays deterministic by default and does not require a live provider.
+
+## Remaining Prompt Risks
+
+- Only legacy_rag is prompt-backed today; agent_workflow remains deterministic application logic.
+- Prompt regression focuses on structural and evidence-grounded deltas rather than exact prose matching.
 
 ## Next Recommended Reliability Work
 

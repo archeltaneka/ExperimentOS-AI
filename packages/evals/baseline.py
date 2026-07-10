@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from packages.evals.agent_e2e import AgentE2ERun
 from packages.evals.agent_e2e_report import KNOWN_LIMITATIONS as E2E_KNOWN_LIMITATIONS
@@ -83,6 +83,8 @@ class Phase3BaselineReport:
     next_recommended_work: tuple[str, ...]
     registered_prompts: tuple[tuple[str, str, str], ...]
     prompt_provenance_notes: tuple[str, ...]
+    prompt_regression_coverage: tuple[str, ...] = field(default_factory=tuple)
+    remaining_prompt_risks: tuple[str, ...] = field(default_factory=tuple)
 
 
 def build_phase3_baseline_report(
@@ -131,6 +133,24 @@ def build_phase3_baseline_report(
             "legacy_rag responses expose prompt_id and prompt_version metadata.",
             "offline QA evaluation samples and reports carry prompt provenance when available.",
             "agent_workflow remains prompt-free until an LLM-backed surface exists.",
+        ),
+        prompt_regression_coverage=(
+            "Prompt regression compares prompt versions over the existing legacy_rag QA dataset.",
+            (
+                "Prompt regression reuses a prompt-backed legacy /ask surface through the "
+                "existing ask adapter."
+            ),
+            "Offline mode stays deterministic by default and does not require a live provider.",
+        ),
+        remaining_prompt_risks=(
+            (
+                "Only legacy_rag is prompt-backed today; agent_workflow remains deterministic "
+                "application logic."
+            ),
+            (
+                "Prompt regression focuses on structural and evidence-grounded deltas rather "
+                "than exact prose matching."
+            ),
         ),
     )
 
@@ -195,6 +215,14 @@ def render_phase3_baseline_report(report: Phase3BaselineReport) -> str:
 
     lines.extend(["", "## Prompt Provenance", ""])
     for note in report.prompt_provenance_notes:
+        lines.append(f"- {note}")
+
+    lines.extend(["", "## Prompt Regression Coverage", ""])
+    for note in report.prompt_regression_coverage:
+        lines.append(f"- {note}")
+
+    lines.extend(["", "## Remaining Prompt Risks", ""])
+    for note in report.remaining_prompt_risks:
         lines.append(f"- {note}")
 
     lines.extend(["", "## Next Recommended Reliability Work", ""])

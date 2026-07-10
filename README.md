@@ -238,6 +238,18 @@ evaluations. The baseline remains deterministic and repository-owned; optional R
 lives beside it rather than replacing it. DeepEval, LangSmith, Phoenix, and OpenTelemetry are still
 out of scope. See [Phase 3 Reliability Baseline](docs/phase3/reliability_baseline.md).
 
+Run prompt regression for a prompt-backed surface:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run python -m packages.evals.run_prompt_regression --prompt-id rag.answer --baseline-version 1 --candidate-version 1 --offline --embedding-provider fake --llm-provider mock --output reports/phase3/prompt_regression.md --json-output reports/phase3/prompt_regression.json
+Get-Content reports/phase3/prompt_regression.md
+```
+
+This command reuses the existing `legacy_rag` QA dataset, freezes retrieval between compared prompt
+versions, and layers offline-safe custom, RAGAS, and DeepEval comparisons on top of the same local
+surfaces. See [Phase 3 Prompt Regression](docs/phase3/prompt_regression.md).
+
 ## Development Workflow
 
 Core commands:

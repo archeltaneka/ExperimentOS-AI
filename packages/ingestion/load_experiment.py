@@ -373,10 +373,13 @@ def resolve_runtime_options(args: argparse.Namespace) -> argparse.Namespace:
 
 def run_async(coro: Any) -> Any:
     if sys.platform == "win32":
-        return asyncio.run(
-            coro,
-            loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()),
-        )
+        try:
+            return asyncio.run(
+                coro,
+                loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()),
+            )
+        except TypeError:
+            return asyncio.run(coro)
     return asyncio.run(coro)
 
 

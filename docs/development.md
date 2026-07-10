@@ -220,6 +220,22 @@ Framework comparison:
 - DeepEval: optional standardized LLM test-case adapter with offline deterministic checks and
   explicit judge-based metrics
 
+Prompt regression now sits on top of those existing evaluation surfaces instead of replacing them.
+
+Run the default offline prompt-regression report:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run python -m packages.evals.run_prompt_regression --prompt-id rag.answer --baseline-version 1 --candidate-version 1 --offline --embedding-provider fake --llm-provider mock --output reports/phase3/prompt_regression.md --json-output reports/phase3/prompt_regression.json
+```
+
+Default prompt-regression behavior:
+
+- reuses the QA dataset and a prompt-backed legacy `/ask` surface
+- freezes retrieval so both prompt versions see the same evidence
+- reuses the repository-owned custom evaluation plus offline RAGAS and DeepEval comparisons
+- avoids live OpenAI or Gemini calls by default
+
 ## Phase 3 Baseline
 
 Phase 3 starts with a deterministic local reliability baseline built from the existing

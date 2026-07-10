@@ -35,6 +35,7 @@ class AskResponse(BaseModel):
     retrieved_chunks: list[dict[str, object]]
     retrieval_metrics: dict[str, object]
     llm_metrics: dict[str, object]
+    prompt_metadata: dict[str, str] | None = None
     intent: str | None = None
     required_agents: list[str] = Field(default_factory=list)
     decision: dict[str, object] | None = None
@@ -85,6 +86,10 @@ class LegacyRagAskService:
             retrieved_chunks=[asdict(chunk) for chunk in qa_response.retrieved_chunks],
             retrieval_metrics=asdict(qa_response.retrieval_metrics),
             llm_metrics=vars(qa_response.llm_metrics),
+            prompt_metadata=_build_prompt_metadata(
+                qa_response.prompt_id,
+                qa_response.prompt_version,
+            ),
             intent=None,
             required_agents=[],
             decision=None,
@@ -162,6 +167,7 @@ def map_agent_state_to_ask_response(state: AgentState) -> AskResponse:
             "average_similarity": retrieval_metrics.get("average_similarity", 0.0),
         },
         llm_metrics=llm_metrics,
+        prompt_metadata=None,
         intent=state["intent"],
         required_agents=list(state["required_agents"]),
         decision=dict(state["decision"]),
@@ -184,3 +190,15 @@ def _resolve_agent_answer(state: AgentState) -> str:
         if str(answer).strip():
             return str(answer)
     return INSUFFICIENT_EVIDENCE_ANSWER
+
+
+def _build_prompt_metadata(
+    prompt_id: str | None,
+    prompt_version: str | None,
+) -> dict[str, str] | None:
+    if prompt_id is None or prompt_version is None:
+        return None
+    return {
+        "prompt_id": prompt_id,
+        "prompt_version": prompt_version,
+    }

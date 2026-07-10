@@ -48,6 +48,8 @@ class QAResponse(BaseModel):
     retrieved_chunks: list[RetrievalResult]
     retrieval_metrics: RetrievalMetrics
     llm_metrics: LLMMetrics
+    prompt_id: str | None = None
+    prompt_version: str | None = None
 
     model_config = ConfigDict(frozen=True)
 
@@ -127,6 +129,8 @@ class QuestionAnsweringService:
             retrieved_chunks=results,
             retrieval_metrics=retrieval_metrics,
             llm_metrics=llm_response.metrics,
+            prompt_id=prompt.prompt_id,
+            prompt_version=prompt.version,
         )
 
     def _build_citations(self, results: list[RetrievalResult]) -> list[Citation]:

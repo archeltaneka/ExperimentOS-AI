@@ -11,9 +11,21 @@ from packages.llm.client import (
     OllamaLLMClient,
     OpenAILLMClient,
 )
+from packages.llm.prompt_registry import (
+    DuplicatePromptRegistrationError,
+    PromptDefinition,
+    PromptDefinitionError,
+    PromptLookupError,
+    PromptRegistry,
+    PromptRegistryError,
+    PromptRenderError,
+    RenderedPrompt,
+    get_prompt_registry,
+)
 
 __all__ = [
     "GEMINI_LLM_MODEL",
+    "DuplicatePromptRegistrationError",
     "GeminiLLMClient",
     "LLMClient",
     "LLMClientError",
@@ -22,4 +34,12 @@ __all__ = [
     "MockLLMClient",
     "OllamaLLMClient",
     "OpenAILLMClient",
+    "PromptDefinition",
+    "PromptDefinitionError",
+    "PromptLookupError",
+    "PromptRegistry",
+    "PromptRegistryError",
+    "PromptRenderError",
+    "RenderedPrompt",
+    "get_prompt_registry",
 ]

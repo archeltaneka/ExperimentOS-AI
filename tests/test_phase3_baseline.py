@@ -63,6 +63,15 @@ def test_render_phase3_baseline_report_includes_sections_metrics_and_gaps() -> N
             "Expand the evaluation datasets.",
             "Add deterministic hallucination checks.",
         ),
+        registered_prompts=(
+            ("rag.answer", "1", "active"),
+            ("rag.decision", "1", "experimental"),
+            ("rag.summary", "1", "experimental"),
+        ),
+        prompt_provenance_notes=(
+            "legacy_rag responses expose prompt_id and prompt_version metadata.",
+            "agent_workflow remains prompt-free until an LLM-backed surface exists.",
+        ),
     )
 
     markdown = render_phase3_baseline_report(report)
@@ -73,6 +82,8 @@ def test_render_phase3_baseline_report_includes_sections_metrics_and_gaps() -> N
     assert "Agent Workflow E2E Evaluation" in markdown
     assert "Questions evaluated" in markdown
     assert "Legacy fallback coverage" in markdown
+    assert "rag.answer" in markdown
+    assert "legacy_rag responses expose prompt_id and prompt_version metadata." in markdown
     assert "No threshold policy exists yet." in markdown
     assert "Add deterministic hallucination checks." in markdown
 

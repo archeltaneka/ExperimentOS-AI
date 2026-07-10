@@ -6,6 +6,7 @@ from packages.evals.agent_e2e import AgentE2ERun
 from packages.evals.agent_e2e_report import KNOWN_LIMITATIONS as E2E_KNOWN_LIMITATIONS
 from packages.evals.agent_evaluator import AgentEvaluationRun
 from packages.evals.evaluator import EvaluationRun
+from packages.llm.prompt_registry import get_prompt_registry
 
 QA_MISSING_METRICS = (
     "factual grounding",
@@ -80,6 +81,8 @@ class Phase3BaselineReport:
     sections: list[Phase3BaselineSection]
     known_gaps: tuple[str, ...]
     next_recommended_work: tuple[str, ...]
+    registered_prompts: tuple[tuple[str, str, str], ...]
+    prompt_provenance_notes: tuple[str, ...]
 
 
 def build_phase3_baseline_report(
@@ -123,6 +126,12 @@ def build_phase3_baseline_report(
         sections=sections,
         known_gaps=BASELINE_KNOWN_GAPS,
         next_recommended_work=BASELINE_NEXT_WORK,
+        registered_prompts=_registered_prompts(),
+        prompt_provenance_notes=(
+            "legacy_rag responses expose prompt_id and prompt_version metadata.",
+            "offline QA evaluation samples and reports carry prompt provenance when available.",
+            "agent_workflow remains prompt-free until an LLM-backed surface exists.",
+        ),
     )
 
 
@@ -177,6 +186,16 @@ def render_phase3_baseline_report(report: Phase3BaselineReport) -> str:
     lines.extend(["", "## Known Gaps", ""])
     for gap in report.known_gaps:
         lines.append(f"- {gap}")
+
+    lines.extend(["", "## Registered Prompts", ""])
+    lines.append("| Prompt ID | Active Version | Status |")
+    lines.append("| --- | --- | --- |")
+    for prompt_id, version, status in report.registered_prompts:
+        lines.append(f"| {prompt_id} | {version} | {status} |")
+
+    lines.extend(["", "## Prompt Provenance", ""])
+    for note in report.prompt_provenance_notes:
+        lines.append(f"- {note}")
 
     lines.extend(["", "## Next Recommended Reliability Work", ""])
     for step in report.next_recommended_work:
@@ -286,3 +305,11 @@ def _build_agent_e2e_section(
 
 def _percent(value: float) -> str:
     return f"{value * 100.0:.1f}%"
+
+
+def _registered_prompts() -> tuple[tuple[str, str, str], ...]:
+    registry = get_prompt_registry()
+    return tuple(
+        (definition.prompt_id, definition.version, definition.status)
+        for definition in registry.list_prompts()
+    )

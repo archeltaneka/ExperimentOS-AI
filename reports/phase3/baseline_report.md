@@ -1,6 +1,6 @@
 # Phase 3 Reliability Baseline Report
 
-- Generated at: 2026-07-10T01:44:41.230150Z
+- Generated at: 2026-07-10T03:35:50.836633Z
 - Overall status: pass
 
 ## Evaluation Status
@@ -13,7 +13,7 @@
 
 ## Commands Run
 
-- `uv run python -m packages.evals.run --dataset data\eval\qa_dataset.json --output reports\evaluation.md --top-k 5 --embedding-provider fake --embedding-model fake --llm-provider mock --llm-model mock`
+- `uv run python -m packages.evals.run --dataset data\eval\qa_dataset.json --output reports\evaluation.md --top-k 5 --embedding-provider ollama --embedding-model nomic-embed-text --llm-provider ollama --llm-model qwen2.5:7b`
 - `uv run python -m packages.evals.run_agent --dataset data\eval\agent_dataset.json --output reports\agent_evaluation.md`
 - `uv run python -m packages.evals.run_agent_e2e --output reports\agent_e2e_evaluation.md`
 
@@ -29,8 +29,8 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 50.5 ms
-- Average LLM latency: 0.0 ms
+- Average retrieval latency: 517.1 ms
+- Average LLM latency: 4151.6 ms
 
 ### Missing Metrics
 
@@ -105,6 +105,20 @@
 - No threshold policy exists yet for turning these metrics into CI gates.
 - No direct hallucination or factuality score is computed yet.
 - No external tracing or observability export is enabled yet.
+
+## Registered Prompts
+
+| Prompt ID | Active Version | Status |
+| --- | --- | --- |
+| rag.answer | 1 | active |
+| rag.decision | 1 | experimental |
+| rag.summary | 1 | experimental |
+
+## Prompt Provenance
+
+- legacy_rag responses expose prompt_id and prompt_version metadata.
+- offline QA evaluation samples and reports carry prompt provenance when available.
+- agent_workflow remains prompt-free until an LLM-backed surface exists.
 
 ## Next Recommended Reliability Work
 

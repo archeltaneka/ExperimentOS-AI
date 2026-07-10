@@ -55,21 +55,24 @@ def render_evaluation_report(run: EvaluationRun) -> str:
             "",
             "## Sample Results",
             "",
-            "| ID | Experiment | Category | Retrieval | Citation Coverage | "
+            "| ID | Experiment | Category | Prompt | Retrieval | Citation Coverage | "
             "Avg Similarity | Error |",
-            "| --- | --- | --- | ---: | ---: | ---: | --- |",
+            "| --- | --- | --- | --- | ---: | ---: | ---: | --- |",
         ]
     )
     for sample in run.samples:
+        prompt_label = _prompt_label(sample)
         if sample.metrics is None:
             lines.append(
                 f"| {sample.question.id} | {sample.question.experiment_id} | "
-                f"{sample.question.category} | no | 0.0% | 0.000 | {sample.error or ''} |"
+                f"{sample.question.category} | {prompt_label} | no | 0.0% | 0.000 | "
+                f"{sample.error or ''} |"
             )
             continue
         lines.append(
             f"| {sample.question.id} | {sample.question.experiment_id} | "
-            f"{sample.question.category} | {_yes_no(sample.metrics.retrieval_success)} | "
+            f"{sample.question.category} | {prompt_label} | "
+            f"{_yes_no(sample.metrics.retrieval_success)} | "
             f"{_percent(sample.metrics.citation_coverage)} | "
             f"{sample.metrics.average_similarity:.3f} | {sample.error or ''} |"
         )
@@ -116,3 +119,9 @@ def _percent(value: float) -> str:
 
 def _yes_no(value: bool) -> str:
     return "yes" if value else "no"
+
+
+def _prompt_label(sample: EvaluationSampleResult) -> str:
+    if sample.prompt_id is None or sample.prompt_version is None:
+        return ""
+    return f"{sample.prompt_id}@{sample.prompt_version}"

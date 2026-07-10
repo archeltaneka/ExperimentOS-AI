@@ -59,6 +59,8 @@ def qa_response(*, experiment_id: str, document_name: str, chunk_text: str) -> Q
             output_tokens=12,
             latency_ms=3.5,
         ),
+        prompt_id="rag.answer",
+        prompt_version="1",
     )
 
 
@@ -279,6 +281,8 @@ def test_offline_evaluator_invokes_question_answering_service() -> None:
     assert result.summary.retrieval_success_rate == pytest.approx(1.0)
     assert result.samples[0].metrics is not None
     assert result.samples[0].error is None
+    assert result.samples[0].prompt_id == "rag.answer"
+    assert result.samples[0].prompt_version == "1"
 
 
 def test_report_renderer_includes_summary_and_low_performing_rows() -> None:
@@ -315,6 +319,8 @@ def test_report_renderer_includes_summary_and_low_performing_rows() -> None:
             "The recommendation was to roll out with wallet telemetry monitoring.",
         ),
         error=None,
+        prompt_id="rag.answer",
+        prompt_version="1",
     )
     run_result = EvaluationRun(
         samples=[sample],
@@ -335,6 +341,7 @@ def test_report_renderer_includes_summary_and_low_performing_rows() -> None:
     assert "Questions evaluated: 1" in markdown
     assert "Retrieval success rate: 100.0%" in markdown
     assert "payment-decision" in markdown
+    assert "rag.answer@1" in markdown
 
 
 def test_cli_parser_accepts_dataset_output_and_provider_options() -> None:

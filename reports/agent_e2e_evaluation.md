@@ -12,7 +12,7 @@
 - Decision coverage: 100.0%
 - Executive summary coverage: 100.0%
 - Approval status coverage: 100.0%
-- Average workflow latency: 7.1 ms
+- Average workflow latency: 16.2 ms
 
 ## Case Results
 

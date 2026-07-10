@@ -2,41 +2,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from packages.llm.prompt_registry import get_prompt_registry
 from packages.retrieval.service import RetrievalResult
 
-SYSTEM_PROMPT = (
-    "Only answer using retrieved context.\n"
-    "If the answer cannot be supported by retrieved evidence, say that insufficient evidence "
-    "exists.\n"
-    "Never invent facts."
-)
+_PROMPT_REGISTRY = get_prompt_registry()
+_RAG_ANSWER_DEFINITION = _PROMPT_REGISTRY.get_active("rag.answer")
+_RAG_DECISION_DEFINITION = _PROMPT_REGISTRY.get_active("rag.decision")
+_RAG_SUMMARY_DEFINITION = _PROMPT_REGISTRY.get_active("rag.summary")
 
-QA_PROMPT = "\n\n".join(
-    [
-        "User Question: {question}",
-        "Retrieved Context:",
-        "{context}",
-        "Answer using only the retrieved context and cite the supporting documents.",
-    ]
-)
-
-DECISION_PROMPT = "\n\n".join(
-    [
-        "Decision Question: {question}",
-        "Evidence:",
-        "{context}",
-        "Summarize the decision, supporting evidence, and any unresolved uncertainty.",
-    ]
-)
-
-SUMMARY_PROMPT = "\n\n".join(
-    [
-        "Summary Request: {question}",
-        "Source Context:",
-        "{context}",
-        "Produce a concise summary grounded only in the source context.",
-    ]
-)
+SYSTEM_PROMPT = _RAG_ANSWER_DEFINITION.system_template
+QA_PROMPT = _RAG_ANSWER_DEFINITION.user_template
+DECISION_PROMPT = _RAG_DECISION_DEFINITION.user_template
+SUMMARY_PROMPT = _RAG_SUMMARY_DEFINITION.user_template
 
 # Backward-compatible alias for existing imports while new code uses SYSTEM_PROMPT.
 SYSTEM_INSTRUCTION = SYSTEM_PROMPT
@@ -46,6 +23,8 @@ SYSTEM_INSTRUCTION = SYSTEM_PROMPT
 class GroundedPrompt:
     system_instruction: str
     prompt: str
+    prompt_id: str
+    version: str
 
 
 def build_grounded_prompt(
@@ -68,8 +47,16 @@ def build_grounded_prompt(
         )
         for index, chunk in enumerate(retrieved_chunks, start=1)
     ]
-    prompt = QA_PROMPT.format(
-        question=question.strip(),
-        context="\n\n".join(context_blocks),
+    rendered = _PROMPT_REGISTRY.render(
+        "rag.answer",
+        {
+            "question": question.strip(),
+            "context": "\n\n".join(context_blocks),
+        },
     )
-    return GroundedPrompt(system_instruction=SYSTEM_PROMPT, prompt=prompt)
+    return GroundedPrompt(
+        system_instruction=rendered.system_prompt,
+        prompt=rendered.user_prompt,
+        prompt_id=rendered.prompt_id,
+        version=rendered.version,
+    )

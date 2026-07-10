@@ -182,11 +182,50 @@ To enable judge-backed metrics, set `RAGAS_JUDGE_LLM_PROVIDER` and optionally
 `RAGAS_JUDGE_LLM_MODEL`. `answer_relevancy` also needs `RAGAS_JUDGE_EMBEDDING_PROVIDER` and
 optionally `RAGAS_JUDGE_EMBEDDING_MODEL`. No live OpenAI or Gemini calls are required by default.
 
+Optional DeepEval evaluation is also additive rather than a replacement for the custom harnesses.
+
+Run the default offline DeepEval report:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run python -m packages.evals.run_deepeval --mode offline --embedding-provider fake --llm-provider mock --output reports/phase3/deepeval_report.md --json-output reports/phase3/deepeval_report.json
+```
+
+Default DeepEval behavior:
+
+- reuses the existing QA dataset, agent workflow dataset, and `/ask` E2E cases
+- converts repository-owned cases into DeepEval `Golden`, `LLMTestCase`, and `EvaluationDataset`
+  shapes
+- runs deterministic ExperimentOS-owned checks for routing, decision, approval, citation,
+  fallback, error-state, trace, and unsupported-claim behavior
+- skips judge-based metrics with explicit reasons in offline mode
+- writes both Markdown and JSON reports
+
+Judge-backed DeepEval metrics are opt-in:
+
+- `answer_relevancy`
+- `faithfulness`
+- `hallucination`
+- `contextual_relevancy`
+
+To enable judge-backed DeepEval metrics, run `--mode judge` or `--mode all` and set
+`DEEPEVAL_JUDGE_PROVIDER` plus `DEEPEVAL_JUDGE_MODEL`, or pass the matching CLI flags explicitly.
+`judge` and `all` fail fast when judge configuration or provider credentials are missing. Gemini
+judge runs also set `USE_GEMINI_MODEL=1` for the current DeepEval integration path.
+
+Framework comparison:
+
+- Custom evaluation: repository-owned deterministic QA, workflow, and `/ask` contract checks
+- RAGAS: optional RAG-focused retrieval and answer-quality metrics over the QA harness
+- DeepEval: optional standardized LLM test-case adapter with offline deterministic checks and
+  explicit judge-based metrics
+
 ## Phase 3 Baseline
 
 Phase 3 starts with a deterministic local reliability baseline built from the existing
 repository-owned evaluation surfaces. The baseline stays deterministic even though RAGAS is now
-available as a separate optional report path.
+available as a separate optional report path and DeepEval is now available as a separate optional
+report path.
 
 Run it with:
 

@@ -28,6 +28,7 @@ dev = [
   "ruff>=0.7.0"
 ]
 eval = [
+    "deepeval>=4.0.7",
     "ragas>=0.4.3",
 ]
 

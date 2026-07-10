@@ -1,7 +1,7 @@
 # Phase 3 Reliability Baseline Report
 
-- Generated at: 2026-07-10T04:07:23.563055Z
-- Overall status: pass
+- Generated at: 2026-07-10T07:08:49.763415Z
+- Overall status: fail
 
 ## Evaluation Status
 
@@ -10,12 +10,14 @@
 | RAG Evaluation | pass | completed without sample errors | data\eval\qa_dataset.json | `reports\evaluation.md` |
 | Agent Workflow Evaluation | pass | all deterministic workflow cases passed | data\eval\agent_dataset.json | `reports\agent_evaluation.md` |
 | Agent Workflow E2E Evaluation | pass | all deterministic API cases passed | n/a | `reports\agent_e2e_evaluation.md` |
+| Factuality Evaluation | fail | Critical factuality violations exceeded the configured allowance.; Unsupported numerical claims exceeded the configured allowance.; Fabricated financial claims exceeded the configured allowance.; Fabricated statistical claims exceeded the configured allowance.; Medium-severity findings exceeded the configured allowance. | data\eval\qa_dataset.json, data\eval\agent_dataset.json | `reports\phase3\factuality_report.md` |
 
 ## Commands Run
 
-- `uv run python -m packages.evals.run --dataset data\eval\qa_dataset.json --output reports\evaluation.md --top-k 5 --embedding-provider fake --embedding-model fake --llm-provider mock --llm-model mock`
+- `uv run python -m packages.evals.run --dataset data\eval\qa_dataset.json --output reports\evaluation.md --top-k 5 --embedding-provider ollama --embedding-model nomic-embed-text --llm-provider ollama --llm-model qwen2.5:7b`
 - `uv run python -m packages.evals.run_agent --dataset data\eval\agent_dataset.json --output reports\agent_evaluation.md`
 - `uv run python -m packages.evals.run_agent_e2e --output reports\agent_e2e_evaluation.md`
+- `uv run python -m packages.evals.run_factuality --dataset data\eval\qa_dataset.json --agent-dataset data\eval\agent_dataset.json --target all --mode offline --output reports\phase3\factuality_report.md --json-output reports\phase3\factuality_report.json --top-k 5`
 
 ## RAG Evaluation
 
@@ -29,8 +31,8 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 49.8 ms
-- Average LLM latency: 0.0 ms
+- Average retrieval latency: 650.1 ms
+- Average LLM latency: 4348.1 ms
 
 ### Missing Metrics
 
@@ -100,10 +102,36 @@
 - Assertions are structural and intentionally avoid exact prose matching.
 - Failure-path coverage validates structured API surfacing, not downstream recovery behavior.
 
+## Factuality Evaluation
+
+- Status: fail
+- Reason: Critical factuality violations exceeded the configured allowance.; Unsupported numerical claims exceeded the configured allowance.; Fabricated financial claims exceeded the configured allowance.; Fabricated statistical claims exceeded the configured allowance.; Medium-severity findings exceeded the configured allowance.
+- Dataset: data\eval\qa_dataset.json, data\eval\agent_dataset.json
+- Report path: `reports\phase3\factuality_report.md`
+
+### Key Metrics
+
+- Cases evaluated: 70
+- Policy result: fail
+- Critical findings: 35
+- Citation failures: 0
+- Unsupported numerical claims: 4
+
+### Missing Metrics
+
+- production blocking
+- automatic answer repair
+- human fact-check workflow
+
+### Known Limitations
+
+- Deterministic checks are conservative and do not prove universal factual correctness.
+- Numerical and workflow assertions remain deterministic; judge metrics are optional.
+- Offline mode never invokes a live provider.
+
 ## Known Gaps
 
 - No threshold policy exists yet for turning these metrics into CI gates.
-- No direct hallucination or factuality score is computed yet.
 - No external tracing or observability export is enabled yet.
 
 ## Registered Prompts
@@ -133,6 +161,5 @@
 
 ## Next Recommended Reliability Work
 
-- Add deterministic factual grounding and unsupported-claim checks on top of the expanded datasets.
 - Define category-specific threshold policies before introducing CI quality gates.
 - Add report-level regression diffs so future baseline runs can compare changed failure cases directly.

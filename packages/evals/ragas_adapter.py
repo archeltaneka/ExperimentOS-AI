@@ -180,15 +180,13 @@ def import_ragas_bindings() -> RagasBindings:
     from ragas import EvaluationDataset, SingleTurnSample, __version__, evaluate
     from ragas.embeddings import embedding_factory
     from ragas.llms import llm_factory
-    from ragas.metrics import (
-        IDBasedContextPrecision,
-        IDBasedContextRecall,
-        ResponseRelevancy,
-    )
     from ragas.metrics.collections import (
         ContextPrecision,
         ContextRecall,
         Faithfulness,
+        IDBasedContextPrecision,
+        IDBasedContextRecall,
+        ResponseRelevancy,
     )
     from ragas.run_config import RunConfig
 

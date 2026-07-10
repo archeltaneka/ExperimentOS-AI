@@ -6,6 +6,7 @@ from packages.evals.agent_e2e import AgentE2ERun
 from packages.evals.agent_e2e_report import KNOWN_LIMITATIONS as E2E_KNOWN_LIMITATIONS
 from packages.evals.agent_evaluator import AgentEvaluationRun
 from packages.evals.evaluator import EvaluationRun
+from packages.evals.factuality.models import FactualityReport
 from packages.llm.prompt_registry import get_prompt_registry
 
 QA_MISSING_METRICS = (
@@ -44,15 +45,10 @@ E2E_MISSING_METRICS = (
 
 BASELINE_KNOWN_GAPS = (
     "No threshold policy exists yet for turning these metrics into CI gates.",
-    "No direct hallucination or factuality score is computed yet.",
     "No external tracing or observability export is enabled yet.",
 )
 
 BASELINE_NEXT_WORK = (
-    (
-        "Add deterministic factual grounding and unsupported-claim checks on top of "
-        "the expanded datasets."
-    ),
     "Define category-specific threshold policies before introducing CI quality gates.",
     (
         "Add report-level regression diffs so future baseline runs can compare changed "
@@ -101,6 +97,9 @@ def build_phase3_baseline_report(
     agent_e2e_run: AgentE2ERun,
     agent_e2e_command: str,
     agent_e2e_report_path: str,
+    factuality_report: FactualityReport,
+    factuality_command: str,
+    factuality_report_path: str,
 ) -> Phase3BaselineReport:
     sections = [
         _build_qa_section(
@@ -119,6 +118,11 @@ def build_phase3_baseline_report(
             run=agent_e2e_run,
             command=agent_e2e_command,
             report_path=agent_e2e_report_path,
+        ),
+        _build_factuality_section(
+            report=factuality_report,
+            command=factuality_command,
+            report_path=factuality_report_path,
         ),
     ]
     overall_status = "pass" if all(section.status == "pass" for section in sections) else "fail"
@@ -328,6 +332,53 @@ def _build_agent_e2e_section(
         ),
         missing_metrics=E2E_MISSING_METRICS,
         known_limitations=E2E_KNOWN_LIMITATIONS,
+    )
+
+
+def _build_factuality_section(
+    *,
+    report: FactualityReport,
+    command: str,
+    report_path: str,
+) -> Phase3BaselineSection:
+    status = "pass" if report.policy_result.status == "pass" else report.policy_result.status
+    status_reason = (
+        "factuality policy passed"
+        if report.policy_result.status == "pass"
+        else "; ".join(report.policy_result.reasons) or "factuality policy did not pass"
+    )
+    return Phase3BaselineSection(
+        name="Factuality Evaluation",
+        command=command,
+        dataset=", ".join(report.dataset_identifiers),
+        report_path=report_path,
+        status=status,
+        status_reason=status_reason,
+        key_metrics=(
+            ("Cases evaluated", str(len(report.case_results))),
+            (
+                "Policy result",
+                report.policy_result.status,
+            ),
+            (
+                "Critical findings",
+                str(report.findings_by_severity.get("critical", 0)),
+            ),
+            (
+                "Citation failures",
+                str(report.findings_by_category.get("citation_missing", 0)),
+            ),
+            (
+                "Unsupported numerical claims",
+                str(report.findings_by_category.get("unsupported_numerical_claim", 0)),
+            ),
+        ),
+        missing_metrics=(
+            "production blocking",
+            "automatic answer repair",
+            "human fact-check workflow",
+        ),
+        known_limitations=report.limitations,
     )
 
 

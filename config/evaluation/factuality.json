@@ -1,0 +1,14 @@
+{
+  "critical_violations_allowed": 0,
+  "unsupported_numerical_claims_allowed": 0,
+  "fabricated_financial_claims_allowed": 0,
+  "fabricated_statistical_claims_allowed": 0,
+  "required_citation_coverage_minimum": 1.0,
+  "max_unresolved_medium_severity_findings": 0,
+  "judge_metric_thresholds": {
+    "faithfulness": 0.5,
+    "hallucination": 0.5,
+    "contextual_relevancy": 0.5,
+    "answer_relevancy": 0.5
+  }
+}

@@ -18,6 +18,14 @@ FindingCategory = Literal[
     "answer_generated_when_abstention_was_expected",
 ]
 Severity = Literal["low", "medium", "high", "critical"]
+FindingClassification = Literal[
+    "true_positive",
+    "false_positive",
+    "dataset_mismatch",
+    "parser_error",
+    "report_error",
+    "unresolved",
+]
 FactualitySurface = Literal["legacy_rag", "agent_workflow"]
 PolicyStatus = Literal["pass", "fail", "warning", "skipped"]
 FactualityTarget = Literal["legacy_rag", "agent_workflow", "all"]
@@ -78,6 +86,11 @@ class FactualityFinding:
     detector: str
     passed: bool
     explanation: str
+    expected_evidence: tuple[str, ...] = ()
+    structured_field_ids: tuple[str, ...] = ()
+    normalized_claim: str = ""
+    classification: FindingClassification = "true_positive"
+    remediation_status: str = "action_required"
     metadata: dict[str, object] = field(default_factory=dict)
 
 
@@ -212,7 +225,13 @@ class FactualityReport:
         )
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        payload = asdict(self)
+        payload["findings_detail"] = [
+            _finding_detail(case_result, finding)
+            for case_result in self.case_results
+            for finding in case_result.failed_findings
+        ]
+        return payload
 
 
 def _case_status(case_result: FactualityCaseResult) -> PolicyStatus:
@@ -224,3 +243,25 @@ def _case_status(case_result: FactualityCaseResult) -> PolicyStatus:
     if failed_findings or case_result.unparsed_claims:
         return "warning"
     return "skipped"
+
+
+def _finding_detail(
+    case_result: FactualityCaseResult,
+    finding: FactualityFinding,
+) -> dict[str, object]:
+    return {
+        "case_id": case_result.case_id,
+        "surface": case_result.surface,
+        "category": finding.category,
+        "severity": finding.severity,
+        "detector": finding.detector,
+        "exact_flagged_claim": finding.claim,
+        "normalized_claim": finding.normalized_claim,
+        "expected_evidence": list(finding.expected_evidence),
+        "available_evidence": list(finding.evidence),
+        "source_ids": list(finding.source_ids),
+        "structured_field_ids": list(finding.structured_field_ids),
+        "explanation": finding.explanation,
+        "classification": finding.classification,
+        "remediation_status": finding.remediation_status,
+    }

@@ -12,10 +12,10 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 650.1 ms
-- Average LLM latency: 4348.1 ms
+- Average retrieval latency: 517.9 ms
+- Average LLM latency: 4144.7 ms
 - Average similarity: 0.664
-- Token usage: 72510 total (66623 input, 5887 output)
+- Token usage: 72457 total (66623 input, 5834 output)
 - Estimated cost: $0.000000
 
 ## Category Coverage
@@ -65,7 +65,7 @@
 | exp-005-business-impact | exp-005-pricing | business_impact | rag.answer@1 | yes | 100.0% | 0.640 |  |
 | exp-005-insufficient-evidence | exp-005-pricing | insufficient_evidence | rag.answer@1 | yes | 100.0% | 0.609 |  |
 | exp-006-rollout-decision | exp-006-loyalty | rollout_decision | rag.answer@1 | yes | 100.0% | 0.703 |  |
-| exp-006-factual-retrieval | exp-006-loyalty | factual_retrieval | rag.answer@1 | yes | 100.0% | 0.673 |  |
+| exp-006-factual-retrieval | exp-006-loyalty | factual_retrieval | rag.answer@1 | yes | 100.0% | 0.672 |  |
 | exp-006-result-interpretation | exp-006-loyalty | result_interpretation | rag.answer@1 | yes | 100.0% | 0.659 |  |
 | exp-006-risk-guardrail | exp-006-loyalty | risk_guardrail | rag.answer@1 | yes | 100.0% | 0.634 |  |
 | exp-006-business-impact | exp-006-loyalty | business_impact | rag.answer@1 | yes | 100.0% | 0.670 |  |
@@ -73,7 +73,7 @@
 | exp-007-rollout-decision | exp-007-crm-notifications | rollout_decision | rag.answer@1 | yes | 100.0% | 0.731 |  |
 | exp-007-factual-retrieval | exp-007-crm-notifications | factual_retrieval | rag.answer@1 | yes | 100.0% | 0.697 |  |
 | exp-007-result-interpretation | exp-007-crm-notifications | result_interpretation | rag.answer@1 | yes | 100.0% | 0.645 |  |
-| exp-007-risk-guardrail | exp-007-crm-notifications | risk_guardrail | rag.answer@1 | yes | 100.0% | 0.632 |  |
+| exp-007-risk-guardrail | exp-007-crm-notifications | risk_guardrail | rag.answer@1 | yes | 100.0% | 0.631 |  |
 | exp-007-business-impact | exp-007-crm-notifications | business_impact | rag.answer@1 | yes | 100.0% | 0.690 |  |
 | exp-007-insufficient-evidence | exp-007-crm-notifications | insufficient_evidence | rag.answer@1 | yes | 100.0% | 0.647 |  |
 | exp-008-rollout-decision | exp-008-recommendation-systems | rollout_decision | rag.answer@1 | yes | 100.0% | 0.684 |  |
@@ -86,7 +86,7 @@
 | exp-009-factual-retrieval | exp-009-search-filters | factual_retrieval | rag.answer@1 | yes | 100.0% | 0.676 |  |
 | exp-009-result-interpretation | exp-009-search-filters | result_interpretation | rag.answer@1 | yes | 100.0% | 0.640 |  |
 | exp-009-risk-guardrail | exp-009-search-filters | risk_guardrail | rag.answer@1 | yes | 100.0% | 0.608 |  |
-| exp-009-business-impact | exp-009-search-filters | business_impact | rag.answer@1 | yes | 100.0% | 0.676 |  |
+| exp-009-business-impact | exp-009-search-filters | business_impact | rag.answer@1 | yes | 100.0% | 0.677 |  |
 | exp-009-insufficient-evidence | exp-009-search-filters | insufficient_evidence | rag.answer@1 | yes | 100.0% | 0.633 |  |
 | exp-010-rollout-decision | exp-010-premium-subscriptions | rollout_decision | rag.answer@1 | yes | 100.0% | 0.731 |  |
 | exp-010-factual-retrieval | exp-010-premium-subscriptions | factual_retrieval | rag.answer@1 | yes | 100.0% | 0.692 |  |
@@ -94,7 +94,7 @@
 | exp-010-risk-guardrail | exp-010-premium-subscriptions | risk_guardrail | rag.answer@1 | yes | 100.0% | 0.622 |  |
 | exp-010-business-impact | exp-010-premium-subscriptions | business_impact | rag.answer@1 | yes | 100.0% | 0.662 |  |
 | exp-010-insufficient-evidence | exp-010-premium-subscriptions | insufficient_evidence | rag.answer@1 | yes | 100.0% | 0.660 |  |
-| exp-001-legacy-rag-lookup | exp-001-payment-recommendation | legacy_rag_fallback | rag.answer@1 | yes | 100.0% | 0.686 |  |
+| exp-001-legacy-rag-lookup | exp-001-payment-recommendation | legacy_rag_fallback | rag.answer@1 | yes | 100.0% | 0.685 |  |
 | exp-004-legacy-rag-lookup | exp-004-checkout-ux | legacy_rag_fallback | rag.answer@1 | yes | 100.0% | 0.701 |  |
 
 ## Follow-Up Candidates

@@ -2,126 +2,106 @@
 
 ## Summary
 
-- Generated at: 2026-07-10T07:08:49.757064Z
+- Generated at: 2026-07-10T11:17:09.330531Z
 - Target: all
 - Mode: offline
 - Dataset identifiers: data\eval\qa_dataset.json, data\eval\agent_dataset.json
 - Judge provider/model: none / none
 - Checks executed: citation_presence, citation_support, numerical_grounding, financial_guardrails, statistical_validation, abstention_correctness, structured_consistency, evidence_coverage
-- Checks skipped: claim_extraction, judge:deepeval:faithfulness, judge:deepeval:hallucination, judge:deepeval:contextual_relevancy, judge:deepeval:answer_relevancy
-- Overall policy result: fail
+- Checks skipped: judge:deepeval:faithfulness, judge:deepeval:hallucination, judge:deepeval:contextual_relevancy, judge:deepeval:answer_relevancy
+- Overall policy result: pass
 
 ## Findings By Category
 
 | Category | Count |
 | --- | ---: |
-| contradiction_with_structured_experiment_data | 1 |
-| fabricated_experiment_result | 1 |
-| fabricated_revenue_or_roi | 25 |
-| fabricated_statistical_significance | 9 |
-| unsupported_factual_claim | 12 |
-| unsupported_numerical_claim | 4 |
 
 ## Findings By Severity
 
 | Severity | Count |
 | --- | ---: |
-| critical | 35 |
-
-## Case Outcomes
-
-| Case | Surface | Category | Citation Coverage | Unparsed Claims | Findings | Prompt |
-| --- | --- | --- | ---: | --- | ---: | --- |
-| high | 5 |
-
-## Case Outcomes
-
-| Case | Surface | Category | Citation Coverage | Unparsed Claims | Findings | Prompt |
-| --- | --- | --- | ---: | --- | ---: | --- |
-| medium | 12 |
 
 ## Case Outcomes
 
 | Case | Surface | Category | Citation Coverage | Unparsed Claims | Findings | Prompt |
 | --- | --- | --- | ---: | --- | ---: | --- |
 | exp-001-rollout-decision | legacy_rag | rollout_decision | 1.00 | no | 0 | rag.answer@1 |
-| exp-001-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 1 | rag.answer@1 |
+| exp-001-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 0 | rag.answer@1 |
 | exp-001-result-interpretation | legacy_rag | result_interpretation | 1.00 | no | 0 | rag.answer@1 |
 | exp-001-risk-guardrail | legacy_rag | risk_guardrail | 1.00 | no | 0 | rag.answer@1 |
 | exp-001-business-impact | legacy_rag | business_impact | 1.00 | no | 0 | rag.answer@1 |
-| exp-001-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 2 | rag.answer@1 |
+| exp-001-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 0 | rag.answer@1 |
 | exp-002-rollout-decision | legacy_rag | rollout_decision | 1.00 | no | 0 | rag.answer@1 |
 | exp-002-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 0 | rag.answer@1 |
 | exp-002-result-interpretation | legacy_rag | result_interpretation | 1.00 | no | 0 | rag.answer@1 |
 | exp-002-risk-guardrail | legacy_rag | risk_guardrail | 1.00 | no | 0 | rag.answer@1 |
 | exp-002-business-impact | legacy_rag | business_impact | 1.00 | no | 0 | rag.answer@1 |
-| exp-002-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 3 | rag.answer@1 |
+| exp-002-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 0 | rag.answer@1 |
 | exp-003-rollout-decision | legacy_rag | rollout_decision | 1.00 | no | 0 | rag.answer@1 |
 | exp-003-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 0 | rag.answer@1 |
 | exp-003-result-interpretation | legacy_rag | result_interpretation | 1.00 | no | 0 | rag.answer@1 |
 | exp-003-risk-guardrail | legacy_rag | risk_guardrail | 1.00 | no | 0 | rag.answer@1 |
 | exp-003-business-impact | legacy_rag | business_impact | 1.00 | no | 0 | rag.answer@1 |
-| exp-003-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 3 | rag.answer@1 |
+| exp-003-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 0 | rag.answer@1 |
 | exp-004-rollout-decision | legacy_rag | rollout_decision | 1.00 | no | 0 | rag.answer@1 |
 | exp-004-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 0 | rag.answer@1 |
 | exp-004-result-interpretation | legacy_rag | result_interpretation | 1.00 | no | 0 | rag.answer@1 |
 | exp-004-risk-guardrail | legacy_rag | risk_guardrail | 1.00 | no | 0 | rag.answer@1 |
 | exp-004-business-impact | legacy_rag | business_impact | 1.00 | no | 0 | rag.answer@1 |
-| exp-004-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 3 | rag.answer@1 |
+| exp-004-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 0 | rag.answer@1 |
 | exp-005-rollout-decision | legacy_rag | rollout_decision | 1.00 | no | 0 | rag.answer@1 |
 | exp-005-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 0 | rag.answer@1 |
 | exp-005-result-interpretation | legacy_rag | result_interpretation | 1.00 | no | 0 | rag.answer@1 |
-| exp-005-risk-guardrail | legacy_rag | risk_guardrail | 1.00 | yes | 0 | rag.answer@1 |
-| exp-005-business-impact | legacy_rag | business_impact | 1.00 | no | 1 | rag.answer@1 |
-| exp-005-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 2 | rag.answer@1 |
+| exp-005-risk-guardrail | legacy_rag | risk_guardrail | 1.00 | no | 0 | rag.answer@1 |
+| exp-005-business-impact | legacy_rag | business_impact | 1.00 | no | 0 | rag.answer@1 |
+| exp-005-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 0 | rag.answer@1 |
 | exp-006-rollout-decision | legacy_rag | rollout_decision | 1.00 | no | 0 | rag.answer@1 |
 | exp-006-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 0 | rag.answer@1 |
 | exp-006-result-interpretation | legacy_rag | result_interpretation | 1.00 | no | 0 | rag.answer@1 |
 | exp-006-risk-guardrail | legacy_rag | risk_guardrail | 1.00 | no | 0 | rag.answer@1 |
 | exp-006-business-impact | legacy_rag | business_impact | 1.00 | no | 0 | rag.answer@1 |
-| exp-006-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 3 | rag.answer@1 |
-| exp-007-rollout-decision | legacy_rag | rollout_decision | 1.00 | no | 2 | rag.answer@1 |
+| exp-006-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 0 | rag.answer@1 |
+| exp-007-rollout-decision | legacy_rag | rollout_decision | 1.00 | no | 0 | rag.answer@1 |
 | exp-007-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 0 | rag.answer@1 |
 | exp-007-result-interpretation | legacy_rag | result_interpretation | 1.00 | no | 0 | rag.answer@1 |
 | exp-007-risk-guardrail | legacy_rag | risk_guardrail | 1.00 | no | 0 | rag.answer@1 |
 | exp-007-business-impact | legacy_rag | business_impact | 1.00 | no | 0 | rag.answer@1 |
-| exp-007-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 2 | rag.answer@1 |
+| exp-007-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 0 | rag.answer@1 |
 | exp-008-rollout-decision | legacy_rag | rollout_decision | 1.00 | no | 0 | rag.answer@1 |
-| exp-008-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 1 | rag.answer@1 |
+| exp-008-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 0 | rag.answer@1 |
 | exp-008-result-interpretation | legacy_rag | result_interpretation | 1.00 | no | 0 | rag.answer@1 |
 | exp-008-risk-guardrail | legacy_rag | risk_guardrail | 1.00 | no | 0 | rag.answer@1 |
 | exp-008-business-impact | legacy_rag | business_impact | 1.00 | no | 0 | rag.answer@1 |
-| exp-008-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 3 | rag.answer@1 |
+| exp-008-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 0 | rag.answer@1 |
 | exp-009-rollout-decision | legacy_rag | rollout_decision | 1.00 | no | 0 | rag.answer@1 |
 | exp-009-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 0 | rag.answer@1 |
 | exp-009-result-interpretation | legacy_rag | result_interpretation | 1.00 | no | 0 | rag.answer@1 |
 | exp-009-risk-guardrail | legacy_rag | risk_guardrail | 1.00 | no | 0 | rag.answer@1 |
 | exp-009-business-impact | legacy_rag | business_impact | 1.00 | no | 0 | rag.answer@1 |
-| exp-009-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 3 | rag.answer@1 |
+| exp-009-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 0 | rag.answer@1 |
 | exp-010-rollout-decision | legacy_rag | rollout_decision | 1.00 | no | 0 | rag.answer@1 |
 | exp-010-factual-retrieval | legacy_rag | factual_retrieval | 1.00 | no | 0 | rag.answer@1 |
 | exp-010-result-interpretation | legacy_rag | result_interpretation | 1.00 | no | 0 | rag.answer@1 |
 | exp-010-risk-guardrail | legacy_rag | risk_guardrail | 1.00 | no | 0 | rag.answer@1 |
 | exp-010-business-impact | legacy_rag | business_impact | 1.00 | no | 0 | rag.answer@1 |
-| exp-010-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 1 | rag.answer@1 |
-| exp-001-legacy-rag-lookup | legacy_rag | legacy_rag_fallback | 1.00 | no | 1 | rag.answer@1 |
+| exp-010-insufficient-evidence | legacy_rag | insufficient_evidence | 1.00 | no | 0 | rag.answer@1 |
+| exp-001-legacy-rag-lookup | legacy_rag | legacy_rag_fallback | 1.00 | no | 0 | rag.answer@1 |
 | exp-004-legacy-rag-lookup | legacy_rag | legacy_rag_fallback | 1.00 | no | 0 | rag.answer@1 |
 | lookup-payment | agent_workflow | lookup | 1.00 | no | 0 |  |
-| decision-loyalty-rollout | agent_workflow | rollout_decision | 1.00 | no | 6 |  |
-| decision-pricing-do-not-rollout | agent_workflow | rollout_decision | 1.00 | no | 5 |  |
-| summary-checkout-pending | agent_workflow | approval_workflow | 1.00 | no | 3 |  |
-| summary-loyalty-revision-requested | agent_workflow | approval_workflow | 1.00 | no | 4 |  |
+| decision-loyalty-rollout | agent_workflow | rollout_decision | 1.00 | no | 0 |  |
+| decision-pricing-do-not-rollout | agent_workflow | rollout_decision | 1.00 | no | 0 |  |
+| summary-checkout-pending | agent_workflow | approval_workflow | 1.00 | no | 0 |  |
+| summary-loyalty-revision-requested | agent_workflow | approval_workflow | 1.00 | no | 0 |  |
 | risk-search-filters | agent_workflow | risk_guardrail | 1.00 | no | 0 |  |
-| impact-search-ranking | agent_workflow | business_impact | 1.00 | yes | 0 |  |
-| decision-premium-needs-more-data | agent_workflow | insufficient_evidence | 1.00 | no | 3 |  |
+| impact-search-ranking | agent_workflow | business_impact | 1.00 | no | 0 |  |
+| decision-premium-needs-more-data | agent_workflow | insufficient_evidence | 1.00 | no | 0 |  |
 
+## Finding Details
+
+No failed findings were recorded.
 ## Policy Reasons
 
-- Critical factuality violations exceeded the configured allowance.
-- Unsupported numerical claims exceeded the configured allowance.
-- Fabricated financial claims exceeded the configured allowance.
-- Fabricated statistical claims exceeded the configured allowance.
-- Medium-severity findings exceeded the configured allowance.
+No policy failures or warnings were recorded.
 
 ## Judge Metrics
 

@@ -1,7 +1,7 @@
 # Phase 3 Reliability Baseline Report
 
-- Generated at: 2026-07-10T07:08:49.763415Z
-- Overall status: fail
+- Generated at: 2026-07-10T10:02:20.824060Z
+- Overall status: pass
 
 ## Evaluation Status
 
@@ -10,14 +10,14 @@
 | RAG Evaluation | pass | completed without sample errors | data\eval\qa_dataset.json | `reports\evaluation.md` |
 | Agent Workflow Evaluation | pass | all deterministic workflow cases passed | data\eval\agent_dataset.json | `reports\agent_evaluation.md` |
 | Agent Workflow E2E Evaluation | pass | all deterministic API cases passed | n/a | `reports\agent_e2e_evaluation.md` |
-| Factuality Evaluation | fail | Critical factuality violations exceeded the configured allowance.; Unsupported numerical claims exceeded the configured allowance.; Fabricated financial claims exceeded the configured allowance.; Fabricated statistical claims exceeded the configured allowance.; Medium-severity findings exceeded the configured allowance. | data\eval\qa_dataset.json, data\eval\agent_dataset.json | `reports\phase3\factuality_report.md` |
+| Factuality Evaluation | pass | factuality policy passed | data\eval\qa_dataset.json, data\eval\agent_dataset.json | `reports\phase3\factuality_report.md` |
 
 ## Commands Run
 
 - `uv run python -m packages.evals.run --dataset data\eval\qa_dataset.json --output reports\evaluation.md --top-k 5 --embedding-provider ollama --embedding-model nomic-embed-text --llm-provider ollama --llm-model qwen2.5:7b`
 - `uv run python -m packages.evals.run_agent --dataset data\eval\agent_dataset.json --output reports\agent_evaluation.md`
 - `uv run python -m packages.evals.run_agent_e2e --output reports\agent_e2e_evaluation.md`
-- `uv run python -m packages.evals.run_factuality --dataset data\eval\qa_dataset.json --agent-dataset data\eval\agent_dataset.json --target all --mode offline --output reports\phase3\factuality_report.md --json-output reports\phase3\factuality_report.json --top-k 5`
+- `uv run python -m packages.evals.run_factuality --dataset data\eval\qa_dataset.json --agent-dataset data\eval\agent_dataset.json --target all --mode offline --output reports\phase3\factuality_report.md --json-output reports\phase3\factuality_report.json --top-k 5 --embedding-provider ollama --embedding-model nomic-embed-text --llm-provider ollama --llm-model qwen2.5:7b`
 
 ## RAG Evaluation
 
@@ -31,8 +31,8 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 650.1 ms
-- Average LLM latency: 4348.1 ms
+- Average retrieval latency: 517.9 ms
+- Average LLM latency: 4144.7 ms
 
 ### Missing Metrics
 
@@ -104,18 +104,18 @@
 
 ## Factuality Evaluation
 
-- Status: fail
-- Reason: Critical factuality violations exceeded the configured allowance.; Unsupported numerical claims exceeded the configured allowance.; Fabricated financial claims exceeded the configured allowance.; Fabricated statistical claims exceeded the configured allowance.; Medium-severity findings exceeded the configured allowance.
+- Status: pass
+- Reason: factuality policy passed
 - Dataset: data\eval\qa_dataset.json, data\eval\agent_dataset.json
 - Report path: `reports\phase3\factuality_report.md`
 
 ### Key Metrics
 
 - Cases evaluated: 70
-- Policy result: fail
-- Critical findings: 35
+- Policy result: pass
+- Critical findings: 0
 - Citation failures: 0
-- Unsupported numerical claims: 4
+- Unsupported numerical claims: 0
 
 ### Missing Metrics
 

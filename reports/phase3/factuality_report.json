@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-10T07:08:49.757064Z",
+  "generated_at": "2026-07-10T11:17:09.330531Z",
   "target": "all",
   "mode": "offline",
   "dataset_identifiers": [
@@ -34,29 +34,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "factual_retrieval",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "This is supported by Chunk 2 of the document, which states: \"The primary metric was payment_success_rate, supported by secondary metrics for checkout_completion_rate, payment_retry_rate, revenue_per_user",
-          "evidence": [
-            "## Background\n\nAdaptive Payment Method Recommendation was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was payment recommendation, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Maya Chen from Payments Optimization. Traffic ran from 2026-01-12 through 2026-01-26, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Ranking locally preferred payment methods above generic card options will reduce checkout hesitation and raise successful payment completion. The primary metric was payment_success_rate, supported by secondary metrics for checkout_completion_rate, payment_retry_rate, revenue_per_user. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -144,50 +122,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Insufficient evidence exists to claim definitive statistical significance or ROI for the payment recommendation experiment based solely on the provided report",
-          "evidence": [
-            "## Background\n\nAdaptive Payment Method Recommendation was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was payment recommendation, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Maya Chen from Payments Optimization. Traffic ran from 2026-01-12 through 2026-01-26, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Ranking locally preferred payment methods above generic card options will reduce checkout hesitation and raise successful payment completion. The primary metric was payment_success_rate, supported by secondary metrics for checkout_completion_rate, payment_retry_rate, revenue_per_user. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Therefore, while there may be directional insights, definitive statistical significance or ROI cannot be claimed without further analysis or data",
-          "evidence": [
-            "## Background\n\nAdaptive Payment Method Recommendation was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was payment recommendation, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Maya Chen from Payments Optimization. Traffic ran from 2026-01-12 through 2026-01-26, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Ranking locally preferred payment methods above generic card options will reduce checkout hesitation and raise successful payment completion. The primary metric was payment_success_rate, supported by secondary metrics for checkout_completion_rate, payment_retry_rate, revenue_per_user. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -319,71 +254,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Insufficient evidence exists to claim definitive statistical significance or ROI for the hotel image quality experiment based solely on the provided report",
-          "evidence": [
-            "## Background\n\nHotel Gallery Image Quality Boost was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was hotel image quality, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Oliver Smith from Lodging Merchandising. Traffic ran from 2026-02-02 through 2026-02-16, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Prioritizing brighter, higher-resolution lead photos will increase property detail engagement and booking intent on hotel search results. The primary metric was booking_intent_rate, supported by secondary metrics for gallery_open_rate, property_save_rate, image_load_p95_ms. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Therefore, while there is evidence of an observed effect on booking_intent_rate, definitive statistical significance or ROI cannot be conclusively determined without additional analysis",
-          "evidence": [
-            "## Background\n\nHotel Gallery Image Quality Boost was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was hotel image quality, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Oliver Smith from Lodging Merchandising. Traffic ran from 2026-02-02 through 2026-02-16, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Prioritizing brighter, higher-resolution lead photos will increase property detail engagement and booking intent on hotel search results. The primary metric was booking_intent_rate, supported by secondary metrics for gallery_open_rate, property_save_rate, image_load_p95_ms. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_statistical_significance",
-          "severity": "critical",
-          "claim": "The document mentions that the sample size is intentionally small for repository practicality (Chunk 3) and that the result was not interpreted mechanically from a single p-value but considered in context with other factors such as product risk, operational cost, and segment behavior (Chunk 4)",
-          "evidence": [
-            "## Background\n\nHotel Gallery Image Quality Boost was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was hotel image quality, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Oliver Smith from Lodging Merchandising. Traffic ran from 2026-02-02 through 2026-02-16, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Prioritizing brighter, higher-resolution lead photos will increase property detail engagement and booking intent on hotel search results. The primary metric was booking_intent_rate, supported by secondary metrics for gallery_open_rate, property_save_rate, image_load_p95_ms. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost",
-            "Hotel Gallery Image Quality Boost"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.statistical_validation",
-          "passed": false,
-          "explanation": "A p-value was claimed without grounded statistical evidence.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -515,71 +386,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Insufficient evidence exists to claim definitive statistical significance or ROI for the search ranking experiment based solely on the provided report",
-          "evidence": [
-            "## Background\n\nIntent-Aware Search Ranking was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was search ranking, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Aisha Rahman from Search Relevance. Traffic ran from 2026-02-20 through 2026-03-06, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Sample ratio mismatch caused by search cache bucketing on anonymous sessions.; Treatment reduced supplier diversity for long-tail searches in Germany.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement."
-          ],
-          "source_ids": [
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Therefore, while there is a directional improvement observed in the primary metric (search_to_order_rate) from 0.1830 in control to 0.2110 in treatment, definitive statistical significance or ROI cannot be claimed without further analysis and consideration of these limitations",
-          "evidence": [
-            "## Background\n\nIntent-Aware Search Ranking was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was search ranking, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Aisha Rahman from Search Relevance. Traffic ran from 2026-02-20 through 2026-03-06, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Sample ratio mismatch caused by search cache bucketing on anonymous sessions.; Treatment reduced supplier diversity for long-tail searches in Germany.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement."
-          ],
-          "source_ids": [
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_statistical_significance",
-          "severity": "critical",
-          "claim": "The document mentions that the result was not interpreted mechanically from a single p-value but considered the size of the effect, product risk, operational cost, and segment behavior (Chunk 3)",
-          "evidence": [
-            "## Background\n\nIntent-Aware Search Ranking was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was search ranking, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Aisha Rahman from Search Relevance. Traffic ran from 2026-02-20 through 2026-03-06, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Sample ratio mismatch caused by search cache bucketing on anonymous sessions.; Treatment reduced supplier diversity for long-tail searches in Germany.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement."
-          ],
-          "source_ids": [
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking",
-            "Intent-Aware Search Ranking"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.statistical_validation",
-          "passed": false,
-          "explanation": "A p-value was claimed without grounded statistical evidence.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -711,71 +518,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Insufficient evidence exists to claim definitive statistical significance or ROI for the checkout UX experiment from the report alone",
-          "evidence": [
-            "## Background\n\nOne-Page Checkout UX was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was checkout ux, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Diego Martinez from Checkout Experience. Traffic ran from 2026-03-10 through 2026-03-24, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Combining shipping, payment, and review into a single checkout step will reduce drop-off for returning customers. The primary metric was checkout_completion_rate, supported by secondary metrics for form_error_rate, support_contact_rate, average_order_value. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "One-Page Checkout UX",
-            "One-Page Checkout UX",
-            "One-Page Checkout UX",
-            "One-Page Checkout UX",
-            "One-Page Checkout UX"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_statistical_significance",
-          "severity": "critical",
-          "claim": "The document mentions an observed improvement in the primary metric (checkout_completion_rate) but does not provide a p-value or other statistical test results necessary to determine statistical significance definitively",
-          "evidence": [
-            "## Background\n\nOne-Page Checkout UX was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was checkout ux, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Diego Martinez from Checkout Experience. Traffic ran from 2026-03-10 through 2026-03-24, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Combining shipping, payment, and review into a single checkout step will reduce drop-off for returning customers. The primary metric was checkout_completion_rate, supported by secondary metrics for form_error_rate, support_contact_rate, average_order_value. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "One-Page Checkout UX",
-            "One-Page Checkout UX",
-            "One-Page Checkout UX",
-            "One-Page Checkout UX",
-            "One-Page Checkout UX"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.statistical_validation",
-          "passed": false,
-          "explanation": "A p-value was claimed without grounded statistical evidence.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_statistical_significance",
-          "severity": "critical",
-          "claim": "Additionally, the team considered multiple factors beyond just the p-value when interpreting the result, indicating that definitive conclusions were not drawn solely based on statistical tests",
-          "evidence": [
-            "## Background\n\nOne-Page Checkout UX was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was checkout ux, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Diego Martinez from Checkout Experience. Traffic ran from 2026-03-10 through 2026-03-24, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Combining shipping, payment, and review into a single checkout step will reduce drop-off for returning customers. The primary metric was checkout_completion_rate, supported by secondary metrics for form_error_rate, support_contact_rate, average_order_value. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "One-Page Checkout UX",
-            "One-Page Checkout UX",
-            "One-Page Checkout UX",
-            "One-Page Checkout UX",
-            "One-Page Checkout UX"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.statistical_validation",
-          "passed": false,
-          "explanation": "A p-value was claimed without grounded statistical evidence.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -874,11 +617,9 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [
-        "claim_extraction"
-      ],
+      "skipped_checks": [],
       "citation_coverage": 1.0,
-      "unparsed_claims": true,
+      "unparsed_claims": false,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -887,29 +628,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "business_impact",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_statistical_significance",
-          "severity": "critical",
-          "claim": "Control recorded 4.8600 on gross_margin_per_visitor, while treatment recorded 4.7100, indicating an absolute movement of -0.1500. The result was not interpreted mechanically from a single p-value but rather through a comprehensive analysis",
-          "evidence": [
-            "## Hypothesis\n\nThe hypothesis was: Showing the final discounted price earlier will improve conversion while preserving gross margin and reducing promo-code hunting. The primary metric was gross_margin_per_visitor, supported by secondary metrics for purchase_conversion_rate, promo_code_attempt_rate, refund_rate. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored.",
-            "## Risks\n\nThe main risk is that the treatment effect may not generalize when exposed to broader traffic. Price framing can train customers to wait for visible discounts. There is also risk in over-reading aggregate lift when one country, platform, or segment contributes disproportionately. Tracking issues can create false confidence if they align with the treatment experience. Finally, product teams may be tempted to ship from the headline metric alone, but each report is written to require a business decision that balances upside, guardrails, and data quality."
-          ],
-          "source_ids": [
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.statistical_validation",
-          "passed": false,
-          "explanation": "A p-value was claimed without grounded statistical evidence.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -931,50 +650,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Insufficient evidence exists to claim definitive statistical significance or ROI for the pricing experiment from the report alone",
-          "evidence": [
-            "## Background\n\nTransparent Discount Price Framing was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was pricing, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Priya Nair from Pricing Strategy. Traffic ran from 2026-03-28 through 2026-04-08, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Seasonality from end-of-quarter promotions inflated baseline discount sensitivity.; Country-specific behaviour: Germany showed margin loss despite flat conversion.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement."
-          ],
-          "source_ids": [
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_statistical_significance",
-          "severity": "critical",
-          "claim": "The document mentions that the result was not interpreted mechanically from a single p-value but considered the size of the effect, product risk, operational cost, and segment behavior (Chunk 5)",
-          "evidence": [
-            "## Background\n\nTransparent Discount Price Framing was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was pricing, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Priya Nair from Pricing Strategy. Traffic ran from 2026-03-28 through 2026-04-08, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Seasonality from end-of-quarter promotions inflated baseline discount sensitivity.; Country-specific behaviour: Germany showed margin loss despite flat conversion.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement."
-          ],
-          "source_ids": [
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing",
-            "Transparent Discount Price Framing"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.statistical_validation",
-          "passed": false,
-          "explanation": "A p-value was claimed without grounded statistical evidence.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -1106,71 +782,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Insufficient evidence exists to claim definitive statistical significance or ROI for the loyalty experiment from the report alone",
-          "evidence": [
-            "## Background\n\nLoyalty Tier Progress Nudges was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was loyalty, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Hannah Lee from Lifecycle Loyalty. Traffic ran from 2026-04-12 through 2026-04-26, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Sample ratio mismatch from delayed exclusion of dormant loyalty accounts.; Novelty effect in the first three days increased progress-panel clicks.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement."
-          ],
-          "source_ids": [
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Therefore, based on the provided context, it is not appropriate to claim definitive statistical significance or ROI for this experiment",
-          "evidence": [
-            "## Background\n\nLoyalty Tier Progress Nudges was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was loyalty, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Hannah Lee from Lifecycle Loyalty. Traffic ran from 2026-04-12 through 2026-04-26, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Sample ratio mismatch from delayed exclusion of dormant loyalty accounts.; Novelty effect in the first three days increased progress-panel clicks.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement."
-          ],
-          "source_ids": [
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_statistical_significance",
-          "severity": "critical",
-          "claim": "The document mentions limitations such as sample ratio mismatch, novelty effect, and intentional small sample size due to repository practicality (Chunk 2)",
-          "evidence": [
-            "## Background\n\nLoyalty Tier Progress Nudges was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was loyalty, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Hannah Lee from Lifecycle Loyalty. Traffic ran from 2026-04-12 through 2026-04-26, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Sample ratio mismatch from delayed exclusion of dormant loyalty accounts.; Novelty effect in the first three days increased progress-panel clicks.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement."
-          ],
-          "source_ids": [
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges",
-            "Loyalty Tier Progress Nudges"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.statistical_validation",
-          "passed": false,
-          "explanation": "Confidence intervals and sample sizes are not grounded by the current structured evidence surface.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -1192,50 +804,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "rollout_decision",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "The rollout decision recommended for the CRM notifications experiment was to launch with deduplicated Android events and country-specific quiet-hour rules",
-          "evidence": [
-            "## Background\n\nCRM Back-in-Stock Notification Timing was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was crm notifications, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Marcus Johnson from CRM Growth. Traffic ran from 2026-05-01 through 2026-05-15, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "# CRM Back-in-Stock Notification Timing"
-          ],
-          "source_ids": [
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "This recommendation is documented in the \"Recommendation\" section of the report, where it states: \"Launch with deduplicated Android events and country-specific quiet-hour rules",
-          "evidence": [
-            "## Background\n\nCRM Back-in-Stock Notification Timing was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was crm notifications, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Marcus Johnson from CRM Growth. Traffic ran from 2026-05-01 through 2026-05-15, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "# CRM Back-in-Stock Notification Timing"
-          ],
-          "source_ids": [
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -1345,50 +914,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Insufficient evidence exists to claim definitive statistical significance or ROI for the CRM notifications experiment from the report alone",
-          "evidence": [
-            "## Background\n\nCRM Back-in-Stock Notification Timing was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was crm notifications, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Marcus Johnson from CRM Growth. Traffic ran from 2026-05-01 through 2026-05-15, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Risks\n\nThe main risk is that the treatment effect may not generalize when exposed to broader traffic. Faster CRM messages may be perceived as intrusive if inventory changes repeatedly. There is also risk in over-reading aggregate lift when one country, platform, or segment contributes disproportionately. Tracking issues can create false confidence if they align with the treatment experience. Finally, product teams may be tempted to ship from the headline metric alone, but each report is written to require a business decision that balances upside, guardrails, and data quality."
-          ],
-          "source_ids": [
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Therefore, while there is evidence of a directional improvement, definitive statistical significance or ROI cannot be conclusively stated based solely on this report",
-          "evidence": [
-            "## Background\n\nCRM Back-in-Stock Notification Timing was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was crm notifications, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Marcus Johnson from CRM Growth. Traffic ran from 2026-05-01 through 2026-05-15, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Risks\n\nThe main risk is that the treatment effect may not generalize when exposed to broader traffic. Faster CRM messages may be perceived as intrusive if inventory changes repeatedly. There is also risk in over-reading aggregate lift when one country, platform, or segment contributes disproportionately. Tracking issues can create false confidence if they align with the treatment experience. Finally, product teams may be tempted to ship from the headline metric alone, but each report is written to require a business decision that balances upside, guardrails, and data quality."
-          ],
-          "source_ids": [
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing",
-            "CRM Back-in-Stock Notification Timing"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -1432,29 +958,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "factual_retrieval",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "This is supported by Chunk 3 of the document, which states: \"The primary metric was add_to_cart_rate, supported by secondary metrics for recommendation_click_rate, category_diversity_score, revenue_per_user",
-          "evidence": [
-            "## Recommendation\n\nThe recommendation is: Tune category diversity constraints before expanding traffic. The business decision recorded in metadata is: Hold at 15 percent traffic while monitoring category concentration. This recommendation reflects both the metric movement and the imperfections observed during the run. For future ExperimentOS milestones, this report should be useful as a retrieval target because it contains explicit reasoning, named metrics, known caveats, and a decision that is more nuanced than simply winning or losing.",
-            "## Background\n\nPersonalized Similar-Item Recommendations was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was recommendation systems, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Sofia Rossi from Recommendations. Traffic ran from 2026-05-18 through 2026-06-01, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report."
-          ],
-          "source_ids": [
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -1542,71 +1046,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Insufficient evidence exists to claim definitive statistical significance or ROI for the recommendation systems experiment based solely on the provided report",
-          "evidence": [
-            "## Background\n\nPersonalized Similar-Item Recommendations was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was recommendation systems, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Sofia Rossi from Recommendations. Traffic ran from 2026-05-18 through 2026-06-01, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Novelty effect from a new carousel placement increased clicks in week one.; Treatment over-recommended premium accessories for US desktop users.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement."
-          ],
-          "source_ids": [
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Therefore, while the report provides valuable insights and recommendations, it does not support making definitive claims about statistical significance or ROI",
-          "evidence": [
-            "## Background\n\nPersonalized Similar-Item Recommendations was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was recommendation systems, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Sofia Rossi from Recommendations. Traffic ran from 2026-05-18 through 2026-06-01, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Novelty effect from a new carousel placement increased clicks in week one.; Treatment over-recommended premium accessories for US desktop users.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement."
-          ],
-          "source_ids": [
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_statistical_significance",
-          "severity": "critical",
-          "claim": "The document explicitly states that the sample size is intentionally small for repository practicality, and reports describe realistic directional decisions rather than definitive statistical proof (Chunk 2)",
-          "evidence": [
-            "## Background\n\nPersonalized Similar-Item Recommendations was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was recommendation systems, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Sofia Rossi from Recommendations. Traffic ran from 2026-05-18 through 2026-06-01, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Novelty effect from a new carousel placement increased clicks in week one.; Treatment over-recommended premium accessories for US desktop users.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement."
-          ],
-          "source_ids": [
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations",
-            "Personalized Similar-Item Recommendations"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.statistical_validation",
-          "passed": false,
-          "explanation": "Confidence intervals and sample sizes are not grounded by the current structured evidence surface.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -1738,71 +1178,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Insufficient evidence exists to claim definitive statistical significance or ROI for the search filters experiment based solely on the provided report",
-          "evidence": [
-            "## Background\n\nDynamic Search Filter Shortcuts was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was search filters, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Noah Brown from Search Experience. Traffic ran from 2026-06-03 through 2026-06-17, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Surfacing query-specific filter shortcuts will help users narrow results faster and increase qualified result clicks. The primary metric was qualified_result_click_rate, supported by secondary metrics for filter_apply_rate, time_to_first_click_seconds, zero_result_rate. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Therefore, while there is evidence of directional improvement in qualified_result_click_rate, definitive statistical significance or ROI cannot be claimed without additional analysis",
-          "evidence": [
-            "## Background\n\nDynamic Search Filter Shortcuts was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was search filters, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Noah Brown from Search Experience. Traffic ran from 2026-06-03 through 2026-06-17, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Surfacing query-specific filter shortcuts will help users narrow results faster and increase qualified result clicks. The primary metric was qualified_result_click_rate, supported by secondary metrics for filter_apply_rate, time_to_first_click_seconds, zero_result_rate. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "fabricated_statistical_significance",
-          "severity": "critical",
-          "claim": "The document mentions that the sample size is intentionally small for repository practicality (Chunk 3) and that the result was not interpreted mechanically from a single p-value but considered in context with other factors such as product risk, operational cost, and segment behavior (Chunk 4)",
-          "evidence": [
-            "## Background\n\nDynamic Search Filter Shortcuts was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was search filters, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Noah Brown from Search Experience. Traffic ran from 2026-06-03 through 2026-06-17, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Surfacing query-specific filter shortcuts will help users narrow results faster and increase qualified result clicks. The primary metric was qualified_result_click_rate, supported by secondary metrics for filter_apply_rate, time_to_first_click_seconds, zero_result_rate. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts",
-            "Dynamic Search Filter Shortcuts"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.statistical_validation",
-          "passed": false,
-          "explanation": "A p-value was claimed without grounded statistical evidence.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -1934,29 +1310,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Insufficient evidence exists to claim definitive statistical significance or ROI for the premium subscriptions experiment from the report alone",
-          "evidence": [
-            "## Background\n\nPremium Subscription Trial Offer was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was premium subscriptions, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Emma Wilson from Subscriptions. Traffic ran from 2026-06-18 through 2026-07-02, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: A contextual seven-day premium trial offer after the third booking search will raise subscription starts without cannibalizing paid annual plans. The primary metric was trial_start_rate, supported by secondary metrics for paid_conversion_rate_30d, annual_plan_purchase_rate, support_ticket_rate. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "Premium Subscription Trial Offer",
-            "Premium Subscription Trial Offer",
-            "Premium Subscription Trial Offer",
-            "Premium Subscription Trial Offer",
-            "Premium Subscription Trial Offer"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -1978,29 +1332,7 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "legacy_rag_fallback",
       "surface": "legacy_rag",
-      "findings": [
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "The primary metric used was the payment_success_rate, supported by secondary metrics such as checkout_completion_rate, payment_retry_rate, and revenue_per_user",
-          "evidence": [
-            "## Background\n\nAdaptive Payment Method Recommendation was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was payment recommendation, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Maya Chen from Payments Optimization. Traffic ran from 2026-01-12 through 2026-01-26, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report.",
-            "## Hypothesis\n\nThe hypothesis was: Ranking locally preferred payment methods above generic card options will reduce checkout hesitation and raise successful payment completion. The primary metric was payment_success_rate, supported by secondary metrics for checkout_completion_rate, payment_retry_rate, revenue_per_user. The team expected the treatment to improve the primary metric without creating unacceptable movement in guardrail metrics. A result would be considered actionable only if the direction of movement was consistent across major user segments and if known data quality issues could be explained rather than ignored."
-          ],
-          "source_ids": [
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation",
-            "Adaptive Payment Method Recommendation"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial impact was claimed without supported revenue, ROI, or annualized impact inputs.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -2066,120 +1398,7 @@
       "dataset_identifier": "data\\eval\\agent_dataset.json",
       "category": "rollout_decision",
       "surface": "agent_workflow",
-      "findings": [
-        {
-          "category": "unsupported_numerical_claim",
-          "severity": "high",
-          "claim": "Risk is currently assessed as medium with 1 material factor recorded",
-          "evidence": [
-            "Control recorded 0.2740 on repeat_session_rate_14d, while treatment recorded 0.3290.",
-            "Roll out to silver and gold members with a frequency cap."
-          ],
-          "source_ids": [
-            "exp-006-loyalty-doc-1",
-            "exp-006-loyalty-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.numerical_grounding",
-          "passed": false,
-          "explanation": "At least one numerical claim was absent from the structured experiment data and retrieved evidence.",
-          "metadata": {
-            "unsupported_values": [
-              1.0
-            ]
-          }
-        },
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Estimated business impact for repeat_session_rate_14d: baseline=0.2740, treatment=0.3290, absolute_lift=0.055000. Relative lift=0.200730. Annualized impact was carried from source evidence",
-          "evidence": [
-            "Control recorded 0.2740 on repeat_session_rate_14d, while treatment recorded 0.3290.",
-            "Roll out to silver and gold members with a frequency cap."
-          ],
-          "source_ids": [
-            "exp-006-loyalty-doc-1",
-            "exp-006-loyalty-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial amounts in the answer did not match the grounded business impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "Rollout is supported and approved",
-          "evidence": [
-            "Control recorded 0.2740 on repeat_session_rate_14d, while treatment recorded 0.3290.",
-            "Roll out to silver and gold members with a frequency cap."
-          ],
-          "source_ids": [
-            "exp-006-loyalty-doc-1",
-            "exp-006-loyalty-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        },
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "The primary metric improved, business impact is positive, and risk is within a manageable range for rollout",
-          "evidence": [
-            "Control recorded 0.2740 on repeat_session_rate_14d, while treatment recorded 0.3290.",
-            "Roll out to silver and gold members with a frequency cap."
-          ],
-          "source_ids": [
-            "exp-006-loyalty-doc-1",
-            "exp-006-loyalty-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        },
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "The recommendation was approved",
-          "evidence": [
-            "Control recorded 0.2740 on repeat_session_rate_14d, while treatment recorded 0.3290.",
-            "Roll out to silver and gold members with a frequency cap."
-          ],
-          "source_ids": [
-            "exp-006-loyalty-doc-1",
-            "exp-006-loyalty-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        },
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "Approval feedback: Approved for a monitored rollout",
-          "evidence": [
-            "Control recorded 0.2740 on repeat_session_rate_14d, while treatment recorded 0.3290.",
-            "Roll out to silver and gold members with a frequency cap."
-          ],
-          "source_ids": [
-            "exp-006-loyalty-doc-1",
-            "exp-006-loyalty-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -2201,110 +1420,7 @@
       "dataset_identifier": "data\\eval\\agent_dataset.json",
       "category": "rollout_decision",
       "surface": "agent_workflow",
-      "findings": [
-        {
-          "category": "unsupported_numerical_claim",
-          "severity": "high",
-          "claim": "Estimated business impact for gross_margin_per_visitor: baseline=4.8600, treatment=4.7100, absolute_lift=-0.150000. Relative lift=-0.030864. Risk is currently assessed as high with 1 material factor recorded",
-          "evidence": [
-            "Control recorded 4.8600 on gross_margin_per_visitor, while treatment recorded 4.7100.",
-            "Do not roll out; conversion gain did not offset margin dilution."
-          ],
-          "source_ids": [
-            "exp-005-pricing-doc-1",
-            "exp-005-pricing-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.numerical_grounding",
-          "passed": false,
-          "explanation": "At least one numerical claim was absent from the structured experiment data and retrieved evidence.",
-          "metadata": {
-            "unsupported_values": [
-              0.15,
-              1.0
-            ]
-          }
-        },
-        {
-          "category": "fabricated_experiment_result",
-          "severity": "high",
-          "claim": "Estimated business impact for gross_margin_per_visitor: baseline=4.8600, treatment=4.7100, absolute_lift=-0.150000. Relative lift=-0.030864. Risk is currently assessed as high with 1 material factor recorded",
-          "evidence": [
-            "Control recorded 4.8600 on gross_margin_per_visitor, while treatment recorded 4.7100.",
-            "Do not roll out; conversion gain did not offset margin dilution."
-          ],
-          "source_ids": [
-            "exp-005-pricing-doc-1",
-            "exp-005-pricing-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.numerical_grounding",
-          "passed": false,
-          "explanation": "The answer asserted an experiment result value that was absent from the structured experiment evidence.",
-          "metadata": {
-            "unsupported_values": [
-              0.15,
-              1.0
-            ]
-          }
-        },
-        {
-          "category": "contradiction_with_structured_experiment_data",
-          "severity": "critical",
-          "claim": "The recommendation was not approved. Recommendation: do_not_rollout. Estimated business impact for gross_margin_per_visitor: baseline=4.8600, treatment=4.7100, absolute_lift=-0.150000. Relative lift=-0.030864. Risk is currently assessed as high with 1 material factor recorded. The primary metric moved in the wrong direction, so the evidence does not support rollout. The recommendation was not approved. Approval feedback: Margin dilution is not acceptable for rollout. Next action: Do not roll out the treatment beyond the current exposure.",
-          "evidence": [
-            "The primary metric moved in the wrong direction, so the evidence does not support rollout.",
-            "The primary metric moved in the wrong direction, so the evidence does not support rollout.",
-            "Estimated business impact for gross_margin_per_visitor: baseline=4.8600, treatment=4.7100, absolute_lift=-0.150000. Relative lift=-0.030864.",
-            "Transparent Discount Price Framing reduced gross_margin_per_visitor in treatment."
-          ],
-          "source_ids": [
-            "exp-005-pricing-doc-1",
-            "exp-005-pricing-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.structured_consistency",
-          "passed": false,
-          "explanation": "The output contradicted the recorded human approval state.",
-          "metadata": {}
-        },
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "The recommendation was not approved",
-          "evidence": [
-            "Control recorded 4.8600 on gross_margin_per_visitor, while treatment recorded 4.7100.",
-            "Do not roll out; conversion gain did not offset margin dilution."
-          ],
-          "source_ids": [
-            "exp-005-pricing-doc-1",
-            "exp-005-pricing-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        },
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "The primary metric moved in the wrong direction, so the evidence does not support rollout",
-          "evidence": [
-            "Control recorded 4.8600 on gross_margin_per_visitor, while treatment recorded 4.7100.",
-            "Do not roll out; conversion gain did not offset margin dilution."
-          ],
-          "source_ids": [
-            "exp-005-pricing-doc-1",
-            "exp-005-pricing-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -2326,66 +1442,7 @@
       "dataset_identifier": "data\\eval\\agent_dataset.json",
       "category": "approval_workflow",
       "surface": "agent_workflow",
-      "findings": [
-        {
-          "category": "unsupported_numerical_claim",
-          "severity": "high",
-          "claim": "Risk is currently assessed as medium with 1 material factor recorded",
-          "evidence": [
-            "Control recorded 0.5840 on checkout_completion_rate, while treatment recorded 0.6380.",
-            "Roll out to returning users; keep first-time users on guided checkout."
-          ],
-          "source_ids": [
-            "exp-004-checkout-ux-doc-1",
-            "exp-004-checkout-ux-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.numerical_grounding",
-          "passed": false,
-          "explanation": "At least one numerical claim was absent from the structured experiment data and retrieved evidence.",
-          "metadata": {
-            "unsupported_values": [
-              1.0
-            ]
-          }
-        },
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Estimated business impact for checkout_completion_rate: baseline=0.5840, treatment=0.6380, absolute_lift=0.054000. Relative lift=0.092466. Annualized impact was carried from source evidence",
-          "evidence": [
-            "Control recorded 0.5840 on checkout_completion_rate, while treatment recorded 0.6380.",
-            "Roll out to returning users; keep first-time users on guided checkout."
-          ],
-          "source_ids": [
-            "exp-004-checkout-ux-doc-1",
-            "exp-004-checkout-ux-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial amounts in the answer did not match the grounded business impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "The primary metric improved, business impact is positive, and risk is within a manageable range for rollout",
-          "evidence": [
-            "Control recorded 0.5840 on checkout_completion_rate, while treatment recorded 0.6380.",
-            "Roll out to returning users; keep first-time users on guided checkout."
-          ],
-          "source_ids": [
-            "exp-004-checkout-ux-doc-1",
-            "exp-004-checkout-ux-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -2407,84 +1464,7 @@
       "dataset_identifier": "data\\eval\\agent_dataset.json",
       "category": "approval_workflow",
       "surface": "agent_workflow",
-      "findings": [
-        {
-          "category": "unsupported_numerical_claim",
-          "severity": "high",
-          "claim": "Risk is currently assessed as medium with 1 material factor recorded",
-          "evidence": [
-            "Control recorded 0.2740 on repeat_session_rate_14d, while treatment recorded 0.3290.",
-            "Roll out to silver and gold members with a frequency cap."
-          ],
-          "source_ids": [
-            "exp-006-loyalty-doc-1",
-            "exp-006-loyalty-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.numerical_grounding",
-          "passed": false,
-          "explanation": "At least one numerical claim was absent from the structured experiment data and retrieved evidence.",
-          "metadata": {
-            "unsupported_values": [
-              1.0
-            ]
-          }
-        },
-        {
-          "category": "fabricated_revenue_or_roi",
-          "severity": "critical",
-          "claim": "Estimated business impact for repeat_session_rate_14d: baseline=0.2740, treatment=0.3290, absolute_lift=0.055000. Relative lift=0.200730. Annualized impact was carried from source evidence",
-          "evidence": [
-            "Control recorded 0.2740 on repeat_session_rate_14d, while treatment recorded 0.3290.",
-            "Roll out to silver and gold members with a frequency cap."
-          ],
-          "source_ids": [
-            "exp-006-loyalty-doc-1",
-            "exp-006-loyalty-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.financial_guardrails",
-          "passed": false,
-          "explanation": "Financial amounts in the answer did not match the grounded business impact inputs.",
-          "metadata": {}
-        },
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "The primary metric improved, business impact is positive, and risk is within a manageable range for rollout",
-          "evidence": [
-            "Control recorded 0.2740 on repeat_session_rate_14d, while treatment recorded 0.3290.",
-            "Roll out to silver and gold members with a frequency cap."
-          ],
-          "source_ids": [
-            "exp-006-loyalty-doc-1",
-            "exp-006-loyalty-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        },
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "Approval feedback: Clarify the rollout guardrails and supporting evidence",
-          "evidence": [
-            "Control recorded 0.2740 on repeat_session_rate_14d, while treatment recorded 0.3290.",
-            "Roll out to silver and gold members with a frequency cap."
-          ],
-          "source_ids": [
-            "exp-006-loyalty-doc-1",
-            "exp-006-loyalty-doc-2"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -2539,11 +1519,9 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [
-        "claim_extraction"
-      ],
+      "skipped_checks": [],
       "citation_coverage": 1.0,
-      "unparsed_claims": true,
+      "unparsed_claims": false,
       "prompt_id": null,
       "prompt_version": null
     },
@@ -2552,56 +1530,7 @@
       "dataset_identifier": "data\\eval\\agent_dataset.json",
       "category": "insufficient_evidence",
       "surface": "agent_workflow",
-      "findings": [
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "Rollout is not ready; more evidence is required",
-          "evidence": [
-            "Trial-start tracking lagged for Apple in-app subscriptions."
-          ],
-          "source_ids": [
-            "exp-010-premium-subscriptions-doc-1"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        },
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "Evidence is incomplete or uncertain, so a rollout recommendation is not supported",
-          "evidence": [
-            "Trial-start tracking lagged for Apple in-app subscriptions."
-          ],
-          "source_ids": [
-            "exp-010-premium-subscriptions-doc-1"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        },
-        {
-          "category": "unsupported_factual_claim",
-          "severity": "medium",
-          "claim": "Next action: Gather additional evidence before making a rollout-sensitive decision",
-          "evidence": [
-            "Trial-start tracking lagged for Apple in-app subscriptions."
-          ],
-          "source_ids": [
-            "exp-010-premium-subscriptions-doc-1"
-          ],
-          "confidence": 0.95,
-          "detector": "deterministic.evidence_coverage",
-          "passed": false,
-          "explanation": "The answer made a factual recommendation that did not have token-level support in the retrieved evidence.",
-          "metadata": {}
-        }
-      ],
+      "findings": [],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -6262,27 +5191,10 @@
     }
   ],
   "policy_result": {
-    "status": "fail",
-    "reasons": [
-      "Critical factuality violations exceeded the configured allowance.",
-      "Unsupported numerical claims exceeded the configured allowance.",
-      "Fabricated financial claims exceeded the configured allowance.",
-      "Fabricated statistical claims exceeded the configured allowance.",
-      "Medium-severity findings exceeded the configured allowance."
-    ],
-    "finding_counts": {
-      "contradiction_with_structured_experiment_data": 1,
-      "fabricated_experiment_result": 1,
-      "fabricated_revenue_or_roi": 25,
-      "fabricated_statistical_significance": 9,
-      "unsupported_factual_claim": 12,
-      "unsupported_numerical_claim": 4
-    },
-    "severity_counts": {
-      "critical": 35,
-      "high": 5,
-      "medium": 12
-    }
+    "status": "pass",
+    "reasons": [],
+    "finding_counts": {},
+    "severity_counts": {}
   },
   "judge_provider": "none",
   "judge_model": null,
@@ -6297,33 +5209,20 @@
     "evidence_coverage"
   ],
   "checks_skipped": [
-    "claim_extraction",
     "judge:deepeval:faithfulness",
     "judge:deepeval:hallucination",
     "judge:deepeval:contextual_relevancy",
     "judge:deepeval:answer_relevancy"
   ],
-  "findings_by_category": {
-    "contradiction_with_structured_experiment_data": 1,
-    "fabricated_experiment_result": 1,
-    "fabricated_revenue_or_roi": 25,
-    "fabricated_statistical_significance": 9,
-    "unsupported_factual_claim": 12,
-    "unsupported_numerical_claim": 4
-  },
-  "findings_by_severity": {
-    "critical": 35,
-    "high": 5,
-    "medium": 12
-  },
+  "findings_by_category": {},
+  "findings_by_severity": {},
   "case_status_counts": {
-    "fail": 19,
-    "pass": 48,
-    "warning": 3
+    "pass": 70
   },
   "limitations": [
     "Deterministic checks are conservative and do not prove universal factual correctness.",
     "Numerical and workflow assertions remain deterministic; judge metrics are optional.",
     "Offline mode never invokes a live provider."
-  ]
+  ],
+  "findings_detail": []
 }

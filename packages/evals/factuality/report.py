@@ -40,7 +40,7 @@ def render_factuality_report(report: FactualityReport) -> str:
     for severity, count in sorted(report.findings_by_severity.items()):
         lines.append(f"| {severity} | {count} |")
 
-        lines.extend(
+    lines.extend(
         [
             "",
             "## Case Outcomes",
@@ -65,7 +65,44 @@ def render_factuality_report(report: FactualityReport) -> str:
             f"{len(result.failed_findings)} | {prompt} |"
         )
 
-    lines.extend(["", "## Policy Reasons", ""])
+    lines.extend(["", "## Finding Details", ""])
+    details = report.to_dict().get("findings_detail", [])
+    if not details:
+        lines.append("No failed findings were recorded.")
+    else:
+        for index, finding in enumerate(details, start=1):
+            lines.extend(
+                [
+                    f"### Finding {index}",
+                    "",
+                    f"- Case: {finding['case_id']}",
+                    f"- Surface: {finding['surface']}",
+                    f"- Category: {finding['category']}",
+                    f"- Severity: {finding['severity']}",
+                    f"- Detector: {finding['detector']}",
+                    f"- Exact Flagged Claim: {finding['exact_flagged_claim']}",
+                    f"- Normalized Claim: {finding['normalized_claim']}",
+                    (
+                        "- Expected Evidence: "
+                        + (_join_items(finding["expected_evidence"]) or "none")
+                    ),
+                    (
+                        "- Available Evidence: "
+                        + (_join_items(finding["available_evidence"]) or "none")
+                    ),
+                    "- Source IDs: " + (_join_items(finding["source_ids"]) or "none"),
+                    (
+                        "- Structured Field IDs: "
+                        + (_join_items(finding["structured_field_ids"]) or "none")
+                    ),
+                    f"- Explanation: {finding['explanation']}",
+                    f"- Classification: {finding['classification']}",
+                    f"- Remediation Status: {finding['remediation_status']}",
+                    "",
+                ]
+            )
+
+    lines.extend(["## Policy Reasons", ""])
     if not report.policy_result.reasons:
         lines.append("No policy failures or warnings were recorded.")
     else:
@@ -95,3 +132,9 @@ def render_factuality_report(report: FactualityReport) -> str:
 
 def factuality_report_to_json(report: FactualityReport) -> str:
     return json.dumps(report.to_dict(), indent=2) + "\n"
+
+
+def _join_items(values: object) -> str:
+    if not isinstance(values, list):
+        return ""
+    return " | ".join(str(value) for value in values if str(value).strip())

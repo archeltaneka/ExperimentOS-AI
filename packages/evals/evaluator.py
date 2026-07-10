@@ -30,6 +30,7 @@ class EvaluationSampleResult:
     error: str | None
     prompt_id: str | None = None
     prompt_version: str | None = None
+    citations: tuple[dict[str, object], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -104,6 +105,14 @@ class OfflineEvaluator:
                         error=None,
                         prompt_id=response.prompt_id,
                         prompt_version=response.prompt_version,
+                        citations=tuple(
+                            {
+                                "experiment_id": citation.experiment_id,
+                                "document": citation.document,
+                                "similarity": citation.similarity,
+                            }
+                            for citation in response.citations
+                        ),
                     )
                 )
             except Exception as exc:

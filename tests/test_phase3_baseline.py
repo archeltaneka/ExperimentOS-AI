@@ -61,7 +61,7 @@ def test_render_phase3_baseline_report_includes_sections_metrics_and_gaps() -> N
         ),
         next_recommended_work=(
             "Expand the evaluation datasets.",
-            "Add deterministic hallucination checks.",
+            "Define category-specific threshold policies before introducing CI quality gates.",
         ),
         registered_prompts=(
             ("rag.answer", "1", "active"),
@@ -96,7 +96,7 @@ def test_render_phase3_baseline_report_includes_sections_metrics_and_gaps() -> N
     assert "Prompt Regression Coverage" in markdown
     assert "Only legacy_rag is prompt-backed today" in markdown
     assert "No threshold policy exists yet." in markdown
-    assert "Add deterministic hallucination checks." in markdown
+    assert "Define category-specific threshold policies" in markdown
 
 
 def test_phase3_baseline_cli_parser_accepts_output_paths_and_provider_options() -> None:
@@ -125,6 +125,7 @@ def test_phase3_baseline_cli_parser_accepts_output_paths_and_provider_options() 
     assert args.rag_output == Path("reports/evaluation.md")
     assert args.agent_output == Path("reports/agent_evaluation.md")
     assert args.agent_e2e_output == Path("reports/agent_e2e_evaluation.md")
+    assert args.factuality_output == Path("reports/phase3/factuality_report.md")
     assert args.embedding_provider == "fake"
     assert args.llm_provider == "mock"
     assert args.top_k == 4
@@ -137,6 +138,8 @@ def test_run_phase3_baseline_writes_aggregate_report(tmp_path: Path, monkeypatch
     rag_output = tmp_path / "evaluation.md"
     agent_output = tmp_path / "agent_evaluation.md"
     agent_e2e_output = tmp_path / "agent_e2e_evaluation.md"
+    factuality_output = tmp_path / "phase3" / "factuality_report.md"
+    factuality_json_output = tmp_path / "phase3" / "factuality_report.json"
 
     args = parse_args(
         [
@@ -148,6 +151,10 @@ def test_run_phase3_baseline_writes_aggregate_report(tmp_path: Path, monkeypatch
             str(agent_output),
             "--agent-e2e-output",
             str(agent_e2e_output),
+            "--factuality-output",
+            str(factuality_output),
+            "--factuality-json-output",
+            str(factuality_json_output),
             "--embedding-provider",
             "fake",
             "--llm-provider",
@@ -161,6 +168,11 @@ def test_run_phase3_baseline_writes_aggregate_report(tmp_path: Path, monkeypatch
     from packages.evals.agent_metrics import AgentEvaluationSummary, AgentSampleMetrics
     from packages.evals.dataset import EvaluationQuestion
     from packages.evals.evaluator import EvaluationRun, EvaluationSampleResult
+    from packages.evals.factuality.models import (
+        FactualityCaseResult,
+        FactualityPolicyResult,
+        FactualityReport,
+    )
     from packages.evals.metrics import EvaluationSummary, SampleMetrics
 
     qa_question = EvaluationQuestion(
@@ -252,6 +264,35 @@ def test_run_phase3_baseline_writes_aggregate_report(tmp_path: Path, monkeypatch
             failure_cases=(),
         ),
     )
+    factuality_run = FactualityReport.build(
+        generated_at="2026-07-10T00:00:00Z",
+        target="all",
+        mode="offline",
+        dataset_identifiers=("data/eval/qa_dataset.json", "data/eval/agent_dataset.json"),
+        case_results=(
+            FactualityCaseResult(
+                case_id="payment-rollout",
+                dataset_identifier="data/eval/agent_dataset.json",
+                category="rollout_decision",
+                surface="agent_workflow",
+                findings=(),
+                checks_executed=("citation_presence",),
+                skipped_checks=(),
+                citation_coverage=1.0,
+                unparsed_claims=False,
+            ),
+        ),
+        judge_metrics=(),
+        policy_result=FactualityPolicyResult(
+            status="pass",
+            reasons=(),
+            finding_counts={},
+            severity_counts={},
+        ),
+        judge_provider="none",
+        judge_model=None,
+        limitations=("Deterministic checks are conservative.",),
+    )
 
     import packages.evals.run_baseline as run_baseline_module
 
@@ -261,6 +302,11 @@ def test_run_phase3_baseline_writes_aggregate_report(tmp_path: Path, monkeypatch
     monkeypatch.setattr(run_baseline_module, "_build_qa_run", fake_build_qa_run)
     monkeypatch.setattr(run_baseline_module, "_build_agent_run", lambda _args: agent_run)
     monkeypatch.setattr(run_baseline_module, "_build_agent_e2e_run", lambda _args: agent_e2e_run)
+    monkeypatch.setattr(
+        run_baseline_module,
+        "_build_factuality_run",
+        lambda _args, _qa_run, _agent_run: factuality_run,
+    )
 
     report = run(run_phase3_baseline(args))
 
@@ -268,4 +314,6 @@ def test_run_phase3_baseline_writes_aggregate_report(tmp_path: Path, monkeypatch
     assert rag_output.is_file()
     assert agent_output.is_file()
     assert agent_e2e_output.is_file()
+    assert factuality_output.is_file()
+    assert factuality_json_output.is_file()
     assert report.startswith("# Phase 3 Reliability Baseline Report")

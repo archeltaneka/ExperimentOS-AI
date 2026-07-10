@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+import argparse
+
+from packages.evals.run_factuality import main as factuality_main
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="ExperimentOS evaluation CLI.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    factuality = subparsers.add_parser(
+        "factuality",
+        help="Run deterministic and optional judge-based factuality checks.",
+    )
+    factuality.add_argument("args", nargs=argparse.REMAINDER)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    parsed = parser.parse_args(argv)
+    if parsed.command == "factuality":
+        return factuality_main(parsed.args)
+    parser.error(f"unknown command: {parsed.command}")
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

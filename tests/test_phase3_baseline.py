@@ -57,7 +57,10 @@ def test_render_phase3_baseline_report_includes_sections_metrics_and_gaps() -> N
         ],
         known_gaps=(
             "No threshold policy exists yet.",
-            "No external observability export is enabled yet.",
+            (
+                "LangSmith tracing is optional, disabled by default, and not yet integrated "
+                "with production alerting."
+            ),
         ),
         next_recommended_work=(
             "Expand the evaluation datasets.",
@@ -96,6 +99,7 @@ def test_render_phase3_baseline_report_includes_sections_metrics_and_gaps() -> N
     assert "Prompt Regression Coverage" in markdown
     assert "Only legacy_rag is prompt-backed today" in markdown
     assert "No threshold policy exists yet." in markdown
+    assert "LangSmith tracing is optional, disabled by default" in markdown
     assert "Define category-specific threshold policies" in markdown
 
 

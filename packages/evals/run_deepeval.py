@@ -34,6 +34,7 @@ from packages.evals.run_agent import parse_args as parse_agent_args
 from packages.evals.run_agent_e2e import build_evaluation_run as build_agent_e2e_evaluation_run
 from packages.evals.run_agent_e2e import parse_args as parse_agent_e2e_args
 from packages.ingestion.load_experiment import run_async
+from packages.observability.factory import resolve_observability_provider
 
 DEFAULT_MARKDOWN_REPORT_PATH = Path("reports/phase3/deepeval_report.md")
 DEFAULT_JSON_REPORT_PATH = Path("reports/phase3/deepeval_report.json")
@@ -256,6 +257,22 @@ def resolve_runtime_options(args: argparse.Namespace) -> argparse.Namespace:
 
 def build_deepeval_report(args: argparse.Namespace) -> DeepEvalEvaluationReport:
     args = resolve_runtime_options(args)
+    observability_provider = resolve_observability_provider()
+    root_span = observability_provider.start_root_span(
+        "evaluation.deepeval",
+        trace_id=f"evaluation.deepeval:{args.dataset}",
+        inputs={"dataset": str(args.dataset), "metrics": list(args.metrics), "mode": args.mode},
+        metadata={"surface": "evaluation.deepeval"},
+        tags=("evaluation", "deepeval"),
+    )
+    with root_span.activate():
+        return _build_deepeval_report(args, observability_provider)
+
+
+def _build_deepeval_report(
+    args: argparse.Namespace,
+    observability_provider,
+) -> DeepEvalEvaluationReport:
     judge_metric_names = [name for name in args.metrics if name in JUDGE_METRICS]
     if args.mode != "offline":
         _require_judge_configuration(args, judge_metric_names)
@@ -364,7 +381,7 @@ def build_deepeval_report(args: argparse.Namespace) -> DeepEvalEvaluationReport:
         dict.fromkeys(result.metric_name for result in metric_results_tuple if result.skipped)
     )
 
-    return DeepEvalEvaluationReport(
+    report = DeepEvalEvaluationReport(
         generated_at=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         evaluation_mode=args.mode,
         deepeval_available=deepeval_available,
@@ -387,6 +404,22 @@ def build_deepeval_report(args: argparse.Namespace) -> DeepEvalEvaluationReport:
         metric_results=metric_results_tuple,
         limitations=tuple(dict.fromkeys(limitations)),
     )
+    current_span = observability_provider.current_span()
+    if current_span is not None:
+        current_span.add_metadata(
+            {
+                "response_case_count": report.response_case_count,
+                "workflow_case_count": report.workflow_case_count,
+                "metrics_executed": list(report.metrics_executed),
+            }
+        )
+        current_span.finish(
+            outputs={
+                "status": "completed",
+                "metric_count": len(report.metric_results),
+            }
+        )
+    return report
 
 
 def write_deepeval_reports(args: argparse.Namespace) -> DeepEvalEvaluationReport:

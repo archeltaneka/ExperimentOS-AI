@@ -16,6 +16,8 @@ from packages.config.env import resolve_setting
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.ingestion.embeddings import build_embedding_provider
 from packages.ingestion.load_experiment import run_async
+from packages.observability.base import BaseObservabilityProvider
+from packages.observability.noop import NoOpObservabilityProvider
 from packages.retrieval.service import RetrievalMetrics, RetrievalResult, RetrievalService
 
 RETRIEVAL_NODE = "retrieval"
@@ -48,9 +50,12 @@ class RetrievalClient(Protocol):
 @dataclass
 class RuntimeRetrievalClient:
     embedding_provider: str | None = None
+    observability_provider: BaseObservabilityProvider | None = None
 
     def __post_init__(self) -> None:
         self.last_metrics: RetrievalMetrics | None = None
+        if self.observability_provider is None:
+            self.observability_provider = NoOpObservabilityProvider()
 
     async def search(
         self,
@@ -93,7 +98,11 @@ class RuntimeRetrievalClient:
         session_factory = create_async_session_factory(engine)
         try:
             async with session_factory() as session:
-                service = RetrievalService(session, provider)
+                service = RetrievalService(
+                    session,
+                    provider,
+                    observability_provider=self.observability_provider,
+                )
                 if experiment_id is None:
                     results = await service.search(
                         query,
@@ -125,10 +134,15 @@ class RuntimeRetrievalClient:
 class RetrievalAgent:
     client: RetrievalClient | None = None
     top_k: int = DEFAULT_TOP_K
+    observability_provider: BaseObservabilityProvider | None = None
 
     def __post_init__(self) -> None:
         if self.client is None:
-            self.client = RuntimeRetrievalClient()
+            self.client = RuntimeRetrievalClient(
+                observability_provider=self.observability_provider,
+            )
+        if self.observability_provider is None:
+            self.observability_provider = NoOpObservabilityProvider()
 
     def run(self, state: AgentState) -> AgentStateUpdate:
         trace = [create_trace_entry(node=RETRIEVAL_NODE, event="started")]

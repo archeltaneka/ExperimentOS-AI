@@ -5,6 +5,7 @@ from pathlib import Path
 
 from packages.evals.agent_e2e import AgentE2EEvaluator, build_default_agent_e2e_cases
 from packages.evals.agent_e2e_report import render_agent_e2e_report
+from packages.observability.factory import resolve_observability_provider
 
 DEFAULT_AGENT_E2E_REPORT_PATH = Path("reports/agent_e2e_evaluation.md")
 
@@ -31,8 +32,31 @@ def run_evaluation(args: argparse.Namespace) -> str:
 
 
 def build_evaluation_run(args: argparse.Namespace):
-    evaluator = AgentE2EEvaluator(cases=build_default_agent_e2e_cases())
-    return evaluator.evaluate()
+    observability_provider = resolve_observability_provider()
+    root_span = observability_provider.start_root_span(
+        "evaluation.agent_e2e",
+        trace_id=f"evaluation.agent_e2e:{args.output}",
+        metadata={"surface": "evaluation.agent_e2e"},
+        tags=("evaluation", "agent_e2e"),
+    )
+    with root_span.activate():
+        evaluator = AgentE2EEvaluator(cases=build_default_agent_e2e_cases())
+        result = evaluator.evaluate()
+        root_span.add_metadata(
+            {
+                "sample_count": result.summary.sample_count,
+                "default_agent_workflow_coverage": result.summary.default_agent_workflow_coverage,
+                "legacy_fallback_coverage": result.summary.legacy_fallback_coverage,
+            }
+        )
+        root_span.finish(
+            outputs={
+                "status": "completed",
+                "sample_count": result.summary.sample_count,
+                "fail_count": result.summary.fail_count,
+            }
+        )
+        return result
 
 
 def main() -> None:

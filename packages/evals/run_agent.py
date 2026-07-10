@@ -12,6 +12,7 @@ from packages.evals.agent_evaluator import (
     build_default_agent_workflow_service,
 )
 from packages.evals.agent_report import render_agent_evaluation_report
+from packages.observability.factory import resolve_observability_provider
 
 DEFAULT_AGENT_REPORT_PATH = Path("reports/agent_evaluation.md")
 
@@ -44,12 +45,42 @@ def run_evaluation(args: argparse.Namespace) -> str:
 
 
 def build_evaluation_run(args: argparse.Namespace):
+    observability_provider = resolve_observability_provider()
+    root_span = observability_provider.start_root_span(
+        "evaluation.agent",
+        trace_id=f"evaluation.agent:{args.dataset}",
+        inputs={"dataset": str(args.dataset)},
+        metadata={"surface": "evaluation.agent"},
+        tags=("evaluation", "agent"),
+    )
+    with root_span.activate():
+        return _build_evaluation_run(args, observability_provider)
+
+
+def _build_evaluation_run(args: argparse.Namespace, observability_provider):
     cases = load_agent_evaluation_dataset(args.dataset)
     evaluator = AgentWorkflowEvaluator(
-        workflow_service=build_default_agent_workflow_service(),
+        workflow_service=build_default_agent_workflow_service(observability_provider),
         cases=cases,
     )
-    return evaluator.evaluate()
+    result = evaluator.evaluate()
+    current_span = observability_provider.current_span()
+    if current_span is not None:
+        current_span.add_metadata(
+            {
+                "sample_count": result.summary.sample_count,
+                "workflow_success_rate": result.summary.workflow_success_rate,
+                "surface": "evaluation.agent",
+            }
+        )
+        current_span.finish(
+            outputs={
+                "status": "completed",
+                "sample_count": result.summary.sample_count,
+                "fail_count": result.summary.fail_count,
+            }
+        )
+    return result
 
 
 def main() -> None:

@@ -20,6 +20,7 @@ from packages.evals.run import (
 )
 from packages.ingestion.embeddings import build_embedding_provider
 from packages.ingestion.load_experiment import run_async
+from packages.observability.factory import resolve_observability_provider
 from packages.retrieval.service import RetrievalService
 
 DEFAULT_MARKDOWN_REPORT_PATH = Path("reports/phase3/prompt_regression.md")
@@ -98,6 +99,23 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 async def build_prompt_regression_report(args: argparse.Namespace):
     args = resolve_runtime_options(args)
+    observability_provider = resolve_observability_provider()
+    root_span = observability_provider.start_root_span(
+        "evaluation.prompt_regression",
+        trace_id=f"evaluation.prompt_regression:{args.prompt_id}",
+        inputs={
+            "prompt_id": args.prompt_id,
+            "baseline_version": args.baseline_version,
+            "candidate_version": args.candidate_version,
+        },
+        metadata={"surface": "evaluation.prompt_regression"},
+        tags=("evaluation", "prompt_regression"),
+    )
+    with root_span.activate():
+        return await _build_prompt_regression_report(args, observability_provider)
+
+
+async def _build_prompt_regression_report(args: argparse.Namespace, observability_provider):
     questions = _resolve_questions(args.dataset)
     engine = create_database_engine()
     session_factory = create_async_session_factory(engine)
@@ -122,7 +140,11 @@ async def build_prompt_regression_report(args: argparse.Namespace):
                 candidate_version=args.candidate_version,
                 qa_questions=resolved_questions,
                 ask_cases=legacy_cases,
-                retrieval_service=RetrievalService(session, provider),
+                retrieval_service=RetrievalService(
+                    session,
+                    provider,
+                    observability_provider=observability_provider,
+                ),
                 llm_client_factory=(
                     (lambda _surface: _build_llm_client(args))
                     if args.llm_provider != "mock" and not args.offline
@@ -133,7 +155,23 @@ async def build_prompt_regression_report(args: argparse.Namespace):
                 deepeval_judge_provider=args.judge_provider,
                 deepeval_judge_model=args.judge_model,
             )
-            return await runner.evaluate()
+            report = await runner.evaluate()
+            current_span = observability_provider.current_span()
+            if current_span is not None:
+                current_span.add_metadata(
+                    {
+                        "prompt_id": args.prompt_id,
+                        "dataset": str(args.dataset),
+                        "legacy_case_count": len(legacy_cases),
+                    }
+                )
+                current_span.finish(
+                    outputs={
+                        "status": "completed",
+                        "sample_count": len(report.samples),
+                    }
+                )
+            return report
     finally:
         await engine.dispose()
 

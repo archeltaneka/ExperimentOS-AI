@@ -18,6 +18,7 @@ from packages.evals.agent_metrics import (
     AgentSampleMetrics,
     calculate_agent_sample_metrics,
 )
+from packages.observability.base import BaseObservabilityProvider
 
 
 class AgentWorkflowServiceLike(Protocol):
@@ -83,7 +84,9 @@ class AgentWorkflowEvaluator:
         )
 
 
-def build_default_agent_workflow_service() -> AgentWorkflowService:
+def build_default_agent_workflow_service(
+    observability_provider: BaseObservabilityProvider | None = None,
+) -> AgentWorkflowService:
     return AgentWorkflowService(
         retrieval_agent=_EvaluationRetrievalAgent(),
         experiment_analysis_agent=_EvaluationExperimentAnalysisAgent(),
@@ -92,6 +95,7 @@ def build_default_agent_workflow_service() -> AgentWorkflowService:
         decision_agent=DecisionAgent(),
         human_approval_agent=_EvaluationHumanApprovalAgent(),
         executive_summary_agent=ExecutiveSummaryAgent(),
+        observability_provider=observability_provider,
     )
 
 

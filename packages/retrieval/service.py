@@ -11,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from packages.db.models import Document, DocumentChunk, Experiment
 from packages.ingestion.embeddings import EmbeddingProvider
+from packages.observability.base import BaseObservabilityProvider
+from packages.observability.noop import NoOpObservabilityProvider
 
 
 @dataclass(frozen=True)
@@ -41,10 +43,17 @@ class RetrievalMetrics:
 
 
 class RetrievalService:
-    def __init__(self, session: AsyncSession, embedding_provider: EmbeddingProvider) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        embedding_provider: EmbeddingProvider,
+        *,
+        observability_provider: BaseObservabilityProvider | None = None,
+    ) -> None:
         self.session = session
         self.embedding_provider = embedding_provider
         self.last_metrics: RetrievalMetrics | None = None
+        self.observability_provider = observability_provider or NoOpObservabilityProvider()
 
     async def search(
         self,
@@ -94,6 +103,44 @@ class RetrievalService:
             )
             return []
 
+        span = self.observability_provider.start_span(
+            "retrieval",
+            run_type="retriever",
+            inputs={
+                "query": normalized_query,
+                "top_k": top_k,
+                "experiment_id": str(experiment_id) if experiment_id is not None else "",
+                "metadata_filter": dict(metadata_filter or {}),
+            },
+            metadata={
+                "embedding_provider": self.embedding_provider.__class__.__name__,
+                "embedding_model": str(getattr(self.embedding_provider, "model", "unknown")),
+            },
+        )
+        with span.activate():
+            try:
+                return await self._execute_search(
+                    normalized_query,
+                    top_k=top_k,
+                    experiment_id=experiment_id,
+                    metadata_filter=metadata_filter,
+                    span=span,
+                )
+            except Exception as exc:
+                span.record_error(exc, details={"surface": "retrieval"})
+                span.finish(outputs={"status": "failed"})
+                raise
+
+    async def _execute_search(
+        self,
+        normalized_query: str,
+        *,
+        top_k: int,
+        experiment_id: uuid.UUID | None = None,
+        metadata_filter: Mapping[str, Any] | None = None,
+        span,
+    ) -> list[RetrievalResult]:
+
         embedding_started_at = perf_counter()
         query_embedding = self._embed_query(normalized_query)
         embedding_time_ms = (perf_counter() - embedding_started_at) * 1000.0
@@ -136,6 +183,22 @@ class RetrievalService:
             vector_search_time_ms=vector_search_time_ms,
             retrieved_chunks=len(results),
             average_similarity=average_similarity,
+        )
+        span.add_metadata(
+            {
+                "retrieved_count": len(results),
+                "empty_retrieval": not results,
+                "average_similarity": average_similarity,
+                "embedding_time_ms": embedding_time_ms,
+                "vector_search_time_ms": vector_search_time_ms,
+            }
+        )
+        span.finish(
+            outputs={
+                "retrieved_chunks": len(results),
+                "average_similarity": average_similarity,
+                "status": "completed",
+            }
         )
         return results
 

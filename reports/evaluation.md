@@ -12,10 +12,10 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 517.9 ms
-- Average LLM latency: 4144.7 ms
+- Average retrieval latency: 583.8 ms
+- Average LLM latency: 4265.3 ms
 - Average similarity: 0.664
-- Token usage: 72457 total (66623 input, 5834 output)
+- Token usage: 72535 total (66623 input, 5912 output)
 - Estimated cost: $0.000000
 
 ## Category Coverage

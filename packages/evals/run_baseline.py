@@ -33,6 +33,7 @@ from packages.evals.run_factuality import (
     parse_args as parse_factuality_args,
 )
 from packages.ingestion.load_experiment import run_async
+from packages.observability.factory import resolve_observability_provider
 
 DEFAULT_BASELINE_REPORT_PATH = Path("reports/phase3/baseline_report.md")
 DEFAULT_RAG_REPORT_PATH = Path("reports/evaluation.md")
@@ -121,6 +122,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 async def run_phase3_baseline(args: argparse.Namespace) -> str:
+    observability_provider = resolve_observability_provider()
+    root_span = observability_provider.start_root_span(
+        "evaluation.baseline",
+        trace_id=f"evaluation.baseline:{args.output}",
+        inputs={"output": str(args.output)},
+        metadata={"surface": "evaluation.baseline"},
+        tags=("evaluation", "baseline"),
+    )
+    with root_span.activate():
+        return await _run_phase3_baseline(args, observability_provider)
+
+
+async def _run_phase3_baseline(args: argparse.Namespace, observability_provider) -> str:
     qa_args = parse_qa_args(
         [
             "--dataset",
@@ -219,6 +233,20 @@ async def run_phase3_baseline(args: argparse.Namespace) -> str:
     )
     report = render_phase3_baseline_report(baseline)
     _write_report(args.output, report)
+    current_span = observability_provider.current_span()
+    if current_span is not None:
+        current_span.add_metadata(
+            {
+                "overall_status": baseline.overall_status,
+                "section_count": len(baseline.sections),
+            }
+        )
+        current_span.finish(
+            outputs={
+                "status": baseline.overall_status,
+                "section_count": len(baseline.sections),
+            }
+        )
     return report
 
 

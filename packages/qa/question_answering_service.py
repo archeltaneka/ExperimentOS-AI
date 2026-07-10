@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
+from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict
 
 from packages.llm.client import LLMClient, LLMClientError, LLMMetrics
 from packages.llm.prompts import GroundedPrompt, build_grounded_prompt
+from packages.observability.base import BaseObservabilityProvider
+from packages.observability.noop import NoOpObservabilityProvider
 from packages.retrieval.service import RetrievalMetrics, RetrievalResult, RetrievalService
 
 INSUFFICIENT_EVIDENCE_ANSWER = "Insufficient evidence exists to answer the question."
@@ -66,11 +69,13 @@ class QuestionAnsweringService:
         llm_client: LLMClient,
         experiment_exists: ExperimentExists | None = None,
         prompt_builder: PromptBuilder = build_grounded_prompt,
+        observability_provider: BaseObservabilityProvider | None = None,
     ) -> None:
         self.retrieval_service = retrieval_service
         self.llm_client = llm_client
         self.experiment_exists = experiment_exists
         self.prompt_builder = prompt_builder
+        self.observability_provider = observability_provider or NoOpObservabilityProvider()
 
     async def answer_question(
         self,
@@ -88,53 +93,147 @@ class QuestionAnsweringService:
         ):
             raise UnknownExperimentError(f"experiment {experiment_id} was not found")
 
-        try:
-            results = await self.retrieval_service.search_by_experiment(
-                experiment_id,
-                normalized_question,
-                top_k=top_k,
+        parent_span = self.observability_provider.current_span()
+        if parent_span is None:
+            trace_span = self.observability_provider.start_root_span(
+                "legacy_rag",
+                trace_id=str(uuid4()),
+                inputs={
+                    "question": normalized_question,
+                    "experiment_id": str(experiment_id),
+                    "top_k": top_k,
+                },
+                metadata={"surface": "legacy_rag"},
+                tags=("legacy_rag",),
             )
-        except Exception as exc:
-            raise EmbeddingFailureError(str(exc)) from exc
+        else:
+            trace_span = self.observability_provider.start_span(
+                "legacy_rag",
+                inputs={
+                    "question": normalized_question,
+                    "experiment_id": str(experiment_id),
+                    "top_k": top_k,
+                },
+                metadata={"surface": "legacy_rag"},
+                tags=("legacy_rag",),
+            )
+        with trace_span.activate():
+            try:
+                results = await self.retrieval_service.search_by_experiment(
+                    experiment_id,
+                    normalized_question,
+                    top_k=top_k,
+                )
+            except Exception as exc:
+                trace_span.record_error(exc, details={"stage": "retrieval"})
+                trace_span.finish(outputs={"status": "failed"})
+                raise EmbeddingFailureError(str(exc)) from exc
 
-        retrieval_metrics = self._resolve_retrieval_metrics(
-            self.retrieval_service.last_metrics,
-            retrieved_chunks=len(results),
-        )
-        if not results:
-            return QAResponse(
-                answer=INSUFFICIENT_EVIDENCE_ANSWER,
-                citations=[],
-                retrieved_chunks=[],
+            retrieval_metrics = self._resolve_retrieval_metrics(
+                self.retrieval_service.last_metrics,
+                retrieved_chunks=len(results),
+            )
+            trace_span.add_metadata(
+                {
+                    "retrieved_chunks": len(results),
+                    "embedding_time_ms": retrieval_metrics.embedding_time_ms,
+                    "vector_search_time_ms": retrieval_metrics.vector_search_time_ms,
+                }
+            )
+            if not results:
+                trace_span.finish(
+                    outputs={
+                        "status": "completed",
+                        "answer": INSUFFICIENT_EVIDENCE_ANSWER,
+                        "citation_count": 0,
+                    }
+                )
+                return QAResponse(
+                    answer=INSUFFICIENT_EVIDENCE_ANSWER,
+                    citations=[],
+                    retrieved_chunks=[],
+                    retrieval_metrics=retrieval_metrics,
+                    llm_metrics=LLMMetrics(
+                        model="mock",
+                        input_tokens=0,
+                        output_tokens=0,
+                        latency_ms=0.0,
+                    ),
+                )
+
+            prompt_span = self.observability_provider.start_span(
+                "prompt_rendering",
+                metadata={"surface": "legacy_rag"},
+            )
+            with prompt_span.activate():
+                prompt = self.prompt_builder(question=normalized_question, retrieved_chunks=results)
+                prompt_span.add_metadata(
+                    {
+                        "prompt_id": prompt.prompt_id,
+                        "prompt_version": prompt.version,
+                        "input_variables": ["question", "context"],
+                        "rendered_prompt_length": (
+                            len(prompt.prompt) + len(prompt.system_instruction)
+                        ),
+                        "provider_model": str(getattr(self.llm_client, "model", "unknown")),
+                    }
+                )
+                prompt_span.finish(outputs={"status": "completed"})
+            generation_span = self.observability_provider.start_span(
+                "llm_generation",
+                run_type="llm",
+                metadata={
+                    "surface": "legacy_rag",
+                    "provider_model": str(getattr(self.llm_client, "model", "unknown")),
+                },
+            )
+            with generation_span.activate():
+                try:
+                    llm_response = await self.llm_client.generate(
+                        prompt=prompt.prompt,
+                        system_instruction=prompt.system_instruction,
+                    )
+                except LLMClientError as exc:
+                    generation_span.record_error(exc, details={"stage": "llm_generation"})
+                    generation_span.finish(outputs={"status": "failed"})
+                    trace_span.record_error(exc, details={"stage": "llm_generation"})
+                    trace_span.finish(outputs={"status": "failed"})
+                    raise LLMGenerationError(str(exc)) from exc
+                except Exception as exc:
+                    generation_span.record_error(exc, details={"stage": "llm_generation"})
+                    generation_span.finish(outputs={"status": "failed"})
+                    trace_span.record_error(exc, details={"stage": "llm_generation"})
+                    trace_span.finish(outputs={"status": "failed"})
+                    raise LLMGenerationError(str(exc)) from exc
+                generation_span.finish(
+                    outputs={
+                        "status": "completed",
+                        "model": llm_response.metrics.model,
+                        "input_tokens": llm_response.metrics.input_tokens,
+                        "output_tokens": llm_response.metrics.output_tokens,
+                        "latency_ms": llm_response.metrics.latency_ms,
+                    }
+                )
+
+            response = QAResponse(
+                answer=llm_response.answer,
+                citations=self._build_citations(results),
+                retrieved_chunks=results,
                 retrieval_metrics=retrieval_metrics,
-                llm_metrics=LLMMetrics(
-                    model="mock",
-                    input_tokens=0,
-                    output_tokens=0,
-                    latency_ms=0.0,
-                ),
+                llm_metrics=llm_response.metrics,
+                prompt_id=prompt.prompt_id,
+                prompt_version=prompt.version,
             )
-
-        prompt = self.prompt_builder(question=normalized_question, retrieved_chunks=results)
-        try:
-            llm_response = await self.llm_client.generate(
-                prompt=prompt.prompt,
-                system_instruction=prompt.system_instruction,
+            trace_span.finish(
+                outputs={
+                    "status": "completed",
+                    "answer": response.answer,
+                    "citation_count": len(response.citations),
+                    "prompt_id": response.prompt_id or "",
+                    "prompt_version": response.prompt_version or "",
+                }
             )
-        except LLMClientError as exc:
-            raise LLMGenerationError(str(exc)) from exc
-        except Exception as exc:
-            raise LLMGenerationError(str(exc)) from exc
-
-        return QAResponse(
-            answer=llm_response.answer,
-            citations=self._build_citations(results),
-            retrieved_chunks=results,
-            retrieval_metrics=retrieval_metrics,
-            llm_metrics=llm_response.metrics,
-            prompt_id=prompt.prompt_id,
-            prompt_version=prompt.version,
-        )
+            return response
 
     def _build_citations(self, results: list[RetrievalResult]) -> list[Citation]:
         return [

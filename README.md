@@ -234,9 +234,11 @@ Get-Content reports/phase3/baseline_report.md
 ```
 
 This baseline coordinates the existing repository-local QA, agent workflow, and `/ask` E2E
-evaluations. The baseline remains deterministic and repository-owned; optional RAGAS reporting now
-lives beside it rather than replacing it. DeepEval, LangSmith, Phoenix, and OpenTelemetry are still
-out of scope. See [Phase 3 Reliability Baseline](docs/phase3/reliability_baseline.md).
+evaluations. The baseline remains deterministic and repository-owned; optional RAGAS reporting and
+optional LangSmith tracing now live beside it rather than replacing it. Phoenix and
+OpenTelemetry are still out of scope. See
+[Phase 3 Reliability Baseline](docs/phase3/reliability_baseline.md) and
+[LangSmith Observability](docs/phase3/langsmith_observability.md).
 
 Run prompt regression for a prompt-backed surface:
 

@@ -34,6 +34,7 @@ from packages.ingestion.embeddings import (
 )
 from packages.ingestion.load_experiment import run_async
 from packages.llm.client import GEMINI_LLM_MODEL
+from packages.observability.factory import resolve_observability_provider
 
 DEFAULT_MARKDOWN_REPORT_PATH = Path("reports/phase3/ragas_report.md")
 DEFAULT_JSON_REPORT_PATH = Path("reports/phase3/ragas_report.json")
@@ -197,6 +198,19 @@ def resolve_runtime_options(args: argparse.Namespace) -> argparse.Namespace:
 
 def build_ragas_report(args: argparse.Namespace) -> RagasEvaluationReport:
     args = resolve_runtime_options(args)
+    observability_provider = resolve_observability_provider()
+    root_span = observability_provider.start_root_span(
+        "evaluation.ragas",
+        trace_id=f"evaluation.ragas:{args.dataset}",
+        inputs={"dataset": str(args.dataset), "metrics": list(args.metrics)},
+        metadata={"surface": "evaluation.ragas"},
+        tags=("evaluation", "ragas"),
+    )
+    with root_span.activate():
+        return _build_ragas_report(args, observability_provider)
+
+
+def _build_ragas_report(args: argparse.Namespace, observability_provider) -> RagasEvaluationReport:
     qa_run = run_async(build_qa_evaluation_run(args))
     prepared = prepare_ragas_dataset(qa_run)
 
@@ -337,7 +351,7 @@ def build_ragas_report(args: argparse.Namespace) -> RagasEvaluationReport:
                     )
                 )
 
-    return RagasEvaluationReport(
+    report = RagasEvaluationReport(
         generated_at=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         dataset_path=str(args.dataset),
         dataset_size=len(qa_run.samples),
@@ -360,6 +374,22 @@ def build_ragas_report(args: argparse.Namespace) -> RagasEvaluationReport:
         case_results=case_results,
         limitations=tuple(dict.fromkeys(limitations)),
     )
+    current_span = observability_provider.current_span()
+    if current_span is not None:
+        current_span.add_metadata(
+            {
+                "dataset_size": report.dataset_size,
+                "eligible_sample_count": report.eligible_sample_count,
+                "metrics_run": list(report.metrics_run),
+            }
+        )
+        current_span.finish(
+            outputs={
+                "status": "completed",
+                "metric_count": len(report.metric_results),
+            }
+        )
+    return report
 
 
 def write_ragas_reports(args: argparse.Namespace) -> RagasEvaluationReport:

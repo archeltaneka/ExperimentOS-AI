@@ -1,6 +1,6 @@
 # Phase 3 Reliability Baseline Report
 
-- Generated at: 2026-07-10T10:02:20.824060Z
+- Generated at: 2026-07-10T12:14:55.283873Z
 - Overall status: pass
 
 ## Evaluation Status
@@ -31,8 +31,8 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 517.9 ms
-- Average LLM latency: 4144.7 ms
+- Average retrieval latency: 583.8 ms
+- Average LLM latency: 4265.3 ms
 
 ### Missing Metrics
 
@@ -132,7 +132,8 @@
 ## Known Gaps
 
 - No threshold policy exists yet for turning these metrics into CI gates.
-- No external tracing or observability export is enabled yet.
+- LangSmith tracing is optional, disabled by default, and not yet integrated with production alerting.
+- Cross-service distributed tracing remains out of scope.
 
 ## Registered Prompts
 
@@ -163,3 +164,4 @@
 
 - Define category-specific threshold policies before introducing CI quality gates.
 - Add report-level regression diffs so future baseline runs can compare changed failure cases directly.
+- Expand observability coverage from local and evaluation runs into deployed service operations.

@@ -29,6 +29,7 @@ from packages.llm.client import (
     OllamaLLMClient,
     OpenAILLMClient,
 )
+from packages.observability.factory import resolve_observability_provider
 from packages.qa.question_answering_service import QuestionAnsweringService
 from packages.retrieval.service import RetrievalService
 
@@ -159,6 +160,24 @@ async def run_evaluation(args: argparse.Namespace) -> str:
 
 async def build_evaluation_run(args: argparse.Namespace):
     args = resolve_runtime_options(args)
+    observability_provider = resolve_observability_provider()
+    root_span = observability_provider.start_root_span(
+        "evaluation.rag",
+        trace_id=f"evaluation.rag:{args.dataset}",
+        inputs={
+            "dataset": str(args.dataset),
+            "top_k": args.top_k,
+            "embedding_provider": args.embedding_provider,
+            "llm_provider": args.llm_provider,
+        },
+        metadata={"surface": "evaluation.rag"},
+        tags=("evaluation", "rag"),
+    )
+    with root_span.activate():
+        return await _build_evaluation_run(args, observability_provider)
+
+
+async def _build_evaluation_run(args: argparse.Namespace, observability_provider):
     questions = load_evaluation_dataset(args.dataset)
     engine = create_database_engine()
     session_factory = create_async_session_factory(engine)
@@ -170,9 +189,14 @@ async def build_evaluation_run(args: argparse.Namespace):
         async with session_factory() as session:
             experiment_id_map = await _load_experiment_id_map(session)
             service = QuestionAnsweringService(
-                retrieval_service=RetrievalService(session, provider),
+                retrieval_service=RetrievalService(
+                    session,
+                    provider,
+                    observability_provider=observability_provider,
+                ),
                 llm_client=_build_llm_client(args),
                 experiment_exists=lambda experiment_id: _experiment_exists(session, experiment_id),
+                observability_provider=observability_provider,
             )
             evaluator = OfflineEvaluator(
                 qa_service=service,
@@ -189,7 +213,23 @@ async def build_evaluation_run(args: argparse.Namespace):
                 llm_provider=args.llm_provider,
                 llm_model=_llm_model_label(args),
             )
-            return await evaluator.evaluate()
+            result = await evaluator.evaluate()
+            root_metadata = {
+                "question_count": result.summary.question_count,
+                "retrieval_success_rate": result.summary.retrieval_success_rate,
+                "surface": "evaluation.rag",
+            }
+            current_span = observability_provider.current_span()
+            if current_span is not None:
+                current_span.add_metadata(root_metadata)
+                current_span.finish(
+                    outputs={
+                        "status": "completed",
+                        "question_count": result.summary.question_count,
+                        "sample_count": len(result.samples),
+                    }
+                )
+            return result
     finally:
         await engine.dispose()
 

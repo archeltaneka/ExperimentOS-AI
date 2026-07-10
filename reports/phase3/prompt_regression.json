@@ -1,0 +1,3987 @@
+{
+  "prompt_id": "rag.answer",
+  "baseline_version": "1",
+  "candidate_version": "1",
+  "dataset": "data\\eval\\qa_dataset.json",
+  "case_results": [
+    {
+      "case_id": "exp-001-rollout-decision",
+      "surface": "legacy_rag",
+      "baseline_output": "; Japan wallet success events were under-counted for the first 18 hours. Source: Adaptive Payment Method Recommendation.",
+      "candidate_output": "; Japan wallet success events were under-counted for the first 18 hours. Source: Adaptive Payment Method Recommendation.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-001-factual-retrieval",
+      "surface": "legacy_rag",
+      "baseline_output": "0316 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Ship to markets with clean wallet telemetry and keep JP behind monitoring. Source: Adaptive Payment Method Recommendation.",
+      "candidate_output": "0316 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Ship to markets with clean wallet telemetry and keep JP behind monitoring. Source: Adaptive Payment Method Recommendation.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-001-result-interpretation",
+      "surface": "legacy_rag",
+      "baseline_output": "; Japan wallet success events were under-counted for the first 18 hours. Source: Adaptive Payment Method Recommendation.",
+      "candidate_output": "; Japan wallet success events were under-counted for the first 18 hours. Source: Adaptive Payment Method Recommendation.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.3333333333333333,
+          "candidate": 0.3333333333333333,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-001-risk-guardrail",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 292ce834-0523-4a73-88a3-e525cf14d8b3 Experiment: Adaptive Payment Method Recommendation Document: Adaptive Payment Method Recommendation Similarity: 0. Source: Adaptive Payment Method Recommendation.",
+      "candidate_output": "Chunk 1 Experiment ID: 292ce834-0523-4a73-88a3-e525cf14d8b3 Experiment: Adaptive Payment Method Recommendation Document: Adaptive Payment Method Recommendation Similarity: 0. Source: Adaptive Payment Method Recommendation.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-001-business-impact",
+      "surface": "legacy_rag",
+      "baseline_output": "; Japan wallet success events were under-counted for the first 18 hours. Source: Adaptive Payment Method Recommendation.",
+      "candidate_output": "; Japan wallet success events were under-counted for the first 18 hours. Source: Adaptive Payment Method Recommendation.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-001-insufficient-evidence",
+      "surface": "legacy_rag",
+      "baseline_output": "0313 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Ship to markets with clean wallet telemetry and keep JP behind monitoring. Source: Adaptive Payment Method Recommendation.",
+      "candidate_output": "0313 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Ship to markets with clean wallet telemetry and keep JP behind monitoring. Source: Adaptive Payment Method Recommendation.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-002-rollout-decision",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 2dceb13b-3a89-486a-b969-55cb494ef041 Experiment: Hotel Gallery Image Quality Boost Document: Hotel Gallery Image Quality Boost Similarity: 0. Source: Hotel Gallery Image Quality Boost.",
+      "candidate_output": "Chunk 1 Experiment ID: 2dceb13b-3a89-486a-b969-55cb494ef041 Experiment: Hotel Gallery Image Quality Boost Document: Hotel Gallery Image Quality Boost Similarity: 0. Source: Hotel Gallery Image Quality Boost.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-002-factual-retrieval",
+      "surface": "legacy_rag",
+      "baseline_output": "0136 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out while enforcing image byte-size budgets and CDN pre-warming. Source: Hotel Gallery Image Quality Boost.",
+      "candidate_output": "0136 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out while enforcing image byte-size budgets and CDN pre-warming. Source: Hotel Gallery Image Quality Boost.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-002-result-interpretation",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 2dceb13b-3a89-486a-b969-55cb494ef041 Experiment: Hotel Gallery Image Quality Boost Document: Hotel Gallery Image Quality Boost Similarity: 0. Source: Hotel Gallery Image Quality Boost.",
+      "candidate_output": "Chunk 1 Experiment ID: 2dceb13b-3a89-486a-b969-55cb494ef041 Experiment: Hotel Gallery Image Quality Boost Document: Hotel Gallery Image Quality Boost Similarity: 0. Source: Hotel Gallery Image Quality Boost.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-002-risk-guardrail",
+      "surface": "legacy_rag",
+      "baseline_output": "0128 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out while enforcing image byte-size budgets and CDN pre-warming. Source: Hotel Gallery Image Quality Boost.",
+      "candidate_output": "0128 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out while enforcing image byte-size budgets and CDN pre-warming. Source: Hotel Gallery Image Quality Boost.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-002-business-impact",
+      "surface": "legacy_rag",
+      "baseline_output": "0196 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out while enforcing image byte-size budgets and CDN pre-warming. Source: Hotel Gallery Image Quality Boost.",
+      "candidate_output": "0196 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out while enforcing image byte-size budgets and CDN pre-warming. Source: Hotel Gallery Image Quality Boost.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-002-insufficient-evidence",
+      "surface": "legacy_rag",
+      "baseline_output": "0097 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out while enforcing image byte-size budgets and CDN pre-warming. Source: Hotel Gallery Image Quality Boost.",
+      "candidate_output": "0097 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out while enforcing image byte-size budgets and CDN pre-warming. Source: Hotel Gallery Image Quality Boost.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-003-rollout-decision",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 0540dfeb-3541-48f1-b295-8c76ed3e54ba Experiment: Intent-Aware Search Ranking Document: Intent-Aware Search Ranking Similarity: 0. Source: Intent-Aware Search Ranking.",
+      "candidate_output": "Chunk 1 Experiment ID: 0540dfeb-3541-48f1-b295-8c76ed3e54ba Experiment: Intent-Aware Search Ranking Document: Intent-Aware Search Ranking Similarity: 0. Source: Intent-Aware Search Ranking.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-003-factual-retrieval",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Continue monitoring for long-tail query diversity before broader rollout. Source: Intent-Aware Search Ranking.",
+      "candidate_output": "The business decision recorded in metadata is: Continue monitoring for long-tail query diversity before broader rollout. Source: Intent-Aware Search Ranking.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-003-result-interpretation",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Continue monitoring for long-tail query diversity before broader rollout. Source: Intent-Aware Search Ranking.",
+      "candidate_output": "The business decision recorded in metadata is: Continue monitoring for long-tail query diversity before broader rollout. Source: Intent-Aware Search Ranking.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.3333333333333333,
+          "candidate": 0.3333333333333333,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-003-risk-guardrail",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Continue monitoring for long-tail query diversity before broader rollout. Source: Intent-Aware Search Ranking.",
+      "candidate_output": "The business decision recorded in metadata is: Continue monitoring for long-tail query diversity before broader rollout. Source: Intent-Aware Search Ranking.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-003-business-impact",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Continue monitoring for long-tail query diversity before broader rollout. Source: Intent-Aware Search Ranking.",
+      "candidate_output": "The business decision recorded in metadata is: Continue monitoring for long-tail query diversity before broader rollout. Source: Intent-Aware Search Ranking.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-003-insufficient-evidence",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 0540dfeb-3541-48f1-b295-8c76ed3e54ba Experiment: Intent-Aware Search Ranking Document: Intent-Aware Search Ranking Similarity: 0. Source: Intent-Aware Search Ranking.",
+      "candidate_output": "Chunk 1 Experiment ID: 0540dfeb-3541-48f1-b295-8c76ed3e54ba Experiment: Intent-Aware Search Ranking Document: Intent-Aware Search Ranking Similarity: 0. Source: Intent-Aware Search Ranking.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-004-rollout-decision",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 0a7deee5-3fc7-4363-a088-e65a210691ea Experiment: One-Page Checkout UX Document: One-Page Checkout UX Similarity: -0. Source: One-Page Checkout UX.",
+      "candidate_output": "Chunk 1 Experiment ID: 0a7deee5-3fc7-4363-a088-e65a210691ea Experiment: One-Page Checkout UX Document: One-Page Checkout UX Similarity: -0. Source: One-Page Checkout UX.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-004-factual-retrieval",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 0a7deee5-3fc7-4363-a088-e65a210691ea Experiment: One-Page Checkout UX Document: One-Page Checkout UX Similarity: 0. Source: One-Page Checkout UX.",
+      "candidate_output": "Chunk 1 Experiment ID: 0a7deee5-3fc7-4363-a088-e65a210691ea Experiment: One-Page Checkout UX Document: One-Page Checkout UX Similarity: 0. Source: One-Page Checkout UX.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-004-result-interpretation",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to returning users; keep first-time users on guided checkout. Source: One-Page Checkout UX.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to returning users; keep first-time users on guided checkout. Source: One-Page Checkout UX.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-004-risk-guardrail",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to returning users; keep first-time users on guided checkout. Source: One-Page Checkout UX.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to returning users; keep first-time users on guided checkout. Source: One-Page Checkout UX.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-004-business-impact",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to returning users; keep first-time users on guided checkout. Source: One-Page Checkout UX.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to returning users; keep first-time users on guided checkout. Source: One-Page Checkout UX.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-004-insufficient-evidence",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to returning users; keep first-time users on guided checkout. Source: One-Page Checkout UX.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to returning users; keep first-time users on guided checkout. Source: One-Page Checkout UX.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-005-rollout-decision",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. Source: Transparent Discount Price Framing.",
+      "candidate_output": "The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. Source: Transparent Discount Price Framing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.6666666666666666,
+          "candidate": 0.6666666666666666,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-005-factual-retrieval",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. Source: Transparent Discount Price Framing.",
+      "candidate_output": "The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. Source: Transparent Discount Price Framing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-005-result-interpretation",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. Source: Transparent Discount Price Framing.",
+      "candidate_output": "The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. Source: Transparent Discount Price Framing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-005-risk-guardrail",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: e2a7575a-104c-44bc-ac88-e540996e4098 Experiment: Transparent Discount Price Framing Document: Transparent Discount Price Framing Similarity: 0. Source: Transparent Discount Price Framing.",
+      "candidate_output": "Chunk 1 Experiment ID: e2a7575a-104c-44bc-ac88-e540996e4098 Experiment: Transparent Discount Price Framing Document: Transparent Discount Price Framing Similarity: 0. Source: Transparent Discount Price Framing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-005-business-impact",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. Source: Transparent Discount Price Framing.",
+      "candidate_output": "The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. Source: Transparent Discount Price Framing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-005-insufficient-evidence",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. Source: Transparent Discount Price Framing.",
+      "candidate_output": "The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. Source: Transparent Discount Price Framing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-006-rollout-decision",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to silver and gold members with a frequency cap. Source: Loyalty Tier Progress Nudges.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to silver and gold members with a frequency cap. Source: Loyalty Tier Progress Nudges.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.6666666666666666,
+          "candidate": 0.6666666666666666,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-006-factual-retrieval",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to silver and gold members with a frequency cap. Source: Loyalty Tier Progress Nudges.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to silver and gold members with a frequency cap. Source: Loyalty Tier Progress Nudges.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-006-result-interpretation",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 76d08f49-0483-4bb3-8f5a-4eba01d4ebd7 Experiment: Loyalty Tier Progress Nudges Document: Loyalty Tier Progress Nudges Similarity: 0. Source: Loyalty Tier Progress Nudges.",
+      "candidate_output": "Chunk 1 Experiment ID: 76d08f49-0483-4bb3-8f5a-4eba01d4ebd7 Experiment: Loyalty Tier Progress Nudges Document: Loyalty Tier Progress Nudges Similarity: 0. Source: Loyalty Tier Progress Nudges.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-006-risk-guardrail",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to silver and gold members with a frequency cap. Source: Loyalty Tier Progress Nudges.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to silver and gold members with a frequency cap. Source: Loyalty Tier Progress Nudges.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-006-business-impact",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 76d08f49-0483-4bb3-8f5a-4eba01d4ebd7 Experiment: Loyalty Tier Progress Nudges Document: Loyalty Tier Progress Nudges Similarity: -0. Source: Loyalty Tier Progress Nudges.",
+      "candidate_output": "Chunk 1 Experiment ID: 76d08f49-0483-4bb3-8f5a-4eba01d4ebd7 Experiment: Loyalty Tier Progress Nudges Document: Loyalty Tier Progress Nudges Similarity: -0. Source: Loyalty Tier Progress Nudges.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-006-insufficient-evidence",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to silver and gold members with a frequency cap. Source: Loyalty Tier Progress Nudges.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to silver and gold members with a frequency cap. Source: Loyalty Tier Progress Nudges.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-007-rollout-decision",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 2d9a46ec-04c1-4c3a-8336-53926af262bd Experiment: CRM Back-in-Stock Notification Timing Document: CRM Back-in-Stock Notification Timing Similarity: -0. Source: CRM Back-in-Stock Notification Timing.",
+      "candidate_output": "Chunk 1 Experiment ID: 2d9a46ec-04c1-4c3a-8336-53926af262bd Experiment: CRM Back-in-Stock Notification Timing Document: CRM Back-in-Stock Notification Timing Similarity: -0. Source: CRM Back-in-Stock Notification Timing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-007-factual-retrieval",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 2d9a46ec-04c1-4c3a-8336-53926af262bd Experiment: CRM Back-in-Stock Notification Timing Document: CRM Back-in-Stock Notification Timing Similarity: 0. Source: CRM Back-in-Stock Notification Timing.",
+      "candidate_output": "Chunk 1 Experiment ID: 2d9a46ec-04c1-4c3a-8336-53926af262bd Experiment: CRM Back-in-Stock Notification Timing Document: CRM Back-in-Stock Notification Timing Similarity: 0. Source: CRM Back-in-Stock Notification Timing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-007-result-interpretation",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 2d9a46ec-04c1-4c3a-8336-53926af262bd Experiment: CRM Back-in-Stock Notification Timing Document: CRM Back-in-Stock Notification Timing Similarity: -0. Source: CRM Back-in-Stock Notification Timing.",
+      "candidate_output": "Chunk 1 Experiment ID: 2d9a46ec-04c1-4c3a-8336-53926af262bd Experiment: CRM Back-in-Stock Notification Timing Document: CRM Back-in-Stock Notification Timing Similarity: -0. Source: CRM Back-in-Stock Notification Timing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-007-risk-guardrail",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 2d9a46ec-04c1-4c3a-8336-53926af262bd Experiment: CRM Back-in-Stock Notification Timing Document: CRM Back-in-Stock Notification Timing Similarity: 0. Source: CRM Back-in-Stock Notification Timing.",
+      "candidate_output": "Chunk 1 Experiment ID: 2d9a46ec-04c1-4c3a-8336-53926af262bd Experiment: CRM Back-in-Stock Notification Timing Document: CRM Back-in-Stock Notification Timing Similarity: 0. Source: CRM Back-in-Stock Notification Timing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-007-business-impact",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out for opted-in customers outside quiet hours. Source: CRM Back-in-Stock Notification Timing.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out for opted-in customers outside quiet hours. Source: CRM Back-in-Stock Notification Timing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-007-insufficient-evidence",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 2d9a46ec-04c1-4c3a-8336-53926af262bd Experiment: CRM Back-in-Stock Notification Timing Document: CRM Back-in-Stock Notification Timing Similarity: 0. Source: CRM Back-in-Stock Notification Timing.",
+      "candidate_output": "Chunk 1 Experiment ID: 2d9a46ec-04c1-4c3a-8336-53926af262bd Experiment: CRM Back-in-Stock Notification Timing Document: CRM Back-in-Stock Notification Timing Similarity: 0. Source: CRM Back-in-Stock Notification Timing.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-008-rollout-decision",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 1c8178aa-ca4d-4072-a8a2-8a1308467e9b Experiment: Personalized Similar-Item Recommendations Document: Personalized Similar-Item Recommendations Similarity: -0. Source: Personalized Similar-Item Recommendations.",
+      "candidate_output": "Chunk 1 Experiment ID: 1c8178aa-ca4d-4072-a8a2-8a1308467e9b Experiment: Personalized Similar-Item Recommendations Document: Personalized Similar-Item Recommendations Similarity: -0. Source: Personalized Similar-Item Recommendations.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-008-factual-retrieval",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Hold at 15 percent traffic while monitoring category concentration. Source: Personalized Similar-Item Recommendations.",
+      "candidate_output": "The business decision recorded in metadata is: Hold at 15 percent traffic while monitoring category concentration. Source: Personalized Similar-Item Recommendations.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-008-result-interpretation",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 1c8178aa-ca4d-4072-a8a2-8a1308467e9b Experiment: Personalized Similar-Item Recommendations Document: Personalized Similar-Item Recommendations Similarity: 0. Source: Personalized Similar-Item Recommendations.",
+      "candidate_output": "Chunk 1 Experiment ID: 1c8178aa-ca4d-4072-a8a2-8a1308467e9b Experiment: Personalized Similar-Item Recommendations Document: Personalized Similar-Item Recommendations Similarity: 0. Source: Personalized Similar-Item Recommendations.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-008-risk-guardrail",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Hold at 15 percent traffic while monitoring category concentration. Source: Personalized Similar-Item Recommendations.",
+      "candidate_output": "The business decision recorded in metadata is: Hold at 15 percent traffic while monitoring category concentration. Source: Personalized Similar-Item Recommendations.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-008-business-impact",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Hold at 15 percent traffic while monitoring category concentration. Source: Personalized Similar-Item Recommendations.",
+      "candidate_output": "The business decision recorded in metadata is: Hold at 15 percent traffic while monitoring category concentration. Source: Personalized Similar-Item Recommendations.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-008-insufficient-evidence",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Hold at 15 percent traffic while monitoring category concentration. Source: Personalized Similar-Item Recommendations.",
+      "candidate_output": "The business decision recorded in metadata is: Hold at 15 percent traffic while monitoring category concentration. Source: Personalized Similar-Item Recommendations.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-009-rollout-decision",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to high-volume categories after fixing mobile web scroll tracking. Source: Dynamic Search Filter Shortcuts.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to high-volume categories after fixing mobile web scroll tracking. Source: Dynamic Search Filter Shortcuts.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.6666666666666666,
+          "candidate": 0.6666666666666666,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-009-factual-retrieval",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to high-volume categories after fixing mobile web scroll tracking. Source: Dynamic Search Filter Shortcuts.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to high-volume categories after fixing mobile web scroll tracking. Source: Dynamic Search Filter Shortcuts.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-009-result-interpretation",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to high-volume categories after fixing mobile web scroll tracking. Source: Dynamic Search Filter Shortcuts.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to high-volume categories after fixing mobile web scroll tracking. Source: Dynamic Search Filter Shortcuts.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.5,
+          "candidate": 0.5,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-009-risk-guardrail",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to high-volume categories after fixing mobile web scroll tracking. Source: Dynamic Search Filter Shortcuts.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to high-volume categories after fixing mobile web scroll tracking. Source: Dynamic Search Filter Shortcuts.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-009-business-impact",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: c0d7879d-64c2-434e-a39c-ca1ddafbbea7 Experiment: Dynamic Search Filter Shortcuts Document: Dynamic Search Filter Shortcuts Similarity: -0. Source: Dynamic Search Filter Shortcuts.",
+      "candidate_output": "Chunk 1 Experiment ID: c0d7879d-64c2-434e-a39c-ca1ddafbbea7 Experiment: Dynamic Search Filter Shortcuts Document: Dynamic Search Filter Shortcuts Similarity: -0. Source: Dynamic Search Filter Shortcuts.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-009-insufficient-evidence",
+      "surface": "legacy_rag",
+      "baseline_output": "The business decision recorded in metadata is: Roll out to high-volume categories after fixing mobile web scroll tracking. Source: Dynamic Search Filter Shortcuts.",
+      "candidate_output": "The business decision recorded in metadata is: Roll out to high-volume categories after fixing mobile web scroll tracking. Source: Dynamic Search Filter Shortcuts.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-010-rollout-decision",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 7cf091ec-81b2-4b01-b46a-5170b1f6f4a2 Experiment: Premium Subscription Trial Offer Document: Premium Subscription Trial Offer Similarity: 0. Source: Premium Subscription Trial Offer.",
+      "candidate_output": "Chunk 1 Experiment ID: 7cf091ec-81b2-4b01-b46a-5170b1f6f4a2 Experiment: Premium Subscription Trial Offer Document: Premium Subscription Trial Offer Similarity: 0. Source: Premium Subscription Trial Offer.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-010-factual-retrieval",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 7cf091ec-81b2-4b01-b46a-5170b1f6f4a2 Experiment: Premium Subscription Trial Offer Document: Premium Subscription Trial Offer Similarity: 0. Source: Premium Subscription Trial Offer.",
+      "candidate_output": "Chunk 1 Experiment ID: 7cf091ec-81b2-4b01-b46a-5170b1f6f4a2 Experiment: Premium Subscription Trial Offer Document: Premium Subscription Trial Offer Similarity: 0. Source: Premium Subscription Trial Offer.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-010-result-interpretation",
+      "surface": "legacy_rag",
+      "baseline_output": "0170 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out with annual-plan cannibalization guardrails and billing telemetry checks. Source: Premium Subscription Trial Offer.",
+      "candidate_output": "0170 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out with annual-plan cannibalization guardrails and billing telemetry checks. Source: Premium Subscription Trial Offer.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-010-risk-guardrail",
+      "surface": "legacy_rag",
+      "baseline_output": "0198 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out with annual-plan cannibalization guardrails and billing telemetry checks. Source: Premium Subscription Trial Offer.",
+      "candidate_output": "0198 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out with annual-plan cannibalization guardrails and billing telemetry checks. Source: Premium Subscription Trial Offer.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-010-business-impact",
+      "surface": "legacy_rag",
+      "baseline_output": "0121 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out with annual-plan cannibalization guardrails and billing telemetry checks. Source: Premium Subscription Trial Offer.",
+      "candidate_output": "0121 Metadata: {'section': 'Recommendation', 'chunk_index': 7, 'section_chunk_index': 0} Text: ## Recommendation The recommendation is: Roll out with annual-plan cannibalization guardrails and billing telemetry checks. Source: Premium Subscription Trial Offer.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-010-insufficient-evidence",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 7cf091ec-81b2-4b01-b46a-5170b1f6f4a2 Experiment: Premium Subscription Trial Offer Document: Premium Subscription Trial Offer Similarity: 0. Source: Premium Subscription Trial Offer.",
+      "candidate_output": "Chunk 1 Experiment ID: 7cf091ec-81b2-4b01-b46a-5170b1f6f4a2 Experiment: Premium Subscription Trial Offer Document: Premium Subscription Trial Offer Similarity: 0. Source: Premium Subscription Trial Offer.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-001-legacy-rag-lookup",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 292ce834-0523-4a73-88a3-e525cf14d8b3 Experiment: Adaptive Payment Method Recommendation Document: Adaptive Payment Method Recommendation Similarity: 0. Source: Adaptive Payment Method Recommendation.",
+      "candidate_output": "Chunk 1 Experiment ID: 292ce834-0523-4a73-88a3-e525cf14d8b3 Experiment: Adaptive Payment Method Recommendation Document: Adaptive Payment Method Recommendation Similarity: 0. Source: Adaptive Payment Method Recommendation.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "exp-004-legacy-rag-lookup",
+      "surface": "legacy_rag",
+      "baseline_output": "Chunk 1 Experiment ID: 0a7deee5-3fc7-4363-a088-e65a210691ea Experiment: One-Page Checkout UX Document: One-Page Checkout UX Similarity: -0. Source: One-Page Checkout UX.",
+      "candidate_output": "Chunk 1 Experiment ID: 0a7deee5-3fc7-4363-a088-e65a210691ea Experiment: One-Page Checkout UX Document: One-Page Checkout UX Similarity: -0. Source: One-Page Checkout UX.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "keyword_coverage": {
+          "baseline": 0.0,
+          "candidate": 0.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "citation_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "retrieval_consistency": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    },
+    {
+      "case_id": "legacy-fallback",
+      "surface": "legacy_rag.ask",
+      "baseline_output": "Chunk 1 Experiment ID: 292ce834-0523-4a73-88a3-e525cf14d8b3 Experiment: Adaptive Payment Method Recommendation Document: Adaptive Payment Method Recommendation Similarity: 0. Source: Adaptive Payment Method Recommendation.",
+      "candidate_output": "Chunk 1 Experiment ID: 292ce834-0523-4a73-88a3-e525cf14d8b3 Experiment: Adaptive Payment Method Recommendation Document: Adaptive Payment Method Recommendation Similarity: 0. Source: Adaptive Payment Method Recommendation.",
+      "metric_scores": {
+        "prompt_rendering_success": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "answer_generated": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "legacy_fallback_compatibility": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "structured_output_validity": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "document_reference_coverage": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        },
+        "forbidden_hallucination_markers": {
+          "baseline": 1.0,
+          "candidate": 1.0,
+          "delta": 0.0,
+          "regression": false,
+          "improvement": false
+        }
+      },
+      "regression_detected": false,
+      "improvement_detected": false,
+      "failed": false,
+      "notes": []
+    }
+  ],
+  "metrics": [
+    {
+      "name": "answer_generated",
+      "baseline": 1.0,
+      "candidate": 1.0,
+      "delta": 0.0,
+      "regressions": 0,
+      "improvements": 0
+    },
+    {
+      "name": "citation_coverage",
+      "baseline": 1.0,
+      "candidate": 1.0,
+      "delta": 0.0,
+      "regressions": 0,
+      "improvements": 0
+    },
+    {
+      "name": "document_reference_coverage",
+      "baseline": 1.0,
+      "candidate": 1.0,
+      "delta": 0.0,
+      "regressions": 0,
+      "improvements": 0
+    },
+    {
+      "name": "forbidden_hallucination_markers",
+      "baseline": 1.0,
+      "candidate": 1.0,
+      "delta": 0.0,
+      "regressions": 0,
+      "improvements": 0
+    },
+    {
+      "name": "keyword_coverage",
+      "baseline": 0.0510752688172043,
+      "candidate": 0.0510752688172043,
+      "delta": 0.0,
+      "regressions": 0,
+      "improvements": 0
+    },
+    {
+      "name": "legacy_fallback_compatibility",
+      "baseline": 1.0,
+      "candidate": 1.0,
+      "delta": 0.0,
+      "regressions": 0,
+      "improvements": 0
+    },
+    {
+      "name": "prompt_rendering_success",
+      "baseline": 1.0,
+      "candidate": 1.0,
+      "delta": 0.0,
+      "regressions": 0,
+      "improvements": 0
+    },
+    {
+      "name": "retrieval_consistency",
+      "baseline": 1.0,
+      "candidate": 1.0,
+      "delta": 0.0,
+      "regressions": 0,
+      "improvements": 0
+    },
+    {
+      "name": "structured_output_validity",
+      "baseline": 1.0,
+      "candidate": 1.0,
+      "delta": 0.0,
+      "regressions": 0,
+      "improvements": 0
+    }
+  ],
+  "ragas_comparison": {
+    "framework": "ragas",
+    "metrics": [
+      {
+        "name": "id_based_context_precision",
+        "baseline": 1.0,
+        "candidate": 1.0,
+        "delta": 0.0,
+        "regressions": 0,
+        "improvements": 0
+      },
+      {
+        "name": "id_based_context_recall",
+        "baseline": 1.0,
+        "candidate": 1.0,
+        "delta": 0.0,
+        "regressions": 0,
+        "improvements": 0
+      }
+    ],
+    "notes": [
+      "Judge-backed metrics are opt-in. This run used no judge LLM, so model-backed RAGAS metrics were skipped by design."
+    ]
+  },
+  "deepeval_comparison": {
+    "framework": "deepeval",
+    "metrics": [
+      {
+        "name": "citation_coverage",
+        "baseline": 1.0,
+        "candidate": 1.0,
+        "delta": 0.0,
+        "regressions": 0,
+        "improvements": 0
+      },
+      {
+        "name": "fallback_compatibility",
+        "baseline": 1.0,
+        "candidate": 1.0,
+        "delta": 0.0,
+        "regressions": 0,
+        "improvements": 0
+      },
+      {
+        "name": "response_field_completeness",
+        "baseline": 1.0,
+        "candidate": 1.0,
+        "delta": 0.0,
+        "regressions": 0,
+        "improvements": 0
+      }
+    ],
+    "notes": [
+      "DeepEval remains additive; the existing custom evaluation harnesses and RAGAS stay intact.",
+      "No Confident AI cloud integration, tracing, or observability hooks are enabled in this adapter.",
+      "Workflow deterministic metrics remain ExperimentOS-owned even when DeepEval is installed.",
+      "Unsupported-claim avoidance is a deterministic heuristic, not a semantic judge score.",
+      "Offline mode skips judge-based metrics by design and never invokes a live model."
+    ]
+  },
+  "summary": {
+    "cases_run": 63,
+    "regressions": 0,
+    "improvements": 0,
+    "unchanged": 63,
+    "failures": 0,
+    "skipped": 0,
+    "passed": true
+  }
+}

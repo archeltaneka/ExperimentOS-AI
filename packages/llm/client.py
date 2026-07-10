@@ -45,10 +45,12 @@ class MockLLMClient:
         answer: str = "Mock answer.",
         model: str = "mock",
         failure: Exception | None = None,
+        response_builder: Any | None = None,
     ) -> None:
         self.answer = answer
         self.model = model
         self.failure = failure
+        self.response_builder = response_builder
         self.calls = 0
         self.last_prompt = ""
         self.last_system_instruction = ""
@@ -65,12 +67,16 @@ class MockLLMClient:
         if self.failure is not None:
             raise self.failure
 
+        answer = self.answer
+        if self.response_builder is not None:
+            answer = str(self.response_builder(prompt, system_instruction))
+
         return LLMResponse(
-            answer=self.answer,
+            answer=answer,
             metrics=LLMMetrics(
                 model=self.model,
                 input_tokens=len((system_instruction + " " + prompt).split()),
-                output_tokens=len(self.answer.split()),
+                output_tokens=len(answer.split()),
                 latency_ms=0.0,
             ),
         )
@@ -163,9 +169,7 @@ class GeminiLLMClient:
             metrics=LLMMetrics(
                 model=self.model,
                 input_tokens=int(_response_value(usage, "prompt_token_count", default=0) or 0),
-                output_tokens=int(
-                    _response_value(usage, "candidates_token_count", default=0) or 0
-                ),
+                output_tokens=int(_response_value(usage, "candidates_token_count", default=0) or 0),
                 latency_ms=latency_ms,
             ),
         )

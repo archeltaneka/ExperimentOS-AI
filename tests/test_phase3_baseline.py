@@ -72,6 +72,15 @@ def test_render_phase3_baseline_report_includes_sections_metrics_and_gaps() -> N
             "legacy_rag responses expose prompt_id and prompt_version metadata.",
             "agent_workflow remains prompt-free until an LLM-backed surface exists.",
         ),
+        prompt_regression_coverage=(
+            "Prompt regression compares prompt versions over the existing legacy_rag QA dataset.",
+        ),
+        remaining_prompt_risks=(
+            (
+                "Only legacy_rag is prompt-backed today; agent_workflow remains deterministic "
+                "application logic."
+            ),
+        ),
     )
 
     markdown = render_phase3_baseline_report(report)
@@ -84,6 +93,8 @@ def test_render_phase3_baseline_report_includes_sections_metrics_and_gaps() -> N
     assert "Legacy fallback coverage" in markdown
     assert "rag.answer" in markdown
     assert "legacy_rag responses expose prompt_id and prompt_version metadata." in markdown
+    assert "Prompt Regression Coverage" in markdown
+    assert "Only legacy_rag is prompt-backed today" in markdown
     assert "No threshold policy exists yet." in markdown
     assert "Add deterministic hallucination checks." in markdown
 

@@ -96,7 +96,8 @@ The command stores:
 ## QA Evaluation Dataset
 
 `data/eval/qa_dataset.json` is the Phase 1 offline QA dataset used by `packages.evals.run`.
-It is also the single source of truth for the optional `packages.evals.run_ragas` adapter.
+It is also the single source of truth for the optional `packages.evals.run_ragas` and
+`packages.evals.run_deepeval` adapters.
 
 It is loaded by `packages.evals.dataset.load_evaluation_dataset`.
 
@@ -157,6 +158,9 @@ The optional RAGAS path reuses the same dataset rows, generated answers, and ret
 Its offline-safe context metrics also map `expected_documents` into RAGAS
 `reference_context_ids`.
 
+The optional DeepEval path reuses the same dataset rows and generated answers, then maps them into
+DeepEval `Golden` and `LLMTestCase` objects without changing the repository-owned question schema.
+
 Run it locally:
 
 ```powershell
@@ -170,6 +174,15 @@ Run the optional RAGAS report against the same dataset:
 uv sync --group eval
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
 uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output reports/phase3/ragas_report.md --json-output reports/phase3/ragas_report.json
+```
+
+Run the optional DeepEval report against the same dataset plus the existing workflow and `/ask`
+surfaces:
+
+```powershell
+uv sync --group eval
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv run python -m packages.evals.run_deepeval --mode offline --embedding-provider fake --llm-provider mock --output reports/phase3/deepeval_report.md --json-output reports/phase3/deepeval_report.json
 ```
 
 ## Agent Workflow Evaluation Dataset
@@ -257,6 +270,39 @@ Run it locally:
 uv run python -m packages.evals.run_agent_e2e --output reports/agent_e2e_evaluation.md
 ```
 
+## DeepEval Evaluation Surfaces
+
+`packages.evals.run_deepeval` is an additive adapter layer over the existing evaluation assets.
+
+It currently evaluates two explicit scopes:
+
+- response evaluation for `legacy_rag` QA samples and final `/ask` responses
+- workflow evaluation for deterministic `AgentWorkflowService` cases
+
+Offline-safe deterministic metrics include:
+
+- citation coverage
+- response field completeness
+- `legacy_rag` fallback compatibility
+- error-state correctness
+- routing accuracy
+- decision status match
+- approval status match
+- summary status match
+- trace completeness
+- unsupported-claim avoidance for incomplete-evidence cases
+
+Judge-based metrics remain opt-in:
+
+- `answer_relevancy`
+- `faithfulness`
+- `hallucination`
+- `contextual_relevancy`
+
+The default offline mode never requires network calls or live model credentials. Judge mode is
+explicit and uses the same repository-owned cases, but it only runs when judge configuration is
+supplied directly.
+
 ## Phase 3 Baseline
 
 The aggregate deterministic baseline combines all three evaluation surfaces:
@@ -272,6 +318,11 @@ This writes:
 - `reports/agent_evaluation.md`
 - `reports/agent_e2e_evaluation.md`
 - `reports/phase3/baseline_report.md`
+
+The optional DeepEval command writes:
+
+- `reports/phase3/deepeval_report.md`
+- `reports/phase3/deepeval_report.json`
 
 ## How To Add Future Cases
 
@@ -298,5 +349,6 @@ General guidance:
 
 - keep cases deterministic and repository-local
 - do not require live OpenAI calls
+- keep DeepEval additive; do not move repository-owned truth into DeepEval-specific schemas
 - do not change `/ask` production behavior just to satisfy a dataset row
 - update loader or contract tests when the schema changes

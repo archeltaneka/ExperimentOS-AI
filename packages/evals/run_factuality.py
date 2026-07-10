@@ -15,6 +15,7 @@ from packages.evals.run import resolve_runtime_options as resolve_legacy_rag_run
 from packages.evals.run_agent import build_evaluation_run as build_agent_run
 from packages.evals.run_agent import parse_args as parse_agent_args
 from packages.ingestion.load_experiment import run_async
+from packages.observability.factory import resolve_observability_provider
 
 DEFAULT_MARKDOWN_REPORT_PATH = Path("reports/phase3/factuality_report.md")
 DEFAULT_JSON_REPORT_PATH = Path("reports/phase3/factuality_report.json")
@@ -126,6 +127,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def build_factuality_report_from_args(args: argparse.Namespace):
+    observability_provider = resolve_observability_provider()
+    root_span = observability_provider.start_root_span(
+        "evaluation.factuality",
+        trace_id=f"evaluation.factuality:{args.target}",
+        inputs={"target": args.target, "mode": args.mode},
+        metadata={"surface": "evaluation.factuality"},
+        tags=("evaluation", "factuality"),
+    )
+    with root_span.activate():
+        return _build_factuality_report_from_args(args, observability_provider)
+
+
+def _build_factuality_report_from_args(args: argparse.Namespace, observability_provider):
     legacy_run = None
     agent_run = None
     if args.target in {"legacy_rag", "all"}:
@@ -160,7 +174,24 @@ def build_factuality_report_from_args(args: argparse.Namespace):
             ]
         )
         agent_run = build_agent_run(agent_args)
-    return _build_runner_report(args, legacy_run, agent_run)
+    report = _build_runner_report(args, legacy_run, agent_run)
+    current_span = observability_provider.current_span()
+    if current_span is not None:
+        current_span.add_metadata(
+            {
+                "target": args.target,
+                "mode": args.mode,
+                "dataset": str(args.dataset),
+                "agent_dataset": str(args.agent_dataset),
+            }
+        )
+        current_span.finish(
+            outputs={
+                "status": report.policy_result.status,
+                "case_count": len(report.case_results),
+            }
+        )
+    return report
 
 
 def build_factuality_report(args: argparse.Namespace):

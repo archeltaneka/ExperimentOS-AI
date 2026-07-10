@@ -1,7 +1,43 @@
 ## Phase 3 Reliability Baseline
 
-Phase 3 now includes a repository-owned factuality evaluation layer in addition to the existing
-RAG, agent workflow, prompt regression, RAGAS, and DeepEval surfaces.
+Phase 3 now includes a repository-owned factuality evaluation layer and an optional LangSmith
+observability adapter in addition to the existing RAG, agent workflow, prompt regression, RAGAS,
+and DeepEval surfaces.
+
+### LangSmith Observability Status
+
+- integration status: available
+- runtime requirement: optional dependency group plus explicit enablement
+- default mode: disabled
+- authoritative traces: ExperimentOS-owned state, metrics, and reports remain primary
+- instrumented surfaces:
+  - `/ask`
+  - `agent_workflow`
+  - `legacy_rag`
+  - retrieval
+  - prompt provenance for prompt-backed flows
+  - evaluation entrypoints
+- hierarchy coverage:
+  - request root
+  - workflow or legacy roots
+  - deterministic agent node exports
+  - response serialization
+- redaction coverage:
+  - secrets
+  - tokens
+  - cookies
+  - database URLs
+  - prompt bodies by default
+  - response bodies by default
+  - retrieved document chunks by default
+- sampling support: deterministic per trace id
+- correlation support: `experimentos_trace_id` is attached to exported traces
+
+Remaining observability gaps:
+
+- production alerting is not implemented
+- distributed tracing across multiple services is still out of scope
+- CI threshold policies remain separate from tracing
 
 ### Factuality Evaluation
 

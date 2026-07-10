@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field, field_validator
 from packages.agents.service import AgentWorkflowService
 from packages.agents.state import AgentState
 from packages.config.env import resolve_setting
+from packages.observability.base import BaseObservabilityProvider
+from packages.observability.noop import NoOpObservabilityProvider
 from packages.qa.question_answering_service import (
     INSUFFICIENT_EVIDENCE_ANSWER,
     QAResponse,
@@ -71,8 +73,14 @@ class AgentWorkflowExecutionError(RuntimeError):
 
 
 class LegacyRagAskService:
-    def __init__(self, qa_service: QuestionAnsweringDependency) -> None:
+    def __init__(
+        self,
+        qa_service: QuestionAnsweringDependency,
+        *,
+        observability_provider: BaseObservabilityProvider | None = None,
+    ) -> None:
         self.qa_service = qa_service
+        self.observability_provider = observability_provider or NoOpObservabilityProvider()
 
     async def answer(self, request: AskRequest) -> AskResponse:
         qa_response = await self.qa_service.answer_question(
@@ -80,24 +88,41 @@ class LegacyRagAskService:
             experiment_id=request.experiment_id,
             top_k=request.top_k,
         )
-        return AskResponse(
-            answer=qa_response.answer,
-            citations=[citation.model_dump() for citation in qa_response.citations],
-            retrieved_chunks=[asdict(chunk) for chunk in qa_response.retrieved_chunks],
-            retrieval_metrics=asdict(qa_response.retrieval_metrics),
-            llm_metrics=vars(qa_response.llm_metrics),
-            prompt_metadata=_build_prompt_metadata(
-                qa_response.prompt_id,
-                qa_response.prompt_version,
-            ),
-            intent=None,
-            required_agents=[],
-            decision=None,
-            executive_summary=None,
-            agent_trace=[],
-            agent_metrics={},
-            approval_status=None,
+        span = self.observability_provider.start_span(
+            "response_serialization",
+            metadata={
+                "surface": "legacy_rag",
+                "prompt_id": qa_response.prompt_id or "",
+                "prompt_version": qa_response.prompt_version or "",
+            },
         )
+        with span.activate():
+            response = AskResponse(
+                answer=qa_response.answer,
+                citations=[citation.model_dump() for citation in qa_response.citations],
+                retrieved_chunks=[asdict(chunk) for chunk in qa_response.retrieved_chunks],
+                retrieval_metrics=asdict(qa_response.retrieval_metrics),
+                llm_metrics=vars(qa_response.llm_metrics),
+                prompt_metadata=_build_prompt_metadata(
+                    qa_response.prompt_id,
+                    qa_response.prompt_version,
+                ),
+                intent=None,
+                required_agents=[],
+                decision=None,
+                executive_summary=None,
+                agent_trace=[],
+                agent_metrics={},
+                approval_status=None,
+            )
+            span.finish(
+                outputs={
+                    "citation_count": len(response.citations),
+                    "retrieved_chunks": len(response.retrieved_chunks),
+                    "status": "completed",
+                }
+            )
+            return response
 
 
 class AgentWorkflowAskService:
@@ -106,9 +131,11 @@ class AgentWorkflowAskService:
         workflow_service: AgentWorkflowService,
         *,
         experiment_exists: ExperimentExistsDependency | None = None,
+        observability_provider: BaseObservabilityProvider | None = None,
     ) -> None:
         self.workflow_service = workflow_service
         self.experiment_exists = experiment_exists
+        self.observability_provider = observability_provider or NoOpObservabilityProvider()
 
     async def answer(self, request: AskRequest) -> AskResponse:
         if self.experiment_exists is not None and not await self.experiment_exists(
@@ -124,7 +151,20 @@ class AgentWorkflowAskService:
             )
         except Exception as exc:
             raise AgentWorkflowExecutionError(str(exc)) from exc
-        return map_agent_state_to_ask_response(state)
+        span = self.observability_provider.start_span(
+            "response_serialization",
+            metadata={"surface": "agent_workflow", "workflow": "phase2_shared_state"},
+        )
+        with span.activate():
+            response = map_agent_state_to_ask_response(state)
+            span.finish(
+                outputs={
+                    "citation_count": len(response.citations),
+                    "required_agent_count": len(response.required_agents),
+                    "status": "completed",
+                }
+            )
+            return response
 
 
 def get_ask_mode() -> str:

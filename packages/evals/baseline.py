@@ -45,7 +45,11 @@ E2E_MISSING_METRICS = (
 
 BASELINE_KNOWN_GAPS = (
     "No threshold policy exists yet for turning these metrics into CI gates.",
-    "No external tracing or observability export is enabled yet.",
+    (
+        "LangSmith tracing is optional, disabled by default, and not yet integrated "
+        "with production alerting."
+    ),
+    "Cross-service distributed tracing remains out of scope.",
 )
 
 BASELINE_NEXT_WORK = (
@@ -53,6 +57,10 @@ BASELINE_NEXT_WORK = (
     (
         "Add report-level regression diffs so future baseline runs can compare changed "
         "failure cases directly."
+    ),
+    (
+        "Expand observability coverage from local and evaluation runs into deployed "
+        "service operations."
     ),
 )
 

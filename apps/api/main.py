@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import uuid
+from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Annotated, Protocol
 
@@ -31,6 +32,8 @@ from packages.llm.client import (
     OllamaLLMClient,
     OpenAILLMClient,
 )
+from packages.observability.base import BaseObservabilityProvider
+from packages.observability.factory import resolve_observability_provider
 from packages.qa.question_answering_service import (
     EmbeddingFailureError,
     EmptyQuestionError,
@@ -88,6 +91,9 @@ class QuestionAnsweringDependency(Protocol):
 
 
 class DatabaseQuestionAnsweringService:
+    def __init__(self, observability_provider: BaseObservabilityProvider) -> None:
+        self.observability_provider = observability_provider
+
     async def answer_question(
         self,
         *,
@@ -100,12 +106,14 @@ class DatabaseQuestionAnsweringService:
             retrieval_service = RetrievalService(
                 session,
                 build_embedding_provider(get_embedding_provider_name()),
+                observability_provider=self.observability_provider,
             )
 
             service = QuestionAnsweringService(
                 retrieval_service=retrieval_service,
                 llm_client=get_llm_client(),
                 experiment_exists=experiment_exists,
+                observability_provider=self.observability_provider,
             )
             return await service.answer_question(
                 question=question,
@@ -114,12 +122,27 @@ class DatabaseQuestionAnsweringService:
             )
 
 
-def get_question_answering_service() -> QuestionAnsweringDependency:
-    return DatabaseQuestionAnsweringService()
+@lru_cache(maxsize=1)
+def get_observability_provider() -> BaseObservabilityProvider:
+    return resolve_observability_provider()
 
 
-def get_agent_workflow_service() -> AgentWorkflowService:
-    return AgentWorkflowService()
+def get_question_answering_service(
+    observability_provider: Annotated[
+        BaseObservabilityProvider,
+        Depends(get_observability_provider),
+    ],
+) -> QuestionAnsweringDependency:
+    return DatabaseQuestionAnsweringService(observability_provider)
+
+
+def get_agent_workflow_service(
+    observability_provider: Annotated[
+        BaseObservabilityProvider,
+        Depends(get_observability_provider),
+    ],
+) -> AgentWorkflowService:
+    return AgentWorkflowService(observability_provider=observability_provider)
 
 
 def get_experiment_exists_dependency() -> ExperimentExistsDependency:
@@ -153,12 +176,20 @@ def get_ask_service(
         ExperimentExistsDependency,
         Depends(get_experiment_exists_dependency),
     ],
+    observability_provider: Annotated[
+        BaseObservabilityProvider,
+        Depends(get_observability_provider),
+    ],
 ) -> AskService:
     if get_ask_mode() == "legacy_rag":
-        return LegacyRagAskService(qa_service)
+        return LegacyRagAskService(
+            qa_service,
+            observability_provider=observability_provider,
+        )
     return AgentWorkflowAskService(
         workflow_service,
         experiment_exists=experiment_exists_dependency,
+        observability_provider=observability_provider,
     )
 
 
@@ -171,12 +202,57 @@ async def health() -> dict[str, str]:
 async def ask(
     request: AskRequest,
     service: Annotated[AskService, Depends(get_ask_service)],
+    observability_provider: Annotated[
+        BaseObservabilityProvider,
+        Depends(get_observability_provider),
+    ],
 ) -> AskResponse:
-    try:
-        return await service.answer(request)
-    except EmptyQuestionError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    except UnknownExperimentError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except (EmbeddingFailureError, LLMGenerationError, AgentWorkflowExecutionError) as exc:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+    ask_mode = get_ask_mode()
+    request_id = str(uuid.uuid4())
+    root_span = observability_provider.start_root_span(
+        "ask_request",
+        trace_id=request_id,
+        inputs={
+            "question": request.question,
+            "experiment_id": request.experiment_id,
+            "top_k": request.top_k,
+        },
+        metadata={
+            "surface": "ask",
+            "endpoint": "/ask",
+            "ask_mode": ask_mode,
+            "environment": os.environ.get("APP_ENV", "local"),
+            "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        },
+        tags=("ask", ask_mode),
+    )
+    with root_span.activate():
+        try:
+            response = await service.answer(request)
+            root_span.add_metadata(
+                {
+                    "citation_count": len(response.citations),
+                    "approval_status": response.approval_status or "",
+                    "intent": response.intent or "",
+                }
+            )
+            root_span.finish(
+                outputs={
+                    "status_code": 200,
+                    "success": True,
+                    "answer": response.answer,
+                }
+            )
+            return response
+        except EmptyQuestionError as exc:
+            root_span.record_error(exc, details={"status_code": status.HTTP_400_BAD_REQUEST})
+            root_span.finish(outputs={"status_code": status.HTTP_400_BAD_REQUEST})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        except UnknownExperimentError as exc:
+            root_span.record_error(exc, details={"status_code": status.HTTP_404_NOT_FOUND})
+            root_span.finish(outputs={"status_code": status.HTTP_404_NOT_FOUND})
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        except (EmbeddingFailureError, LLMGenerationError, AgentWorkflowExecutionError) as exc:
+            root_span.record_error(exc, details={"status_code": status.HTTP_502_BAD_GATEWAY})
+            root_span.finish(outputs={"status_code": status.HTTP_502_BAD_GATEWAY})
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc

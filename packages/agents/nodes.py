@@ -53,10 +53,14 @@ def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
         question = state["question"]
         request = state.get("request", {})
         human_approval_input = state.get("human_approval_input", {})
+        preserved_run_metadata = state.get("run_metadata")
+        preserved_timestamps = state.get("timestamps")
     else:
         question = state.question
         request = dict(getattr(state, "request", {}))
         human_approval_input = dict(getattr(state, "human_approval_input", {}))
+        preserved_run_metadata = None
+        preserved_timestamps = None
     defaults = create_initial_state(
         question,
         experiment_id=request.get("experiment_id"),
@@ -93,6 +97,16 @@ def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
         },
         "metrics": plan.metrics,
         "trace": [trace_entry],
+        "run_metadata": (
+            dict(preserved_run_metadata)
+            if isinstance(preserved_run_metadata, dict)
+            else defaults["run_metadata"]
+        ),
+        "timestamps": (
+            dict(preserved_timestamps)
+            if isinstance(preserved_timestamps, dict)
+            else defaults["timestamps"]
+        ),
     }
 
 

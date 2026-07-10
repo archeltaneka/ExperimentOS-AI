@@ -624,6 +624,9 @@ eval = [
     { name = "deepeval" },
     { name = "ragas" },
 ]
+observability = [
+    { name = "langsmith" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -654,6 +657,7 @@ eval = [
     { name = "deepeval", specifier = ">=4.0.7" },
     { name = "ragas", specifier = ">=0.4.3" },
 ]
+observability = [{ name = "langsmith", specifier = ">=0.9.8" }]
 
 [[package]]
 name = "fastapi"

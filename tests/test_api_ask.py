@@ -337,6 +337,8 @@ def build_legacy_qa_response() -> QAResponse:
             output_tokens=4,
             latency_ms=0.0,
         ),
+        prompt_id="rag.answer",
+        prompt_version="1",
     )
 
 
@@ -365,6 +367,7 @@ def test_ask_endpoint_uses_agent_workflow_by_default(monkeypatch) -> None:
     assert response.json()["citations"]
     assert response.json()["agent_trace"]
     assert response.json()["agent_metrics"]["decision"]["status"] == "decided"
+    assert response.json()["prompt_metadata"] is None
     assert workflow_service.calls == [
         (
             "Should we roll out the loyalty tier progress nudges experiment?",
@@ -397,6 +400,7 @@ def test_ask_endpoint_uses_legacy_rag_when_configured(monkeypatch) -> None:
     assert "retrieved_chunks" in response.json()
     assert "retrieval_metrics" in response.json()
     assert "llm_metrics" in response.json()
+    assert response.json()["prompt_metadata"] == {"prompt_id": "rag.answer", "prompt_version": "1"}
     assert response.json()["decision"] is None
     assert response.json()["executive_summary"] is None
     assert qa_service.calls == [("What happened?", "00000000-0000-0000-0000-000000000123", 5)]

@@ -28,6 +28,8 @@ class EvaluationSampleResult:
     retrieved_documents: tuple[str, ...]
     retrieved_contexts: tuple[str, ...]
     error: str | None
+    prompt_id: str | None = None
+    prompt_version: str | None = None
 
 
 @dataclass(frozen=True)
@@ -100,6 +102,8 @@ class OfflineEvaluator:
                             chunk.chunk_text for chunk in response.retrieved_chunks
                         ),
                         error=None,
+                        prompt_id=response.prompt_id,
+                        prompt_version=response.prompt_version,
                     )
                 )
             except Exception as exc:

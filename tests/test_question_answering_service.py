@@ -106,6 +106,8 @@ def test_question_answering_service_returns_grounded_answer_and_citations(top_k:
     assert answer.llm_metrics.input_tokens > 0
     assert answer.llm_metrics.output_tokens > 0
     assert answer.llm_metrics.latency_ms >= 0.0
+    assert answer.prompt_id == "rag.answer"
+    assert answer.prompt_version == "1"
     assert "Only answer using retrieved context." in llm.last_system_instruction
     assert "Similarity: 0.9100" in llm.last_prompt
     assert "Metadata: {'section': 'Results'}" in llm.last_prompt
@@ -245,6 +247,8 @@ def test_prompt_templates_are_centralized_and_used_for_qa_prompt() -> None:
     assert DECISION_PROMPT
     assert SUMMARY_PROMPT
     assert prompt.system_instruction == SYSTEM_PROMPT
+    assert prompt.prompt_id == "rag.answer"
+    assert prompt.version == "1"
     assert prompt.prompt == QA_PROMPT.format(
         question="Why did it ship?",
         context="\n\n".join(
@@ -263,4 +267,44 @@ def test_prompt_templates_are_centralized_and_used_for_qa_prompt() -> None:
                 )
             ]
         ),
+    )
+
+
+def test_build_grounded_prompt_preserves_previous_effective_output() -> None:
+    from packages.llm.prompts import build_grounded_prompt
+
+    result = retrieval_result(
+        chunk_text="The payment recommendation shipped after guardrails passed.",
+        metadata={"section": "Decision"},
+    )
+
+    prompt = build_grounded_prompt(
+        question="Why did it ship?",
+        retrieved_chunks=[result],
+    )
+
+    assert prompt.system_instruction == (
+        "Only answer using retrieved context.\n"
+        "If the answer cannot be supported by retrieved evidence, say that insufficient evidence "
+        "exists.\n"
+        "Never invent facts."
+    )
+    assert prompt.prompt == "\n\n".join(
+        [
+            "User Question: Why did it ship?",
+            "Retrieved Context:",
+            "\n".join(
+                [
+                    "Chunk 1",
+                    f"Experiment ID: {result.experiment_id}",
+                    f"Experiment: {result.experiment_name}",
+                    f"Document: {result.document_name}",
+                    f"Similarity: {result.similarity:.4f}",
+                    f"Metadata: {result.metadata}",
+                    "Text:",
+                    result.chunk_text,
+                ]
+            ),
+            "Answer using only the retrieved context and cite the supporting documents.",
+        ]
     )

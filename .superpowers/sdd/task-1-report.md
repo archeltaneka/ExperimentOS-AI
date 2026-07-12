@@ -62,3 +62,44 @@
 
 - `PhoenixObservabilityProvider` currently resolves successfully only as a placeholder; it does not emit spans yet by design.
 - `CompositeObservabilityProvider` is intentionally minimal and exists to stabilize the resolution surface for later fan-out work.
+
+## Fix pass
+
+### Reviewer findings addressed
+
+- Fixed the Phoenix placeholder provider path so `PhoenixObservabilityProvider(settings=PhoenixSettings(enabled=True, endpoint="http://localhost:6006")).start_root_span("test").finish()` is safely non-crashing in this task.
+- Fixed top-level `ObservabilitySettings` compatibility properties so Phoenix-only configurations report truthful provider-agnostic values instead of always proxying LangSmith.
+- Re-ran `uv run ruff check .` as required by the review plan and recorded the result here.
+
+### Additional TDD evidence
+
+#### Failing command
+
+`uv run pytest tests\test_observability_config.py -v`
+
+#### Failing output
+
+- `AttributeError: 'PhoenixSettings' object has no attribute 'sampling_rate'`
+- `AssertionError: assert None == 'phoenix-key'`
+- Summary: `2 failed, 3 passed`
+
+#### Passing commands
+
+- `uv run pytest tests\test_observability_config.py -v`
+- `uv run ruff check .`
+
+#### Passing output
+
+- `5 passed in 0.22s`
+- `All checks passed!`
+
+### Files changed in fix pass
+
+- `packages/observability/models.py`
+- `tests/test_observability_config.py`
+
+### Self-review findings for fix pass
+
+- Shared provider defaults now cover the fields used by `BaseObservabilityProvider`, which keeps the Phoenix placeholder safe without implementing export behavior.
+- Compatibility properties now read from the active provider configuration, so Phoenix-only setups no longer misreport endpoint, project, API key, tracing flags, or tags.
+- The Phoenix placeholder remains intentionally non-exporting for this task; the fix is scoped to safety and truthfulness of configuration reporting.

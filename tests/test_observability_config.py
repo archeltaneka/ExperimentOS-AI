@@ -58,3 +58,46 @@ def test_resolve_provider_raises_when_phoenix_enabled_and_dependency_missing(
 
     with pytest.raises(ObservabilityConfigurationError, match="Phoenix"):
         resolve_observability_provider()
+
+
+def test_phoenix_placeholder_provider_finish_is_non_crashing() -> None:
+    from packages.observability.models import PhoenixSettings
+    from packages.observability.noop import PhoenixObservabilityProvider
+
+    provider = PhoenixObservabilityProvider(
+        settings=PhoenixSettings(enabled=True, endpoint="http://localhost:6006")
+    )
+
+    root = provider.start_root_span("test")
+    root.finish()
+
+    assert provider.failure_count == 0
+
+
+def test_observability_settings_compatibility_properties_reflect_phoenix_only_configuration(
+) -> None:
+    from packages.observability.models import ObservabilitySettings, PhoenixSettings
+
+    settings = ObservabilitySettings(
+        phoenix=PhoenixSettings(
+            enabled=True,
+            endpoint="http://localhost:6006",
+            api_key="phoenix-key",
+            project="phoenix-project",
+            environment="staging",
+            trace_inputs=True,
+            trace_outputs=True,
+            redact_sensitive_data=False,
+            tags=("phoenix", "otel"),
+        )
+    )
+
+    assert settings.enabled is True
+    assert settings.api_key == "phoenix-key"
+    assert settings.endpoint == "http://localhost:6006"
+    assert settings.project == "phoenix-project"
+    assert settings.environment == "staging"
+    assert settings.trace_inputs is True
+    assert settings.trace_outputs is True
+    assert settings.redact_sensitive_data is False
+    assert settings.tags == ("phoenix", "otel")

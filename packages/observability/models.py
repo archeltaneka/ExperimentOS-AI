@@ -79,16 +79,7 @@ class ProviderSettings:
     trace_outputs: bool = False
     redact_sensitive_data: bool = True
     tags: tuple[str, ...] = ()
-
-    def validate(self) -> tuple[str, ...]:
-        return ()
-
-
-@dataclass(frozen=True)
-class LangSmithSettings(ProviderSettings):
-    api_key: str | None = None
-    project: str | None = None
-    sampling_rate: float = 0.0
+    sampling_rate: float = 1.0
     strict: bool = False
     always_trace_errors: bool = True
     max_string_length: int = 512
@@ -98,12 +89,8 @@ class LangSmithSettings(ProviderSettings):
 
     def validate(self) -> tuple[str, ...]:
         errors: list[str] = []
-        if self.enabled and not self.api_key:
-            errors.append("LangSmith tracing is enabled but no API key is configured.")
-        if self.enabled and not self.project:
-            errors.append("LangSmith tracing is enabled but no project is configured.")
         if self.sampling_rate < 0.0 or self.sampling_rate > 1.0:
-            errors.append("LangSmith sampling rate must be between 0.0 and 1.0.")
+            errors.append("sampling_rate must be between 0.0 and 1.0.")
         if self.max_string_length < 8:
             errors.append("max_string_length must be at least 8.")
         if self.max_collection_length < 1:
@@ -112,6 +99,23 @@ class LangSmithSettings(ProviderSettings):
             errors.append("max_metadata_depth must be at least 1.")
         if self.max_retrieval_records < 1:
             errors.append("max_retrieval_records must be at least 1.")
+        return tuple(errors)
+
+
+@dataclass(frozen=True)
+class LangSmithSettings(ProviderSettings):
+    api_key: str | None = None
+    project: str | None = None
+    sampling_rate: float = 0.0
+    strict: bool = False
+    always_trace_errors: bool = True
+
+    def validate(self) -> tuple[str, ...]:
+        errors = list(super().validate())
+        if self.enabled and not self.api_key:
+            errors.append("LangSmith tracing is enabled but no API key is configured.")
+        if self.enabled and not self.project:
+            errors.append("LangSmith tracing is enabled but no project is configured.")
         return tuple(errors)
 
 
@@ -125,7 +129,7 @@ class PhoenixSettings(ProviderSettings):
     headers: tuple[tuple[str, str], ...] = ()
 
     def validate(self) -> tuple[str, ...]:
-        errors: list[str] = []
+        errors = list(super().validate())
         if self.enabled and not self.endpoint:
             errors.append("Phoenix tracing is enabled but no endpoint is configured.")
         if self.protocol not in {"http/protobuf", "grpc"}:
@@ -138,69 +142,76 @@ class ObservabilitySettings:
     langsmith: LangSmithSettings = field(default_factory=LangSmithSettings)
     phoenix: PhoenixSettings = field(default_factory=PhoenixSettings)
 
+    def _primary_provider(self) -> ProviderSettings:
+        if self.langsmith.enabled:
+            return self.langsmith
+        if self.phoenix.enabled:
+            return self.phoenix
+        return self.langsmith
+
     @property
     def enabled(self) -> bool:
         return self.langsmith.enabled or self.phoenix.enabled
 
     @property
     def api_key(self) -> str | None:
-        return self.langsmith.api_key
+        return getattr(self._primary_provider(), "api_key", None)
 
     @property
     def endpoint(self) -> str | None:
-        return self.langsmith.endpoint
+        return self._primary_provider().endpoint
 
     @property
     def project(self) -> str | None:
-        return self.langsmith.project
+        return getattr(self._primary_provider(), "project", None)
 
     @property
     def environment(self) -> str:
-        return self.langsmith.environment
+        return self._primary_provider().environment
 
     @property
     def sampling_rate(self) -> float:
-        return self.langsmith.sampling_rate
+        return self._primary_provider().sampling_rate
 
     @property
     def trace_inputs(self) -> bool:
-        return self.langsmith.trace_inputs
+        return self._primary_provider().trace_inputs
 
     @property
     def trace_outputs(self) -> bool:
-        return self.langsmith.trace_outputs
+        return self._primary_provider().trace_outputs
 
     @property
     def redact_sensitive_data(self) -> bool:
-        return self.langsmith.redact_sensitive_data
+        return self._primary_provider().redact_sensitive_data
 
     @property
     def tags(self) -> tuple[str, ...]:
-        return self.langsmith.tags
+        return self._primary_provider().tags
 
     @property
     def strict(self) -> bool:
-        return self.langsmith.strict
+        return self._primary_provider().strict
 
     @property
     def always_trace_errors(self) -> bool:
-        return self.langsmith.always_trace_errors
+        return self._primary_provider().always_trace_errors
 
     @property
     def max_string_length(self) -> int:
-        return self.langsmith.max_string_length
+        return self._primary_provider().max_string_length
 
     @property
     def max_collection_length(self) -> int:
-        return self.langsmith.max_collection_length
+        return self._primary_provider().max_collection_length
 
     @property
     def max_metadata_depth(self) -> int:
-        return self.langsmith.max_metadata_depth
+        return self._primary_provider().max_metadata_depth
 
     @property
     def max_retrieval_records(self) -> int:
-        return self.langsmith.max_retrieval_records
+        return self._primary_provider().max_retrieval_records
 
     def validate(self) -> tuple[str, ...]:
         return self.langsmith.validate()

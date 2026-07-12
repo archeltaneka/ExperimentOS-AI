@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import importlib
-from collections.abc import Callable
+import json
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from packages.observability.base import BaseObservabilityProvider, BufferedSpanRecord
@@ -40,6 +41,7 @@ class PhoenixObservabilityProvider(BaseObservabilityProvider):
             set_global_tracer_provider=False,
         )
         self._tracer = self._tracer_provider.get_tracer("packages.observability.phoenix")
+        self._load_trace_api()
 
     def _emit_root(self, record: BufferedSpanRecord) -> None:
         self._emit_record(record)
@@ -72,10 +74,9 @@ class PhoenixObservabilityProvider(BaseObservabilityProvider):
 
     def _build_output_attributes(self, record: BufferedSpanRecord) -> dict[str, object]:
         outputs = dict(redact_payload(record.outputs, settings=self.settings, is_output=True))
-        return {f"output.{key}": value for key, value in outputs.items()}
+        return _flatten_attribute_mapping("output", outputs)
 
     def _build_status(self, *, is_error: bool) -> object:
-        self._load_trace_api()
         if self._status_class is None or self._status_code is None:
             return "ERROR" if is_error else "OK"
         code = self._status_code.ERROR if is_error else self._status_code.OK
@@ -127,7 +128,7 @@ def _span_kind(run_type: str, name: str) -> str:
 
 
 def _flatten_metadata(metadata: dict[str, object]) -> dict[str, object]:
-    return {f"experimentos.metadata.{key}": value for key, value in metadata.items()}
+    return _flatten_attribute_mapping("experimentos.metadata", metadata)
 
 
 def _sanitize_input_attributes(
@@ -135,7 +136,70 @@ def _sanitize_input_attributes(
     settings: PhoenixSettings,
 ) -> dict[str, object]:
     inputs = dict(redact_payload(record.inputs, settings=settings))
-    return {f"input.{key}": value for key, value in inputs.items()}
+    return _flatten_attribute_mapping("input", inputs)
+
+
+def _flatten_attribute_mapping(prefix: str, values: Mapping[str, object]) -> dict[str, object]:
+    attributes: dict[str, object] = {}
+    for key, value in values.items():
+        normalized_key = str(key).strip()
+        if not normalized_key:
+            continue
+        attributes.update(_flatten_attribute_value(f"{prefix}.{normalized_key}", value))
+    return attributes
+
+
+def _flatten_attribute_value(key: str, value: object) -> dict[str, object]:
+    if value is None:
+        return {}
+    if isinstance(value, Mapping):
+        nested: dict[str, object] = {}
+        for child_key, child_value in value.items():
+            normalized_key = str(child_key).strip()
+            if not normalized_key:
+                continue
+            nested.update(_flatten_attribute_value(f"{key}.{normalized_key}", child_value))
+        if nested:
+            return nested
+        return {key: "{}"}
+    if _is_otel_primitive(value):
+        return {key: value}
+    if _is_non_string_sequence(value):
+        return {key: _normalize_sequence(value)}
+    return {key: str(value)}
+
+
+def _normalize_sequence(value: Sequence[object]) -> object:
+    items = list(value)
+    if not items:
+        return "[]"
+    if _is_homogeneous_primitive_sequence(items):
+        return items
+    return _serialize_attribute_value(items)
+
+
+def _is_otel_primitive(value: object) -> bool:
+    return type(value) in {str, bool, int, float}
+
+
+def _is_non_string_sequence(value: object) -> bool:
+    return isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray))
+
+
+def _is_homogeneous_primitive_sequence(values: list[object]) -> bool:
+    if not values:
+        return False
+    first_type = type(values[0])
+    if first_type not in {str, bool, int, float}:
+        return False
+    return all(type(value) is first_type for value in values)
+
+
+def _serialize_attribute_value(value: object) -> str:
+    try:
+        return json.dumps(value, separators=(",", ":"), sort_keys=True, default=str)
+    except TypeError:
+        return str(value)
 
 
 def _error_message(record: BufferedSpanRecord) -> str | None:

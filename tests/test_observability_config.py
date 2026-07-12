@@ -101,3 +101,43 @@ def test_observability_settings_compatibility_properties_reflect_phoenix_only_co
     assert settings.trace_outputs is True
     assert settings.redact_sensitive_data is False
     assert settings.tags == ("phoenix", "otel")
+
+
+def test_observability_settings_accepts_legacy_top_level_langsmith_constructor_args() -> None:
+    from packages.observability.models import ObservabilitySettings
+
+    settings = ObservabilitySettings(
+        enabled=True,
+        api_key="ls-test-key",
+        endpoint="https://langsmith.example.test",
+        project="experimentos-test",
+        environment="test",
+        sampling_rate=0.5,
+        trace_inputs=True,
+        trace_outputs=False,
+        redact_sensitive_data=False,
+        tags=("api", "test"),
+        strict=True,
+        always_trace_errors=False,
+        max_string_length=256,
+        max_collection_length=7,
+        max_metadata_depth=3,
+        max_retrieval_records=4,
+    )
+
+    assert settings.langsmith.enabled is True
+    assert settings.langsmith.api_key == "ls-test-key"
+    assert settings.langsmith.endpoint == "https://langsmith.example.test"
+    assert settings.langsmith.project == "experimentos-test"
+    assert settings.langsmith.environment == "test"
+    assert settings.langsmith.sampling_rate == 0.5
+    assert settings.langsmith.trace_inputs is True
+    assert settings.langsmith.trace_outputs is False
+    assert settings.langsmith.redact_sensitive_data is False
+    assert settings.langsmith.tags == ("api", "test")
+    assert settings.langsmith.strict is True
+    assert settings.langsmith.always_trace_errors is False
+    assert settings.langsmith.max_string_length == 256
+    assert settings.langsmith.max_collection_length == 7
+    assert settings.langsmith.max_metadata_depth == 3
+    assert settings.langsmith.max_retrieval_records == 4

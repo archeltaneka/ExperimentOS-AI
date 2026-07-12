@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from packages.config.env import load_environment
+
+_UNSET = object()
 
 
 def _env_first(*names: str) -> str | None:
@@ -137,10 +139,62 @@ class PhoenixSettings(ProviderSettings):
         return tuple(errors)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, init=False)
 class ObservabilitySettings:
     langsmith: LangSmithSettings = field(default_factory=LangSmithSettings)
     phoenix: PhoenixSettings = field(default_factory=PhoenixSettings)
+
+    def __init__(
+        self,
+        langsmith: LangSmithSettings | None = None,
+        phoenix: PhoenixSettings | None = None,
+        *,
+        enabled: object = _UNSET,
+        api_key: object = _UNSET,
+        endpoint: object = _UNSET,
+        project: object = _UNSET,
+        environment: object = _UNSET,
+        sampling_rate: object = _UNSET,
+        trace_inputs: object = _UNSET,
+        trace_outputs: object = _UNSET,
+        redact_sensitive_data: object = _UNSET,
+        tags: object = _UNSET,
+        strict: object = _UNSET,
+        always_trace_errors: object = _UNSET,
+        max_string_length: object = _UNSET,
+        max_collection_length: object = _UNSET,
+        max_metadata_depth: object = _UNSET,
+        max_retrieval_records: object = _UNSET,
+    ) -> None:
+        resolved_langsmith = langsmith or LangSmithSettings()
+        resolved_phoenix = phoenix or PhoenixSettings()
+
+        legacy_overrides = {
+            "enabled": enabled,
+            "api_key": api_key,
+            "endpoint": endpoint,
+            "project": project,
+            "environment": environment,
+            "sampling_rate": sampling_rate,
+            "trace_inputs": trace_inputs,
+            "trace_outputs": trace_outputs,
+            "redact_sensitive_data": redact_sensitive_data,
+            "tags": tags,
+            "strict": strict,
+            "always_trace_errors": always_trace_errors,
+            "max_string_length": max_string_length,
+            "max_collection_length": max_collection_length,
+            "max_metadata_depth": max_metadata_depth,
+            "max_retrieval_records": max_retrieval_records,
+        }
+        applied_overrides = {
+            name: value for name, value in legacy_overrides.items() if value is not _UNSET
+        }
+        if applied_overrides:
+            resolved_langsmith = replace(resolved_langsmith, **applied_overrides)
+
+        object.__setattr__(self, "langsmith", resolved_langsmith)
+        object.__setattr__(self, "phoenix", resolved_phoenix)
 
     def _primary_provider(self) -> ProviderSettings:
         if self.langsmith.enabled:
@@ -214,7 +268,14 @@ class ObservabilitySettings:
         return self._primary_provider().max_retrieval_records
 
     def validate(self) -> tuple[str, ...]:
-        return self.langsmith.validate()
+        errors: list[str] = []
+        if self.langsmith.enabled:
+            errors.extend(self.langsmith.validate())
+        if self.phoenix.enabled:
+            errors.extend(self.phoenix.validate())
+        if not self.enabled:
+            errors.extend(self.langsmith.validate())
+        return tuple(errors)
 
 
 def load_observability_settings() -> ObservabilitySettings:

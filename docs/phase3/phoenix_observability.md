@@ -8,6 +8,7 @@ Phoenix tracing is integrated as an optional external observability sink for Exp
 - optional dependency group: `observability`
 - no Phoenix server, cloud account, or credentials required for normal tests
 - internal ExperimentOS traces, metrics, ids, and reports remain authoritative
+- when OpenTelemetry is also enabled, Phoenix export reuses the shared OpenTelemetry provider path
 - LangSmith and Phoenix can run together through the composite provider
 
 ## Architecture
@@ -15,6 +16,8 @@ Phoenix tracing is integrated as an optional external observability sink for Exp
 ExperimentOS internal traces are the source of truth.
 Phoenix receives manually created spans through `packages/observability/`.
 No application service imports Phoenix, OpenTelemetry, or OpenInference types directly.
+Phoenix compatibility now shares the OpenTelemetry exporter foundation instead of introducing a
+second competing SDK path when generic OpenTelemetry export is enabled.
 
 Primary modules:
 
@@ -57,6 +60,7 @@ Phoenix:
 - the existing trace hierarchy is preserved
 - no direct Phoenix calls are scattered through business services
 - no LangChain or LangGraph global instrumentor is initialized
+- OpenTelemetry provider ownership stays singular when Phoenix and generic OTLP are both enabled
 - auto-instrumentation remains a future extension point and is out of scope for this issue
 
 ## Instrumented Surfaces
@@ -208,10 +212,9 @@ Payload controls:
 ## Sampling And Failure Behavior
 
 - tracing is fully off by default
-- sampling is deterministic by ExperimentOS trace id
 - error traces can still be exported when always-trace-errors is enabled
 - provider failures do not break requests by default
-- composite mode isolates failures between LangSmith and Phoenix
+- composite mode isolates failures between LangSmith and the OpenTelemetry or Phoenix export path
 
 ## Diagnostics
 

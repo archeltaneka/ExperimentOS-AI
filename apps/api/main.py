@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import uuid
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Annotated, Protocol
@@ -46,7 +47,13 @@ from packages.retrieval.service import RetrievalService
 
 load_environment()
 
-app = FastAPI(title="ExperimentOS AI API", version="0.1.0")
+@asynccontextmanager
+async def app_lifespan(app: FastAPI):
+    get_observability_provider().instrument_fastapi_app(app)
+    yield
+
+
+app = FastAPI(title="ExperimentOS AI API", version="0.1.0", lifespan=app_lifespan)
 
 
 @lru_cache(maxsize=1)

@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from packages.observability.base import BaseObservabilityProvider, BufferedSpanRecord
-from packages.observability.models import ObservabilitySettings, PhoenixSettings
+from packages.observability.models import (
+    ObservabilitySettings,
+    OpenTelemetrySettings,
+    PhoenixSettings,
+)
 
 
 class _LifecycleProvider(BaseObservabilityProvider):
@@ -145,3 +149,58 @@ def test_cli_smoke_test_uses_selected_provider_and_flushes(capsys, monkeypatch) 
     assert "Smoke test emitted an observability trace for Phoenix." in output
     assert provider.flush_calls == 1
     assert provider.shutdown_calls == 1
+
+
+def test_cli_status_reports_opentelemetry_runtime_details(capsys, monkeypatch) -> None:
+    from packages.observability import cli
+
+    settings = ObservabilitySettings(
+        otel=OpenTelemetrySettings(
+            enabled=True,
+            exporter_type="otlp_http",
+            endpoint="http://127.0.0.1:4318/v1/traces",
+            service_name="experimentos-ai",
+            service_version="0.1.0",
+            trace_enabled=True,
+            metrics_enabled=True,
+            propagation_enabled=True,
+            sampling_rate=0.5,
+        )
+    )
+    monkeypatch.setattr(cli, "load_observability_settings", lambda: settings)
+    monkeypatch.setattr(cli.importlib, "import_module", lambda name: object())
+
+    assert cli.main(["status", "--provider", "opentelemetry"]) == 0
+
+    output = capsys.readouterr().out
+    assert "opentelemetry: enabled=True" in output
+    assert "service_name=experimentos-ai" in output
+    assert "exporter_type=otlp_http" in output
+    assert "endpoint_type=local" in output
+    assert "trace_enabled=True" in output
+    assert "metrics_enabled=True" in output
+    assert "propagation=True" in output
+
+
+def test_cli_dry_run_for_opentelemetry_redacts_sensitive_payloads(capsys, monkeypatch) -> None:
+    from packages.observability import cli
+
+    settings = ObservabilitySettings(
+        otel=OpenTelemetrySettings(
+            enabled=True,
+            exporter_type="console",
+            trace_enabled=True,
+            metrics_enabled=True,
+            service_name="experimentos-ai",
+        )
+    )
+    monkeypatch.setattr(cli, "load_observability_settings", lambda: settings)
+    monkeypatch.setattr(cli.importlib, "import_module", lambda name: object())
+
+    assert cli.main(["dry-run", "--provider", "opentelemetry"]) == 0
+
+    output = capsys.readouterr().out
+    assert "source_of_truth=ExperimentOS internal traces/metrics/reports" in output
+    assert '"authorization": "<redacted>"' in output
+    assert '"prompt": "<omitted>"' in output
+    assert '"retrieved_chunks": "<omitted>"' in output

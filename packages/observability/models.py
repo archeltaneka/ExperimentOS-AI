@@ -72,6 +72,10 @@ def _env_headers(*names: str) -> tuple[tuple[str, str], ...]:
     return tuple(headers)
 
 
+def _env_attributes(*names: str) -> tuple[tuple[str, str], ...]:
+    return _env_headers(*names)
+
+
 @dataclass(frozen=True)
 class ProviderSettings:
     enabled: bool = False
@@ -139,15 +143,59 @@ class PhoenixSettings(ProviderSettings):
         return tuple(errors)
 
 
+@dataclass(frozen=True)
+class OpenTelemetrySettings(ProviderSettings):
+    service_name: str = "experimentos-ai"
+    service_namespace: str = "experimentos"
+    service_version: str = "0.1.0"
+    exporter_type: str = "none"
+    protocol: str = "http/protobuf"
+    headers: tuple[tuple[str, str], ...] = ()
+    resource_attributes: tuple[tuple[str, str], ...] = ()
+    trace_enabled: bool = True
+    metrics_enabled: bool = True
+    propagation_enabled: bool = True
+    instrument_fastapi: bool = True
+    batch_export: bool = True
+    export_timeout_ms: int = 30_000
+    metric_export_interval_ms: int = 60_000
+    excluded_urls: str = "^/health$"
+
+    def validate(self) -> tuple[str, ...]:
+        errors = list(super().validate())
+        if not self.service_name.strip():
+            errors.append("OpenTelemetry service_name must not be empty.")
+        if self.exporter_type not in {"none", "console", "in_memory", "otlp", "otlp_http"}:
+            errors.append(
+                "OpenTelemetry exporter_type must be one of "
+                "'none', 'console', 'in_memory', 'otlp', or 'otlp_http'."
+            )
+        if self.protocol != "http/protobuf":
+            errors.append("OpenTelemetry protocol must be 'http/protobuf' in this issue.")
+        if self.exporter_type in {"otlp", "otlp_http"} and not self.endpoint:
+            errors.append(
+                "OpenTelemetry exporter_type 'otlp_http' requires an exporter endpoint."
+            )
+        if self.export_timeout_ms < 1:
+            errors.append("OpenTelemetry export_timeout_ms must be at least 1.")
+        if self.metric_export_interval_ms < 1:
+            errors.append("OpenTelemetry metric_export_interval_ms must be at least 1.")
+        if not self.trace_enabled and not self.metrics_enabled:
+            errors.append("OpenTelemetry must enable at least one of traces or metrics.")
+        return tuple(errors)
+
+
 @dataclass(frozen=True, init=False)
 class ObservabilitySettings:
     langsmith: LangSmithSettings = field(default_factory=LangSmithSettings)
     phoenix: PhoenixSettings = field(default_factory=PhoenixSettings)
+    otel: OpenTelemetrySettings = field(default_factory=OpenTelemetrySettings)
 
     def __init__(
         self,
         langsmith: LangSmithSettings | None = None,
         phoenix: PhoenixSettings | None = None,
+        otel: OpenTelemetrySettings | None = None,
         *,
         enabled: object = _UNSET,
         api_key: object = _UNSET,
@@ -168,6 +216,7 @@ class ObservabilitySettings:
     ) -> None:
         resolved_langsmith = langsmith or LangSmithSettings()
         resolved_phoenix = phoenix or PhoenixSettings()
+        resolved_otel = otel or OpenTelemetrySettings()
 
         legacy_overrides = {
             "enabled": enabled,
@@ -195,17 +244,20 @@ class ObservabilitySettings:
 
         object.__setattr__(self, "langsmith", resolved_langsmith)
         object.__setattr__(self, "phoenix", resolved_phoenix)
+        object.__setattr__(self, "otel", resolved_otel)
 
     def _primary_provider(self) -> ProviderSettings:
         if self.langsmith.enabled:
             return self.langsmith
+        if self.otel.enabled:
+            return self.otel
         if self.phoenix.enabled:
             return self.phoenix
         return self.langsmith
 
     @property
     def enabled(self) -> bool:
-        return self.langsmith.enabled or self.phoenix.enabled
+        return self.langsmith.enabled or self.otel.enabled or self.phoenix.enabled
 
     @property
     def api_key(self) -> str | None:
@@ -271,6 +323,8 @@ class ObservabilitySettings:
         errors: list[str] = []
         if self.langsmith.enabled:
             errors.extend(self.langsmith.validate())
+        if self.otel.enabled:
+            errors.extend(self.otel.validate())
         if self.phoenix.enabled:
             errors.extend(self.phoenix.validate())
         if not self.enabled:
@@ -355,5 +409,64 @@ def load_observability_settings() -> ObservabilitySettings:
                 10,
                 "EXPERIMENTOS_PHOENIX_MAX_RETRIEVAL_RECORDS",
             ),
+        ),
+        otel=OpenTelemetrySettings(
+            enabled=_env_bool(False, "EXPERIMENTOS_OTEL_ENABLED"),
+            endpoint=_env_first(
+                "EXPERIMENTOS_OTEL_EXPORTER_ENDPOINT",
+                "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+                "OTEL_EXPORTER_OTLP_ENDPOINT",
+            ),
+            environment=_env_first("EXPERIMENTOS_OTEL_ENVIRONMENT", "APP_ENV") or "development",
+            service_name=_env_first("EXPERIMENTOS_OTEL_SERVICE_NAME", "OTEL_SERVICE_NAME")
+            or "experimentos-ai",
+            service_namespace=_env_first(
+                "EXPERIMENTOS_OTEL_SERVICE_NAMESPACE",
+                "OTEL_SERVICE_NAMESPACE",
+            )
+            or "experimentos",
+            service_version=_env_first(
+                "EXPERIMENTOS_OTEL_SERVICE_VERSION",
+                "OTEL_SERVICE_VERSION",
+            )
+            or "0.1.0",
+            exporter_type=(
+                _env_first("EXPERIMENTOS_OTEL_EXPORTER_TYPE") or "none"
+            ).lower(),
+            protocol=_env_first(
+                "EXPERIMENTOS_OTEL_PROTOCOL",
+                "OTEL_EXPORTER_OTLP_PROTOCOL",
+            )
+            or "http/protobuf",
+            headers=_env_headers(
+                "EXPERIMENTOS_OTEL_EXPORTER_HEADERS",
+                "OTEL_EXPORTER_OTLP_HEADERS",
+            ),
+            resource_attributes=_env_attributes(
+                "EXPERIMENTOS_OTEL_RESOURCE_ATTRIBUTES",
+                "OTEL_RESOURCE_ATTRIBUTES",
+            ),
+            trace_enabled=_env_bool(True, "EXPERIMENTOS_OTEL_TRACE_ENABLED"),
+            metrics_enabled=_env_bool(True, "EXPERIMENTOS_OTEL_METRICS_ENABLED"),
+            propagation_enabled=_env_bool(True, "EXPERIMENTOS_OTEL_PROPAGATION_ENABLED"),
+            instrument_fastapi=_env_bool(True, "EXPERIMENTOS_OTEL_INSTRUMENT_FASTAPI"),
+            batch_export=_env_bool(True, "EXPERIMENTOS_OTEL_BATCH_EXPORT"),
+            export_timeout_ms=_env_int(30_000, "EXPERIMENTOS_OTEL_EXPORT_TIMEOUT_MS"),
+            metric_export_interval_ms=_env_int(
+                60_000,
+                "EXPERIMENTOS_OTEL_METRIC_EXPORT_INTERVAL_MS",
+            ),
+            excluded_urls=_env_first("EXPERIMENTOS_OTEL_EXCLUDED_URLS") or "^/health$",
+            sampling_rate=_env_float(1.0, "EXPERIMENTOS_OTEL_SAMPLING_RATE"),
+            trace_inputs=_env_bool(False, "EXPERIMENTOS_OTEL_TRACE_INPUTS"),
+            trace_outputs=_env_bool(False, "EXPERIMENTOS_OTEL_TRACE_OUTPUTS"),
+            redact_sensitive_data=_env_bool(True, "EXPERIMENTOS_OTEL_REDACT_SENSITIVE_DATA"),
+            tags=_env_tags("EXPERIMENTOS_OTEL_TAGS"),
+            strict=_env_bool(False, "EXPERIMENTOS_OTEL_STRICT"),
+            always_trace_errors=_env_bool(True, "EXPERIMENTOS_OTEL_ALWAYS_TRACE_ERRORS"),
+            max_string_length=_env_int(512, "EXPERIMENTOS_OTEL_MAX_STRING_LENGTH"),
+            max_collection_length=_env_int(25, "EXPERIMENTOS_OTEL_MAX_COLLECTION_LENGTH"),
+            max_metadata_depth=_env_int(5, "EXPERIMENTOS_OTEL_MAX_METADATA_DEPTH"),
+            max_retrieval_records=_env_int(10, "EXPERIMENTOS_OTEL_MAX_RETRIEVAL_RECORDS"),
         ),
     )

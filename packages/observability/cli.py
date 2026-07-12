@@ -11,13 +11,14 @@ from packages.observability.factory import (
 )
 from packages.observability.models import (
     ObservabilitySettings,
+    OpenTelemetrySettings,
     ProviderSettings,
     load_observability_settings,
 )
 from packages.observability.redaction import redact_payload
 
 ProviderName = str
-_PROVIDERS = ("all", "langsmith", "phoenix")
+_PROVIDERS = ("all", "langsmith", "phoenix", "opentelemetry")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -142,36 +143,6 @@ def _run_smoke_test(settings: ObservabilitySettings, *, provider: ProviderName) 
     return 0
 
 
-def _status_message(settings: ObservabilitySettings, *, provider: ProviderName) -> str:
-    lines = [
-        "Observability status",
-        "source_of_truth=ExperimentOS internal traces/metrics/reports",
-    ]
-    for provider_name, provider_settings in _iter_selected_provider_settings(
-        settings,
-        provider=provider,
-    ):
-        lines.extend(
-            [
-                (
-                    f"{provider_name}: enabled={provider_settings.enabled} "
-                    f"available={_dependency_available(provider_name)} "
-                    f"endpoint_type={_endpoint_type(provider_name, provider_settings.endpoint)} "
-                    f"project={_project_name(provider_name, provider_settings)} "
-                    f"environment={provider_settings.environment} "
-                    f"sampling_rate={provider_settings.sampling_rate:.2f}"
-                ),
-                (
-                    f"{provider_name}: trace_inputs={provider_settings.trace_inputs} "
-                    f"trace_outputs={provider_settings.trace_outputs} "
-                    f"redaction={provider_settings.redact_sensitive_data} "
-                    f"instrumentation={_instrumentation_status(provider_name)}"
-                ),
-            ]
-        )
-    return "\n".join(lines)
-
-
 def _disabled_validation_message(provider: ProviderName) -> str:
     if provider == "all":
         return (
@@ -193,6 +164,8 @@ def _select_settings(
         return ObservabilitySettings(langsmith=settings.langsmith)
     if provider == "phoenix":
         return ObservabilitySettings(phoenix=settings.phoenix)
+    if provider == "opentelemetry":
+        return ObservabilitySettings(otel=settings.otel)
     return settings
 
 
@@ -205,8 +178,11 @@ def _iter_selected_provider_settings(
         return [("langsmith", settings.langsmith)]
     if provider == "phoenix":
         return [("phoenix", settings.phoenix)]
+    if provider == "opentelemetry":
+        return [("opentelemetry", settings.otel)]
     return [
         ("langsmith", settings.langsmith),
+        ("opentelemetry", settings.otel),
         ("phoenix", settings.phoenix),
     ]
 
@@ -243,6 +219,11 @@ def _validate_selected_settings(settings: ObservabilitySettings, *, provider: Pr
 def _require_provider_dependency(provider_name: str) -> None:
     module_names = {
         "langsmith": ("langsmith", "langsmith.run_trees"),
+        "opentelemetry": (
+            "opentelemetry.trace",
+            "opentelemetry.sdk.trace",
+            "opentelemetry.sdk.metrics",
+        ),
         "phoenix": ("phoenix.otel", "opentelemetry.trace"),
     }[provider_name]
     try:
@@ -258,6 +239,11 @@ def _require_provider_dependency(provider_name: str) -> None:
 def _dependency_available(provider_name: str) -> bool:
     module_names = {
         "langsmith": ("langsmith", "langsmith.run_trees"),
+        "opentelemetry": (
+            "opentelemetry.trace",
+            "opentelemetry.sdk.trace",
+            "opentelemetry.sdk.metrics",
+        ),
         "phoenix": ("phoenix.otel", "opentelemetry.trace"),
     }[provider_name]
     try:
@@ -283,6 +269,8 @@ def _endpoint_type(provider_name: str, endpoint: str | None) -> str:
 
 
 def _project_name(provider_name: str, settings: ProviderSettings) -> str:
+    if provider_name == "opentelemetry" and isinstance(settings, OpenTelemetrySettings):
+        return settings.service_name
     project = getattr(settings, "project", None)
     if project:
         return str(project)
@@ -294,10 +282,14 @@ def _provider_label(provider: ProviderName) -> str:
         return "All selected observability sinks"
     if provider == "langsmith":
         return "LangSmith"
+    if provider == "opentelemetry":
+        return "OpenTelemetry"
     return "Phoenix"
 
 
 def _instrumentation_status(provider_name: str) -> str:
+    if provider_name == "opentelemetry":
+        return "manual ExperimentOS spans plus optional FastAPI transport spans"
     if provider_name == "phoenix":
         return "manual ExperimentOS spans only; auto-instrumentation disabled"
     return "manual ExperimentOS spans only"
@@ -330,6 +322,81 @@ def _dry_run_payloads(settings: ProviderSettings) -> dict[str, object]:
         "input": sample_inputs,
         "output": sample_outputs,
     }
+
+
+def _status_message(settings: ObservabilitySettings, *, provider: ProviderName) -> str:
+    lines = [
+        "Observability status",
+        "source_of_truth=ExperimentOS internal traces/metrics/reports",
+    ]
+    for provider_name, provider_settings in _iter_selected_provider_settings(
+        settings,
+        provider=provider,
+    ):
+        detail_lines = [
+            (
+                f"{provider_name}: enabled={provider_settings.enabled} "
+                f"available={_dependency_available(provider_name)} "
+                f"endpoint_type={_endpoint_type(provider_name, provider_settings.endpoint)} "
+                f"project={_project_name(provider_name, provider_settings)} "
+                f"environment={provider_settings.environment} "
+                f"sampling_rate={provider_settings.sampling_rate:.2f}"
+            ),
+            (
+                f"{provider_name}: trace_inputs={provider_settings.trace_inputs} "
+                f"trace_outputs={provider_settings.trace_outputs} "
+                f"redaction={provider_settings.redact_sensitive_data} "
+                f"instrumentation={_instrumentation_status(provider_name)}"
+            ),
+        ]
+        if provider_name == "opentelemetry" and isinstance(
+            provider_settings, OpenTelemetrySettings
+        ):
+            detail_lines.extend(
+                [
+                    (
+                        f"{provider_name}: service_name={provider_settings.service_name} "
+                        f"service_version={provider_settings.service_version} "
+                        f"exporter_type={provider_settings.exporter_type} "
+                        f"protocol={provider_settings.protocol}"
+                    ),
+                    (
+                        f"{provider_name}: trace_enabled={provider_settings.trace_enabled} "
+                        f"metrics_enabled={provider_settings.metrics_enabled} "
+                        f"propagation={provider_settings.propagation_enabled} "
+                        f"batch_export={provider_settings.batch_export}"
+                    ),
+                    (
+                        f"{provider_name}: processor_type="
+                        f"{'BatchSpanProcessor' if provider_settings.batch_export else 'SimpleSpanProcessor'} "  # noqa: E501
+                        f"metric_reader_type={_metric_reader_type(provider_settings)} "
+                        f"init_state={_otel_init_state(provider_settings)}"
+                    ),
+                ]
+            )
+        lines.extend(detail_lines)
+    return "\n".join(lines)
+
+
+def _metric_reader_type(settings: OpenTelemetrySettings) -> str:
+    exporter_type = settings.exporter_type
+    if exporter_type == "in_memory":
+        return "InMemoryMetricReader"
+    if exporter_type in {"otlp", "otlp_http", "console"}:
+        return "PeriodicExportingMetricReader"
+    return "none"
+
+
+def _otel_init_state(settings: OpenTelemetrySettings) -> str:
+    if not settings.enabled:
+        return "disabled"
+    if (
+        settings.exporter_type == "none"
+        and not settings.trace_enabled
+        and not settings.metrics_enabled
+    ):
+        return "invalid"
+    return "configured"
 
 
 if __name__ == "__main__":

@@ -247,3 +247,23 @@ def test_resolve_provider_returns_shared_composite_for_multiple_enabled_sinks(
     provider = factory.resolve_observability_provider()
 
     assert isinstance(provider, CompositeObservabilityProvider)
+
+
+def test_resolve_provider_reuses_shared_opentelemetry_path_for_phoenix_and_otel(
+    monkeypatch,
+) -> None:
+    from packages.observability import factory
+    from packages.observability.opentelemetry import OpenTelemetryObservabilityProvider
+
+    monkeypatch.setenv("EXPERIMENTOS_OTEL_ENABLED", "true")
+    monkeypatch.setenv("EXPERIMENTOS_OTEL_EXPORTER_TYPE", "console")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_ENABLED", "true")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_PROJECT", "experimentos-local")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_ENDPOINT", "http://127.0.0.1:6006/v1/traces")
+    monkeypatch.setattr(factory, "_require_opentelemetry_dependencies", lambda: None)
+    monkeypatch.setattr(factory, "_require_phoenix_dependencies", lambda: None)
+
+    provider = factory.resolve_observability_provider()
+
+    assert isinstance(provider, OpenTelemetryObservabilityProvider)
+    assert provider.phoenix_settings is not None

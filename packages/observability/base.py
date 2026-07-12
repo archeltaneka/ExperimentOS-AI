@@ -220,6 +220,9 @@ class BaseObservabilityProvider:
     def shutdown(self) -> bool:
         return True
 
+    def instrument_fastapi_app(self, app: object) -> bool:
+        return False
+
 
 def _sample_trace(trace_id: str | None, sampling_rate: float) -> bool:
     if sampling_rate >= 1.0:

@@ -8,11 +8,13 @@ from packages.observability.langsmith import LangSmithObservabilityProvider
 from packages.observability.models import (
     LangSmithSettings,
     ObservabilitySettings,
+    OpenTelemetrySettings,
     PhoenixSettings,
     ProviderSettings,
     load_observability_settings,
 )
 from packages.observability.noop import NoOpObservabilityProvider
+from packages.observability.opentelemetry import OpenTelemetryObservabilityProvider
 from packages.observability.phoenix import PhoenixObservabilityProvider
 
 __all__ = [
@@ -22,6 +24,8 @@ __all__ = [
     "LangSmithObservabilityProvider",
     "LangSmithSettings",
     "NoOpObservabilityProvider",
+    "OpenTelemetryObservabilityProvider",
+    "OpenTelemetrySettings",
     "ObservabilityConfigurationError",
     "ObservabilitySettings",
     "PhoenixObservabilityProvider",

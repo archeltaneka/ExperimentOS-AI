@@ -1,6 +1,6 @@
 # Phase 3 Reliability Baseline Report
 
-- Generated at: 2026-07-12T07:25:40.093829Z
+- Generated at: 2026-07-12T08:28:17.322698Z
 - Overall status: fail
 
 ## Evaluation Status
@@ -31,7 +31,7 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 50.0 ms
+- Average retrieval latency: 49.4 ms
 - Average LLM latency: 0.0 ms
 
 ### Missing Metrics

@@ -141,3 +141,35 @@ def test_observability_settings_accepts_legacy_top_level_langsmith_constructor_a
     assert settings.langsmith.max_collection_length == 7
     assert settings.langsmith.max_metadata_depth == 3
     assert settings.langsmith.max_retrieval_records == 4
+
+
+def test_resolve_provider_returns_shared_composite_for_multiple_enabled_sinks(
+    monkeypatch,
+) -> None:
+    from packages.observability import factory
+    from packages.observability.base import BaseObservabilityProvider
+    from packages.observability.composite import CompositeObservabilityProvider
+    from packages.observability.models import ProviderSettings
+
+    monkeypatch.setenv("EXPERIMENTOS_LANGSMITH_ENABLED", "true")
+    monkeypatch.setenv("EXPERIMENTOS_LANGSMITH_API_KEY", "ls-test-key")
+    monkeypatch.setenv("EXPERIMENTOS_LANGSMITH_PROJECT", "experimentos-test")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_ENABLED", "true")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_PROJECT", "experimentos-local")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_ENDPOINT", "http://127.0.0.1:6006")
+
+    class StubProvider(BaseObservabilityProvider):
+        def __init__(self) -> None:
+            super().__init__(ProviderSettings(enabled=True))
+
+        def _emit_root(self, record) -> None:
+            return None
+
+    monkeypatch.setattr(factory, "_require_langsmith_dependency", lambda: None)
+    monkeypatch.setattr(factory, "_require_phoenix_dependencies", lambda: None)
+    monkeypatch.setattr(factory, "LangSmithObservabilityProvider", lambda settings: StubProvider())
+    monkeypatch.setattr(factory, "PhoenixObservabilityProvider", lambda settings: StubProvider())
+
+    provider = factory.resolve_observability_provider()
+
+    assert isinstance(provider, CompositeObservabilityProvider)

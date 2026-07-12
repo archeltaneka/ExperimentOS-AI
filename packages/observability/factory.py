@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 
 from packages.observability.base import BaseObservabilityProvider
+from packages.observability.composite import CompositeObservabilityProvider
 from packages.observability.langsmith import LangSmithObservabilityProvider
 from packages.observability.models import (
     LangSmithSettings,
@@ -10,11 +11,7 @@ from packages.observability.models import (
     PhoenixSettings,
     load_observability_settings,
 )
-from packages.observability.noop import (
-    CompositeObservabilityProvider,
-    NoOpObservabilityProvider,
-    PhoenixObservabilityProvider,
-)
+from packages.observability.noop import NoOpObservabilityProvider, PhoenixObservabilityProvider
 
 
 class ObservabilityConfigurationError(RuntimeError):

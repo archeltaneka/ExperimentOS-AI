@@ -81,4 +81,58 @@ tests/test_observability_composite.py::test_composite_provider_isolates_provider
 
 ## Any issues or concerns
 
-- [`packages/observability/factory.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/factory.py) still imports `CompositeObservabilityProvider` from `packages.observability.noop`. I did not change that because it is outside the files assigned for this task. The new shared composite implementation is exported from `packages.observability`, and a later task should align the factory import path if the Phoenix export path needs it.
+- None after the fix pass below.
+
+## Fix pass
+
+### What I implemented
+
+- Updated [`packages/observability/factory.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/factory.py) to import `CompositeObservabilityProvider` from [`packages/observability/composite.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/composite.py), so `resolve_observability_provider()` now constructs the shared implementation on the real production resolver path.
+- Removed the obsolete placeholder `CompositeObservabilityProvider` from [`packages/observability/noop.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/noop.py) to avoid duplicate behavior and misleading imports.
+- Added resolver-path coverage in [`tests/test_observability_config.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_observability_config.py) that proves multiple enabled sinks return the shared composite implementation.
+
+### TDD evidence
+
+#### RED
+
+Command:
+
+```powershell
+uv run pytest tests/test_observability_redaction.py tests/test_observability_composite.py tests/test_observability_config.py -v
+```
+
+Relevant output:
+
+```text
+tests/test_observability_config.py::test_resolve_provider_returns_shared_composite_for_multiple_enabled_sinks FAILED
+
+E       AssertionError: assert False
+E        +  where False = isinstance(<packages.observability.noop.CompositeObservabilityProvider object ...>, <class 'packages.observability.composite.CompositeObservabilityProvider'>)
+```
+
+#### GREEN
+
+Command:
+
+```powershell
+uv run pytest tests/test_observability_redaction.py tests/test_observability_composite.py tests/test_observability_config.py -v
+uv run ruff check .
+```
+
+Relevant output:
+
+```text
+12 passed in 0.27s
+All checks passed!
+```
+
+### Files changed in fix pass
+
+- [`packages/observability/factory.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/factory.py)
+- [`packages/observability/noop.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/noop.py)
+- [`tests/test_observability_config.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_observability_config.py)
+
+### Self-review findings
+
+- The resolver now has a single composite implementation path, which removes the mismatch between test-only shared plumbing and production provider construction.
+- The new config test stubs provider construction and dependency checks so it verifies the factory decision in isolation rather than LangSmith/Phoenix client internals.

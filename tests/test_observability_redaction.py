@@ -55,3 +55,44 @@ def test_redaction_omits_prompt_and_response_content_by_default() -> None:
         "answer": "<omitted>"
     }
 
+
+def test_redact_payload_omits_prompt_output_and_retrieval_content_by_default() -> None:
+    from packages.observability.models import PhoenixSettings
+    from packages.observability.redaction import redact_payload
+
+    settings = PhoenixSettings(enabled=True, project="experimentos-local")
+
+    payload = {
+        "prompt": "full prompt body",
+        "answer": "full answer body",
+        "retrieved_chunks": [{"chunk_text": "sensitive body"}],
+        "prompt_id": "rag.answer",
+        "prompt_version": "3",
+    }
+
+    redacted = redact_payload(payload, settings=settings)
+
+    assert redacted["prompt"] == "<omitted>"
+    assert redacted["answer"] == "<omitted>"
+    assert redacted["retrieved_chunks"] == "<omitted>"
+    assert redacted["prompt_id"] == "rag.answer"
+
+
+def test_redact_payload_limits_metadata_depth_and_collection_length() -> None:
+    from packages.observability.models import PhoenixSettings
+    from packages.observability.redaction import redact_payload
+
+    settings = PhoenixSettings(
+        enabled=True,
+        project="experimentos-local",
+        max_collection_length=2,
+        max_metadata_depth=2,
+    )
+
+    payload = {"outer": {"inner": {"too_deep": {"secret": "value"}}}, "tags": [1, 2, 3]}
+
+    redacted = redact_payload(payload, settings=settings)
+
+    assert redacted["outer"]["inner"] == "<max-depth>"
+    assert redacted["tags"] == [1, 2, "<truncated>"]
+

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
 from packages.evals.agent_e2e import AgentE2EEvaluator, build_default_agent_e2e_cases
@@ -47,6 +48,8 @@ def build_evaluation_run(args: argparse.Namespace):
                 "sample_count": result.summary.sample_count,
                 "default_agent_workflow_coverage": result.summary.default_agent_workflow_coverage,
                 "legacy_fallback_coverage": result.summary.legacy_fallback_coverage,
+                "execution_mode": "evaluation",
+                "environment": os.environ.get("APP_ENV", "local"),
             }
         )
         root_span.finish(

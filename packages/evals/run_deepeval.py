@@ -262,7 +262,11 @@ def build_deepeval_report(args: argparse.Namespace) -> DeepEvalEvaluationReport:
         "evaluation.deepeval",
         trace_id=f"evaluation.deepeval:{args.dataset}",
         inputs={"dataset": str(args.dataset), "metrics": list(args.metrics), "mode": args.mode},
-        metadata={"surface": "evaluation.deepeval"},
+        metadata={
+            "surface": "evaluation.deepeval",
+            "execution_mode": "evaluation",
+            "environment": os.environ.get("APP_ENV", "local"),
+        },
         tags=("evaluation", "deepeval"),
     )
     with root_span.activate():
@@ -411,6 +415,8 @@ def _build_deepeval_report(
                 "response_case_count": report.response_case_count,
                 "workflow_case_count": report.workflow_case_count,
                 "metrics_executed": list(report.metrics_executed),
+                "judge_provider": args.judge_provider,
+                "judge_mode": args.mode,
             }
         )
         current_span.finish(

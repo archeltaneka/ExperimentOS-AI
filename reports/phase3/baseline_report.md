@@ -1,7 +1,7 @@
 # Phase 3 Reliability Baseline Report
 
-- Generated at: 2026-07-10T12:14:55.283873Z
-- Overall status: pass
+- Generated at: 2026-07-12T07:25:40.093829Z
+- Overall status: fail
 
 ## Evaluation Status
 
@@ -10,14 +10,14 @@
 | RAG Evaluation | pass | completed without sample errors | data\eval\qa_dataset.json | `reports\evaluation.md` |
 | Agent Workflow Evaluation | pass | all deterministic workflow cases passed | data\eval\agent_dataset.json | `reports\agent_evaluation.md` |
 | Agent Workflow E2E Evaluation | pass | all deterministic API cases passed | n/a | `reports\agent_e2e_evaluation.md` |
-| Factuality Evaluation | pass | factuality policy passed | data\eval\qa_dataset.json, data\eval\agent_dataset.json | `reports\phase3\factuality_report.md` |
+| Factuality Evaluation | warning | Some cases could not be parsed conservatively into explicit claims. | data\eval\qa_dataset.json, data\eval\agent_dataset.json | `reports\phase3\factuality_report.md` |
 
 ## Commands Run
 
-- `uv run python -m packages.evals.run --dataset data\eval\qa_dataset.json --output reports\evaluation.md --top-k 5 --embedding-provider ollama --embedding-model nomic-embed-text --llm-provider ollama --llm-model qwen2.5:7b`
+- `uv run python -m packages.evals.run --dataset data\eval\qa_dataset.json --output reports\evaluation.md --top-k 5 --embedding-provider fake --embedding-model fake --llm-provider mock --llm-model mock`
 - `uv run python -m packages.evals.run_agent --dataset data\eval\agent_dataset.json --output reports\agent_evaluation.md`
 - `uv run python -m packages.evals.run_agent_e2e --output reports\agent_e2e_evaluation.md`
-- `uv run python -m packages.evals.run_factuality --dataset data\eval\qa_dataset.json --agent-dataset data\eval\agent_dataset.json --target all --mode offline --output reports\phase3\factuality_report.md --json-output reports\phase3\factuality_report.json --top-k 5 --embedding-provider ollama --embedding-model nomic-embed-text --llm-provider ollama --llm-model qwen2.5:7b`
+- `uv run python -m packages.evals.run_factuality --dataset data\eval\qa_dataset.json --agent-dataset data\eval\agent_dataset.json --target all --mode offline --output reports\phase3\factuality_report.md --json-output reports\phase3\factuality_report.json --top-k 5 --embedding-provider fake --llm-provider mock`
 
 ## RAG Evaluation
 
@@ -31,8 +31,8 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 583.8 ms
-- Average LLM latency: 4265.3 ms
+- Average retrieval latency: 50.0 ms
+- Average LLM latency: 0.0 ms
 
 ### Missing Metrics
 
@@ -104,15 +104,15 @@
 
 ## Factuality Evaluation
 
-- Status: pass
-- Reason: factuality policy passed
+- Status: warning
+- Reason: Some cases could not be parsed conservatively into explicit claims.
 - Dataset: data\eval\qa_dataset.json, data\eval\agent_dataset.json
 - Report path: `reports\phase3\factuality_report.md`
 
 ### Key Metrics
 
 - Cases evaluated: 70
-- Policy result: pass
+- Policy result: warning
 - Critical findings: 0
 - Citation failures: 0
 - Unsupported numerical claims: 0
@@ -132,7 +132,7 @@
 ## Known Gaps
 
 - No threshold policy exists yet for turning these metrics into CI gates.
-- LangSmith tracing is optional, disabled by default, and not yet integrated with production alerting.
+- LangSmith and Phoenix tracing are optional external sinks; internal ExperimentOS traces remain authoritative and production alerting is still absent.
 - Cross-service distributed tracing remains out of scope.
 
 ## Registered Prompts

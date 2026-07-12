@@ -1,15 +1,16 @@
 ## Phase 3 Reliability Baseline
 
-Phase 3 now includes a repository-owned factuality evaluation layer and an optional LangSmith
-observability adapter in addition to the existing RAG, agent workflow, prompt regression, RAGAS,
-and DeepEval surfaces.
+Phase 3 now includes a repository-owned factuality evaluation layer plus optional LangSmith and
+Phoenix observability adapters in addition to the existing RAG, agent workflow, prompt
+regression, RAGAS, and DeepEval surfaces.
 
-### LangSmith Observability Status
+### Observability Status
 
-- integration status: available
+- integration status: LangSmith and Phoenix available behind the shared provider interface
 - runtime requirement: optional dependency group plus explicit enablement
 - default mode: disabled
 - authoritative traces: ExperimentOS-owned state, metrics, and reports remain primary
+- provider architecture: NoOp, LangSmith, Phoenix, or Composite
 - instrumented surfaces:
   - `/ask`
   - `agent_workflow`
@@ -32,12 +33,14 @@ and DeepEval surfaces.
   - retrieved document chunks by default
 - sampling support: deterministic per trace id
 - correlation support: `experimentos_trace_id` is attached to exported traces
+- Phoenix mode: manual ExperimentOS spans only, with no LangChain or LangGraph auto-instrumentor
 
 Remaining observability gaps:
 
 - production alerting is not implemented
 - distributed tracing across multiple services is still out of scope
 - CI threshold policies remain separate from tracing
+- Phoenix datasets, experiments, annotations, and hosted evaluations remain out of scope
 
 ### Factuality Evaluation
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import uuid
 from pathlib import Path
 from typing import Any
@@ -218,6 +219,9 @@ async def _build_evaluation_run(args: argparse.Namespace, observability_provider
                 "question_count": result.summary.question_count,
                 "retrieval_success_rate": result.summary.retrieval_success_rate,
                 "surface": "evaluation.rag",
+                "execution_mode": "evaluation",
+                "environment": os.environ.get("APP_ENV", "local"),
+                "workflow_mode": "legacy_rag",
             }
             current_span = observability_provider.current_span()
             if current_span is not None:

@@ -113,6 +113,7 @@ class RetrievalService:
                 "metadata_filter": dict(metadata_filter or {}),
             },
             metadata={
+                "surface": "retrieval",
                 "embedding_provider": self.embedding_provider.__class__.__name__,
                 "embedding_model": str(getattr(self.embedding_provider, "model", "unknown")),
             },
@@ -178,6 +179,7 @@ class RetrievalService:
         average_similarity = (
             sum(result.similarity_score for result in results) / len(results) if results else 0.0
         )
+        total_latency_ms = embedding_time_ms + vector_search_time_ms
         self.last_metrics = RetrievalMetrics(
             embedding_time_ms=embedding_time_ms,
             vector_search_time_ms=vector_search_time_ms,
@@ -191,12 +193,18 @@ class RetrievalService:
                 "average_similarity": average_similarity,
                 "embedding_time_ms": embedding_time_ms,
                 "vector_search_time_ms": vector_search_time_ms,
+                "retrieval_latency_ms": total_latency_ms,
+                "result_experiment_ids": sorted({result.experiment_id for result in results}),
+                "result_document_ids": [result.document_id for result in results],
+                "score_max": max((result.similarity_score for result in results), default=0.0),
+                "score_min": min((result.similarity_score for result in results), default=0.0),
             }
         )
         span.finish(
             outputs={
                 "retrieved_chunks": len(results),
                 "average_similarity": average_similarity,
+                "retrieval_latency_ms": total_latency_ms,
                 "status": "completed",
             }
         )

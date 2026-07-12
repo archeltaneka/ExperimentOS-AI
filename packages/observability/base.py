@@ -6,7 +6,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from packages.observability.models import ObservabilitySettings
+from packages.observability.models import ObservabilitySettings, ProviderSettings
 
 _CURRENT_SPAN: ContextVar[BufferedSpan | None] = ContextVar(
     "observability_current_span",
@@ -109,7 +109,7 @@ class BufferedSpan:
 
 
 class BaseObservabilityProvider:
-    def __init__(self, settings: ObservabilitySettings) -> None:
+    def __init__(self, settings: ObservabilitySettings | ProviderSettings) -> None:
         self.settings = settings
         self._failure_count = 0
 
@@ -213,6 +213,12 @@ class BaseObservabilityProvider:
 
     def _emit_root(self, record: BufferedSpanRecord) -> None:
         raise NotImplementedError
+
+    def force_flush(self) -> bool:
+        return True
+
+    def shutdown(self) -> bool:
+        return True
 
 
 def _sample_trace(trace_id: str | None, sampling_rate: float) -> bool:

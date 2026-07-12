@@ -221,6 +221,8 @@ async def ask(
             "surface": "ask",
             "endpoint": "/ask",
             "ask_mode": ask_mode,
+            "request_id": request_id,
+            "execution_mode": "api",
             "environment": os.environ.get("APP_ENV", "local"),
             "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         },

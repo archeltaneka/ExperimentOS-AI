@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
 from packages.evals.agent_dataset import (
@@ -71,6 +72,9 @@ def _build_evaluation_run(args: argparse.Namespace, observability_provider):
                 "sample_count": result.summary.sample_count,
                 "workflow_success_rate": result.summary.workflow_success_rate,
                 "surface": "evaluation.agent",
+                "execution_mode": "evaluation",
+                "environment": os.environ.get("APP_ENV", "local"),
+                "workflow_mode": "agent_workflow",
             }
         )
         current_span.finish(

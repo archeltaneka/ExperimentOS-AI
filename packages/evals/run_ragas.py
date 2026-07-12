@@ -203,7 +203,12 @@ def build_ragas_report(args: argparse.Namespace) -> RagasEvaluationReport:
         "evaluation.ragas",
         trace_id=f"evaluation.ragas:{args.dataset}",
         inputs={"dataset": str(args.dataset), "metrics": list(args.metrics)},
-        metadata={"surface": "evaluation.ragas"},
+        metadata={
+            "surface": "evaluation.ragas",
+            "execution_mode": "evaluation",
+            "environment": os.environ.get("APP_ENV", "local"),
+            "workflow_mode": "legacy_rag",
+        },
         tags=("evaluation", "ragas"),
     )
     with root_span.activate():
@@ -381,6 +386,8 @@ def _build_ragas_report(args: argparse.Namespace, observability_provider) -> Rag
                 "dataset_size": report.dataset_size,
                 "eligible_sample_count": report.eligible_sample_count,
                 "metrics_run": list(report.metrics_run),
+                "judge_llm_provider": args.judge_llm_provider,
+                "judge_embedding_provider": args.judge_embedding_provider,
             }
         )
         current_span.finish(

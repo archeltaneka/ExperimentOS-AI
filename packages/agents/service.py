@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from packages.agents.business_impact_agent import BusinessImpactAgent
 from packages.agents.decision_agent import DecisionAgent
 from packages.agents.executive_summary_agent import ExecutiveSummaryAgent
@@ -86,6 +88,9 @@ class AgentWorkflowService:
             "surface": "agent_workflow",
             "workflow": initial_state["run_metadata"]["workflow"],
             "experimentos_trace_id": initial_state["run_metadata"]["run_id"],
+            "workflow_execution_id": initial_state["run_metadata"]["run_id"],
+            "execution_mode": "workflow",
+            "environment": os.environ.get("APP_ENV", "local"),
             "top_k": top_k,
             "experiment_id": experiment_id or "",
         }

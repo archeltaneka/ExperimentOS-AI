@@ -79,6 +79,63 @@ def test_phoenix_provider_exports_manual_span_tree_with_safe_attributes() -> Non
     assert all("hide me" not in str(attrs) for _name, attrs in exported)
 
 
+def test_phoenix_provider_preserves_manual_span_tags_in_exported_attributes() -> None:
+    from packages.observability.models import PhoenixSettings
+    from packages.observability.phoenix import PhoenixObservabilityProvider
+
+    exported: list[tuple[str, dict[str, object]]] = []
+
+    class FakeSpan:
+        def __init__(self, name: str, attributes: dict[str, object]) -> None:
+            self.name = name
+            self.attributes = attributes
+
+        def __enter__(self):
+            exported.append((self.name, dict(self.attributes)))
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def set_status(self, status) -> None:
+            return None
+
+        def record_exception(self, exc: Exception) -> None:
+            return None
+
+        def set_attributes(self, attributes: dict[str, object]) -> None:
+            exported.append((self.name, dict(attributes)))
+
+    class FakeTracer:
+        def start_as_current_span(
+            self,
+            name: str,
+            attributes: dict[str, object] | None = None,
+        ):
+            return FakeSpan(name, attributes or {})
+
+    provider = PhoenixObservabilityProvider(
+        settings=PhoenixSettings(
+            enabled=True,
+            project="experimentos-local",
+            endpoint="http://127.0.0.1:6006",
+            sampling_rate=1.0,
+        ),
+        tracer_provider=object(),
+        tracer=FakeTracer(),
+    )
+
+    root = provider.start_root_span(
+        "ask_request",
+        trace_id="req-tags",
+        metadata={"surface": "ask"},
+        tags=("ask", "api"),
+    )
+    root.finish(outputs={"status": "ok"})
+
+    assert any(attrs.get("experimentos.tags") == ["ask", "api"] for _name, attrs in exported)
+
+
 def test_phoenix_provider_flattens_or_serializes_nested_attributes_to_otel_safe_values() -> None:
     from packages.observability.models import PhoenixSettings
     from packages.observability.phoenix import PhoenixObservabilityProvider

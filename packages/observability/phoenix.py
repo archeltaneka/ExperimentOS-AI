@@ -68,6 +68,7 @@ class PhoenixObservabilityProvider(BaseObservabilityProvider):
             "experimentos.trace_id": record.trace_id or "",
             "experimentos.span.name": record.name,
             "experimentos.surface": str(metadata.get("surface", "")),
+            **_tag_attributes(record.tags),
             **_flatten_metadata(metadata),
             **_sanitize_input_attributes(record, self.settings),
         }
@@ -138,6 +139,15 @@ def _sanitize_input_attributes(
 ) -> dict[str, object]:
     inputs = dict(redact_payload(record.inputs, settings=settings))
     return _flatten_attribute_mapping("input", inputs)
+
+
+def _tag_attributes(tags: Sequence[str]) -> dict[str, object]:
+    if not tags:
+        return {}
+    normalized = [str(tag) for tag in tags if str(tag).strip()]
+    if not normalized:
+        return {}
+    return {"experimentos.tags": normalized}
 
 
 def _flatten_attribute_mapping(prefix: str, values: Mapping[str, object]) -> dict[str, object]:

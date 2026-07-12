@@ -238,3 +238,30 @@ def test_phoenix_provider_force_flush_and_shutdown_use_tracer_provider() -> None
     assert provider.shutdown() is True
     assert fake.flushed is True
     assert fake.stopped is True
+
+
+def test_phoenix_provider_shutdown_treats_none_return_as_success() -> None:
+    from packages.observability.models import PhoenixSettings
+    from packages.observability.phoenix import PhoenixObservabilityProvider
+
+    class FakeTracerProvider:
+        def __init__(self) -> None:
+            self.shutdown_calls = 0
+
+        def shutdown(self) -> None:
+            self.shutdown_calls += 1
+            return None
+
+    fake = FakeTracerProvider()
+    provider = PhoenixObservabilityProvider(
+        settings=PhoenixSettings(
+            enabled=True,
+            project="experimentos-local",
+            endpoint="http://127.0.0.1:6006",
+        ),
+        tracer_provider=fake,
+        tracer=object(),
+    )
+
+    assert provider.shutdown() is True
+    assert fake.shutdown_calls == 1

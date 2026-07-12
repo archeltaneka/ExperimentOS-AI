@@ -103,9 +103,10 @@ class PhoenixObservabilityProvider(BaseObservabilityProvider):
             return True
         try:
             try:
-                return bool(hook(**kwargs))
+                result = hook(**kwargs)
             except TypeError:
-                return bool(hook())
+                result = hook()
+            return result is not False
         except Exception:
             self.increment_failure()
             if self.settings.strict:

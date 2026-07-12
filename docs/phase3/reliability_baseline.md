@@ -1,16 +1,28 @@
 ## Phase 3 Reliability Baseline
 
-Phase 3 now includes a repository-owned factuality evaluation layer plus optional LangSmith and
-Phoenix observability adapters in addition to the existing RAG, agent workflow, prompt
-regression, RAGAS, and DeepEval surfaces.
+Phase 3 now includes a repository-owned factuality evaluation layer plus optional LangSmith,
+Phoenix, and OpenTelemetry observability adapters in addition to the existing RAG, agent
+workflow, prompt regression, RAGAS, and DeepEval surfaces.
 
 ### Observability Status
 
-- integration status: LangSmith and Phoenix available behind the shared provider interface
+- integration status: LangSmith, Phoenix, and OpenTelemetry available behind the shared provider
+  interface
 - runtime requirement: optional dependency group plus explicit enablement
 - default mode: disabled
 - authoritative traces: ExperimentOS-owned state, metrics, and reports remain primary
-- provider architecture: NoOp, LangSmith, Phoenix, or Composite
+- provider architecture: NoOp, LangSmith, OpenTelemetry, Phoenix compatibility path, or Composite
+- OpenTelemetry role: vendor-neutral propagation plus trace and metric export
+- Phoenix reuse status: Phoenix OTLP export now shares the OpenTelemetry provider when both are
+  enabled
+- traces enabled: yes when explicitly enabled
+- metrics enabled: yes when explicitly enabled
+- propagation support: W3C Trace Context for FastAPI when enabled
+- exporter support:
+  - none
+  - console
+  - in-memory
+  - OTLP HTTP
 - instrumented surfaces:
   - `/ask`
   - `agent_workflow`
@@ -31,9 +43,13 @@ regression, RAGAS, and DeepEval surfaces.
   - prompt bodies by default
   - response bodies by default
   - retrieved document chunks by default
-- sampling support: deterministic per trace id
+- sampling support: OpenTelemetry provider-owned tracing plus preserved ExperimentOS correlation ids
 - correlation support: `experimentos_trace_id` is attached to exported traces
+- cardinality controls: request ids, trace ids, prompt text, and raw user text are excluded from
+  metric dimensions
 - Phoenix mode: manual ExperimentOS spans only, with no LangChain or LangGraph auto-instrumentor
+- LangSmith coexistence: independent sink, same internal logical spans, same ExperimentOS
+  correlation metadata
 
 Remaining observability gaps:
 
@@ -41,6 +57,7 @@ Remaining observability gaps:
 - distributed tracing across multiple services is still out of scope
 - CI threshold policies remain separate from tracing
 - Phoenix datasets, experiments, annotations, and hosted evaluations remain out of scope
+- no log export is implemented
 
 ### Factuality Evaluation
 

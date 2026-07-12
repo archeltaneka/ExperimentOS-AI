@@ -8,11 +8,15 @@ from packages.observability.langsmith import LangSmithObservabilityProvider
 from packages.observability.models import (
     LangSmithSettings,
     ObservabilitySettings,
+    OpenTelemetrySettings,
     PhoenixSettings,
     load_observability_settings,
 )
 from packages.observability.noop import NoOpObservabilityProvider
-from packages.observability.phoenix import PhoenixObservabilityProvider
+from packages.observability.opentelemetry import (
+    OpenTelemetryObservabilityProvider,
+    PhoenixObservabilityProvider,
+)
 
 
 class ObservabilityConfigurationError(RuntimeError):
@@ -30,7 +34,19 @@ def resolve_observability_provider(
         _require_langsmith_dependency()
         providers.append(LangSmithObservabilityProvider(settings=resolved.langsmith))
 
-    if resolved.phoenix.enabled:
+    if resolved.otel.enabled:
+        _validate_otel(resolved.otel)
+        _require_opentelemetry_dependencies()
+        if resolved.phoenix.enabled:
+            _validate_phoenix(resolved.phoenix)
+            _require_phoenix_dependencies()
+        providers.append(
+            OpenTelemetryObservabilityProvider(
+                settings=resolved.otel,
+                phoenix_settings=resolved.phoenix if resolved.phoenix.enabled else None,
+            )
+        )
+    elif resolved.phoenix.enabled:
         _validate_phoenix(resolved.phoenix)
         _require_phoenix_dependencies()
         providers.append(PhoenixObservabilityProvider(settings=resolved.phoenix))
@@ -54,6 +70,12 @@ def _validate_phoenix(settings: PhoenixSettings) -> None:
         raise ObservabilityConfigurationError(" ".join(errors))
 
 
+def _validate_otel(settings: OpenTelemetrySettings) -> None:
+    errors = settings.validate()
+    if errors:
+        raise ObservabilityConfigurationError(" ".join(errors))
+
+
 def _require_langsmith_dependency() -> None:
     try:
         importlib.import_module("langsmith")
@@ -71,4 +93,17 @@ def _require_phoenix_dependencies() -> None:
     except ModuleNotFoundError as exc:
         raise ObservabilityConfigurationError(
             "Phoenix tracing is enabled but the optional Phoenix dependencies are not installed."
+        ) from exc
+
+
+def _require_opentelemetry_dependencies() -> None:
+    try:
+        importlib.import_module("opentelemetry.trace")
+        importlib.import_module("opentelemetry.sdk.trace")
+        importlib.import_module("opentelemetry.sdk.metrics")
+        importlib.import_module("opentelemetry.exporter.otlp.proto.http.trace_exporter")
+    except ModuleNotFoundError as exc:
+        raise ObservabilityConfigurationError(
+            "OpenTelemetry is enabled but the optional OpenTelemetry dependencies are "
+            "not installed."
         ) from exc

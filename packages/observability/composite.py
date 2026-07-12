@@ -33,6 +33,18 @@ class CompositeObservabilityProvider(BaseObservabilityProvider):
     def shutdown(self) -> bool:
         return self._run_lifecycle_hook("shutdown")
 
+    def instrument_fastapi_app(self, app: object) -> bool:
+        instrumented = False
+        for provider in self.providers:
+            try:
+                instrumented = provider.instrument_fastapi_app(app) or instrumented
+            except Exception:
+                provider.increment_failure()
+                self.increment_failure()
+                if provider.settings.strict:
+                    raise
+        return instrumented
+
     def _run_lifecycle_hook(self, hook_name: str) -> bool:
         success = True
         for provider in self.providers:

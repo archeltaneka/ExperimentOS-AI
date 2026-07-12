@@ -11,7 +11,8 @@ from packages.observability.models import (
     PhoenixSettings,
     load_observability_settings,
 )
-from packages.observability.noop import NoOpObservabilityProvider, PhoenixObservabilityProvider
+from packages.observability.noop import NoOpObservabilityProvider
+from packages.observability.phoenix import PhoenixObservabilityProvider
 
 
 class ObservabilityConfigurationError(RuntimeError):
@@ -65,8 +66,8 @@ def _require_langsmith_dependency() -> None:
 
 def _require_phoenix_dependencies() -> None:
     try:
-        importlib.import_module("phoenix")
-        importlib.import_module("opentelemetry")
+        importlib.import_module("phoenix.otel")
+        importlib.import_module("opentelemetry.trace")
     except ModuleNotFoundError as exc:
         raise ObservabilityConfigurationError(
             "Phoenix tracing is enabled but the optional Phoenix dependencies are not installed."

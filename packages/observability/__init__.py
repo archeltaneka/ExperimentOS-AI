@@ -12,7 +12,8 @@ from packages.observability.models import (
     ProviderSettings,
     load_observability_settings,
 )
-from packages.observability.noop import NoOpObservabilityProvider, PhoenixObservabilityProvider
+from packages.observability.noop import NoOpObservabilityProvider
+from packages.observability.phoenix import PhoenixObservabilityProvider
 
 __all__ = [
     "BaseObservabilityProvider",

@@ -9,18 +9,39 @@ class CompositeObservabilityProvider(BaseObservabilityProvider):
         super().__init__(ProviderSettings(enabled=True, sampling_rate=1.0))
         self.providers = providers
 
-    def _emit_root(self, record: BufferedSpanRecord) -> None:
+    def _finish_root(self, record: BufferedSpanRecord) -> None:
         for provider in self.providers:
+            before_failures = provider.failure_count
             try:
-                provider._emit_root(record)
+                provider._finish_root(record)
             except Exception:
-                provider.increment_failure()
+                if provider.failure_count == before_failures:
+                    provider.increment_failure()
                 self.increment_failure()
                 if provider.settings.strict:
                     raise
+            else:
+                for _ in range(provider.failure_count - before_failures):
+                    self.increment_failure()
+
+    def _emit_root(self, record: BufferedSpanRecord) -> None:
+        return None
 
     def force_flush(self) -> bool:
-        return all(provider.force_flush() for provider in self.providers)
+        return self._run_lifecycle_hook("force_flush")
 
     def shutdown(self) -> bool:
-        return all(provider.shutdown() for provider in self.providers)
+        return self._run_lifecycle_hook("shutdown")
+
+    def _run_lifecycle_hook(self, hook_name: str) -> bool:
+        success = True
+        for provider in self.providers:
+            hook = getattr(provider, hook_name)
+            try:
+                if not hook():
+                    success = False
+            except Exception:
+                provider.increment_failure()
+                self.increment_failure()
+                success = False
+        return success

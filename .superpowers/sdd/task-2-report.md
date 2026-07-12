@@ -136,3 +136,61 @@ All checks passed!
 
 - The resolver now has a single composite implementation path, which removes the mismatch between test-only shared plumbing and production provider construction.
 - The new config test stubs provider construction and dependency checks so it verifies the factory decision in isolation rather than LangSmith/Phoenix client internals.
+
+## Second fix pass
+
+### What I implemented
+
+- Updated [`tests/test_observability_composite.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_observability_composite.py) with failing coverage for:
+  - per-provider emit gating in a composite setup, proving provider sampling is still respected
+  - non-short-circuit `force_flush()` and `shutdown()` behavior across multiple providers, including exception isolation
+- Updated [`packages/observability/composite.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/composite.py) so root completion delegates through each child provider's own `_finish_root()` path instead of force-calling `_emit_root()`.
+- Reworked composite `force_flush()` and `shutdown()` to evaluate every provider, convert exceptions into isolated provider/composite failures, and return an aggregate boolean result.
+- Preserved the resolver wiring fix from the previous pass; the shared composite remains the implementation returned by [`packages/observability/factory.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/factory.py).
+
+### TDD evidence
+
+#### RED
+
+Command:
+
+```powershell
+uv run pytest tests/test_observability_redaction.py tests/test_observability_composite.py tests/test_observability_config.py -v
+```
+
+Relevant output:
+
+```text
+tests/test_observability_composite.py::test_composite_provider_preserves_per_provider_emit_gating FAILED
+tests/test_observability_composite.py::test_composite_provider_force_flush_and_shutdown_do_not_short_circuit FAILED
+
+E       AssertionError: assert [BufferedSpanRecord(...)] == []
+E       assert 0 == 1
+E        +  where 0 = <...FailingLifecycleProvider object ...>.flush_calls
+```
+
+#### GREEN
+
+Command:
+
+```powershell
+uv run pytest tests/test_observability_redaction.py tests/test_observability_composite.py tests/test_observability_config.py -v
+uv run ruff check .
+```
+
+Relevant output:
+
+```text
+14 passed in 0.27s
+All checks passed!
+```
+
+### Files changed in second fix pass
+
+- [`packages/observability/composite.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/composite.py)
+- [`tests/test_observability_composite.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_observability_composite.py)
+
+### Self-review findings
+
+- Delegating through `provider._finish_root()` restores each provider's own `_should_emit()` sampling and emit policy instead of bypassing it at the composite layer.
+- Lifecycle aggregation now keeps going after `False` returns and exceptions, which gives a complete flush/shutdown attempt across all configured providers while still surfacing failure via the boolean result and failure counters.

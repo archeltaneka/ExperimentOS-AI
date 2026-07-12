@@ -2,9 +2,19 @@ from __future__ import annotations
 
 import importlib
 
+from packages.observability.base import BaseObservabilityProvider
 from packages.observability.langsmith import LangSmithObservabilityProvider
-from packages.observability.models import ObservabilitySettings, load_observability_settings
-from packages.observability.noop import NoOpObservabilityProvider
+from packages.observability.models import (
+    LangSmithSettings,
+    ObservabilitySettings,
+    PhoenixSettings,
+    load_observability_settings,
+)
+from packages.observability.noop import (
+    CompositeObservabilityProvider,
+    NoOpObservabilityProvider,
+    PhoenixObservabilityProvider,
+)
 
 
 class ObservabilityConfigurationError(RuntimeError):
@@ -13,13 +23,40 @@ class ObservabilityConfigurationError(RuntimeError):
 
 def resolve_observability_provider(
     settings: ObservabilitySettings | None = None,
-):
+) -> BaseObservabilityProvider:
     resolved = settings or load_observability_settings()
-    if not resolved.enabled:
+    providers: list[BaseObservabilityProvider] = []
+
+    if resolved.langsmith.enabled:
+        _validate_langsmith(resolved.langsmith)
+        _require_langsmith_dependency()
+        providers.append(LangSmithObservabilityProvider(settings=resolved.langsmith))
+
+    if resolved.phoenix.enabled:
+        _validate_phoenix(resolved.phoenix)
+        _require_phoenix_dependencies()
+        providers.append(PhoenixObservabilityProvider(settings=resolved.phoenix))
+
+    if not providers:
         return NoOpObservabilityProvider()
-    errors = resolved.validate()
+    if len(providers) == 1:
+        return providers[0]
+    return CompositeObservabilityProvider(providers)
+
+
+def _validate_langsmith(settings: LangSmithSettings) -> None:
+    errors = settings.validate()
     if errors:
         raise ObservabilityConfigurationError(" ".join(errors))
+
+
+def _validate_phoenix(settings: PhoenixSettings) -> None:
+    errors = settings.validate()
+    if errors:
+        raise ObservabilityConfigurationError(" ".join(errors))
+
+
+def _require_langsmith_dependency() -> None:
     try:
         importlib.import_module("langsmith")
         importlib.import_module("langsmith.run_trees")
@@ -27,4 +64,13 @@ def resolve_observability_provider(
         raise ObservabilityConfigurationError(
             "LangSmith tracing is enabled but the optional 'langsmith' dependency is not installed."
         ) from exc
-    return LangSmithObservabilityProvider(settings=resolved)
+
+
+def _require_phoenix_dependencies() -> None:
+    try:
+        importlib.import_module("phoenix")
+        importlib.import_module("opentelemetry")
+    except ModuleNotFoundError as exc:
+        raise ObservabilityConfigurationError(
+            "Phoenix tracing is enabled but the optional Phoenix dependencies are not installed."
+        ) from exc

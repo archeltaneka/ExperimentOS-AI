@@ -46,8 +46,8 @@ E2E_MISSING_METRICS = (
 BASELINE_KNOWN_GAPS = (
     "No threshold policy exists yet for turning these metrics into CI gates.",
     (
-        "LangSmith tracing is optional, disabled by default, and not yet integrated "
-        "with production alerting."
+        "LangSmith and Phoenix tracing are optional external sinks; internal "
+        "ExperimentOS traces remain authoritative and production alerting is still absent."
     ),
     "Cross-service distributed tracing remains out of scope.",
 )

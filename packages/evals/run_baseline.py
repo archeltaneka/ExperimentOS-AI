@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -127,7 +128,11 @@ async def run_phase3_baseline(args: argparse.Namespace) -> str:
         "evaluation.baseline",
         trace_id=f"evaluation.baseline:{args.output}",
         inputs={"output": str(args.output)},
-        metadata={"surface": "evaluation.baseline"},
+        metadata={
+            "surface": "evaluation.baseline",
+            "execution_mode": "evaluation",
+            "environment": os.environ.get("APP_ENV", "local"),
+        },
         tags=("evaluation", "baseline"),
     )
     with root_span.activate():

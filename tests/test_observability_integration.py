@@ -121,6 +121,8 @@ def test_agent_workflow_service_emits_workflow_and_node_spans() -> None:
     assert workflow_record.name == "workflow"
     assert workflow_record.metadata["surface"] == "agent_workflow"
     assert workflow_record.metadata["experimentos_trace_id"] == state["run_metadata"]["run_id"]
+    assert workflow_record.metadata["workflow_execution_id"] == state["run_metadata"]["run_id"]
+    assert workflow_record.metadata["execution_mode"] == "workflow"
     assert "planner" in child_names
     assert "retrieval" in child_names
 
@@ -157,6 +159,8 @@ def test_question_answering_service_emits_prompt_and_generation_metadata() -> No
     child_names = [child.name for child in root.children]
     prompt_span = next(child for child in root.children if child.name == "prompt_rendering")
     assert root.name == "legacy_rag"
+    assert root.metadata["workflow_mode"] == "legacy_rag"
+    assert root.metadata["execution_mode"] == "workflow"
     assert "prompt_rendering" in child_names
     assert "llm_generation" in child_names
     assert prompt_span.metadata["prompt_id"] == "rag.answer"
@@ -191,6 +195,38 @@ def test_ask_route_continues_when_observability_export_fails() -> None:
     assert provider.failure_count == 1
 
 
+def test_ask_route_emits_request_id_and_api_execution_metadata() -> None:
+    provider = RecordingObservabilityProvider()
+    response_payload = AskResponse(
+        answer="Rollout is supported.",
+        citations=[],
+        retrieved_chunks=[],
+        retrieval_metrics={"embedding_time_ms": 0.0, "vector_search_time_ms": 0.0},
+        llm_metrics={"model": "mock", "input_tokens": 0, "output_tokens": 0, "latency_ms": 0.0},
+    )
+    app.dependency_overrides[get_observability_provider] = lambda: provider
+    app.dependency_overrides[get_ask_service] = lambda: StubAskService(response_payload)
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/ask",
+            json={
+                "question": "What happened?",
+                "experiment_id": "00000000-0000-0000-0000-000000000123",
+                "top_k": 3,
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert provider.records
+    root = provider.records[0]
+    assert root.name == "ask_request"
+    assert root.metadata["execution_mode"] == "api"
+    assert root.metadata["request_id"] == root.trace_id
+
+
 def test_agent_evaluation_run_emits_evaluation_root(monkeypatch) -> None:
     from packages.evals import run_agent
 
@@ -203,3 +239,4 @@ def test_agent_evaluation_run_emits_evaluation_root(monkeypatch) -> None:
     assert result.summary.sample_count > 0
     assert provider.records
     assert provider.records[0].name == "evaluation.agent"
+    assert provider.records[0].metadata["execution_mode"] == "evaluation"

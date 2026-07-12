@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from dataclasses import replace
 from pathlib import Path
 
@@ -163,6 +164,8 @@ async def _build_prompt_regression_report(args: argparse.Namespace, observabilit
                         "prompt_id": args.prompt_id,
                         "dataset": str(args.dataset),
                         "legacy_case_count": len(legacy_cases),
+                        "execution_mode": "evaluation",
+                        "environment": os.environ.get("APP_ENV", "local"),
                     }
                 )
                 current_span.finish(

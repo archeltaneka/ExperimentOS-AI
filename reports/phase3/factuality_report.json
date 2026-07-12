@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-10T12:14:55.276302Z",
+  "generated_at": "2026-07-12T07:25:40.083791Z",
   "target": "all",
   "mode": "offline",
   "dataset_identifiers": [
@@ -23,9 +23,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -45,9 +47,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -67,9 +71,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -89,9 +95,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -111,9 +119,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -122,7 +132,34 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [],
+      "findings": [
+        {
+          "category": "answer_generated_when_abstention_was_expected",
+          "severity": "high",
+          "claim": "Mock evaluation answer generated from retrieved context.",
+          "evidence": [
+            "# Adaptive Payment Method Recommendation",
+            "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 68 control users and 78 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature."
+          ],
+          "source_ids": [
+            "Adaptive Payment Method Recommendation",
+            "Adaptive Payment Method Recommendation",
+            "Adaptive Payment Method Recommendation",
+            "Adaptive Payment Method Recommendation",
+            "Adaptive Payment Method Recommendation"
+          ],
+          "confidence": 0.95,
+          "detector": "deterministic.abstention",
+          "passed": false,
+          "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+          "expected_evidence": [],
+          "structured_field_ids": [],
+          "normalized_claim": "mock evaluation answer generated from retrieved context.",
+          "classification": "true_positive",
+          "remediation_status": "strengthen_abstention_behavior",
+          "metadata": {}
+        }
+      ],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -133,9 +170,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -155,9 +194,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -177,9 +218,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -199,9 +242,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -221,9 +266,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -243,9 +290,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -254,7 +303,34 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [],
+      "findings": [
+        {
+          "category": "answer_generated_when_abstention_was_expected",
+          "severity": "high",
+          "claim": "Mock evaluation answer generated from retrieved context.",
+          "evidence": [
+            "## Risks\n\nThe main risk is that the treatment effect may not generalize when exposed to broader traffic. Higher quality imagery can slow weaker devices and harm low-bandwidth users. There is also risk in over-reading aggregate lift when one country, platform, or segment contributes disproportionately. Tracking issues can create false confidence if they align with the treatment experience. Finally, product teams may be tempted to ship from the headline metric alone, but each report is written to require a business decision that balances upside, guardrails, and data quality.",
+            "## Recommendation\n\nThe recommendation is: Roll out while enforcing image byte-size budgets and CDN pre-warming. The business decision recorded in metadata is: Roll out globally except markets with pending image CDN latency regressions. This recommendation reflects both the metric movement and the imperfections observed during the run. For future ExperimentOS milestones, this report should be useful as a retrieval target because it contains explicit reasoning, named metrics, known caveats, and a decision that is more nuanced than simply winning or losing."
+          ],
+          "source_ids": [
+            "Hotel Gallery Image Quality Boost",
+            "Hotel Gallery Image Quality Boost",
+            "Hotel Gallery Image Quality Boost",
+            "Hotel Gallery Image Quality Boost",
+            "Hotel Gallery Image Quality Boost"
+          ],
+          "confidence": 0.95,
+          "detector": "deterministic.abstention",
+          "passed": false,
+          "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+          "expected_evidence": [],
+          "structured_field_ids": [],
+          "normalized_claim": "mock evaluation answer generated from retrieved context.",
+          "classification": "true_positive",
+          "remediation_status": "strengthen_abstention_behavior",
+          "metadata": {}
+        }
+      ],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -265,9 +341,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -287,9 +365,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -309,9 +389,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -331,9 +413,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -353,9 +437,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -375,9 +461,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -386,7 +474,34 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [],
+      "findings": [
+        {
+          "category": "answer_generated_when_abstention_was_expected",
+          "severity": "high",
+          "claim": "Mock evaluation answer generated from retrieved context.",
+          "evidence": [
+            "# Intent-Aware Search Ranking",
+            "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 80 control users and 70 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature."
+          ],
+          "source_ids": [
+            "Intent-Aware Search Ranking",
+            "Intent-Aware Search Ranking",
+            "Intent-Aware Search Ranking",
+            "Intent-Aware Search Ranking",
+            "Intent-Aware Search Ranking"
+          ],
+          "confidence": 0.95,
+          "detector": "deterministic.abstention",
+          "passed": false,
+          "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+          "expected_evidence": [],
+          "structured_field_ids": [],
+          "normalized_claim": "mock evaluation answer generated from retrieved context.",
+          "classification": "true_positive",
+          "remediation_status": "strengthen_abstention_behavior",
+          "metadata": {}
+        }
+      ],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -397,9 +512,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -419,9 +536,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -441,9 +560,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -463,9 +584,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -485,9 +608,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -507,9 +632,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -518,7 +645,34 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [],
+      "findings": [
+        {
+          "category": "answer_generated_when_abstention_was_expected",
+          "severity": "high",
+          "claim": "Mock evaluation answer generated from retrieved context.",
+          "evidence": [
+            "# One-Page Checkout UX",
+            "## Results\n\nControl recorded 0.5840 on checkout_completion_rate, while treatment recorded 0.6380. The absolute movement was 0.0540, and the supporting metrics were directionally consistent with the business read. The result was not interpreted mechanically from a single p-value. Instead, the team considered the size of the effect, product risk, operational cost, and segment behaviour. Metric rows in `metrics.csv` include sample size, the primary metric, and secondary diagnostics for both variants. Event rows in `events.csv` allow future retrieval tests to connect aggregate conclusions back to realistic user-level evidence."
+          ],
+          "source_ids": [
+            "One-Page Checkout UX",
+            "One-Page Checkout UX",
+            "One-Page Checkout UX",
+            "One-Page Checkout UX",
+            "One-Page Checkout UX"
+          ],
+          "confidence": 0.95,
+          "detector": "deterministic.abstention",
+          "passed": false,
+          "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+          "expected_evidence": [],
+          "structured_field_ids": [],
+          "normalized_claim": "mock evaluation answer generated from retrieved context.",
+          "classification": "true_positive",
+          "remediation_status": "strengthen_abstention_behavior",
+          "metadata": {}
+        }
+      ],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -529,9 +683,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -551,9 +707,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -573,9 +731,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -595,9 +755,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -617,9 +779,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -639,9 +803,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -650,7 +816,34 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [],
+      "findings": [
+        {
+          "category": "answer_generated_when_abstention_was_expected",
+          "severity": "high",
+          "claim": "Mock evaluation answer generated from retrieved context.",
+          "evidence": [
+            "## Recommendation\n\nThe recommendation is: Stop current variant and retest with clearer savings copy but no deeper discounts. The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. This recommendation reflects both the metric movement and the imperfections observed during the run. For future ExperimentOS milestones, this report should be useful as a retrieval target because it contains explicit reasoning, named metrics, known caveats, and a decision that is more nuanced than simply winning or losing.",
+            "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 76 control users and 74 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature."
+          ],
+          "source_ids": [
+            "Transparent Discount Price Framing",
+            "Transparent Discount Price Framing",
+            "Transparent Discount Price Framing",
+            "Transparent Discount Price Framing",
+            "Transparent Discount Price Framing"
+          ],
+          "confidence": 0.95,
+          "detector": "deterministic.abstention",
+          "passed": false,
+          "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+          "expected_evidence": [],
+          "structured_field_ids": [],
+          "normalized_claim": "mock evaluation answer generated from retrieved context.",
+          "classification": "true_positive",
+          "remediation_status": "strengthen_abstention_behavior",
+          "metadata": {}
+        }
+      ],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -661,9 +854,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -683,9 +878,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -705,9 +902,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -727,9 +926,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -749,9 +950,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -771,9 +974,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -782,7 +987,34 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [],
+      "findings": [
+        {
+          "category": "answer_generated_when_abstention_was_expected",
+          "severity": "high",
+          "claim": "Mock evaluation answer generated from retrieved context.",
+          "evidence": [
+            "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Sample ratio mismatch from delayed exclusion of dormant loyalty accounts.; Novelty effect in the first three days increased progress-panel clicks.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement.",
+            "## Risks\n\nThe main risk is that the treatment effect may not generalize when exposed to broader traffic. Too many loyalty prompts can make transactional surfaces feel promotional. There is also risk in over-reading aggregate lift when one country, platform, or segment contributes disproportionately. Tracking issues can create false confidence if they align with the treatment experience. Finally, product teams may be tempted to ship from the headline metric alone, but each report is written to require a business decision that balances upside, guardrails, and data quality."
+          ],
+          "source_ids": [
+            "Loyalty Tier Progress Nudges",
+            "Loyalty Tier Progress Nudges",
+            "Loyalty Tier Progress Nudges",
+            "Loyalty Tier Progress Nudges",
+            "Loyalty Tier Progress Nudges"
+          ],
+          "confidence": 0.95,
+          "detector": "deterministic.abstention",
+          "passed": false,
+          "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+          "expected_evidence": [],
+          "structured_field_ids": [],
+          "normalized_claim": "mock evaluation answer generated from retrieved context.",
+          "classification": "true_positive",
+          "remediation_status": "strengthen_abstention_behavior",
+          "metadata": {}
+        }
+      ],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -793,9 +1025,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -815,9 +1049,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -837,9 +1073,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -859,9 +1097,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -881,9 +1121,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -903,9 +1145,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -914,7 +1158,34 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [],
+      "findings": [
+        {
+          "category": "answer_generated_when_abstention_was_expected",
+          "severity": "high",
+          "claim": "Mock evaluation answer generated from retrieved context.",
+          "evidence": [
+            "## Results\n\nControl recorded 0.0730 on reactivation_purchase_rate, while treatment recorded 0.0910. The absolute movement was 0.0180, and the supporting metrics were directionally consistent with the business read. The result was not interpreted mechanically from a single p-value. Instead, the team considered the size of the effect, product risk, operational cost, and segment behaviour. Metric rows in `metrics.csv` include sample size, the primary metric, and secondary diagnostics for both variants. Event rows in `events.csv` allow future retrieval tests to connect aggregate conclusions back to realistic user-level evidence.",
+            "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 73 control users and 77 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature."
+          ],
+          "source_ids": [
+            "CRM Back-in-Stock Notification Timing",
+            "CRM Back-in-Stock Notification Timing",
+            "CRM Back-in-Stock Notification Timing",
+            "CRM Back-in-Stock Notification Timing",
+            "CRM Back-in-Stock Notification Timing"
+          ],
+          "confidence": 0.95,
+          "detector": "deterministic.abstention",
+          "passed": false,
+          "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+          "expected_evidence": [],
+          "structured_field_ids": [],
+          "normalized_claim": "mock evaluation answer generated from retrieved context.",
+          "classification": "true_positive",
+          "remediation_status": "strengthen_abstention_behavior",
+          "metadata": {}
+        }
+      ],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -925,9 +1196,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -947,9 +1220,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -969,9 +1244,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -991,9 +1268,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1013,9 +1292,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1035,9 +1316,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1046,7 +1329,34 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [],
+      "findings": [
+        {
+          "category": "answer_generated_when_abstention_was_expected",
+          "severity": "high",
+          "claim": "Mock evaluation answer generated from retrieved context.",
+          "evidence": [
+            "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 79 control users and 79 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature.",
+            "# Personalized Similar-Item Recommendations"
+          ],
+          "source_ids": [
+            "Personalized Similar-Item Recommendations",
+            "Personalized Similar-Item Recommendations",
+            "Personalized Similar-Item Recommendations",
+            "Personalized Similar-Item Recommendations",
+            "Personalized Similar-Item Recommendations"
+          ],
+          "confidence": 0.95,
+          "detector": "deterministic.abstention",
+          "passed": false,
+          "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+          "expected_evidence": [],
+          "structured_field_ids": [],
+          "normalized_claim": "mock evaluation answer generated from retrieved context.",
+          "classification": "true_positive",
+          "remediation_status": "strengthen_abstention_behavior",
+          "metadata": {}
+        }
+      ],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -1057,9 +1367,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1079,9 +1391,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1101,9 +1415,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1123,9 +1439,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1145,9 +1463,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1167,9 +1487,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1178,7 +1500,34 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [],
+      "findings": [
+        {
+          "category": "answer_generated_when_abstention_was_expected",
+          "severity": "high",
+          "claim": "Mock evaluation answer generated from retrieved context.",
+          "evidence": [
+            "# Dynamic Search Filter Shortcuts",
+            "## Background\n\nDynamic Search Filter Shortcuts was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was search filters, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Noah Brown from Search Experience. Traffic ran from 2026-06-03 through 2026-06-17, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report."
+          ],
+          "source_ids": [
+            "Dynamic Search Filter Shortcuts",
+            "Dynamic Search Filter Shortcuts",
+            "Dynamic Search Filter Shortcuts",
+            "Dynamic Search Filter Shortcuts",
+            "Dynamic Search Filter Shortcuts"
+          ],
+          "confidence": 0.95,
+          "detector": "deterministic.abstention",
+          "passed": false,
+          "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+          "expected_evidence": [],
+          "structured_field_ids": [],
+          "normalized_claim": "mock evaluation answer generated from retrieved context.",
+          "classification": "true_positive",
+          "remediation_status": "strengthen_abstention_behavior",
+          "metadata": {}
+        }
+      ],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -1189,9 +1538,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1211,9 +1562,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1233,9 +1586,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1255,9 +1610,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1277,9 +1634,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1299,9 +1658,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1310,7 +1671,34 @@
       "dataset_identifier": "data\\eval\\qa_dataset.json",
       "category": "insufficient_evidence",
       "surface": "legacy_rag",
-      "findings": [],
+      "findings": [
+        {
+          "category": "answer_generated_when_abstention_was_expected",
+          "severity": "high",
+          "claim": "Mock evaluation answer generated from retrieved context.",
+          "evidence": [
+            "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 77 control users and 73 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature.",
+            "## Future Work\n\nFuture work should include a larger follow-up test or monitored rollout, depending on the decision status. The next analysis should check whether the primary metric movement persists after novelty effects fade, whether country-specific behaviour remains stable, and whether any tracking caveats have been fixed. Future ingestion work can parse this report, link it to metadata and CSV evidence, and produce embeddings or chunks that support questions such as why the decision was made, which imperfections mattered, and what follow-up work was recommended."
+          ],
+          "source_ids": [
+            "Premium Subscription Trial Offer",
+            "Premium Subscription Trial Offer",
+            "Premium Subscription Trial Offer",
+            "Premium Subscription Trial Offer",
+            "Premium Subscription Trial Offer"
+          ],
+          "confidence": 0.95,
+          "detector": "deterministic.abstention",
+          "passed": false,
+          "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+          "expected_evidence": [],
+          "structured_field_ids": [],
+          "normalized_claim": "mock evaluation answer generated from retrieved context.",
+          "classification": "true_positive",
+          "remediation_status": "strengthen_abstention_behavior",
+          "metadata": {}
+        }
+      ],
       "checks_executed": [
         "citation_presence",
         "citation_support",
@@ -1321,9 +1709,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1343,9 +1733,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -1365,9 +1757,11 @@
         "structured_consistency",
         "evidence_coverage"
       ],
-      "skipped_checks": [],
+      "skipped_checks": [
+        "claim_extraction"
+      ],
       "citation_coverage": 1.0,
-      "unparsed_claims": false,
+      "unparsed_claims": true,
       "prompt_id": "rag.answer",
       "prompt_version": "1"
     },
@@ -5191,10 +5585,16 @@
     }
   ],
   "policy_result": {
-    "status": "pass",
-    "reasons": [],
-    "finding_counts": {},
-    "severity_counts": {}
+    "status": "warning",
+    "reasons": [
+      "Some cases could not be parsed conservatively into explicit claims."
+    ],
+    "finding_counts": {
+      "answer_generated_when_abstention_was_expected": 10
+    },
+    "severity_counts": {
+      "high": 10
+    }
   },
   "judge_provider": "none",
   "judge_model": null,
@@ -5209,20 +5609,278 @@
     "evidence_coverage"
   ],
   "checks_skipped": [
+    "claim_extraction",
     "judge:deepeval:faithfulness",
     "judge:deepeval:hallucination",
     "judge:deepeval:contextual_relevancy",
     "judge:deepeval:answer_relevancy"
   ],
-  "findings_by_category": {},
-  "findings_by_severity": {},
+  "findings_by_category": {
+    "answer_generated_when_abstention_was_expected": 10
+  },
+  "findings_by_severity": {
+    "high": 10
+  },
   "case_status_counts": {
-    "pass": 70
+    "fail": 10,
+    "pass": 8,
+    "warning": 52
   },
   "limitations": [
     "Deterministic checks are conservative and do not prove universal factual correctness.",
     "Numerical and workflow assertions remain deterministic; judge metrics are optional.",
     "Offline mode never invokes a live provider."
   ],
-  "findings_detail": []
+  "findings_detail": [
+    {
+      "case_id": "exp-001-insufficient-evidence",
+      "surface": "legacy_rag",
+      "category": "answer_generated_when_abstention_was_expected",
+      "severity": "high",
+      "detector": "deterministic.abstention",
+      "exact_flagged_claim": "Mock evaluation answer generated from retrieved context.",
+      "normalized_claim": "mock evaluation answer generated from retrieved context.",
+      "expected_evidence": [],
+      "available_evidence": [
+        "# Adaptive Payment Method Recommendation",
+        "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 68 control users and 78 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature."
+      ],
+      "source_ids": [
+        "Adaptive Payment Method Recommendation",
+        "Adaptive Payment Method Recommendation",
+        "Adaptive Payment Method Recommendation",
+        "Adaptive Payment Method Recommendation",
+        "Adaptive Payment Method Recommendation"
+      ],
+      "structured_field_ids": [],
+      "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+      "classification": "true_positive",
+      "remediation_status": "strengthen_abstention_behavior"
+    },
+    {
+      "case_id": "exp-002-insufficient-evidence",
+      "surface": "legacy_rag",
+      "category": "answer_generated_when_abstention_was_expected",
+      "severity": "high",
+      "detector": "deterministic.abstention",
+      "exact_flagged_claim": "Mock evaluation answer generated from retrieved context.",
+      "normalized_claim": "mock evaluation answer generated from retrieved context.",
+      "expected_evidence": [],
+      "available_evidence": [
+        "## Risks\n\nThe main risk is that the treatment effect may not generalize when exposed to broader traffic. Higher quality imagery can slow weaker devices and harm low-bandwidth users. There is also risk in over-reading aggregate lift when one country, platform, or segment contributes disproportionately. Tracking issues can create false confidence if they align with the treatment experience. Finally, product teams may be tempted to ship from the headline metric alone, but each report is written to require a business decision that balances upside, guardrails, and data quality.",
+        "## Recommendation\n\nThe recommendation is: Roll out while enforcing image byte-size budgets and CDN pre-warming. The business decision recorded in metadata is: Roll out globally except markets with pending image CDN latency regressions. This recommendation reflects both the metric movement and the imperfections observed during the run. For future ExperimentOS milestones, this report should be useful as a retrieval target because it contains explicit reasoning, named metrics, known caveats, and a decision that is more nuanced than simply winning or losing."
+      ],
+      "source_ids": [
+        "Hotel Gallery Image Quality Boost",
+        "Hotel Gallery Image Quality Boost",
+        "Hotel Gallery Image Quality Boost",
+        "Hotel Gallery Image Quality Boost",
+        "Hotel Gallery Image Quality Boost"
+      ],
+      "structured_field_ids": [],
+      "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+      "classification": "true_positive",
+      "remediation_status": "strengthen_abstention_behavior"
+    },
+    {
+      "case_id": "exp-003-insufficient-evidence",
+      "surface": "legacy_rag",
+      "category": "answer_generated_when_abstention_was_expected",
+      "severity": "high",
+      "detector": "deterministic.abstention",
+      "exact_flagged_claim": "Mock evaluation answer generated from retrieved context.",
+      "normalized_claim": "mock evaluation answer generated from retrieved context.",
+      "expected_evidence": [],
+      "available_evidence": [
+        "# Intent-Aware Search Ranking",
+        "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 80 control users and 70 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature."
+      ],
+      "source_ids": [
+        "Intent-Aware Search Ranking",
+        "Intent-Aware Search Ranking",
+        "Intent-Aware Search Ranking",
+        "Intent-Aware Search Ranking",
+        "Intent-Aware Search Ranking"
+      ],
+      "structured_field_ids": [],
+      "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+      "classification": "true_positive",
+      "remediation_status": "strengthen_abstention_behavior"
+    },
+    {
+      "case_id": "exp-004-insufficient-evidence",
+      "surface": "legacy_rag",
+      "category": "answer_generated_when_abstention_was_expected",
+      "severity": "high",
+      "detector": "deterministic.abstention",
+      "exact_flagged_claim": "Mock evaluation answer generated from retrieved context.",
+      "normalized_claim": "mock evaluation answer generated from retrieved context.",
+      "expected_evidence": [],
+      "available_evidence": [
+        "# One-Page Checkout UX",
+        "## Results\n\nControl recorded 0.5840 on checkout_completion_rate, while treatment recorded 0.6380. The absolute movement was 0.0540, and the supporting metrics were directionally consistent with the business read. The result was not interpreted mechanically from a single p-value. Instead, the team considered the size of the effect, product risk, operational cost, and segment behaviour. Metric rows in `metrics.csv` include sample size, the primary metric, and secondary diagnostics for both variants. Event rows in `events.csv` allow future retrieval tests to connect aggregate conclusions back to realistic user-level evidence."
+      ],
+      "source_ids": [
+        "One-Page Checkout UX",
+        "One-Page Checkout UX",
+        "One-Page Checkout UX",
+        "One-Page Checkout UX",
+        "One-Page Checkout UX"
+      ],
+      "structured_field_ids": [],
+      "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+      "classification": "true_positive",
+      "remediation_status": "strengthen_abstention_behavior"
+    },
+    {
+      "case_id": "exp-005-insufficient-evidence",
+      "surface": "legacy_rag",
+      "category": "answer_generated_when_abstention_was_expected",
+      "severity": "high",
+      "detector": "deterministic.abstention",
+      "exact_flagged_claim": "Mock evaluation answer generated from retrieved context.",
+      "normalized_claim": "mock evaluation answer generated from retrieved context.",
+      "expected_evidence": [],
+      "available_evidence": [
+        "## Recommendation\n\nThe recommendation is: Stop current variant and retest with clearer savings copy but no deeper discounts. The business decision recorded in metadata is: Do not roll out; conversion gain did not offset margin dilution. This recommendation reflects both the metric movement and the imperfections observed during the run. For future ExperimentOS milestones, this report should be useful as a retrieval target because it contains explicit reasoning, named metrics, known caveats, and a decision that is more nuanced than simply winning or losing.",
+        "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 76 control users and 74 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature."
+      ],
+      "source_ids": [
+        "Transparent Discount Price Framing",
+        "Transparent Discount Price Framing",
+        "Transparent Discount Price Framing",
+        "Transparent Discount Price Framing",
+        "Transparent Discount Price Framing"
+      ],
+      "structured_field_ids": [],
+      "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+      "classification": "true_positive",
+      "remediation_status": "strengthen_abstention_behavior"
+    },
+    {
+      "case_id": "exp-006-insufficient-evidence",
+      "surface": "legacy_rag",
+      "category": "answer_generated_when_abstention_was_expected",
+      "severity": "high",
+      "detector": "deterministic.abstention",
+      "exact_flagged_claim": "Mock evaluation answer generated from retrieved context.",
+      "normalized_claim": "mock evaluation answer generated from retrieved context.",
+      "expected_evidence": [],
+      "available_evidence": [
+        "## Limitations\n\nThis experiment has limitations that should be preserved in the synthetic data because they are common in production testing. Notable imperfections were: Sample ratio mismatch from delayed exclusion of dormant loyalty accounts.; Novelty effect in the first three days increased progress-panel clicks.. These issues do not make the dataset unusable, but they change how confident a decision maker should be. The sample is intentionally small for repository practicality, so the reports describe realistic directional decisions rather than definitive statistical proof. Some country and platform segments are sparse, and several metrics are proxies for longer-term outcomes that would normally require follow-up measurement.",
+        "## Risks\n\nThe main risk is that the treatment effect may not generalize when exposed to broader traffic. Too many loyalty prompts can make transactional surfaces feel promotional. There is also risk in over-reading aggregate lift when one country, platform, or segment contributes disproportionately. Tracking issues can create false confidence if they align with the treatment experience. Finally, product teams may be tempted to ship from the headline metric alone, but each report is written to require a business decision that balances upside, guardrails, and data quality."
+      ],
+      "source_ids": [
+        "Loyalty Tier Progress Nudges",
+        "Loyalty Tier Progress Nudges",
+        "Loyalty Tier Progress Nudges",
+        "Loyalty Tier Progress Nudges",
+        "Loyalty Tier Progress Nudges"
+      ],
+      "structured_field_ids": [],
+      "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+      "classification": "true_positive",
+      "remediation_status": "strengthen_abstention_behavior"
+    },
+    {
+      "case_id": "exp-007-insufficient-evidence",
+      "surface": "legacy_rag",
+      "category": "answer_generated_when_abstention_was_expected",
+      "severity": "high",
+      "detector": "deterministic.abstention",
+      "exact_flagged_claim": "Mock evaluation answer generated from retrieved context.",
+      "normalized_claim": "mock evaluation answer generated from retrieved context.",
+      "expected_evidence": [],
+      "available_evidence": [
+        "## Results\n\nControl recorded 0.0730 on reactivation_purchase_rate, while treatment recorded 0.0910. The absolute movement was 0.0180, and the supporting metrics were directionally consistent with the business read. The result was not interpreted mechanically from a single p-value. Instead, the team considered the size of the effect, product risk, operational cost, and segment behaviour. Metric rows in `metrics.csv` include sample size, the primary metric, and secondary diagnostics for both variants. Event rows in `events.csv` allow future retrieval tests to connect aggregate conclusions back to realistic user-level evidence.",
+        "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 73 control users and 77 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature."
+      ],
+      "source_ids": [
+        "CRM Back-in-Stock Notification Timing",
+        "CRM Back-in-Stock Notification Timing",
+        "CRM Back-in-Stock Notification Timing",
+        "CRM Back-in-Stock Notification Timing",
+        "CRM Back-in-Stock Notification Timing"
+      ],
+      "structured_field_ids": [],
+      "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+      "classification": "true_positive",
+      "remediation_status": "strengthen_abstention_behavior"
+    },
+    {
+      "case_id": "exp-008-insufficient-evidence",
+      "surface": "legacy_rag",
+      "category": "answer_generated_when_abstention_was_expected",
+      "severity": "high",
+      "detector": "deterministic.abstention",
+      "exact_flagged_claim": "Mock evaluation answer generated from retrieved context.",
+      "normalized_claim": "mock evaluation answer generated from retrieved context.",
+      "expected_evidence": [],
+      "available_evidence": [
+        "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 79 control users and 79 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature.",
+        "# Personalized Similar-Item Recommendations"
+      ],
+      "source_ids": [
+        "Personalized Similar-Item Recommendations",
+        "Personalized Similar-Item Recommendations",
+        "Personalized Similar-Item Recommendations",
+        "Personalized Similar-Item Recommendations",
+        "Personalized Similar-Item Recommendations"
+      ],
+      "structured_field_ids": [],
+      "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+      "classification": "true_positive",
+      "remediation_status": "strengthen_abstention_behavior"
+    },
+    {
+      "case_id": "exp-009-insufficient-evidence",
+      "surface": "legacy_rag",
+      "category": "answer_generated_when_abstention_was_expected",
+      "severity": "high",
+      "detector": "deterministic.abstention",
+      "exact_flagged_claim": "Mock evaluation answer generated from retrieved context.",
+      "normalized_claim": "mock evaluation answer generated from retrieved context.",
+      "expected_evidence": [],
+      "available_evidence": [
+        "# Dynamic Search Filter Shortcuts",
+        "## Background\n\nDynamic Search Filter Shortcuts was designed for the ExperimentOS synthetic corpus as a realistic example of a product experimentation decision. The product area was search filters, and the team needed evidence that would be useful for a future ingestion and retrieval pipeline, not a perfect classroom test. The baseline experience already had meaningful traffic and some known operational constraints, so the experiment deliberately includes realistic noise. The owner was Noah Brown from Search Experience. Traffic ran from 2026-06-03 through 2026-06-17, long enough to observe weekday and weekend behaviour but short enough that market conditions could still influence the result. The dataset includes user-level events, aggregate metrics, metadata, and this decision report."
+      ],
+      "source_ids": [
+        "Dynamic Search Filter Shortcuts",
+        "Dynamic Search Filter Shortcuts",
+        "Dynamic Search Filter Shortcuts",
+        "Dynamic Search Filter Shortcuts",
+        "Dynamic Search Filter Shortcuts"
+      ],
+      "structured_field_ids": [],
+      "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+      "classification": "true_positive",
+      "remediation_status": "strengthen_abstention_behavior"
+    },
+    {
+      "case_id": "exp-010-insufficient-evidence",
+      "surface": "legacy_rag",
+      "category": "answer_generated_when_abstention_was_expected",
+      "severity": "high",
+      "detector": "deterministic.abstention",
+      "exact_flagged_claim": "Mock evaluation answer generated from retrieved context.",
+      "normalized_claim": "mock evaluation answer generated from retrieved context.",
+      "expected_evidence": [],
+      "available_evidence": [
+        "## Experiment Design\n\nUsers were assigned to control and treatment at the user level. Control retained the existing product experience, while treatment received the proposed change. The analysis population included 77 control users and 73 treatment users. Assignment was intended to be even, but the final counts reflect production imperfections. Events were collected across web, mobile web, iOS, and Android. The event stream records country, platform, segment, event name, conversion flag, revenue where applicable, and a tracking-quality indicator. The experiment was evaluated using an intent-to-treat approach so that users remained in their assigned variant even if they did not engage deeply with the feature.",
+        "## Future Work\n\nFuture work should include a larger follow-up test or monitored rollout, depending on the decision status. The next analysis should check whether the primary metric movement persists after novelty effects fade, whether country-specific behaviour remains stable, and whether any tracking caveats have been fixed. Future ingestion work can parse this report, link it to metadata and CSV evidence, and produce embeddings or chunks that support questions such as why the decision was made, which imperfections mattered, and what follow-up work was recommended."
+      ],
+      "source_ids": [
+        "Premium Subscription Trial Offer",
+        "Premium Subscription Trial Offer",
+        "Premium Subscription Trial Offer",
+        "Premium Subscription Trial Offer",
+        "Premium Subscription Trial Offer"
+      ],
+      "structured_field_ids": [],
+      "explanation": "This case expected a needs-more-data or insufficient-evidence outcome, but the answer remained assertive.",
+      "classification": "true_positive",
+      "remediation_status": "strengthen_abstention_behavior"
+    }
+  ]
 }

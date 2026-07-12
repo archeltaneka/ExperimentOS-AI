@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 from packages.evals.agent_dataset import DEFAULT_AGENT_DATASET_PATH
@@ -132,7 +133,11 @@ def build_factuality_report_from_args(args: argparse.Namespace):
         "evaluation.factuality",
         trace_id=f"evaluation.factuality:{args.target}",
         inputs={"target": args.target, "mode": args.mode},
-        metadata={"surface": "evaluation.factuality"},
+        metadata={
+            "surface": "evaluation.factuality",
+            "execution_mode": "evaluation",
+            "environment": os.environ.get("APP_ENV", "local"),
+        },
         tags=("evaluation", "factuality"),
     )
     with root_span.activate():
@@ -183,6 +188,7 @@ def _build_factuality_report_from_args(args: argparse.Namespace, observability_p
                 "mode": args.mode,
                 "dataset": str(args.dataset),
                 "agent_dataset": str(args.agent_dataset),
+                "judge_provider": args.judge_provider,
             }
         )
         current_span.finish(

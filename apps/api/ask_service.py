@@ -92,6 +92,8 @@ class LegacyRagAskService:
             "response_serialization",
             metadata={
                 "surface": "legacy_rag",
+                "workflow_mode": "legacy_rag",
+                "execution_mode": "api",
                 "prompt_id": qa_response.prompt_id or "",
                 "prompt_version": qa_response.prompt_version or "",
             },
@@ -153,7 +155,12 @@ class AgentWorkflowAskService:
             raise AgentWorkflowExecutionError(str(exc)) from exc
         span = self.observability_provider.start_span(
             "response_serialization",
-            metadata={"surface": "agent_workflow", "workflow": "phase2_shared_state"},
+            metadata={
+                "surface": "agent_workflow",
+                "workflow": "phase2_shared_state",
+                "workflow_mode": "agent_workflow",
+                "execution_mode": "api",
+            },
         )
         with span.activate():
             response = map_agent_state_to_ask_response(state)

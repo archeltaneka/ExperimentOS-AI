@@ -21,6 +21,36 @@ def test_load_observability_settings_defaults_all_external_sinks_to_disabled(
     assert settings.phoenix.trace_retrieval_content is False
 
 
+def test_load_observability_settings_reads_extended_phoenix_environment_options(
+    monkeypatch,
+) -> None:
+    from packages.observability.models import load_observability_settings
+
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_ENABLED", "true")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_ENDPOINT", "http://127.0.0.1:6006/v1/traces")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_PROJECT", "experimentos-eval")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_TRANSPORT", "grpc")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_SAMPLING_RATE", "0.25")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_STRICT", "true")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_ALWAYS_TRACE_ERRORS", "false")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_MAX_STRING_LENGTH", "128")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_MAX_COLLECTION_LENGTH", "4")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_MAX_METADATA_DEPTH", "3")
+    monkeypatch.setenv("EXPERIMENTOS_PHOENIX_MAX_RETRIEVAL_RECORDS", "2")
+
+    settings = load_observability_settings()
+
+    assert settings.phoenix.enabled is True
+    assert settings.phoenix.protocol == "grpc"
+    assert settings.phoenix.sampling_rate == 0.25
+    assert settings.phoenix.strict is True
+    assert settings.phoenix.always_trace_errors is False
+    assert settings.phoenix.max_string_length == 128
+    assert settings.phoenix.max_collection_length == 4
+    assert settings.phoenix.max_metadata_depth == 3
+    assert settings.phoenix.max_retrieval_records == 2
+
+
 def test_resolve_provider_returns_noop_when_all_external_sinks_disabled(
     monkeypatch,
 ) -> None:

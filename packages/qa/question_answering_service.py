@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from collections.abc import Awaitable, Callable
 from uuid import uuid4
 
@@ -95,15 +96,22 @@ class QuestionAnsweringService:
 
         parent_span = self.observability_provider.current_span()
         if parent_span is None:
+            execution_id = str(uuid4())
             trace_span = self.observability_provider.start_root_span(
                 "legacy_rag",
-                trace_id=str(uuid4()),
+                trace_id=execution_id,
                 inputs={
                     "question": normalized_question,
                     "experiment_id": str(experiment_id),
                     "top_k": top_k,
                 },
-                metadata={"surface": "legacy_rag"},
+                metadata={
+                    "surface": "legacy_rag",
+                    "workflow_mode": "legacy_rag",
+                    "legacy_rag_execution_id": execution_id,
+                    "execution_mode": "workflow",
+                    "environment": os.environ.get("APP_ENV", "local"),
+                },
                 tags=("legacy_rag",),
             )
         else:
@@ -114,7 +122,13 @@ class QuestionAnsweringService:
                     "experiment_id": str(experiment_id),
                     "top_k": top_k,
                 },
-                metadata={"surface": "legacy_rag"},
+                metadata={
+                    "surface": "legacy_rag",
+                    "workflow_mode": "legacy_rag",
+                    "legacy_rag_execution_id": str(uuid4()),
+                    "execution_mode": "workflow",
+                    "environment": os.environ.get("APP_ENV", "local"),
+                },
                 tags=("legacy_rag",),
             )
         with trace_span.activate():
@@ -163,7 +177,11 @@ class QuestionAnsweringService:
 
             prompt_span = self.observability_provider.start_span(
                 "prompt_rendering",
-                metadata={"surface": "legacy_rag"},
+                metadata={
+                    "surface": "legacy_rag",
+                    "workflow_mode": "legacy_rag",
+                    "execution_mode": "workflow",
+                },
             )
             with prompt_span.activate():
                 prompt = self.prompt_builder(question=normalized_question, retrieved_chunks=results)
@@ -184,6 +202,8 @@ class QuestionAnsweringService:
                 run_type="llm",
                 metadata={
                     "surface": "legacy_rag",
+                    "workflow_mode": "legacy_rag",
+                    "execution_mode": "workflow",
                     "provider_model": str(getattr(self.llm_client, "model", "unknown")),
                 },
             )
@@ -212,6 +232,17 @@ class QuestionAnsweringService:
                         "input_tokens": llm_response.metrics.input_tokens,
                         "output_tokens": llm_response.metrics.output_tokens,
                         "latency_ms": llm_response.metrics.latency_ms,
+                    }
+                )
+                generation_span.add_metadata(
+                    {
+                        "provider": self.llm_client.__class__.__name__,
+                        "model": llm_response.metrics.model,
+                        "operation_type": "answer_generation",
+                        "prompt_id": prompt.prompt_id,
+                        "prompt_version": prompt.version,
+                        "input_length": len(prompt.prompt) + len(prompt.system_instruction),
+                        "output_length": len(llm_response.answer),
                     }
                 )
 

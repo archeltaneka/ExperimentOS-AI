@@ -318,7 +318,12 @@ def load_observability_settings() -> ObservabilitySettings:
             project=_env_first("EXPERIMENTOS_PHOENIX_PROJECT") or "experimentos-local",
             environment=_env_first("EXPERIMENTOS_PHOENIX_ENVIRONMENT", "APP_ENV")
             or "development",
-            protocol=_env_first("EXPERIMENTOS_PHOENIX_PROTOCOL") or "http/protobuf",
+            protocol=_env_first(
+                "EXPERIMENTOS_PHOENIX_PROTOCOL",
+                "EXPERIMENTOS_PHOENIX_TRANSPORT",
+            )
+            or "http/protobuf",
+            sampling_rate=_env_float(1.0, "EXPERIMENTOS_PHOENIX_SAMPLING_RATE"),
             trace_inputs=_env_bool(False, "EXPERIMENTOS_PHOENIX_TRACE_INPUTS"),
             trace_outputs=_env_bool(False, "EXPERIMENTOS_PHOENIX_TRACE_OUTPUTS"),
             trace_retrieval_content=_env_bool(
@@ -335,5 +340,20 @@ def load_observability_settings() -> ObservabilitySettings:
             ),
             tags=_env_tags("EXPERIMENTOS_PHOENIX_TAGS"),
             headers=_env_headers("EXPERIMENTOS_PHOENIX_HEADERS"),
+            strict=_env_bool(False, "EXPERIMENTOS_PHOENIX_STRICT"),
+            always_trace_errors=_env_bool(
+                True,
+                "EXPERIMENTOS_PHOENIX_ALWAYS_TRACE_ERRORS",
+            ),
+            max_string_length=_env_int(512, "EXPERIMENTOS_PHOENIX_MAX_STRING_LENGTH"),
+            max_collection_length=_env_int(
+                25,
+                "EXPERIMENTOS_PHOENIX_MAX_COLLECTION_LENGTH",
+            ),
+            max_metadata_depth=_env_int(5, "EXPERIMENTOS_PHOENIX_MAX_METADATA_DEPTH"),
+            max_retrieval_records=_env_int(
+                10,
+                "EXPERIMENTOS_PHOENIX_MAX_RETRIEVAL_RECORDS",
+            ),
         ),
     )

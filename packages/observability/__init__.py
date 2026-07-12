@@ -1,4 +1,5 @@
 from packages.observability.base import BaseObservabilityProvider, BufferedSpan
+from packages.observability.composite import CompositeObservabilityProvider
 from packages.observability.factory import (
     ObservabilityConfigurationError,
     resolve_observability_provider,
@@ -11,11 +12,7 @@ from packages.observability.models import (
     ProviderSettings,
     load_observability_settings,
 )
-from packages.observability.noop import (
-    CompositeObservabilityProvider,
-    NoOpObservabilityProvider,
-    PhoenixObservabilityProvider,
-)
+from packages.observability.noop import NoOpObservabilityProvider, PhoenixObservabilityProvider
 
 __all__ = [
     "BaseObservabilityProvider",

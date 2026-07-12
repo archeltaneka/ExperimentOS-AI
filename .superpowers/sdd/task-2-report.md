@@ -2,24 +2,22 @@
 
 ## What I implemented
 
-- Added [`apps/api/ask_service.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/apps/api/ask_service.py) with:
-  - `AskRequest`
-  - unified `AskResponse`
-  - `AskService` protocol
-  - `LegacyRagAskService`
-  - `AgentWorkflowAskService`
-  - `get_ask_mode()`
-  - `map_agent_state_to_ask_response()`
-  - `AgentWorkflowExecutionError`
-- Updated [`apps/api/main.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/apps/api/main.py) so `POST /ask` depends on `get_ask_service()` and returns the unified `AskResponse`.
-- Split `/ask` endpoint coverage into a dedicated [`tests/test_api_ask.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_api_ask.py).
-- Trimmed [`tests/test_api_health.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_api_health.py) back to health/config helper coverage.
+- Added [`packages/observability/composite.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/composite.py) with `CompositeObservabilityProvider`, provider fan-out, per-provider failure isolation, and shared `force_flush()` / `shutdown()` aggregation.
+- Extended [`packages/observability/base.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/base.py) so `BaseObservabilityProvider` exposes default `force_flush() -> bool` and `shutdown() -> bool` hooks.
+- Updated [`packages/observability/redaction.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/redaction.py) to support:
+  - provider settings from either `ProviderSettings` or `ObservabilitySettings`
+  - `max_metadata_depth` enforcement with `"<max-depth>"`
+  - full omission of `retrieved_chunks` unless `trace_retrieval_content` is enabled
+  - prompt-content omission via `trace_prompt_content` fallback to `trace_inputs`
+  - preserved collection truncation behavior with `"<truncated>"`
+- Updated [`packages/observability/__init__.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/__init__.py) to export `CompositeObservabilityProvider` from the new shared module.
+- Added focused coverage in [`tests/test_observability_redaction.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_observability_redaction.py) and new [`tests/test_observability_composite.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_observability_composite.py).
 
 ## What I tested and results
 
-- `uv run pytest tests/test_api_health.py tests/test_api_ask.py -v`
+- `uv run pytest tests/test_observability_redaction.py tests/test_observability_composite.py -v`
   - Result: passed
-  - Summary: `11 passed in 1.47s`
+  - Summary: `5 passed in 0.08s`
 - `uv run ruff check .`
   - Result: passed
   - Summary: `All checks passed!`
@@ -31,14 +29,19 @@
 Command:
 
 ```powershell
-uv run pytest tests/test_api_health.py tests/test_api_ask.py -v
+uv run pytest tests/test_observability_redaction.py tests/test_observability_composite.py -v
 ```
 
 Relevant output:
 
 ```text
-ERROR tests/test_api_ask.py
-ModuleNotFoundError: No module named 'apps.api.ask_service'
+tests/test_observability_redaction.py::test_redact_payload_omits_prompt_output_and_retrieval_content_by_default FAILED
+tests/test_observability_redaction.py::test_redact_payload_limits_metadata_depth_and_collection_length FAILED
+tests/test_observability_composite.py::test_composite_provider_isolates_provider_failures FAILED
+
+E       AssertionError: assert [{'chunk_text': '<omitted>'}] == '<omitted>'
+E       AssertionError: assert {'too_deep': {'secret': '<redacted>'}} == '<max-depth>'
+E       ModuleNotFoundError: No module named 'packages.observability.composite'
 ```
 
 ### GREEN
@@ -46,40 +49,36 @@ ModuleNotFoundError: No module named 'apps.api.ask_service'
 Command:
 
 ```powershell
-uv run pytest tests/test_api_health.py tests/test_api_ask.py -v
+uv run pytest tests/test_observability_redaction.py tests/test_observability_composite.py -v
 ```
 
 Relevant output:
 
 ```text
-tests/test_api_health.py::test_health_endpoint_returns_ok PASSED
-tests/test_api_health.py::test_embedding_provider_name_uses_dotenv PASSED
-tests/test_api_health.py::test_llm_client_auto_prefers_gemini_when_api_key_is_set PASSED
-tests/test_api_health.py::test_llm_client_loads_dotenv_for_gemini_auto_provider PASSED
-tests/test_api_health.py::test_llm_client_uses_ollama_provider_from_dotenv PASSED
-tests/test_api_ask.py::test_ask_endpoint_defaults_to_agent_workflow_response PASSED
-tests/test_api_ask.py::test_ask_endpoint_uses_legacy_rag_when_configured PASSED
-tests/test_api_ask.py::test_ask_endpoint_rejects_empty_question PASSED
-tests/test_api_ask.py::test_ask_endpoint_returns_404_for_unknown_experiment PASSED
-tests/test_api_ask.py::test_ask_endpoint_returns_502_for_embedding_failure PASSED
-tests/test_api_ask.py::test_ask_endpoint_returns_502_for_llm_failure PASSED
+tests/test_observability_redaction.py::test_redaction_masks_sensitive_fields_and_limits_payload_size PASSED
+tests/test_observability_redaction.py::test_redaction_omits_prompt_and_response_content_by_default PASSED
+tests/test_observability_redaction.py::test_redact_payload_omits_prompt_output_and_retrieval_content_by_default PASSED
+tests/test_observability_redaction.py::test_redact_payload_limits_metadata_depth_and_collection_length PASSED
+tests/test_observability_composite.py::test_composite_provider_isolates_provider_failures PASSED
 
-11 passed in 1.47s
+5 passed in 0.08s
 ```
 
 ## Files changed
 
-- [`apps/api/ask_service.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/apps/api/ask_service.py)
-- [`apps/api/main.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/apps/api/main.py)
-- [`tests/test_api_health.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_api_health.py)
-- [`tests/test_api_ask.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_api_ask.py)
+- [`packages/observability/base.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/base.py)
+- [`packages/observability/redaction.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/redaction.py)
+- [`packages/observability/composite.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/composite.py)
+- [`packages/observability/__init__.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/__init__.py)
+- [`tests/test_observability_redaction.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_observability_redaction.py)
+- [`tests/test_observability_composite.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/tests/test_observability_composite.py)
 
 ## Self-review findings
 
-- The route now exposes one stable response model for both runtime modes and keeps existing QA dependency construction intact behind the adapter boundary.
-- The legacy adapter uses dataclass serialization for `retrieved_chunks`, `retrieval_metrics`, and `llm_metrics` because those runtime objects are dataclasses in the current codebase rather than Pydantic models.
-- The agent-workflow adapter converts unexpected workflow exceptions into `AgentWorkflowExecutionError` so the route can consistently surface them as `502`.
+- The composite provider intentionally calls each child provider's `_emit_root()` directly so one provider failure does not suppress successful emission to the others.
+- `force_flush()` and `shutdown()` return `all(...)`, which keeps the contract simple while still evaluating every provider in order.
+- Depth limiting now applies to nested mappings but still allows shallow scalar list items to be preserved, which matches the task brief's expected `tags` behavior.
 
-## Any concerns
+## Any issues or concerns
 
-- `map_agent_state_to_ask_response()` is included here because the agent-workflow adapter needs a concrete API response mapper to function. Task 3 may add deeper mapper-specific test coverage and could refine this mapping further, but the current implementation already matches the response contract needed for Task 2.
+- [`packages/observability/factory.py`](/C:/Users/Archel/Documents/Personal%20Projects/ExperimentOS-AI/packages/observability/factory.py) still imports `CompositeObservabilityProvider` from `packages.observability.noop`. I did not change that because it is outside the files assigned for this task. The new shared composite implementation is exported from `packages.observability`, and a later task should align the factory import path if the Phoenix export path needs it.

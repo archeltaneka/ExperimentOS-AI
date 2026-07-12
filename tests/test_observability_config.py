@@ -60,17 +60,61 @@ def test_resolve_provider_raises_when_phoenix_enabled_and_dependency_missing(
         resolve_observability_provider()
 
 
-def test_phoenix_placeholder_provider_finish_is_non_crashing() -> None:
+def test_legacy_phoenix_import_path_resolves_real_provider_behavior() -> None:
     from packages.observability.models import PhoenixSettings
     from packages.observability.noop import PhoenixObservabilityProvider
 
+    exported: list[tuple[str, dict[str, object]]] = []
+
+    class FakeSpan:
+        def __init__(self, name: str, attributes: dict[str, object]) -> None:
+            self.name = name
+            self.attributes = attributes
+
+        def __enter__(self):
+            exported.append((self.name, dict(self.attributes)))
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def set_status(self, status) -> None:
+            return None
+
+        def record_exception(self, exc: Exception) -> None:
+            return None
+
+        def set_attributes(self, attributes: dict[str, object]) -> None:
+            exported.append((self.name, dict(attributes)))
+
+    class FakeTracer:
+        def start_as_current_span(
+            self,
+            name: str,
+            attributes: dict[str, object] | None = None,
+        ):
+            return FakeSpan(name, attributes or {})
+
     provider = PhoenixObservabilityProvider(
-        settings=PhoenixSettings(enabled=True, endpoint="http://localhost:6006")
+        settings=PhoenixSettings(
+            enabled=True,
+            endpoint="http://localhost:6006",
+            project="experimentos-local",
+        ),
+        tracer_provider=object(),
+        tracer=FakeTracer(),
     )
 
-    root = provider.start_root_span("test")
-    root.finish()
+    root = provider.start_root_span(
+        "ask_request",
+        trace_id="req-legacy",
+        inputs={"question": "hello"},
+        metadata={"surface": "ask"},
+    )
+    root.finish(outputs={"status": "ok"})
 
+    assert any(name == "ask_request" for name, _attrs in exported)
+    assert any(attrs.get("experimentos.trace_id") == "req-legacy" for _name, attrs in exported)
     assert provider.failure_count == 0
 
 

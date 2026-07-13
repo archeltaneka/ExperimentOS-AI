@@ -87,8 +87,15 @@ def test_ask_endpoint_legacy_rag_uses_real_database_retrieval(tmp_path: Path, mo
                 "prompt_version": "1",
             }
             assert response.json()["citations"]
-            assert response.json()["retrieved_chunks"]
+            retrieved_chunks = response.json()["retrieved_chunks"]
+            assert retrieved_chunks
+            assert any("wallet telemetry" in chunk["chunk_text"] for chunk in retrieved_chunks)
         finally:
+            async with session_factory() as session:
+                await session.execute(
+                    delete(Experiment).where(Experiment.name == "API Ask Integration")
+                )
+                await session.commit()
             await engine.dispose()
 
     run_async(run_test())

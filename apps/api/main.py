@@ -63,11 +63,13 @@ app = FastAPI(title="ExperimentOS AI API", version="0.1.0", lifespan=app_lifespa
 
 @lru_cache(maxsize=1)
 def get_session_factory() -> async_sessionmaker:
+    load_environment()
     engine = create_database_engine()
     return create_async_session_factory(engine)
 
 
 def get_llm_client() -> LLMClient:
+    load_environment()
     provider = os.environ.get("LLM_PROVIDER", "auto").lower()
     if provider == "mock":
         return MockLLMClient()
@@ -85,6 +87,7 @@ def get_llm_client() -> LLMClient:
 
 
 def get_embedding_provider_name() -> str:
+    load_environment()
     return os.environ.get("EMBEDDING_PROVIDER", "auto").lower()
 
 

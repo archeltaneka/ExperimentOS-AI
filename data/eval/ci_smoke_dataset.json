@@ -1,0 +1,12 @@
+[
+  {
+    "id": "ci-payment-rollout",
+    "experiment_id": "exp-001-payment-recommendation",
+    "question": "Why did the payment recommendation ship?",
+    "expected_documents": ["Adaptive Payment Method Recommendation"],
+    "expected_keywords": ["roll out", "wallet telemetry"],
+    "category": "rollout_decision",
+    "difficulty": "easy",
+    "reference_answer": "Roll out to clean markets while monitoring wallet telemetry."
+  }
+]

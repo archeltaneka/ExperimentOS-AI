@@ -18,9 +18,11 @@ def resolve_setting(
     default: str,
     lowercase: bool = False,
 ) -> str:
-    load_environment()
     value = explicit_value
     if value is None:
+        value = os.environ.get(env_var)
+    if value is None:
+        load_environment()
         value = os.environ.get(env_var, default)
     resolved = value.strip() if isinstance(value, str) else default
     if not resolved:

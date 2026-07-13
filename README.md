@@ -252,6 +252,18 @@ This command reuses the existing `legacy_rag` QA dataset, freezes retrieval betw
 versions, and layers offline-safe custom, RAGAS, and DeepEval comparisons on top of the same local
 surfaces. See [Phase 3 Prompt Regression](docs/phase3/prompt_regression.md).
 
+Run the offline prompt experiment workflow:
+
+```powershell
+uv run python -m packages.evals.run_prompt_experiment validate --experiment rag-answer-abstention-v1-v2
+uv run python -m packages.evals.run_prompt_experiment run --experiment rag-answer-abstention-v1-v2 --mode offline --report-dir reports/phase3/prompt_experiments
+Get-Content reports/phase3/prompt_experiments/rag-answer-abstention-v1-v2.md
+```
+
+This workflow keeps runtime experimentation disabled by default, reuses the immutable prompt
+registry, and writes repository-owned Markdown and JSON artifacts without using production
+traffic. See [Phase 3 Prompt Experiments](docs/phase3/prompt_experiments.md).
+
 ## Development Workflow
 
 Core commands:

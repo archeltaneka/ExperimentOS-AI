@@ -14,7 +14,19 @@ def test_default_prompt_registry_exposes_registered_prompts_and_active_versions(
     assert registry.get_active("rag.answer").version == "1"
     assert registry.get_active("rag.answer").status == "active"
     assert registry.get_active("rag.decision").status == "experimental"
-    assert registry.list_versions("rag.answer") == ("1",)
+    assert registry.list_versions("rag.answer") == ("1", "2")
+
+
+def test_default_prompt_registry_preserves_experimental_candidate_without_changing_active() -> None:
+    from packages.llm.prompt_registry import get_prompt_registry
+
+    registry = get_prompt_registry()
+    candidate = registry.get("rag.answer", "2")
+
+    assert registry.get_active("rag.answer").version == "1"
+    assert candidate.status == "experimental"
+    assert "experimental" in candidate.tags
+    assert candidate.metadata["surface"] == "legacy_rag"
 
 
 def test_prompt_registry_rejects_duplicate_prompt_registration() -> None:

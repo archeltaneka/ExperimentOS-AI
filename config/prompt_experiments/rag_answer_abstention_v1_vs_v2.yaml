@@ -1,0 +1,39 @@
+{
+  "experiment_id": "rag-answer-abstention-v1-v2",
+  "name": "RAG answer abstention wording",
+  "description": "Compare the production control prompt against a stronger abstention and citation candidate.",
+  "prompt_id": "rag.answer",
+  "control_version": "1",
+  "treatment_versions": ["2"],
+  "hypothesis": "Stronger abstention wording reduces unsupported claims without reducing citation coverage.",
+  "primary_metric": "factuality_pass_rate",
+  "secondary_metrics": [
+    "citation_coverage",
+    "regression_pass_rate",
+    "response_availability",
+    "latency_ms"
+  ],
+  "guardrail_metrics": [
+    "critical_factuality_violations",
+    "fabricated_revenue_or_roi",
+    "fabricated_significance",
+    "citation_coverage_non_regression",
+    "structured_output_validity_non_regression",
+    "latency_tolerance",
+    "failure_rate_tolerance"
+  ],
+  "dataset_id": "qa_dataset",
+  "assignment_strategy": "fixed",
+  "allocation": {
+    "control": 0.5,
+    "treatment_2": 0.5
+  },
+  "randomization_unit": "dataset_case",
+  "seed": "rag-answer-abstention-v1-v2",
+  "status": "validated",
+  "allow_deprecated_versions": false,
+  "metadata": {
+    "surface": "legacy_rag",
+    "runtime_enabled": false
+  }
+}

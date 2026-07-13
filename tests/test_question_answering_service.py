@@ -138,6 +138,79 @@ def test_question_answering_service_returns_no_context_answer_without_llm_call()
     assert llm.calls == 0
 
 
+def test_question_answering_service_records_exposure_only_when_prompt_is_rendered() -> None:
+    from packages.evals.prompt_experiments.exposure import PromptExperimentExposureRecorder
+    from packages.evals.prompt_experiments.models import PromptExperimentContext
+
+    experiment_id = str(uuid.uuid4())
+    retrieval = StubRetrievalService([retrieval_result(experiment_id=experiment_id)])
+    llm = MockLLMClient(answer="Grounded answer.", model="mock-answerer")
+    recorder = PromptExperimentExposureRecorder()
+    context = PromptExperimentContext(
+        experiment_id="rag-answer-abstention-v1-v2",
+        variant="treatment_2",
+        prompt_id="rag.answer",
+        prompt_version="2",
+        assignment_strategy="deterministic_hash",
+        assignment_key_hash="hashed-key",
+        allocation={"control": 0.5, "treatment_2": 0.5},
+    )
+    service = QuestionAnsweringService(
+        retrieval_service=retrieval,
+        llm_client=llm,
+        experiment_exists=experiment_exists(True),
+    )
+
+    answer = run(
+        service.answer_question(
+            question="Why was it launched?",
+            experiment_id=experiment_id,
+            top_k=1,
+            prompt_experiment_context=context,
+            prompt_exposure_recorder=recorder,
+        )
+    )
+
+    assert answer.prompt_id == "rag.answer"
+    assert answer.prompt_version == "2"
+    assert len(recorder.exposures) == 1
+    assert recorder.exposures[0].variant == "treatment_2"
+
+
+def test_question_answering_service_does_not_record_exposure_without_rendered_prompt() -> None:
+    from packages.evals.prompt_experiments.exposure import PromptExperimentExposureRecorder
+    from packages.evals.prompt_experiments.models import PromptExperimentContext
+
+    recorder = PromptExperimentExposureRecorder()
+    context = PromptExperimentContext(
+        experiment_id="rag-answer-abstention-v1-v2",
+        variant="treatment_2",
+        prompt_id="rag.answer",
+        prompt_version="2",
+        assignment_strategy="deterministic_hash",
+        assignment_key_hash="hashed-key",
+        allocation={"control": 0.5, "treatment_2": 0.5},
+    )
+    service = QuestionAnsweringService(
+        retrieval_service=StubRetrievalService([]),
+        llm_client=MockLLMClient(answer="unused"),
+        experiment_exists=experiment_exists(True),
+    )
+
+    answer = run(
+        service.answer_question(
+            question="What changed?",
+            experiment_id=str(uuid.uuid4()),
+            top_k=5,
+            prompt_experiment_context=context,
+            prompt_exposure_recorder=recorder,
+        )
+    )
+
+    assert answer.answer == "Insufficient evidence exists to answer the question."
+    assert recorder.exposures == []
+
+
 def test_qa_response_serializes_shared_models() -> None:
     from packages.qa.question_answering_service import Citation
 

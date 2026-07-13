@@ -12,7 +12,7 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 49.4 ms
+- Average retrieval latency: 50.9 ms
 - Average LLM latency: 0.0 ms
 - Average similarity: 0.009
 - Token usage: 36455 total (36021 input, 434 output)

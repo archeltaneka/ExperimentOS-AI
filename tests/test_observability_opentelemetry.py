@@ -177,6 +177,57 @@ def test_opentelemetry_provider_records_metrics_with_controlled_attributes_only(
             assert "experimentos.trace_id" not in point.attributes
 
 
+def test_opentelemetry_provider_records_prompt_experiment_attributes_safely() -> None:
+    from packages.observability.models import OpenTelemetrySettings
+    from packages.observability.opentelemetry import OpenTelemetryObservabilityProvider
+
+    span_exporter = InMemorySpanExporter()
+    metric_reader = InMemoryMetricReader()
+    provider = OpenTelemetryObservabilityProvider(
+        settings=OpenTelemetrySettings(
+            enabled=True,
+            exporter_type="in_memory",
+            trace_enabled=True,
+            metrics_enabled=True,
+            service_name="experimentos-ai",
+            service_version="0.1.0",
+            environment="test",
+            instrument_fastapi=False,
+        ),
+        span_exporter=span_exporter,
+        metric_reader=metric_reader,
+    )
+
+    root = provider.start_root_span(
+        "evaluation.prompt_experiment",
+        trace_id="exp-trace",
+        metadata={
+            "surface": "evaluation.prompt_experiment",
+            "execution_mode": "evaluation",
+            "environment": "test",
+            "experiment_id": "rag-answer-abstention-v1-v2",
+            "experiment_variant": "treatment_2",
+            "assignment_strategy": "deterministic_hash",
+            "assignment_key_hash": "never-emit-this",
+        },
+    )
+    root.finish(outputs={"status": "completed"})
+
+    assert provider.force_flush() is True
+
+    spans = span_exporter.get_finished_spans()
+    attributes = spans[0].attributes
+    assert attributes["experimentos.experiment.id"] == "rag-answer-abstention-v1-v2"
+    assert attributes["experimentos.experiment.variant"] == "treatment_2"
+    assert attributes["experimentos.experiment.assignment_strategy"] == "deterministic_hash"
+    assert "experimentos.metadata.assignment_key_hash" not in attributes
+
+    metrics_data = provider.metric_reader.get_metrics_data()
+    for metric in _iter_metrics(metrics_data):
+        for point in _iter_data_points(metric):
+            assert "assignment_key_hash" not in point.attributes
+
+
 def test_opentelemetry_fastapi_instrumentation_preserves_transport_parent_context() -> None:
     from packages.observability.models import OpenTelemetrySettings
     from packages.observability.opentelemetry import OpenTelemetryObservabilityProvider

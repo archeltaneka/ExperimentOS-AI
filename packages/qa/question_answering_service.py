@@ -6,6 +6,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict
 
+from packages.evals.prompt_experiments.exposure import PromptExperimentExposureRecorder
+from packages.evals.prompt_experiments.models import PromptExperimentContext
 from packages.llm.client import LLMClient, LLMClientError, LLMMetrics
 from packages.llm.prompts import GroundedPrompt, build_grounded_prompt
 from packages.observability.base import BaseObservabilityProvider
@@ -84,6 +86,8 @@ class QuestionAnsweringService:
         question: str,
         experiment_id: str,
         top_k: int = 5,
+        prompt_experiment_context: PromptExperimentContext | None = None,
+        prompt_exposure_recorder: PromptExperimentExposureRecorder | None = None,
     ) -> QAResponse:
         normalized_question = question.strip()
         if not normalized_question:
@@ -111,6 +115,7 @@ class QuestionAnsweringService:
                     "legacy_rag_execution_id": execution_id,
                     "execution_mode": "workflow",
                     "environment": os.environ.get("APP_ENV", "local"),
+                    **_prompt_experiment_metadata(prompt_experiment_context),
                 },
                 tags=("legacy_rag",),
             )
@@ -128,6 +133,7 @@ class QuestionAnsweringService:
                     "legacy_rag_execution_id": str(uuid4()),
                     "execution_mode": "workflow",
                     "environment": os.environ.get("APP_ENV", "local"),
+                    **_prompt_experiment_metadata(prompt_experiment_context),
                 },
                 tags=("legacy_rag",),
             )
@@ -181,10 +187,18 @@ class QuestionAnsweringService:
                     "surface": "legacy_rag",
                     "workflow_mode": "legacy_rag",
                     "execution_mode": "workflow",
+                    **_prompt_experiment_metadata(prompt_experiment_context),
                 },
             )
             with prompt_span.activate():
-                prompt = self.prompt_builder(question=normalized_question, retrieved_chunks=results)
+                prompt = self.prompt_builder(
+                    question=normalized_question,
+                    retrieved_chunks=results,
+                    experiment_context=prompt_experiment_context,
+                    exposure_recorder=prompt_exposure_recorder,
+                    trace_id=trace_span.record.trace_id or "",
+                    execution_mode="workflow",
+                )
                 prompt_span.add_metadata(
                     {
                         "prompt_id": prompt.prompt_id,
@@ -194,6 +208,7 @@ class QuestionAnsweringService:
                             len(prompt.prompt) + len(prompt.system_instruction)
                         ),
                         "provider_model": str(getattr(self.llm_client, "model", "unknown")),
+                        **_prompt_experiment_metadata(prompt_experiment_context),
                     }
                 )
                 prompt_span.finish(outputs={"status": "completed"})
@@ -205,6 +220,7 @@ class QuestionAnsweringService:
                     "workflow_mode": "legacy_rag",
                     "execution_mode": "workflow",
                     "provider_model": str(getattr(self.llm_client, "model", "unknown")),
+                    **_prompt_experiment_metadata(prompt_experiment_context),
                 },
             )
             with generation_span.activate():
@@ -290,3 +306,17 @@ class QuestionAnsweringService:
                 average_similarity=0.0,
             )
         return metrics
+
+
+def _prompt_experiment_metadata(
+    context: PromptExperimentContext | None,
+) -> dict[str, object]:
+    if context is None:
+        return {}
+    return {
+        "experiment_id": context.experiment_id,
+        "experiment_variant": context.variant,
+        "prompt_id": context.prompt_id,
+        "prompt_version": context.prompt_version,
+        "assignment_strategy": context.assignment_strategy,
+    }

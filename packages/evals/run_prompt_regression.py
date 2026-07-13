@@ -99,8 +99,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 async def build_prompt_regression_report(args: argparse.Namespace):
+    initial_database_url = os.environ.get("DATABASE_URL", "").strip()
     args = resolve_runtime_options(args)
-    if args.offline and not os.environ.get("DATABASE_URL"):
+    if args.offline and not initial_database_url:
         return await _build_prompt_regression_report(args, None)
 
     observability_provider = resolve_observability_provider()
@@ -121,7 +122,7 @@ async def build_prompt_regression_report(args: argparse.Namespace):
 
 async def _build_prompt_regression_report(args: argparse.Namespace, observability_provider):
     questions = _resolve_questions(args.dataset)
-    if args.offline and not os.environ.get("DATABASE_URL"):
+    if observability_provider is None:
         runner = PromptRegressionRunner(
             prompt_id=args.prompt_id,
             baseline_version=args.baseline_version,
@@ -189,7 +190,7 @@ async def _build_prompt_regression_report(args: argparse.Namespace, observabilit
                 current_span.finish(
                     outputs={
                         "status": "completed",
-                        "sample_count": len(report.samples),
+                        "sample_count": report.summary.cases_run,
                     }
                 )
             return report

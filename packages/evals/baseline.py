@@ -88,6 +88,7 @@ class Phase3BaselineReport:
     registered_prompts: tuple[tuple[str, str, str], ...]
     prompt_provenance_notes: tuple[str, ...]
     prompt_regression_coverage: tuple[str, ...] = field(default_factory=tuple)
+    prompt_experiment_status: tuple[str, ...] = field(default_factory=tuple)
     remaining_prompt_risks: tuple[str, ...] = field(default_factory=tuple)
 
 
@@ -153,6 +154,14 @@ def build_phase3_baseline_report(
                 "existing ask adapter."
             ),
             "Offline mode stays deterministic by default and does not require a live provider.",
+        ),
+        prompt_experiment_status=(
+            "Offline prompt experiment framework is available for rag.answer only.",
+            "Deterministic assignment is reproducible and exposure tracking is prompt-use based.",
+            (
+                "Runtime experimentation remains disabled by default and public /ask "
+                "behavior is unchanged."
+            ),
         ),
         remaining_prompt_risks=(
             (
@@ -231,6 +240,10 @@ def render_phase3_baseline_report(report: Phase3BaselineReport) -> str:
 
     lines.extend(["", "## Prompt Regression Coverage", ""])
     for note in report.prompt_regression_coverage:
+        lines.append(f"- {note}")
+
+    lines.extend(["", "## Prompt Experiment Framework", ""])
+    for note in report.prompt_experiment_status:
         lines.append(f"- {note}")
 
     lines.extend(["", "## Remaining Prompt Risks", ""])

@@ -227,6 +227,39 @@ def _build_default_prompt_registry() -> PromptRegistry:
     )
     registry.register(
         PromptDefinition(
+            prompt_id="rag.answer",
+            name="Grounded RAG Answer",
+            version="2",
+            description=(
+                "Experimental grounded answer prompt with stronger abstention wording and "
+                "clearer citation requirements."
+            ),
+            system_template=(
+                "Only answer using retrieved context.\n"
+                "If the answer cannot be fully supported by retrieved evidence, say that "
+                "insufficient evidence exists.\n"
+                "Prefer abstaining over guessing.\n"
+                "Never invent facts."
+            ),
+            user_template="\n\n".join(
+                [
+                    "User Question: {question}",
+                    "Retrieved Context:",
+                    "{context}",
+                    "Answer using only the retrieved context, cite the supporting documents, "
+                    "and state clearly when evidence is insufficient.",
+                ]
+            ),
+            input_variables=("question", "context"),
+            output_contract="Grounded answer that cites supporting retrieved documents only.",
+            tags=("legacy_rag", "qa", "grounded", "experimental"),
+            status="experimental",
+            created_at="2026-07-12T00:00:00Z",
+            metadata={"surface": "legacy_rag", "owner": "packages.qa.question_answering_service"},
+        )
+    )
+    registry.register(
+        PromptDefinition(
             prompt_id="rag.decision",
             name="Decision Helper",
             version="1",

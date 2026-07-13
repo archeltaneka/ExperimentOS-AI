@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 
 from packages.evals.run_factuality import main as factuality_main
+from packages.evals.run_prompt_experiment import main as prompt_experiment_main
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -13,6 +14,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run deterministic and optional judge-based factuality checks.",
     )
     factuality.add_argument("args", nargs=argparse.REMAINDER)
+    prompt_experiment = subparsers.add_parser(
+        "prompt-experiment",
+        help="Validate, assign, run, and report prompt experiments.",
+    )
+    prompt_experiment.add_argument("args", nargs=argparse.REMAINDER)
     return parser
 
 
@@ -21,6 +27,8 @@ def main(argv: list[str] | None = None) -> int:
     parsed = parser.parse_args(argv)
     if parsed.command == "factuality":
         return factuality_main(parsed.args)
+    if parsed.command == "prompt-experiment":
+        return prompt_experiment_main(parsed.args)
     parser.error(f"unknown command: {parsed.command}")
     return 2
 

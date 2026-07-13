@@ -1,6 +1,6 @@
 # Phase 3 Reliability Baseline Report
 
-- Generated at: 2026-07-12T08:28:17.322698Z
+- Generated at: 2026-07-13T00:30:11.348095Z
 - Overall status: fail
 
 ## Evaluation Status
@@ -31,7 +31,7 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 49.4 ms
+- Average retrieval latency: 50.9 ms
 - Average LLM latency: 0.0 ms
 
 ### Missing Metrics
@@ -154,6 +154,12 @@
 - Prompt regression compares prompt versions over the existing legacy_rag QA dataset.
 - Prompt regression reuses a prompt-backed legacy /ask surface through the existing ask adapter.
 - Offline mode stays deterministic by default and does not require a live provider.
+
+## Prompt Experiment Framework
+
+- Offline prompt experiment framework is available for rag.answer only.
+- Deterministic assignment is reproducible and exposure tracking is prompt-use based.
+- Runtime experimentation remains disabled by default and public /ask behavior is unchanged.
 
 ## Remaining Prompt Risks
 

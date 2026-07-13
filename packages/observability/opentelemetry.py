@@ -40,9 +40,12 @@ _STATUS_ATTRIBUTE_KEYS = {
 _METRIC_ATTRIBUTE_KEYS = {
     "agent_name",
     "environment",
+    "experiment_id",
+    "experiment_variant",
     "evaluation_type",
     "execution_mode",
     "provider",
+    "assignment_strategy",
     "status",
     "surface",
     "workflow_mode",
@@ -376,6 +379,7 @@ class OpenTelemetryObservabilityProvider(BaseObservabilityProvider):
 
     def _build_span_attributes(self, record: BufferedSpanRecord) -> dict[str, object]:
         metadata = dict(redact_payload(record.metadata, settings=self.settings))
+        metadata.pop("assignment_key_hash", None)
         attributes = {
             "experimentos.trace_id": record.trace_id or "",
             "experimentos.span.name": record.name,
@@ -670,6 +674,14 @@ def _experimentos_metadata_attributes(
         "experimentos.prompt_id": metadata.get("prompt_id", ""),
         "experimentos.prompt_version": metadata.get("prompt_version", ""),
         "experimentos.experiment_id": metadata.get("experiment_id", ""),
+        "experimentos.prompt.id": metadata.get("prompt_id", ""),
+        "experimentos.prompt.version": metadata.get("prompt_version", ""),
+        "experimentos.experiment.id": metadata.get("experiment_id", ""),
+        "experimentos.experiment.variant": metadata.get("experiment_variant", ""),
+        "experimentos.experiment.assignment_strategy": metadata.get(
+            "assignment_strategy",
+            "",
+        ),
     }
     if record.name == "retrieval":
         attributes["experimentos.top_k"] = metadata.get("top_k", "")
@@ -789,6 +801,9 @@ def _metric_attributes(
         "agent_name": agent_name or "",
         "evaluation_type": evaluation_type or "",
         "provider": provider or "",
+        "experiment_id": metadata.get("experiment_id", ""),
+        "experiment_variant": metadata.get("experiment_variant", ""),
+        "assignment_strategy": metadata.get("assignment_strategy", ""),
     }
     attributes: dict[str, object] = {}
     for key in _METRIC_ATTRIBUTE_KEYS:

@@ -2,7 +2,33 @@
 
 Phase 3 now includes a repository-owned factuality evaluation layer plus optional LangSmith,
 Phoenix, and OpenTelemetry observability adapters in addition to the existing RAG, agent
-workflow, prompt regression, RAGAS, and DeepEval surfaces.
+workflow, prompt regression, prompt experiments, RAGAS, and DeepEval surfaces.
+
+### Prompt Experiment Framework
+
+- implementation status: available for offline `rag.answer` comparisons
+- default runtime status: disabled
+- production traffic status: no public traffic experimentation
+- assignment mode: deterministic and reproducible only
+- exposure policy: recorded only when a prompt is actually rendered
+- evaluation reuse:
+  - prompt registry
+  - prompt regression
+  - factuality checks
+  - RAGAS and DeepEval through the existing comparison stack
+- observability status:
+  - safe experiment metadata is attached to ExperimentOS-owned spans
+  - assignment-key hashes are excluded from trace and metric attributes
+- current report outputs:
+  - `reports/phase3/prompt_experiments/<experiment_id>.md`
+  - `reports/phase3/prompt_experiments/<experiment_id>.json`
+
+Remaining prompt experiment gaps:
+
+- runtime assignment is intentionally not wired into public traffic
+- offline CLI defaults use deterministic fixture retrieval rather than a database-backed corpus
+- no automatic prompt promotion exists
+- no CI quality gate consumes the experiment recommendation yet
 
 ### Observability Status
 

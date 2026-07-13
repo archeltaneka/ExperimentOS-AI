@@ -84,6 +84,10 @@ def test_render_phase3_baseline_report_includes_sections_metrics_and_gaps() -> N
                 "application logic."
             ),
         ),
+        prompt_experiment_status=(
+            "Offline prompt experiment framework is available for rag.answer only.",
+            "Runtime experimentation remains disabled by default.",
+        ),
     )
 
     markdown = render_phase3_baseline_report(report)
@@ -97,6 +101,8 @@ def test_render_phase3_baseline_report_includes_sections_metrics_and_gaps() -> N
     assert "rag.answer" in markdown
     assert "legacy_rag responses expose prompt_id and prompt_version metadata." in markdown
     assert "Prompt Regression Coverage" in markdown
+    assert "Prompt Experiment Framework" in markdown
+    assert "rag.answer only" in markdown
     assert "Only legacy_rag is prompt-backed today" in markdown
     assert "No threshold policy exists yet." in markdown
     assert "LangSmith and Phoenix tracing are optional external sinks" in markdown

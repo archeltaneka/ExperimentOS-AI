@@ -222,8 +222,7 @@ class PromptExperimentRunner:
             "citation_coverage": qa_run.summary.average_citation_coverage,
             "factuality_pass_rate": factuality_pass_rate,
             "latency_ms": (
-                qa_run.summary.average_retrieval_latency_ms
-                + qa_run.summary.average_llm_latency_ms
+                qa_run.summary.average_retrieval_latency_ms + qa_run.summary.average_llm_latency_ms
             ),
             "prompt_rendering_success": prompt_rendering_success,
             "regression_pass_rate": self._regression_pass_rate(regression_report),
@@ -261,9 +260,7 @@ class PromptExperimentRunner:
         if report is None or report.summary.cases_run == 0:
             return 1.0
         passed_cases = (
-            report.summary.cases_run
-            - report.summary.regressions
-            - report.summary.failures
+            report.summary.cases_run - report.summary.regressions - report.summary.failures
         )
         return max(passed_cases / report.summary.cases_run, 0.0)
 
@@ -276,8 +273,7 @@ class PromptExperimentRunner:
         metric_names = set(control.metrics) | set(treatment.metrics)
         return {
             metric_name: (
-                treatment.metrics.get(metric_name, 0.0)
-                - control.metrics.get(metric_name, 0.0)
+                treatment.metrics.get(metric_name, 0.0) - control.metrics.get(metric_name, 0.0)
             )
             for metric_name in sorted(metric_names)
         }

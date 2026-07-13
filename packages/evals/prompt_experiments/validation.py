@@ -135,6 +135,4 @@ def _validate_prompt_status(
     allow_deprecated_versions: bool,
 ) -> None:
     if status == "deprecated" and not allow_deprecated_versions:
-        raise PromptExperimentValidationError(
-            "deprecated prompt versions require explicit opt-in"
-        )
+        raise PromptExperimentValidationError("deprecated prompt versions require explicit opt-in")

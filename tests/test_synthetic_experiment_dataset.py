@@ -81,8 +81,7 @@ def test_synthetic_experiment_dataset_contract() -> None:
         sample_size_rows = [row for row in metrics if row["metric_name"] == "sample_size"]
         assert len(sample_size_rows) == 2
         assert {
-            row["variant"]: int(float(row["value"]))
-            for row in sample_size_rows
+            row["variant"]: int(float(row["value"])) for row in sample_size_rows
         } == variant_counts
 
         words = report.split()

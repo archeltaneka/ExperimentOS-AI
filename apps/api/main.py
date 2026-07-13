@@ -52,6 +52,7 @@ if sys.platform == "win32" and hasattr(asyncio, "WindowsSelectorEventLoopPolicy"
 
 load_environment()
 
+
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
     get_observability_provider().instrument_fastapi_app(app)

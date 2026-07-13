@@ -101,8 +101,7 @@ def _build_executive_summary(state: AgentState) -> ExecutiveSummary:
         )
         risk_summary = "Risk could not be assessed from the available evidence."
         decision_rationale = (
-            "A decision-ready summary cannot be produced until the missing evidence "
-            "is resolved."
+            "A decision-ready summary cannot be produced until the missing evidence is resolved."
         )
         recommended_next_actions = _unique(
             [
@@ -120,8 +119,7 @@ def _build_executive_summary(state: AgentState) -> ExecutiveSummary:
         business_impact_summary = _business_impact_summary(state)
         risk_summary = _risk_summary(state)
         decision_rationale = (
-            decision["rationale"]
-            or "No decision rationale was recorded in shared state."
+            decision["rationale"] or "No decision rationale was recorded in shared state."
         )
         recommended_next_actions = _recommended_next_actions(state, summary_status)
         confidence = _summary_confidence(decision["confidence"])

@@ -19,9 +19,7 @@ def assign_prompt_experiment_variant(
     )
     variant = _select_variant(definition, assignment_key_hash)
     prompt_version = (
-        definition.control_version
-        if variant == "control"
-        else variant.removeprefix("treatment_")
+        definition.control_version if variant == "control" else variant.removeprefix("treatment_")
     )
     return AssignedPromptVariant(
         experiment_id=definition.experiment_id,

@@ -94,9 +94,7 @@ def render_ragas_report(report: RagasEvaluationReport) -> str:
     )
     for metric in report.metric_results:
         score = _format_score(metric.average_score)
-        lines.append(
-            f"| {metric.name} | {metric.status} | {score} | {metric.reason or ''} |"
-        )
+        lines.append(f"| {metric.name} | {metric.status} | {score} | {metric.reason or ''} |")
 
     lines.extend(
         [
@@ -110,8 +108,7 @@ def render_ragas_report(report: RagasEvaluationReport) -> str:
     )
     for case in report.case_results:
         scores = ", ".join(
-            f"{name}={_format_score(value)}"
-            for name, value in sorted(case.metric_scores.items())
+            f"{name}={_format_score(value)}" for name, value in sorted(case.metric_scores.items())
         )
         lines.append(
             f"| {case.question_id} | {case.experiment_id} | {case.category} | "

@@ -86,11 +86,13 @@ def test_question_answering_service_returns_grounded_answer_and_citations(top_k:
         experiment_exists=experiment_exists(True),
     )
 
-    answer = run(service.answer_question(
-        question="Why was it launched?",
-        experiment_id=experiment_id,
-        top_k=top_k,
-    ))
+    answer = run(
+        service.answer_question(
+            question="Why was it launched?",
+            experiment_id=experiment_id,
+            top_k=top_k,
+        )
+    )
 
     assert answer.answer == "The launch passed guardrails."
     assert isinstance(answer, QAResponse)
@@ -123,11 +125,13 @@ def test_question_answering_service_returns_no_context_answer_without_llm_call()
         experiment_exists=experiment_exists(True),
     )
 
-    answer = run(service.answer_question(
-        question="What changed?",
-        experiment_id=experiment_id,
-        top_k=5,
-    ))
+    answer = run(
+        service.answer_question(
+            question="What changed?",
+            experiment_id=experiment_id,
+            top_k=5,
+        )
+    )
 
     assert answer.answer == "Insufficient evidence exists to answer the question."
     assert isinstance(answer, QAResponse)
@@ -255,11 +259,13 @@ def test_question_answering_service_rejects_unknown_experiment() -> None:
     )
 
     with pytest.raises(UnknownExperimentError):
-        run(service.answer_question(
-            question="What happened?",
-            experiment_id=str(uuid.uuid4()),
-            top_k=5,
-        ))
+        run(
+            service.answer_question(
+                question="What happened?",
+                experiment_id=str(uuid.uuid4()),
+                top_k=5,
+            )
+        )
 
 
 def test_question_answering_service_maps_embedding_failures() -> None:
@@ -271,11 +277,13 @@ def test_question_answering_service_maps_embedding_failures() -> None:
     )
 
     with pytest.raises(EmbeddingFailureError, match="embedding provider failed"):
-        run(service.answer_question(
-            question="What happened?",
-            experiment_id=str(uuid.uuid4()),
-            top_k=5,
-        ))
+        run(
+            service.answer_question(
+                question="What happened?",
+                experiment_id=str(uuid.uuid4()),
+                top_k=5,
+            )
+        )
 
 
 def test_question_answering_service_maps_llm_failures() -> None:
@@ -288,11 +296,13 @@ def test_question_answering_service_maps_llm_failures() -> None:
     )
 
     with pytest.raises(LLMGenerationError, match="rate limited"):
-        run(service.answer_question(
-            question="What happened?",
-            experiment_id=result.experiment_id,
-            top_k=5,
-        ))
+        run(
+            service.answer_question(
+                question="What happened?",
+                experiment_id=result.experiment_id,
+                top_k=5,
+            )
+        )
 
 
 def test_prompt_templates_are_centralized_and_used_for_qa_prompt() -> None:

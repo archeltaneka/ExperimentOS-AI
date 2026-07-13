@@ -73,7 +73,12 @@ EXPERIMENTS = [
         treatment_users=78,
         control_event_rate=0.676,
         treatment_event_rate=0.731,
-        event_names=["payment_method_viewed", "payment_selected", "payment_success", "payment_retry"],
+        event_names=[
+            "payment_method_viewed",
+            "payment_selected",
+            "payment_success",
+            "payment_retry",
+        ],
         metrics=[
             MetricSpec("payment_success_rate", "rate", 0.676, 0.731, 0.041, 0.676),
             MetricSpec("checkout_completion_rate", "rate", 0.642, 0.701, 0.052, 0.642),
@@ -176,7 +181,12 @@ EXPERIMENTS = [
         treatment_users=75,
         control_event_rate=0.584,
         treatment_event_rate=0.638,
-        event_names=["checkout_started", "address_completed", "payment_submitted", "order_completed"],
+        event_names=[
+            "checkout_started",
+            "address_completed",
+            "payment_submitted",
+            "order_completed",
+        ],
         metrics=[
             MetricSpec("checkout_completion_rate", "rate", 0.584, 0.638, 0.044, 0.584),
             MetricSpec("form_error_rate", "rate", 0.164, 0.191, 0.126, 0.164),
@@ -237,14 +247,23 @@ EXPERIMENTS = [
         status="completed",
         business_decision="Roll out to silver and gold members with a frequency cap.",
         primary_metric="repeat_session_rate_14d",
-        secondary_metrics=["tier_progress_click_rate", "unsubscribe_rate", "points_redemption_rate"],
+        secondary_metrics=[
+            "tier_progress_click_rate",
+            "unsubscribe_rate",
+            "points_redemption_rate",
+        ],
         start_date="2026-04-12",
         end_date="2026-04-26",
         control_users=70,
         treatment_users=82,
         control_event_rate=0.274,
         treatment_event_rate=0.329,
-        event_names=["post_purchase_viewed", "tier_progress_opened", "reward_clicked", "repeat_session"],
+        event_names=[
+            "post_purchase_viewed",
+            "tier_progress_opened",
+            "reward_clicked",
+            "repeat_session",
+        ],
         metrics=[
             MetricSpec("repeat_session_rate_14d", "rate", 0.274, 0.329, 0.027, 0.274),
             MetricSpec("tier_progress_click_rate", "rate", 0.119, 0.238, 0.004, 0.119),
@@ -278,7 +297,12 @@ EXPERIMENTS = [
         treatment_users=77,
         control_event_rate=0.073,
         treatment_event_rate=0.091,
-        event_names=["notification_sent", "notification_opened", "product_viewed", "purchase_completed"],
+        event_names=[
+            "notification_sent",
+            "notification_opened",
+            "product_viewed",
+            "purchase_completed",
+        ],
         metrics=[
             MetricSpec("reactivation_purchase_rate", "rate", 0.073, 0.091, 0.048, 0.073),
             MetricSpec("notification_open_rate", "rate", 0.284, 0.337, 0.031, 0.284),
@@ -305,14 +329,23 @@ EXPERIMENTS = [
         status="monitoring",
         business_decision="Hold at 15 percent traffic while monitoring category concentration.",
         primary_metric="add_to_cart_rate",
-        secondary_metrics=["recommendation_click_rate", "category_diversity_score", "revenue_per_user"],
+        secondary_metrics=[
+            "recommendation_click_rate",
+            "category_diversity_score",
+            "revenue_per_user",
+        ],
         start_date="2026-05-18",
         end_date="2026-06-01",
         control_users=79,
         treatment_users=79,
         control_event_rate=0.214,
         treatment_event_rate=0.246,
-        event_names=["product_viewed", "recommendation_seen", "recommendation_clicked", "cart_added"],
+        event_names=[
+            "product_viewed",
+            "recommendation_seen",
+            "recommendation_clicked",
+            "cart_added",
+        ],
         metrics=[
             MetricSpec("add_to_cart_rate", "rate", 0.214, 0.246, 0.061, 0.214),
             MetricSpec("recommendation_click_rate", "rate", 0.086, 0.127, 0.016, 0.086),
@@ -346,7 +379,12 @@ EXPERIMENTS = [
         treatment_users=85,
         control_event_rate=0.316,
         treatment_event_rate=0.369,
-        event_names=["search_submitted", "shortcut_filter_seen", "filter_applied", "result_clicked"],
+        event_names=[
+            "search_submitted",
+            "shortcut_filter_seen",
+            "filter_applied",
+            "result_clicked",
+        ],
         metrics=[
             MetricSpec("qualified_result_click_rate", "rate", 0.316, 0.369, 0.019, 0.316),
             MetricSpec("filter_apply_rate", "rate", 0.228, 0.342, 0.006, 0.228),
@@ -373,7 +411,11 @@ EXPERIMENTS = [
         status="completed",
         business_decision="Roll out to eligible non-subscribers with annual-plan exclusion logic.",
         primary_metric="trial_start_rate",
-        secondary_metrics=["paid_conversion_rate_30d", "annual_plan_purchase_rate", "support_ticket_rate"],
+        secondary_metrics=[
+            "paid_conversion_rate_30d",
+            "annual_plan_purchase_rate",
+            "support_ticket_rate",
+        ],
         start_date="2026-06-18",
         end_date="2026-07-02",
         control_users=77,
@@ -435,8 +477,14 @@ def metric_rows(spec: ExperimentSpec) -> list[dict[str, object]]:
     for metric in spec.metrics:
         for variant, value in [("control", metric.control), ("treatment", metric.treatment)]:
             denominator = sample_sizes[variant] if metric.unit == "rate" else ""
-            numerator = count_for_rate(sample_sizes[variant], value) if metric.unit == "rate" else ""
-            lift = 0.0 if variant == "control" else (value - control_values[metric.name]) / control_values[metric.name]
+            numerator = (
+                count_for_rate(sample_sizes[variant], value) if metric.unit == "rate" else ""
+            )
+            lift = (
+                0.0
+                if variant == "control"
+                else (value - control_values[metric.name]) / control_values[metric.name]
+            )
             rows.append(
                 {
                     "experiment_id": spec.experiment_id,
@@ -448,8 +496,11 @@ def metric_rows(spec: ExperimentSpec) -> list[dict[str, object]]:
                     "denominator": denominator,
                     "lift_vs_control": f"{lift:.4f}",
                     "p_value": "" if variant == "control" else f"{metric.p_value:.3f}",
-                    "notes": metric.notes or (
-                        "Primary decision metric." if metric.name == spec.primary_metric else "Secondary diagnostic metric."
+                    "notes": metric.notes
+                    or (
+                        "Primary decision metric."
+                        if metric.name == spec.primary_metric
+                        else "Secondary diagnostic metric."
                     ),
                 }
             )
@@ -487,7 +538,12 @@ def event_rows(spec: ExperimentSpec) -> list[dict[str, object]]:
                 note = "Included in analysis with known tracking caveat."
             elif "seasonality" in " ".join(spec.imperfections).lower() and country in {"AU", "US"}:
                 note = "Observed during seasonal demand window."
-            elif "country-specific" in " ".join(spec.imperfections).lower() and country in {"DE", "JP", "AU", "SG"}:
+            elif "country-specific" in " ".join(spec.imperfections).lower() and country in {
+                "DE",
+                "JP",
+                "AU",
+                "SG",
+            }:
                 note = "Country behaviour called out in experiment report."
 
             revenue = 0.0
@@ -519,8 +575,12 @@ def event_rows(spec: ExperimentSpec) -> list[dict[str, object]]:
 
 
 def report_text(spec: ExperimentSpec) -> str:
-    control_primary = next(metric.control for metric in spec.metrics if metric.name == spec.primary_metric)
-    treatment_primary = next(metric.treatment for metric in spec.metrics if metric.name == spec.primary_metric)
+    control_primary = next(
+        metric.control for metric in spec.metrics if metric.name == spec.primary_metric
+    )
+    treatment_primary = next(
+        metric.treatment for metric in spec.metrics if metric.name == spec.primary_metric
+    )
     primary_delta = treatment_primary - control_primary
     imperfections = "; ".join(spec.imperfections)
     secondary = ", ".join(spec.secondary_metrics)

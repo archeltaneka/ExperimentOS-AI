@@ -204,9 +204,7 @@ def test_phoenix_provider_flattens_or_serializes_nested_attributes_to_otel_safe_
     )
 
     assert exported
-    assert any(
-        "experimentos.metadata.request_context.top_k" in attrs for _name, attrs in exported
-    )
+    assert any("experimentos.metadata.request_context.top_k" in attrs for _name, attrs in exported)
     assert any("input.options.limit" in attrs for _name, attrs in exported)
     assert any("output.metrics.latency_ms" in attrs for _name, attrs in exported)
     for _name, attrs in exported:

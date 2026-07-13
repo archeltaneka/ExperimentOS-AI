@@ -127,8 +127,7 @@ def _required_string_tuple(item: dict[str, Any], key: str, *, index: int) -> tup
     value = item[key]
     if not isinstance(value, list) or not value:
         raise ValueError(
-            f"agent evaluation dataset item {index} field {key!r} "
-            "must be a non-empty list"
+            f"agent evaluation dataset item {index} field {key!r} must be a non-empty list"
         )
     entries: list[str] = []
     for offset, entry in enumerate(value):

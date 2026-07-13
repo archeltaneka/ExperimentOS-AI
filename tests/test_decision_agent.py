@@ -169,9 +169,10 @@ def test_decision_agent_uses_evidence_validation_to_block_incomplete_state() -> 
 
     assert update["decision"]["decision_status"] in {"needs_more_data", "insufficient_data"}
     assert update["tool_calls"][0]["tool_name"] == "validate_required_evidence"
-    assert "citations" in update["decision"]["blocking_issues"][0] or update["decision"][
-        "blocking_issues"
-    ]
+    assert (
+        "citations" in update["decision"]["blocking_issues"][0]
+        or update["decision"]["blocking_issues"]
+    )
 
 
 def test_decision_agent_requests_more_data_when_evidence_is_incomplete() -> None:

@@ -563,8 +563,7 @@ def _build_decision_support_state(question: str, experiment_id: str, top_k: int)
         state["business_impact"] = {
             **state["business_impact"],
             "summary": (
-                "Projected business impact is negative because the treatment diluted "
-                "margin."
+                "Projected business impact is negative because the treatment diluted margin."
             ),
             "impact_status": "estimated",
             "relative_lift": -0.031,
@@ -676,8 +675,7 @@ def _build_decision_support_state(question: str, experiment_id: str, top_k: int)
         state["business_impact"] = {
             **state["business_impact"],
             "summary": (
-                "Business impact could not be estimated cleanly from the available "
-                "evidence."
+                "Business impact could not be estimated cleanly from the available evidence."
             ),
             "impact_status": "insufficient_data",
             "evidence_citations": list(state["citations"]),
@@ -851,8 +849,7 @@ def _build_decision_support_state(question: str, experiment_id: str, top_k: int)
             "document_id": "doc-1",
             "experiment_id": experiment_id,
             "content": (
-                "Primary metric improved for loyalty members and the rollout should "
-                "stay monitored."
+                "Primary metric improved for loyalty members and the rollout should stay monitored."
             ),
             "score": 0.91,
             "metadata": {"section": "Results", "document_name": "Loyalty Report"},
@@ -863,8 +860,7 @@ def _build_decision_support_state(question: str, experiment_id: str, top_k: int)
             "document_id": "doc-1",
             "experiment_id": experiment_id,
             "quote": (
-                "Primary metric improved for loyalty members and the rollout should "
-                "stay monitored."
+                "Primary metric improved for loyalty members and the rollout should stay monitored."
             ),
             "section": "Results",
             "metadata": {"section": "Results", "document_name": "Loyalty Report"},

@@ -94,8 +94,7 @@ def _required_string_tuple(item: dict[str, Any], key: str, *, index: int) -> tup
     for offset, entry in enumerate(value):
         if not isinstance(entry, str) or not entry.strip():
             raise ValueError(
-                f"evaluation dataset item {index} field {key!r} entry {offset} "
-                "must be a string"
+                f"evaluation dataset item {index} field {key!r} entry {offset} must be a string"
             )
         strings.append(entry.strip())
     return tuple(strings)

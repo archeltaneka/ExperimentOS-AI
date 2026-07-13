@@ -362,8 +362,7 @@ def _build_decision(state: AgentState) -> tuple[DecisionRecord, list[dict[str, o
             "should continue before a rollout call is made."
             if recommendation == "continue_experiment"
             else (
-                "Evidence is incomplete or uncertain, so a rollout recommendation "
-                "is not supported."
+                "Evidence is incomplete or uncertain, so a rollout recommendation is not supported."
             )
         )
         return (

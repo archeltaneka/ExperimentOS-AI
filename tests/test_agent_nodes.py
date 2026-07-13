@@ -150,8 +150,7 @@ class RecordingExecutiveSummaryAgent:
                 ],
                 "business_impact_summary": "Treatment increased the primary business metric.",
                 "risk_summary": (
-                    "Risk is currently assessed as low with no material blocking "
-                    "factors recorded."
+                    "Risk is currently assessed as low with no material blocking factors recorded."
                 ),
                 "decision_rationale": "Positive lift, positive business impact, and low risk.",
                 "recommended_next_actions": ["Roll out gradually and monitor guardrails."],

@@ -19,6 +19,5 @@ def test_env_example_database_url_matches_compose_credentials() -> None:
     env_example = Path(".env.example").read_text(encoding="utf-8")
 
     assert (
-        "DATABASE_URL=postgresql+psycopg://experimentos:experimentos"
-        "@localhost:5433/experimentos"
+        "DATABASE_URL=postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
     ) in env_example

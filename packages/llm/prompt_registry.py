@@ -64,10 +64,9 @@ class PromptDefinition:
             raise PromptDefinitionError("input_variables must not contain blank values")
 
         declared_variables = set(self.input_variables)
-        template_variables = (
-            _extract_template_variables(self.system_template)
-            | _extract_template_variables(self.user_template)
-        )
+        template_variables = _extract_template_variables(
+            self.system_template
+        ) | _extract_template_variables(self.user_template)
         if template_variables != declared_variables:
             raise PromptDefinitionError(
                 "template variables must match input_variables exactly: "
@@ -264,8 +263,7 @@ def _build_default_prompt_registry() -> PromptRegistry:
             name="Decision Helper",
             version="1",
             description=(
-                "Legacy decision-oriented prompt template kept for backward-compatible "
-                "imports."
+                "Legacy decision-oriented prompt template kept for backward-compatible imports."
             ),
             system_template="",
             user_template="\n\n".join(
@@ -291,8 +289,7 @@ def _build_default_prompt_registry() -> PromptRegistry:
             name="Summary Helper",
             version="1",
             description=(
-                "Legacy summary-oriented prompt template kept for backward-compatible "
-                "imports."
+                "Legacy summary-oriented prompt template kept for backward-compatible imports."
             ),
             system_template="",
             user_template="\n\n".join(

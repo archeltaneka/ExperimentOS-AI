@@ -127,9 +127,7 @@ def test_create_initial_state_sets_shared_contract_defaults() -> None:
 
 
 def test_create_initial_state_sets_human_approval_defaults() -> None:
-    state = create_initial_state(
-        "Should we roll out the payment recommendation experiment?"
-    )
+    state = create_initial_state("Should we roll out the payment recommendation experiment?")
 
     assert state["human_approval_input"] == {}
     assert state["human_approval"] == {
@@ -151,15 +149,11 @@ def test_create_initial_state_seeds_experiment_id_and_top_k() -> None:
 
     assert state["request"]["experiment_id"] == "00000000-0000-0000-0000-000000000123"
     assert state["request"]["top_k"] == 3
-    assert state["experiment_context"]["experiment_ids"] == [
-        "00000000-0000-0000-0000-000000000123"
-    ]
+    assert state["experiment_context"]["experiment_ids"] == ["00000000-0000-0000-0000-000000000123"]
 
 
 def test_create_initial_state_keeps_tool_calls_empty_with_new_contract() -> None:
-    state = create_initial_state(
-        "Should we roll out the payment recommendation experiment?"
-    )
+    state = create_initial_state("Should we roll out the payment recommendation experiment?")
 
     assert state["tool_calls"] == []
     assert state["run_metadata"]["state_version"] == 10

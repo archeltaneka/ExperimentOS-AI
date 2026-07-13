@@ -476,9 +476,7 @@ def test_write_deepeval_reports_offline_skips_judge_metrics_without_evaluate(
     assert json_output.is_file()
     assert report.deepeval_available is True
     skipped = {
-        result.metric_name: result.skip_reason
-        for result in report.metric_results
-        if result.skipped
+        result.metric_name: result.skip_reason for result in report.metric_results if result.skipped
     }
     assert "answer_relevancy" in skipped
     assert "offline mode" in skipped["answer_relevancy"]

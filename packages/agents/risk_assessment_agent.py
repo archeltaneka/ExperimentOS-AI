@@ -262,8 +262,7 @@ def _build_risk_assessment(
             severity="high",
             category="statistical",
             detail=(
-                "Control/treatment values were incomplete, so lift quality "
-                "cannot be checked fully."
+                "Control/treatment values were incomplete, so lift quality cannot be checked fully."
             ),
             mitigation="Recover control and treatment metric values before rollout review.",
         )
@@ -275,8 +274,7 @@ def _build_risk_assessment(
             severity="medium",
             category="statistical",
             detail=(
-                "No stored statistical significance signal was available for "
-                "the primary metric."
+                "No stored statistical significance signal was available for the primary metric."
             ),
             mitigation="Treat the observed lift as directional until significance is established.",
         )
@@ -324,8 +322,7 @@ def _build_risk_assessment(
                 category="guardrail",
                 detail=f"Guardrail metric {metric_name} moved in a riskier direction.",
                 mitigation=(
-                    f"Monitor and mitigate guardrail movement for {metric_name} "
-                    "before ramping."
+                    f"Monitor and mitigate guardrail movement for {metric_name} before ramping."
                 ),
             )
 
@@ -337,8 +334,7 @@ def _build_risk_assessment(
             category="data_quality",
             detail="Citations or retrieved chunks were missing, reducing evidence traceability.",
             mitigation=(
-                "Retrieve supporting evidence and citations before relying on "
-                "this assessment."
+                "Retrieve supporting evidence and citations before relying on this assessment."
             ),
         )
 
@@ -375,8 +371,7 @@ def _build_risk_assessment(
             category="data_quality",
             detail=note,
             mitigation=(
-                "Address the data quality caveat or carry it explicitly into "
-                "rollout monitoring."
+                "Address the data quality caveat or carry it explicitly into rollout monitoring."
             ),
         )
 
@@ -393,12 +388,7 @@ def _build_risk_assessment(
 
     risk_execution = execute_tool(
         "score_experiment_risk",
-        {
-            "risk_factors": [
-                {"severity": str(factor["severity"])}
-                for factor in risk_factors
-            ]
-        },
+        {"risk_factors": [{"severity": str(factor["severity"])} for factor in risk_factors]},
         node=RISK_ASSESSMENT_NODE,
     )
     tool_calls.append(risk_execution.record)

@@ -93,9 +93,7 @@ def extract_workflow_observation(state: AgentState) -> WorkflowObservation:
             error_count=len(errors_by_node.get(node, [])),
             tool_call_count=len(tool_calls_by_node.get(node, [])),
             tool_failure_count=sum(
-                1
-                for record in tool_calls_by_node.get(node, [])
-                if record.get("status") == "failed"
+                1 for record in tool_calls_by_node.get(node, []) if record.get("status") == "failed"
             ),
         )
         for node in PHASE2_WORKFLOW_NODES
@@ -218,10 +216,7 @@ def _workflow_latency_ms(
             return elapsed
     trace_times = [
         parsed
-        for parsed in (
-            _parse_iso8601(str(entry.get("at", "")))
-            for entry in state["trace"]
-        )
+        for parsed in (_parse_iso8601(str(entry.get("at", ""))) for entry in state["trace"])
         if parsed is not None
     ]
     if trace_times:

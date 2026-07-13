@@ -122,9 +122,7 @@ def test_unsupported_numerical_claim_fails() -> None:
                 "decision_status": "decided",
                 "recommendation": "rollout",
                 "confidence": "high",
-                "rationale": (
-                    "Roll out because payment_success_rate improved from 0.67 to 0.81."
-                ),
+                "rationale": ("Roll out because payment_success_rate improved from 0.67 to 0.81."),
             },
         )
     )
@@ -698,6 +696,79 @@ def test_metric_named_claim_is_not_marked_unparsed() -> None:
                 "confidence": "unknown",
                 "decision_rationale": "",
             },
+        )
+    )
+
+    assert result.unparsed_claims is False
+
+
+def test_evidence_supported_descriptive_claim_is_not_marked_unparsed() -> None:
+    from packages.evals.factuality.deterministic import evaluate_case
+
+    result = evaluate_case(
+        _make_case(
+            answer="Higher-quality imagery can slow weaker devices and harm low-bandwidth users.",
+            decision={
+                "decision_status": "not_required",
+                "recommendation": "unknown",
+                "confidence": "unknown",
+                "rationale": "",
+            },
+            executive_summary={
+                "summary_status": "generated",
+                "summary": (
+                    "Higher-quality imagery can slow weaker devices and harm low-bandwidth users."
+                ),
+                "recommendation": "unknown",
+                "confidence": "high",
+                "decision_rationale": "",
+            },
+            evidence=(
+                _make_case().evidence[0],
+                type(_make_case().evidence[0])(
+                    source_id="doc-2",
+                    source_type="document",
+                    text=(
+                        "Higher quality imagery can slow weaker devices and harm "
+                        "low-bandwidth users."
+                    ),
+                    metadata={"section": "Risks"},
+                ),
+            ),
+        )
+    )
+
+    assert result.unparsed_claims is False
+
+
+def test_abstention_answer_is_not_marked_unparsed() -> None:
+    from packages.evals.factuality.deterministic import evaluate_case
+
+    result = evaluate_case(
+        _make_case(
+            answer="Insufficient evidence exists to answer the question.",
+            expected_failure_mode="unsupported_significance_or_roi",
+            decision={
+                "decision_status": "needs_more_data",
+                "recommendation": "needs_more_data",
+                "confidence": "low",
+                "rationale": "Need more data before making a claim.",
+            },
+            executive_summary={
+                "summary_status": "partial_summary",
+                "summary": "Insufficient evidence exists to answer the question.",
+                "recommendation": "needs_more_data",
+                "confidence": "low",
+                "decision_rationale": "Need more data before making a claim.",
+            },
+            business_impact={
+                "impact_status": "insufficient_data",
+                "estimated_annualized_impact": None,
+                "summary": "Cannot estimate business impact from the available inputs.",
+            },
+            expected_decision_status="needs_more_data",
+            expected_recommendation="needs_more_data",
+            expected_summary_status="partial_summary",
         )
     )
 

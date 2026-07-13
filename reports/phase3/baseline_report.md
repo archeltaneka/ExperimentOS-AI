@@ -1,7 +1,7 @@
 # Phase 3 Reliability Baseline Report
 
-- Generated at: 2026-07-13T00:30:11.348095Z
-- Overall status: fail
+- Generated at: 2026-07-13T02:58:14.786970Z
+- Overall status: pass
 
 ## Evaluation Status
 
@@ -10,7 +10,7 @@
 | RAG Evaluation | pass | completed without sample errors | data\eval\qa_dataset.json | `reports\evaluation.md` |
 | Agent Workflow Evaluation | pass | all deterministic workflow cases passed | data\eval\agent_dataset.json | `reports\agent_evaluation.md` |
 | Agent Workflow E2E Evaluation | pass | all deterministic API cases passed | n/a | `reports\agent_e2e_evaluation.md` |
-| Factuality Evaluation | warning | Some cases could not be parsed conservatively into explicit claims. | data\eval\qa_dataset.json, data\eval\agent_dataset.json | `reports\phase3\factuality_report.md` |
+| Factuality Evaluation | pass | factuality policy passed | data\eval\qa_dataset.json, data\eval\agent_dataset.json | `reports\phase3\factuality_report.md` |
 
 ## Commands Run
 
@@ -18,6 +18,15 @@
 - `uv run python -m packages.evals.run_agent --dataset data\eval\agent_dataset.json --output reports\agent_evaluation.md`
 - `uv run python -m packages.evals.run_agent_e2e --output reports\agent_e2e_evaluation.md`
 - `uv run python -m packages.evals.run_factuality --dataset data\eval\qa_dataset.json --agent-dataset data\eval\agent_dataset.json --target all --mode offline --output reports\phase3\factuality_report.md --json-output reports\phase3\factuality_report.json --top-k 5 --embedding-provider fake --llm-provider mock`
+
+## Quality Policy
+
+- Status: pass
+- Markdown report: `C:\Users\Archel\Documents\Personal Projects\ExperimentOS-AI\reports\phase3\quality_policy.md`
+- JSON report: `C:\Users\Archel\Documents\Personal Projects\ExperimentOS-AI\reports\phase3\quality_policy.json`
+- Covered frameworks: rag, agent, agent_e2e, ragas, deepeval, prompt_regression, factuality
+- All required quality policy metrics satisfied their thresholds.
+- 6 metrics were skipped or unavailable.
 
 ## RAG Evaluation
 
@@ -31,7 +40,7 @@
 - Questions evaluated: 62
 - Retrieval success rate: 100.0%
 - Average citation coverage: 100.0%
-- Average retrieval latency: 50.9 ms
+- Average retrieval latency: 49.4 ms
 - Average LLM latency: 0.0 ms
 
 ### Missing Metrics
@@ -104,15 +113,15 @@
 
 ## Factuality Evaluation
 
-- Status: warning
-- Reason: Some cases could not be parsed conservatively into explicit claims.
+- Status: pass
+- Reason: factuality policy passed
 - Dataset: data\eval\qa_dataset.json, data\eval\agent_dataset.json
 - Report path: `reports\phase3\factuality_report.md`
 
 ### Key Metrics
 
 - Cases evaluated: 70
-- Policy result: warning
+- Policy result: pass
 - Critical findings: 0
 - Citation failures: 0
 - Unsupported numerical claims: 0
@@ -131,7 +140,7 @@
 
 ## Known Gaps
 
-- No threshold policy exists yet for turning these metrics into CI gates.
+- A repository-owned threshold policy now exists, but GitHub Actions enforcement and production blocking remain intentionally out of scope.
 - LangSmith and Phoenix tracing are optional external sinks; internal ExperimentOS traces remain authoritative and production alerting is still absent.
 - Cross-service distributed tracing remains out of scope.
 
@@ -168,6 +177,6 @@
 
 ## Next Recommended Reliability Work
 
-- Define category-specific threshold policies before introducing CI quality gates.
+- Integrate the centralized quality policy into GitHub Actions once thresholds are stable.
 - Add report-level regression diffs so future baseline runs can compare changed failure cases directly.
 - Expand observability coverage from local and evaluation runs into deployed service operations.

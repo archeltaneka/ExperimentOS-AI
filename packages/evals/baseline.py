@@ -44,7 +44,10 @@ E2E_MISSING_METRICS = (
 )
 
 BASELINE_KNOWN_GAPS = (
-    "No threshold policy exists yet for turning these metrics into CI gates.",
+    (
+        "A repository-owned threshold policy now exists, but GitHub Actions enforcement and "
+        "production blocking remain intentionally out of scope."
+    ),
     (
         "LangSmith and Phoenix tracing are optional external sinks; internal "
         "ExperimentOS traces remain authoritative and production alerting is still absent."
@@ -53,7 +56,7 @@ BASELINE_KNOWN_GAPS = (
 )
 
 BASELINE_NEXT_WORK = (
-    "Define category-specific threshold policies before introducing CI quality gates.",
+    "Integrate the centralized quality policy into GitHub Actions once thresholds are stable.",
     (
         "Add report-level regression diffs so future baseline runs can compare changed "
         "failure cases directly."
@@ -87,6 +90,11 @@ class Phase3BaselineReport:
     next_recommended_work: tuple[str, ...]
     registered_prompts: tuple[tuple[str, str, str], ...]
     prompt_provenance_notes: tuple[str, ...]
+    quality_policy_status: str = "not_evaluated"
+    quality_policy_report_path: str | None = None
+    quality_policy_json_report_path: str | None = None
+    quality_policy_frameworks: tuple[str, ...] = field(default_factory=tuple)
+    quality_policy_rationale: tuple[str, ...] = field(default_factory=tuple)
     prompt_regression_coverage: tuple[str, ...] = field(default_factory=tuple)
     prompt_experiment_status: tuple[str, ...] = field(default_factory=tuple)
     remaining_prompt_risks: tuple[str, ...] = field(default_factory=tuple)
@@ -109,6 +117,11 @@ def build_phase3_baseline_report(
     factuality_report: FactualityReport,
     factuality_command: str,
     factuality_report_path: str,
+    quality_policy_status: str = "not_evaluated",
+    quality_policy_report_path: str | None = None,
+    quality_policy_json_report_path: str | None = None,
+    quality_policy_frameworks: tuple[str, ...] = (),
+    quality_policy_rationale: tuple[str, ...] = (),
 ) -> Phase3BaselineReport:
     sections = [
         _build_qa_section(
@@ -134,7 +147,12 @@ def build_phase3_baseline_report(
             report_path=factuality_report_path,
         ),
     ]
-    overall_status = "pass" if all(section.status == "pass" for section in sections) else "fail"
+    if any(section.status == "fail" for section in sections) or quality_policy_status == "fail":
+        overall_status = "fail"
+    elif quality_policy_status == "warning":
+        overall_status = "warning"
+    else:
+        overall_status = "pass"
     return Phase3BaselineReport(
         generated_at=generated_at,
         overall_status=overall_status,
@@ -147,6 +165,11 @@ def build_phase3_baseline_report(
             "offline QA evaluation samples and reports carry prompt provenance when available.",
             "agent_workflow remains prompt-free until an LLM-backed surface exists.",
         ),
+        quality_policy_status=quality_policy_status,
+        quality_policy_report_path=quality_policy_report_path,
+        quality_policy_json_report_path=quality_policy_json_report_path,
+        quality_policy_frameworks=quality_policy_frameworks,
+        quality_policy_rationale=quality_policy_rationale,
         prompt_regression_coverage=(
             "Prompt regression compares prompt versions over the existing legacy_rag QA dataset.",
             (
@@ -197,6 +220,17 @@ def render_phase3_baseline_report(report: Phase3BaselineReport) -> str:
     lines.extend(["", "## Commands Run", ""])
     for section in report.sections:
         lines.append(f"- `{section.command}`")
+
+    lines.extend(["", "## Quality Policy", ""])
+    lines.append(f"- Status: {report.quality_policy_status}")
+    if report.quality_policy_report_path is not None:
+        lines.append(f"- Markdown report: `{report.quality_policy_report_path}`")
+    if report.quality_policy_json_report_path is not None:
+        lines.append(f"- JSON report: `{report.quality_policy_json_report_path}`")
+    if report.quality_policy_frameworks:
+        lines.append(f"- Covered frameworks: {', '.join(report.quality_policy_frameworks)}")
+    for rationale in report.quality_policy_rationale:
+        lines.append(f"- {rationale}")
 
     for section in report.sections:
         lines.extend(

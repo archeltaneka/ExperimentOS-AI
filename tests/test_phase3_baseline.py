@@ -150,6 +150,8 @@ def test_run_phase3_baseline_writes_aggregate_report(tmp_path: Path, monkeypatch
     agent_e2e_output = tmp_path / "agent_e2e_evaluation.md"
     factuality_output = tmp_path / "phase3" / "factuality_report.md"
     factuality_json_output = tmp_path / "phase3" / "factuality_report.json"
+    quality_policy_output = tmp_path / "phase3" / "quality_policy.md"
+    quality_policy_json_output = tmp_path / "phase3" / "quality_policy.json"
 
     args = parse_args(
         [
@@ -326,4 +328,7 @@ def test_run_phase3_baseline_writes_aggregate_report(tmp_path: Path, monkeypatch
     assert agent_e2e_output.is_file()
     assert factuality_output.is_file()
     assert factuality_json_output.is_file()
+    assert quality_policy_output.is_file()
+    assert quality_policy_json_output.is_file()
     assert report.startswith("# Phase 3 Reliability Baseline Report")
+    assert "## Quality Policy" in report

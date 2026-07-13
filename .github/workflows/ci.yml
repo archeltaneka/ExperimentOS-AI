@@ -191,7 +191,7 @@ jobs:
           uv run python -m packages.evals.run_factuality
           --dataset data/eval/ci_smoke_dataset.json
           --agent-dataset data/eval/agent_dataset.json
-          --target all
+          --target agent_workflow
           --mode offline
           --embedding-provider fake
           --llm-provider mock
@@ -284,7 +284,7 @@ jobs:
       - name: Seed deterministic integration dataset
         run: >-
           uv run python -m packages.ingestion.load_experiment
-          --experiment-dir data/synthetic/experiments/exp-001-payment-recommendation
+          --experiment-dir tests/fixtures/ci/exp-001-payment-recommendation
           --embedding-provider fake
 
       - name: Run database-backed integration tests

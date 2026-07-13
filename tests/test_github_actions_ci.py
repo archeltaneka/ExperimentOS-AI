@@ -25,5 +25,8 @@ def test_ci_workflow_declares_two_tier_jobs_and_offline_defaults() -> None:
     assert "EMBEDDING_PROVIDER: fake" in workflow
     assert "LLM_PROVIDER: mock" in workflow
     assert "PROMPT_EXPERIMENTS_ENABLED:" in workflow
+    assert "--target agent_workflow" in workflow
+    assert "tests/fixtures/ci/exp-001-payment-recommendation" in workflow
+    assert "data/synthetic/experiments/exp-001-payment-recommendation" not in workflow
     assert "actions/upload-artifact@" in workflow
     assert "docker compose" not in workflow.lower()

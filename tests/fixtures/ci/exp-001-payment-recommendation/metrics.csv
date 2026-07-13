@@ -1,0 +1,4 @@
+experiment_id,metric_name,variant,value,unit,numerator,denominator,lift_vs_control,p_value,notes
+exp-001-payment-recommendation,payment_success_rate,control,0.676,rate,676,1000,0,0.5,Control baseline.
+exp-001-payment-recommendation,payment_success_rate,treatment,0.731,rate,731,1000,0.08136,0.02,Treatment improved conversion.
+exp-001-payment-recommendation,wallet_share,treatment,0.412,rate,412,1000,0.055,0.03,Wallet telemetry increased.

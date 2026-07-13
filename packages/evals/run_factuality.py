@@ -99,7 +99,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--llm-provider",
-        choices=("mock", "openai", "gemini", "ollama"),
+        choices=("auto", "mock", "openai", "gemini", "ollama"),
         default=None,
         help="LLM provider used by legacy_rag.",
     )

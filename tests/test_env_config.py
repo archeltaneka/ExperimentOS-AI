@@ -190,6 +190,101 @@ def test_evaluation_cli_uses_dotenv_provider_defaults_when_flags_omitted(
     assert resolved.llm_model == "qwen2.5:7b"
 
 
+def test_evaluation_cli_resolves_auto_llm_provider_to_mock_without_api_keys(
+    monkeypatch, tmp_path: Path
+) -> None:
+    import packages.evals.run as eval_run
+
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text("LLM_PROVIDER=auto\n", encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    args = eval_run.parse_args([])
+    resolved = eval_run.resolve_runtime_options(args)
+
+    assert resolved.llm_provider == "mock"
+    assert resolved.llm_model == "mock"
+
+
+def test_evaluation_cli_resolves_auto_llm_provider_preferring_gemini(
+    monkeypatch, tmp_path: Path
+) -> None:
+    import packages.evals.run as eval_run
+
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text(
+        "\n".join(
+            [
+                "LLM_PROVIDER=auto",
+                "GEMINI_API_KEY=gemini-key",
+                "OPENAI_API_KEY=openai-key",
+                "GEMINI_MODEL=gemini-test-model",
+                "OPENAI_MODEL=openai-test-model",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_MODEL", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+
+    args = eval_run.parse_args([])
+    resolved = eval_run.resolve_runtime_options(args)
+
+    assert resolved.llm_provider == "gemini"
+    assert resolved.llm_model == "gemini-test-model"
+
+
+def test_prompt_regression_cli_uses_dotenv_provider_defaults_when_flags_omitted(
+    monkeypatch, tmp_path: Path
+) -> None:
+    import packages.evals.run_prompt_regression as run_prompt_regression
+
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text(
+        "\n".join(
+            [
+                "EMBEDDING_PROVIDER=ollama",
+                "LLM_PROVIDER=ollama",
+                "OLLAMA_EMBEDDING_MODEL=nomic-embed-text",
+                "OLLAMA_MODEL=qwen2.5:7b",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("EMBEDDING_PROVIDER", raising=False)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("OLLAMA_EMBEDDING_MODEL", raising=False)
+    monkeypatch.delenv("OLLAMA_MODEL", raising=False)
+
+    args = run_prompt_regression.parse_args(
+        [
+            "--prompt-id",
+            "rag.answer",
+            "--baseline-version",
+            "1",
+            "--candidate-version",
+            "2",
+        ]
+    )
+    resolved = run_prompt_regression.resolve_runtime_options(args)
+
+    assert resolved.embedding_provider == "ollama"
+    assert resolved.embedding_model == "nomic-embed-text"
+    assert resolved.llm_provider == "ollama"
+    assert resolved.llm_model == "qwen2.5:7b"
+
+
 def test_explicit_cli_flags_override_dotenv_provider_defaults(monkeypatch, tmp_path: Path) -> None:
     import packages.evals.run as eval_run
 

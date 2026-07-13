@@ -55,7 +55,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--embedding-provider",
         choices=("auto", "fake", "openai", "gemini", "huggingface", "ollama"),
-        default="fake",
+        default=None,
         help="Embedding provider used by the QA pipeline under test.",
     )
     parser.add_argument(
@@ -65,8 +65,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--llm-provider",
-        choices=("mock", "openai", "gemini", "ollama"),
-        default="mock",
+        choices=("auto", "mock", "openai", "gemini", "ollama"),
+        default=None,
         help="LLM provider used by the QA pipeline under test.",
     )
     parser.add_argument(

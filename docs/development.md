@@ -284,10 +284,14 @@ Current embedding provider choices:
 
 Current evaluation LLM provider choices:
 
+- `auto`
 - `mock`
 - `openai`
 - `gemini`
 - `ollama`
+
+When evaluation CLI provider flags are omitted, the runners load `.env` and resolve provider
+defaults from it.
 
 Current API LLM behavior:
 

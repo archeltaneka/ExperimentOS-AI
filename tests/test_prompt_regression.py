@@ -462,3 +462,88 @@ def test_prompt_regression_cli_runs_offline_without_live_provider(
     assert output.is_file()
     assert json_output.is_file()
     assert "Prompt Regression Report" in output.read_text(encoding="utf-8")
+
+
+def test_build_prompt_regression_report_runs_offline_without_database(
+    monkeypatch,
+) -> None:
+    import packages.evals.run_prompt_regression as module
+    from packages.evals.prompt_regression import (
+        PromptRegressionFrameworkComparison,
+        PromptRegressionMetricComparison,
+        PromptRegressionReport,
+        PromptRegressionSummary,
+    )
+
+    captured = {}
+
+    async def fake_evaluate(self):
+        captured["retrieval_service"] = self.retrieval_service
+        return PromptRegressionReport(
+            prompt_id="rag.answer",
+            baseline_version="1",
+            candidate_version="1",
+            dataset="data/eval/ci_smoke_dataset.json",
+            case_results=(),
+            metrics=(
+                PromptRegressionMetricComparison(
+                    name="answer_generated",
+                    baseline=1.0,
+                    candidate=1.0,
+                    delta=0.0,
+                    regressions=0,
+                    improvements=0,
+                ),
+            ),
+            ragas_comparison=PromptRegressionFrameworkComparison(
+                framework="ragas",
+                metrics=(),
+                notes=(),
+            ),
+            deepeval_comparison=PromptRegressionFrameworkComparison(
+                framework="deepeval",
+                metrics=(),
+                notes=(),
+            ),
+            summary=PromptRegressionSummary(
+                cases_run=0,
+                regressions=0,
+                improvements=0,
+                unchanged=0,
+                failures=0,
+                skipped=0,
+                passed=True,
+            ),
+        )
+
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setattr(module, "_resolve_questions", lambda _path: [build_question()])
+    monkeypatch.setattr(module, "create_database_engine", lambda: (_ for _ in ()).throw(
+        AssertionError("offline prompt regression should not create a database engine")
+    ))
+    monkeypatch.setattr(module.PromptRegressionRunner, "evaluate", fake_evaluate)
+
+    report = module.run_async(
+        module.build_prompt_regression_report(
+            module.parse_args(
+                [
+                    "--prompt-id",
+                    "rag.answer",
+                    "--baseline-version",
+                    "1",
+                    "--candidate-version",
+                    "1",
+                    "--offline",
+                    "--dataset",
+                    "data/eval/ci_smoke_dataset.json",
+                    "--embedding-provider",
+                    "fake",
+                    "--llm-provider",
+                    "mock",
+                ]
+            )
+        )
+    )
+
+    assert report.prompt_id == "rag.answer"
+    assert captured["retrieval_service"].__class__.__name__.startswith("_Offline")

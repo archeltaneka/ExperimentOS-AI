@@ -1,0 +1,327 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  APP_ENV: ci
+  ASK_MODE: agent_workflow
+  EMBEDDING_PROVIDER: fake
+  LLM_PROVIDER: mock
+  PROMPT_EXPERIMENTS_ENABLED: "false"
+  EXPERIMENTOS_LANGSMITH_ENABLED: "false"
+  EXPERIMENTOS_PHOENIX_ENABLED: "false"
+  EXPERIMENTOS_OTEL_ENABLED: "false"
+  LANGSMITH_TRACING: "false"
+  LANGSMITH_API_KEY: ""
+  OPENAI_API_KEY: ""
+  GOOGLE_API_KEY: ""
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+          cache-python: true
+          cache-dependency-glob: uv.lock
+
+      - name: Sync development dependencies
+        run: uv sync --group dev --frozen
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+          cache-python: true
+          cache-dependency-glob: uv.lock
+
+      - name: Sync development dependencies
+        run: uv sync --group dev --frozen
+
+      - name: Run Ruff
+        run: uv run ruff check .
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+          cache-python: true
+          cache-dependency-glob: uv.lock
+
+      - name: Sync validation dependencies
+        run: uv sync --group dev --group observability --frozen
+
+      - name: Validate prompt registry
+        run: uv run python -m packages.llm.prompt_registry_cli validate
+
+      - name: Validate prompt experiment definitions
+        run: >-
+          uv run python -m packages.evals.run_prompt_experiment
+          validate
+          --experiment rag-answer-abstention-v1-v2
+
+      - name: Validate observability configuration
+        run: >-
+          uv run python -m packages.observability.cli
+          validate
+          --provider all
+
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+          cache-python: true
+          cache-dependency-glob: uv.lock
+
+      - name: Sync unit test dependencies
+        run: uv sync --group dev --group eval --group observability --frozen
+
+      - name: Run deterministic unit tests
+        run: >-
+          uv run pytest
+          tests/test_api_health.py
+          tests/test_api_ask.py
+          tests/test_agent_workflow.py
+          tests/test_prompt_registry.py
+          tests/test_prompt_registry_cli.py
+          tests/test_prompt_experiment_cli.py
+          tests/test_prompt_experiment_validation.py
+          tests/test_observability_cli.py
+          tests/test_prompt_regression.py
+          tests/test_factuality.py
+          tests/test_quality_policy.py
+          tests/test_evaluation_harness.py
+          tests/test_phase3_baseline.py
+          tests/test_github_actions_ci.py
+          -v
+
+  offline-eval-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+          cache-python: true
+          cache-dependency-glob: uv.lock
+
+      - name: Sync evaluation dependencies
+        run: uv sync --group dev --group eval --frozen
+
+      - name: Prepare offline artifact directory
+        run: mkdir -p artifacts/ci/offline/phase3
+
+      - name: Run prompt regression smoke
+        run: >-
+          uv run python -m packages.evals.run_prompt_regression
+          --prompt-id rag.answer
+          --baseline-version 1
+          --candidate-version 1
+          --offline
+          --dataset data/eval/ci_smoke_dataset.json
+          --embedding-provider fake
+          --llm-provider mock
+          --output artifacts/ci/offline/phase3/prompt_regression.md
+          --json-output artifacts/ci/offline/phase3/prompt_regression.json
+
+      - name: Run factuality smoke
+        run: >-
+          uv run python -m packages.evals.run_factuality
+          --dataset data/eval/ci_smoke_dataset.json
+          --agent-dataset data/eval/agent_dataset.json
+          --target all
+          --mode offline
+          --embedding-provider fake
+          --llm-provider mock
+          --output artifacts/ci/offline/phase3/factuality_report.md
+          --json-output artifacts/ci/offline/phase3/factuality_report.json
+
+      - name: Run quality policy command validation
+        run: >-
+          uv run python -m packages.evals.run_quality_policy
+          --report-dir artifacts/ci/offline
+          --warn-only
+          --output artifacts/ci/offline/phase3/quality_policy.md
+          --json-output artifacts/ci/offline/phase3/quality_policy.json
+
+      - name: Upload offline evaluation artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: offline-eval-smoke
+          path: artifacts/ci/offline
+          if-no-files-found: warn
+
+  integration-db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: experimentos_ci
+          POSTGRES_USER: experimentos_ci
+          POSTGRES_PASSWORD: experimentos_ci
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U experimentos_ci -d experimentos_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql+psycopg://experimentos_ci:experimentos_ci@localhost:5433/experimentos_ci
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+          cache-python: true
+          cache-dependency-glob: uv.lock
+
+      - name: Sync integration dependencies
+        run: uv sync --group dev --group eval --group observability --frozen
+
+      - name: Wait for PostgreSQL readiness
+        timeout-minutes: 2
+        run: |
+          uv run python - <<'PY'
+          import time
+          import psycopg
+
+          deadline = time.time() + 120
+          dsn = "postgresql://experimentos_ci:experimentos_ci@localhost:5433/experimentos_ci"
+          last_error = None
+
+          while time.time() < deadline:
+              try:
+                  with psycopg.connect(dsn):
+                      print("postgres ready")
+                      raise SystemExit(0)
+              except Exception as exc:
+                  last_error = exc
+                  time.sleep(5)
+
+          raise SystemExit(f"postgres not ready: {last_error}")
+          PY
+
+      - name: Run Alembic migrations
+        run: uv run alembic upgrade head
+
+      - name: Prepare integration artifact directory
+        run: mkdir -p artifacts/ci/integration/phase3
+
+      - name: Seed deterministic integration dataset
+        run: >-
+          uv run python -m packages.ingestion.load_experiment
+          --experiment-dir data/synthetic/experiments/exp-001-payment-recommendation
+          --embedding-provider fake
+
+      - name: Run database-backed integration tests
+        timeout-minutes: 10
+        run: >-
+          uv run pytest
+          tests/test_alembic_config.py
+          tests/test_db_models.py
+          tests/test_db_session.py
+          tests/test_ingestion_load_experiment.py
+          tests/test_retrieval_service.py
+          tests/test_api_ask.py
+          tests/test_agent_workflow.py
+          tests/test_api_ask_db_integration.py
+          -v
+
+      - name: Run DB-backed baseline smoke
+        timeout-minutes: 8
+        run: >-
+          uv run python -m packages.evals.run_baseline
+          --dataset data/eval/ci_smoke_dataset.json
+          --agent-dataset data/eval/agent_dataset.json
+          --embedding-provider fake
+          --llm-provider mock
+          --rag-output artifacts/ci/integration/evaluation.md
+          --agent-output artifacts/ci/integration/agent_evaluation.md
+          --agent-e2e-output artifacts/ci/integration/agent_e2e_evaluation.md
+          --factuality-output artifacts/ci/integration/phase3/factuality_report.md
+          --factuality-json-output artifacts/ci/integration/phase3/factuality_report.json
+          --quality-policy-output artifacts/ci/integration/phase3/quality_policy.md
+          --quality-policy-json-output artifacts/ci/integration/phase3/quality_policy.json
+          --output artifacts/ci/integration/phase3/baseline_report.md
+
+      - name: Upload integration artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-db-reports
+          path: artifacts/ci/integration
+          if-no-files-found: warn

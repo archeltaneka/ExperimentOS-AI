@@ -216,7 +216,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--llm-provider",
-        choices=("mock", "openai", "gemini", "ollama"),
+        choices=("auto", "mock", "openai", "gemini", "ollama"),
         default=None,
         help="LLM provider used by the QA pipeline under test.",
     )
@@ -360,9 +360,7 @@ def _build_deepeval_report(
         )
     else:
         if bindings is None:
-            raise ValueError(
-                "DeepEval is not installed or could not be imported for judge mode."
-            )
+            raise ValueError("DeepEval is not installed or could not be imported for judge mode.")
         metric_results.extend(
             _evaluate_judge_metrics(
                 response_cases=response_cases,

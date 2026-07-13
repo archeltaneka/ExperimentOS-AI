@@ -9,7 +9,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from packages.config.env import resolve_setting
+from packages.config.env import load_environment, resolve_setting
 from packages.db.models import Experiment
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.evals.dataset import DEFAULT_DATASET_PATH, EvaluationQuestion, load_evaluation_dataset
@@ -68,7 +68,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--llm-provider",
-        choices=("mock", "openai", "gemini", "ollama"),
+        choices=("auto", "mock", "openai", "gemini", "ollama"),
         default=None,
         help="LLM provider to use for answer generation.",
     )
@@ -123,9 +123,10 @@ def resolve_runtime_options(args: argparse.Namespace) -> argparse.Namespace:
     args.llm_provider = resolve_setting(
         args.llm_provider,
         env_var="LLM_PROVIDER",
-        default="mock",
+        default="auto",
         lowercase=True,
     )
+    args.llm_provider = _resolve_llm_provider(args.llm_provider)
     if args.llm_provider == "gemini":
         args.llm_model = resolve_setting(
             args.llm_model,
@@ -275,6 +276,18 @@ def _llm_model_label(args: argparse.Namespace) -> str:
     if args.llm_provider == "mock" and args.llm_model in {GEMINI_LLM_MODEL, OLLAMA_LLM_MODEL}:
         return "mock"
     return args.llm_model
+
+
+def _resolve_llm_provider(provider: str) -> str:
+    normalized = provider.lower()
+    if normalized != "auto":
+        return normalized
+    load_environment()
+    if os.environ.get("GEMINI_API_KEY"):
+        return "gemini"
+    if os.environ.get("OPENAI_API_KEY"):
+        return "openai"
+    return "mock"
 
 
 def _build_mock_evaluation_answer(prompt: str, system_instruction: str) -> str:

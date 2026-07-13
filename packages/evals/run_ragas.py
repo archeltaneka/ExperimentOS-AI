@@ -76,7 +76,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--llm-provider",
-        choices=("mock", "openai", "gemini", "ollama"),
+        choices=("auto", "mock", "openai", "gemini", "ollama"),
         default=None,
         help="LLM provider used by the QA pipeline under test.",
     )
@@ -417,8 +417,7 @@ def _build_judge_llm(
     if args.judge_llm_provider in {"none", "mock"}:
         return (
             None,
-            f"judge llm provider `{args.judge_llm_provider}` does not enable RAGAS "
-            "judge metrics",
+            f"judge llm provider `{args.judge_llm_provider}` does not enable RAGAS judge metrics",
         )
     if args.judge_llm_provider == "openai":
         api_key = os.getenv("OPENAI_API_KEY")

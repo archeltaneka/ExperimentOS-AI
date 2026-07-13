@@ -397,6 +397,117 @@ def test_cli_parser_accepts_dataset_output_and_provider_options() -> None:
     assert gemini_args.llm_model == "gemini-3.5-flash"
 
 
+def test_mock_evaluation_llm_abstains_for_insufficient_evidence_prompt() -> None:
+    from packages.evals.run import _build_llm_client, parse_args, resolve_runtime_options
+    from packages.qa.question_answering_service import INSUFFICIENT_EVIDENCE_ANSWER
+
+    args = resolve_runtime_options(parse_args(["--llm-provider", "mock"]))
+    client = _build_llm_client(args)
+
+    response = run(
+        client.generate(
+            prompt="\n".join(
+                [
+                    (
+                        "User Question: Can we claim definitive statistical significance or ROI "
+                        "for the payment recommendation experiment from the report alone?"
+                    ),
+                    "Retrieved Context:",
+                    "Chunk 1",
+                    "Document: Adaptive Payment Method Recommendation",
+                    "Text:",
+                    (
+                        "The result was not interpreted mechanically from a single p-value. "
+                        "The sample is intentionally small."
+                    ),
+                    "Answer using only the retrieved context and cite the supporting documents.",
+                ]
+            ),
+            system_instruction=(
+                "Only answer using retrieved context.\n"
+                "If the answer cannot be supported by retrieved evidence, say that insufficient "
+                "evidence exists.\n"
+                "Never invent facts."
+            ),
+        )
+    )
+
+    assert response.answer == INSUFFICIENT_EVIDENCE_ANSWER
+
+
+def test_mock_evaluation_llm_abstains_for_report_only_definitive_claim_questions() -> None:
+    from packages.evals.run import _build_llm_client, parse_args, resolve_runtime_options
+    from packages.qa.question_answering_service import INSUFFICIENT_EVIDENCE_ANSWER
+
+    args = resolve_runtime_options(parse_args(["--llm-provider", "mock"]))
+    client = _build_llm_client(args)
+
+    response = run(
+        client.generate(
+            prompt="\n".join(
+                [
+                    (
+                        "User Question: Can we claim definitive statistical significance or ROI "
+                        "for the recommendation systems experiment from the report alone?"
+                    ),
+                    "Retrieved Context:",
+                    "Chunk 1",
+                    "Document: Personalized Similar-Item Recommendations",
+                    "Text:",
+                    (
+                        "The recommendation is: Tune category diversity constraints before "
+                        "expanding traffic."
+                    ),
+                    "Answer using only the retrieved context and cite the supporting documents.",
+                ]
+            ),
+            system_instruction=(
+                "Only answer using retrieved context.\n"
+                "If the answer cannot be supported by retrieved evidence, say that insufficient "
+                "evidence exists.\n"
+                "Never invent facts."
+            ),
+        )
+    )
+
+    assert response.answer == INSUFFICIENT_EVIDENCE_ANSWER
+
+
+def test_mock_evaluation_llm_returns_grounded_answer_for_supported_prompt() -> None:
+    from packages.evals.run import _build_llm_client, parse_args, resolve_runtime_options
+
+    args = resolve_runtime_options(parse_args(["--llm-provider", "mock"]))
+    client = _build_llm_client(args)
+
+    response = run(
+        client.generate(
+            prompt="\n".join(
+                [
+                    "User Question: What rollout decision was recommended?",
+                    "Retrieved Context:",
+                    "Chunk 1",
+                    "Document: Adaptive Payment Method Recommendation",
+                    "Text:",
+                    (
+                        "The recommendation is: Roll out in markets with clean wallet telemetry "
+                        "while keeping Japan behind monitoring."
+                    ),
+                    "Answer using only the retrieved context and cite the supporting documents.",
+                ]
+            ),
+            system_instruction=(
+                "Only answer using retrieved context.\n"
+                "If the answer cannot be supported by retrieved evidence, say that insufficient "
+                "evidence exists.\n"
+                "Never invent facts."
+            ),
+        )
+    )
+
+    assert "Roll out in markets with clean wallet telemetry" in response.answer
+    assert "Adaptive Payment Method Recommendation" in response.answer
+
+
 class StubOllamaLLMClient:
     def __init__(self) -> None:
         self.calls = []

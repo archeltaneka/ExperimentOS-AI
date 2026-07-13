@@ -31,7 +31,10 @@ from packages.llm.client import (
     OpenAILLMClient,
 )
 from packages.observability.factory import resolve_observability_provider
-from packages.qa.question_answering_service import QuestionAnsweringService
+from packages.qa.question_answering_service import (
+    INSUFFICIENT_EVIDENCE_ANSWER,
+    QuestionAnsweringService,
+)
 from packages.retrieval.service import RetrievalService
 
 DEFAULT_REPORT_PATH = Path("reports/evaluation.md")
@@ -241,7 +244,7 @@ async def _build_evaluation_run(args: argparse.Namespace, observability_provider
 def _build_llm_client(args: argparse.Namespace) -> Any:
     if args.llm_provider == "mock":
         return MockLLMClient(
-            answer="Mock evaluation answer generated from retrieved context.",
+            response_builder=_build_mock_evaluation_answer,
             model=_llm_model_label(args),
         )
     if args.llm_provider == "ollama":
@@ -272,6 +275,128 @@ def _llm_model_label(args: argparse.Namespace) -> str:
     if args.llm_provider == "mock" and args.llm_model in {GEMINI_LLM_MODEL, OLLAMA_LLM_MODEL}:
         return "mock"
     return args.llm_model
+
+
+def _build_mock_evaluation_answer(prompt: str, system_instruction: str) -> str:
+    question = _extract_prompt_block(prompt, "User Question:")
+    if not question:
+        question = _extract_prompt_block(prompt, "Question:")
+    context = _extract_prompt_context(prompt)
+    document_names = _extract_document_names(prompt)
+    if _requires_abstention(question, context, system_instruction):
+        return INSUFFICIENT_EVIDENCE_ANSWER
+
+    answer = _best_context_sentence(context)
+    if document_names:
+        answer = f"{answer} Source: {', '.join(document_names)}."
+    return answer
+
+
+def _extract_prompt_block(prompt: str, prefix: str) -> str:
+    for line in prompt.splitlines():
+        if line.startswith(prefix):
+            return line.split(prefix, maxsplit=1)[1].strip()
+    return ""
+
+
+def _extract_prompt_context(prompt: str) -> str:
+    text_sections: list[str] = []
+    current_section: list[str] = []
+    collecting_text = False
+
+    for line in prompt.splitlines():
+        if line.startswith("Text:"):
+            if collecting_text and current_section:
+                text_sections.append(_collapse_context_section(current_section))
+            current_section = []
+            collecting_text = True
+            continue
+        if collecting_text and (line.startswith("Chunk ") or line.startswith("Answer using")):
+            if current_section:
+                text_sections.append(_collapse_context_section(current_section))
+            current_section = []
+            collecting_text = False
+            if line.startswith("Answer using"):
+                break
+            continue
+        if collecting_text:
+            current_section.append(line)
+
+    if collecting_text and current_section:
+        text_sections.append(_collapse_context_section(current_section))
+    return "\n".join(section for section in text_sections if section).strip()
+
+
+def _extract_document_names(prompt: str) -> list[str]:
+    names: list[str] = []
+    for line in prompt.splitlines():
+        if not line.startswith("Document:"):
+            continue
+        name = line.split("Document:", maxsplit=1)[1].strip()
+        if name and name not in names:
+            names.append(name)
+    return names
+
+
+def _collapse_context_section(lines: list[str]) -> str:
+    return " ".join(part.strip() for part in lines if part.strip())
+
+
+def _requires_abstention(question: str, context: str, system_instruction: str) -> bool:
+    normalized_question = question.lower()
+    normalized_context = context.lower()
+    normalized_system = system_instruction.lower()
+    asks_for_definitive_claim = any(
+        phrase in normalized_question
+        for phrase in (
+            "definitive statistical significance",
+            "definitive roi",
+            "statistical significance",
+            "roi",
+            "revenue",
+            "annualized",
+        )
+    )
+    report_only_definitive_question = any(
+        phrase in normalized_question
+        for phrase in (
+            "from the report alone",
+            "definitive statistical significance",
+            "definitive roi",
+        )
+    )
+    context_signals_missing_evidence = any(
+        phrase in normalized_context
+        for phrase in (
+            "not interpreted mechanically from a single p-value",
+            "not interpreted mechanically",
+            "sample is intentionally small",
+            "single-p-value",
+            "single p-value",
+            "under-counted",
+            "lagging",
+        )
+    )
+    return (
+        asks_for_definitive_claim
+        and (context_signals_missing_evidence or report_only_definitive_question)
+        and "insufficient evidence exists" in normalized_system
+    )
+
+
+def _best_context_sentence(context: str) -> str:
+    cleaned = " ".join(part.strip() for part in context.splitlines() if part.strip())
+    if not cleaned:
+        return INSUFFICIENT_EVIDENCE_ANSWER
+    for sentence in cleaned.split("."):
+        candidate = sentence.strip()
+        if any(
+            token in candidate.lower()
+            for token in ("recommendation is", "the recommendation", "roll out", "do not roll")
+        ):
+            return f"{candidate}."
+    first = cleaned.split(".")[0].strip()
+    return f"{first}." if first else INSUFFICIENT_EVIDENCE_ANSWER
 
 
 async def _load_experiment_id_map(session: AsyncSession) -> dict[str, str]:

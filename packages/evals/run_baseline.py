@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 from datetime import UTC, datetime
+from os.path import commonpath
 from pathlib import Path
 
 from packages.evals.agent_dataset import DEFAULT_AGENT_DATASET_PATH
@@ -33,6 +34,21 @@ from packages.evals.run_factuality import (
 from packages.evals.run_factuality import (
     parse_args as parse_factuality_args,
 )
+from packages.evals.run_quality_policy import (
+    DEFAULT_JSON_REPORT_PATH as QUALITY_POLICY_JSON_REPORT_PATH,
+)
+from packages.evals.run_quality_policy import (
+    DEFAULT_MARKDOWN_REPORT_PATH as QUALITY_POLICY_REPORT_PATH,
+)
+from packages.evals.run_quality_policy import (
+    DEFAULT_POLICY_PATH as QUALITY_POLICY_PATH,
+)
+from packages.evals.run_quality_policy import (
+    parse_args as parse_quality_policy_args,
+)
+from packages.evals.run_quality_policy import (
+    write_quality_policy_reports,
+)
 from packages.ingestion.load_experiment import run_async
 from packages.observability.factory import resolve_observability_provider
 
@@ -42,6 +58,9 @@ DEFAULT_AGENT_REPORT_PATH = Path("reports/agent_evaluation.md")
 DEFAULT_AGENT_E2E_REPORT_PATH = Path("reports/agent_e2e_evaluation.md")
 DEFAULT_FACTUALITY_REPORT_PATH = FACTUALITY_REPORT_PATH
 DEFAULT_FACTUALITY_JSON_REPORT_PATH = FACTUALITY_JSON_REPORT_PATH
+DEFAULT_QUALITY_POLICY_PATH = QUALITY_POLICY_PATH
+DEFAULT_QUALITY_POLICY_REPORT_PATH = QUALITY_POLICY_REPORT_PATH
+DEFAULT_QUALITY_POLICY_JSON_REPORT_PATH = QUALITY_POLICY_JSON_REPORT_PATH
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -83,6 +102,24 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=DEFAULT_FACTUALITY_JSON_REPORT_PATH,
         help="Path where the factuality evaluation JSON report should be written.",
+    )
+    parser.add_argument(
+        "--quality-policy",
+        type=Path,
+        default=DEFAULT_QUALITY_POLICY_PATH,
+        help="Path to the centralized quality policy configuration YAML file.",
+    )
+    parser.add_argument(
+        "--quality-policy-output",
+        type=Path,
+        default=DEFAULT_QUALITY_POLICY_REPORT_PATH,
+        help="Path where the quality policy Markdown report should be written.",
+    )
+    parser.add_argument(
+        "--quality-policy-json-output",
+        type=Path,
+        default=DEFAULT_QUALITY_POLICY_JSON_REPORT_PATH,
+        help="Path where the quality policy JSON report should be written.",
     )
     parser.add_argument(
         "--dataset",
@@ -214,6 +251,26 @@ async def _run_phase3_baseline(args: argparse.Namespace, observability_provider)
     factuality_report = render_factuality_report(factuality_run)
     _write_report(args.factuality_output, factuality_report)
     _write_report(args.factuality_json_output, factuality_report_to_json(factuality_run))
+    report_dir = _derive_report_dir(
+        args.rag_output,
+        args.agent_output,
+        args.agent_e2e_output,
+        args.factuality_output,
+        args.factuality_json_output,
+    )
+    quality_policy_args = parse_quality_policy_args(
+        [
+            "--policy",
+            str(args.quality_policy),
+            "--report-dir",
+            str(report_dir),
+            "--output",
+            str(args.quality_policy_output),
+            "--json-output",
+            str(args.quality_policy_json_output),
+        ]
+    )
+    quality_policy_result = write_quality_policy_reports(quality_policy_args)
 
     qa_command = _qa_command(qa_args)
     agent_command = _agent_command(agent_args)
@@ -235,6 +292,11 @@ async def _run_phase3_baseline(args: argparse.Namespace, observability_provider)
         factuality_report=factuality_run,
         factuality_command=factuality_command,
         factuality_report_path=str(args.factuality_output),
+        quality_policy_status=quality_policy_result.overall_status,
+        quality_policy_report_path=str(quality_policy_args.output),
+        quality_policy_json_report_path=str(quality_policy_args.json_output),
+        quality_policy_frameworks=quality_policy_result.loaded_sources,
+        quality_policy_rationale=quality_policy_result.rationale,
     )
     report = render_phase3_baseline_report(baseline)
     _write_report(args.output, report)
@@ -287,6 +349,11 @@ def _write_report(path: Path, report: str) -> None:
     path.write_text(report, encoding="utf-8")
 
 
+def _derive_report_dir(*paths: Path) -> Path:
+    resolved = [str(path.resolve()) for path in paths]
+    return Path(commonpath(resolved))
+
+
 def _qa_command(args: argparse.Namespace) -> str:
     parts = [
         "uv run python -m packages.evals.run",
@@ -307,8 +374,7 @@ def _qa_command(args: argparse.Namespace) -> str:
 
 def _agent_command(args: argparse.Namespace) -> str:
     return (
-        "uv run python -m packages.evals.run_agent "
-        f"--dataset {args.dataset} --output {args.output}"
+        f"uv run python -m packages.evals.run_agent --dataset {args.dataset} --output {args.output}"
     )
 
 

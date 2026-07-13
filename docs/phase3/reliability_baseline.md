@@ -2,7 +2,56 @@
 
 Phase 3 now includes a repository-owned factuality evaluation layer plus optional LangSmith,
 Phoenix, and OpenTelemetry observability adapters in addition to the existing RAG, agent
-workflow, prompt regression, prompt experiments, RAGAS, and DeepEval surfaces.
+workflow, prompt regression, prompt experiments, RAGAS, DeepEval, and centralized quality policy
+surfaces.
+
+### Quality Policy
+
+- implementation status: available
+- entrypoint: `packages.evals.run_quality_policy`
+- shared CLI surface: `packages.evals.cli quality-policy`
+- config path: `config/evaluation/quality_policy.yaml`
+- default outputs:
+  - `reports/phase3/quality_policy.md`
+  - `reports/phase3/quality_policy.json`
+- covered frameworks:
+  - custom RAG evaluation
+  - custom agent workflow evaluation
+  - `/ask` end-to-end evaluation
+  - RAGAS
+  - DeepEval
+  - prompt regression
+  - factuality evaluation
+- category coverage:
+  - Retrieval
+  - Answer Quality
+  - Workflow
+  - Prompt
+  - Factuality
+  - Reliability
+- current blocking thresholds include:
+  - retrieval success and citation coverage
+  - offline RAGAS id-based precision and recall
+  - default `agent_workflow` coverage
+  - `legacy_rag` fallback coverage
+  - agent routing, trace completeness, and decision or approval coverage
+  - prompt regression pass rate with zero regressions
+  - zero fabricated revenue or ROI
+  - zero fabricated statistical significance
+  - zero structured contradictions
+  - zero abstention failures when insufficient evidence is expected
+- warning-only thresholds include:
+  - latency
+  - optional judge-backed RAGAS metrics
+  - optional judge-backed DeepEval metrics
+
+Remaining quality policy gaps:
+
+- GitHub Actions enforcement is not wired yet
+- baseline runs rely on existing additive report artifacts for full policy coverage
+- no PR annotation, deployment blocking, or threshold auto-tuning exists
+- the authoritative local status is the latest `reports/phase3/quality_policy.*` output, not this
+  static document
 
 ### Prompt Experiment Framework
 
@@ -136,6 +185,6 @@ The factuality layer improves Phase 3 readiness for later quality gates, but sev
 - production responses are not blocked yet
 - no automatic answer repair or regeneration exists
 - no human fact-check review UI exists
-- CI thresholds are not enforced yet
+- quality policy thresholds are repository-owned now, but CI enforcement is not implemented yet
 
 This keeps the repository honest about what the current checks can and cannot prove.

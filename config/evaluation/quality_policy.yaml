@@ -1,0 +1,456 @@
+version: "2026-07-13"
+sources:
+  rag:
+    path: evaluation.md
+    format: rag_markdown
+  agent:
+    path: agent_evaluation.md
+    format: agent_markdown
+  agent_e2e:
+    path: agent_e2e_evaluation.md
+    format: agent_e2e_markdown
+  ragas:
+    path: phase3/ragas_report.json
+    format: ragas_json
+  deepeval:
+    path: phase3/deepeval_report.json
+    format: deepeval_json
+  prompt_regression:
+    path: phase3/prompt_regression.json
+    format: prompt_regression_json
+  factuality:
+    path: phase3/factuality_report.json
+    format: factuality_json
+metrics:
+  - metric_id: rag.retrieval_success_rate
+    source: rag
+    category: Retrieval
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Preserve deterministic retrieval success for the legacy QA surface.
+  - metric_id: rag.average_citation_coverage
+    source: rag
+    category: Retrieval
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Preserve full citation coverage for the legacy QA surface.
+  - metric_id: ragas.id_based_context_precision
+    source: ragas
+    category: Retrieval
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Repository-owned retrieval precision must remain perfect offline.
+  - metric_id: ragas.id_based_context_recall
+    source: ragas
+    category: Retrieval
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Repository-owned retrieval recall must remain perfect offline.
+  - metric_id: deepeval.citation_coverage.average_score
+    source: deepeval
+    category: Retrieval
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: DeepEval additive citation coverage must agree with the repository expectation.
+  - metric_id: deepeval.response_field_completeness.average_score
+    source: deepeval
+    category: Answer Quality
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Required response fields must remain complete on deterministic surfaces.
+  - metric_id: ragas.answer_relevancy
+    source: ragas
+    category: Answer Quality
+    operator: gte
+    value: 0.5
+    severity: warning
+    required: false
+    weight: 0.5
+    description: Judge-backed RAGAS answer relevancy is advisory when available.
+  - metric_id: ragas.faithfulness
+    source: ragas
+    category: Answer Quality
+    operator: gte
+    value: 0.5
+    severity: warning
+    required: false
+    weight: 0.5
+    description: Judge-backed RAGAS faithfulness is advisory when available.
+  - metric_id: deepeval.answer_relevancy.average_score
+    source: deepeval
+    category: Answer Quality
+    operator: gte
+    value: 0.5
+    severity: warning
+    required: false
+    weight: 0.5
+    description: Judge-backed DeepEval answer relevancy is advisory when available.
+  - metric_id: deepeval.faithfulness.average_score
+    source: deepeval
+    category: Answer Quality
+    operator: gte
+    value: 0.5
+    severity: warning
+    required: false
+    weight: 0.5
+    description: Judge-backed DeepEval faithfulness is advisory when available.
+  - metric_id: deepeval.hallucination.average_score
+    source: deepeval
+    category: Answer Quality
+    operator: gte
+    value: 0.5
+    severity: warning
+    required: false
+    weight: 0.5
+    description: Judge-backed DeepEval hallucination score is advisory when available.
+  - metric_id: deepeval.contextual_relevancy.average_score
+    source: deepeval
+    category: Answer Quality
+    operator: gte
+    value: 0.5
+    severity: warning
+    required: false
+    weight: 0.5
+    description: Judge-backed DeepEval contextual relevancy is advisory when available.
+  - metric_id: agent.workflow_success_rate
+    source: agent
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Deterministic workflow cases must continue to complete successfully.
+  - metric_id: agent.routing_accuracy
+    source: agent
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Required agent routing must remain exact for the workflow harness.
+  - metric_id: agent.trace_completeness
+    source: agent
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Deterministic workflow traces must remain complete.
+  - metric_id: agent.recommendation_coverage
+    source: agent
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Recommendation coverage must remain complete where expected.
+  - metric_id: agent_e2e.default_agent_workflow_coverage
+    source: agent_e2e
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: critical
+    required: true
+    weight: 1.5
+    description: agent_workflow must remain the default /ask route.
+  - metric_id: agent_e2e.legacy_fallback_coverage
+    source: agent_e2e
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: legacy_rag compatibility must remain intact.
+  - metric_id: agent_e2e.routing_accuracy
+    source: agent_e2e
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: /ask routing behavior must stay exact in E2E coverage.
+  - metric_id: agent_e2e.decision_coverage
+    source: agent_e2e
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Decision payload coverage must remain complete where expected.
+  - metric_id: agent_e2e.executive_summary_coverage
+    source: agent_e2e
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Executive summary payload coverage must remain complete where expected.
+  - metric_id: agent_e2e.approval_status_coverage
+    source: agent_e2e
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Approval state coverage must remain complete where expected.
+  - metric_id: deepeval.routing_accuracy.average_score
+    source: deepeval
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: DeepEval additive routing accuracy must remain perfect.
+  - metric_id: deepeval.decision_status_match.average_score
+    source: deepeval
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: DeepEval additive decision status matching must remain perfect.
+  - metric_id: deepeval.approval_status_match.average_score
+    source: deepeval
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: DeepEval additive approval status matching must remain perfect.
+  - metric_id: deepeval.summary_status_match.average_score
+    source: deepeval
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: DeepEval additive summary status matching must remain perfect.
+  - metric_id: deepeval.trace_completeness.average_score
+    source: deepeval
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: DeepEval additive trace completeness must remain perfect.
+  - metric_id: deepeval.fallback_compatibility.average_score
+    source: deepeval
+    category: Workflow
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: DeepEval additive legacy fallback compatibility must remain perfect.
+  - metric_id: prompt_regression.summary.pass_rate
+    source: prompt_regression
+    category: Prompt
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Prompt regression cases must remain unchanged or improved.
+  - metric_id: prompt_regression.summary.regressions
+    source: prompt_regression
+    category: Prompt
+    operator: lte
+    value: 0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Prompt regressions are not allowed.
+  - metric_id: prompt_regression.summary.failures
+    source: prompt_regression
+    category: Prompt
+    operator: lte
+    value: 0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Prompt regression execution failures are not allowed.
+  - metric_id: prompt_regression.metric.prompt_rendering_success.candidate
+    source: prompt_regression
+    category: Prompt
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Prompt rendering must remain fully successful.
+  - metric_id: prompt_regression.metric.legacy_fallback_compatibility.candidate
+    source: prompt_regression
+    category: Prompt
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Prompt-backed legacy fallback responses must remain structurally compatible.
+  - metric_id: prompt_regression.metric.citation_coverage.candidate
+    source: prompt_regression
+    category: Prompt
+    operator: gte
+    value: 1.0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Prompt-backed legacy fallback responses must retain citation coverage.
+  - metric_id: factuality.policy_status
+    source: factuality
+    category: Factuality
+    operator: eq
+    value: pass
+    severity: fail
+    required: true
+    weight: 1.0
+    description: The repository-owned factuality policy must pass.
+  - metric_id: factuality.findings.fabricated_revenue_or_roi
+    source: factuality
+    category: Factuality
+    operator: lte
+    value: 0
+    severity: critical
+    required: true
+    weight: 1.5
+    description: Fabricated revenue or ROI claims are never allowed.
+  - metric_id: factuality.findings.fabricated_statistical_significance
+    source: factuality
+    category: Factuality
+    operator: lte
+    value: 0
+    severity: critical
+    required: true
+    weight: 1.5
+    description: Fabricated significance claims are never allowed.
+  - metric_id: factuality.findings.contradiction_with_structured_experiment_data
+    source: factuality
+    category: Factuality
+    operator: lte
+    value: 0
+    severity: critical
+    required: true
+    weight: 1.5
+    description: Structured contradictions are never allowed.
+  - metric_id: factuality.findings.citation_missing
+    source: factuality
+    category: Factuality
+    operator: lte
+    value: 0
+    severity: critical
+    required: true
+    weight: 1.5
+    description: Missing citations on evaluated factuality cases are never allowed.
+  - metric_id: factuality.findings.citation_does_not_support_claim
+    source: factuality
+    category: Factuality
+    operator: lte
+    value: 0
+    severity: critical
+    required: true
+    weight: 1.5
+    description: Unsupported cited claims are never allowed.
+  - metric_id: factuality.findings.answer_generated_when_abstention_was_expected
+    source: factuality
+    category: Factuality
+    operator: lte
+    value: 0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Insufficient-evidence cases must abstain rather than answer assertively.
+  - metric_id: factuality.case_status.fail
+    source: factuality
+    category: Factuality
+    operator: lte
+    value: 0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: No factuality cases should end in a failed state.
+  - metric_id: rag.average_retrieval_latency_ms
+    source: rag
+    category: Reliability
+    operator: lte
+    value: 3000
+    severity: warning
+    required: true
+    weight: 0.5
+    description: Retrieval latency above three seconds is advisory for local evaluation.
+  - metric_id: agent.average_workflow_latency_ms
+    source: agent
+    category: Reliability
+    operator: lte
+    value: 3000
+    severity: warning
+    required: true
+    weight: 0.5
+    description: Workflow latency above three seconds is advisory for local evaluation.
+  - metric_id: agent_e2e.average_workflow_latency_ms
+    source: agent_e2e
+    category: Reliability
+    operator: lte
+    value: 3000
+    severity: warning
+    required: true
+    weight: 0.5
+    description: E2E API latency above three seconds is advisory for local evaluation.
+  - metric_id: agent.fail_count
+    source: agent
+    category: Reliability
+    operator: lte
+    value: 0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Deterministic workflow evaluation cannot have failed cases.
+  - metric_id: agent.total_tool_failures
+    source: agent
+    category: Reliability
+    operator: lte
+    value: 0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Deterministic workflow evaluation cannot report tool failures.
+  - metric_id: agent_e2e.fail_count
+    source: agent_e2e
+    category: Reliability
+    operator: lte
+    value: 0
+    severity: fail
+    required: true
+    weight: 1.0
+    description: Deterministic E2E evaluation cannot have failed cases.

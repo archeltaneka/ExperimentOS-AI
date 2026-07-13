@@ -102,7 +102,7 @@ def evaluate_case(case: FactualityCase) -> FactualityCaseResult:
     skipped_checks: list[str] = []
     claims = _extract_claims(case)
     unparsed_claims = False
-    if (not claims and case.answer.strip()) or _claims_are_non_specific(claims):
+    if (not claims and case.answer.strip()) or _claims_are_non_specific(case, claims):
         unparsed_claims = True
         skipped_checks.append("claim_extraction")
 
@@ -322,9 +322,7 @@ def _check_statistical_claims(case: FactualityCase, claims: list[str]) -> list[F
     findings: list[FactualityFinding] = []
     significance = case.experiment_analysis.get("statistical_significance", {})
     is_significant = (
-        bool(significance.get("is_significant"))
-        if isinstance(significance, dict)
-        else False
+        bool(significance.get("is_significant")) if isinstance(significance, dict) else False
     )
     supported_p_value = _first_numeric(
         significance.get("p_value") if isinstance(significance, dict) else None
@@ -342,12 +340,11 @@ def _check_statistical_claims(case: FactualityCase, claims: list[str]) -> list[F
             continue
         has_significance_assertion = "statistically significant" in normalized
         has_p_value_assertion = bool(re.search(r"p[- ]value[^\d]{0,6}[-+]?\d", normalized))
-        has_confidence_interval_assertion = (
-            bool(re.search(r"confidence interval[^\d]{0,12}[-+]?\d", normalized))
+        has_confidence_interval_assertion = bool(
+            re.search(r"confidence interval[^\d]{0,12}[-+]?\d", normalized)
         )
         has_sample_size_assertion = (
-            bool(re.search(r"sample size[^\d]{0,12}[-+]?\d", normalized))
-            or "n=" in normalized
+            bool(re.search(r"sample size[^\d]{0,12}[-+]?\d", normalized)) or "n=" in normalized
         )
         if not any(
             (
@@ -544,9 +541,7 @@ def _check_evidence_coverage(case: FactualityCase, claims: list[str]) -> list[Fa
         if _contains_digits(normalized) or _contains_any(normalized, _FINANCIAL_KEYWORDS):
             continue
         tokens = [
-            token
-            for token in re.findall(r"[a-z]{4,}", normalized)
-            if token not in _STOPWORDS
+            token for token in re.findall(r"[a-z]{4,}", normalized) if token not in _STOPWORDS
         ]
         if len(tokens) < 2:
             continue
@@ -594,16 +589,52 @@ def _extract_claims(case: FactualityCase) -> list[str]:
     return claims
 
 
-def _claims_are_non_specific(claims: list[str]) -> bool:
+def _claims_are_non_specific(case: FactualityCase, claims: list[str]) -> bool:
     if not claims:
         return False
-    return all(
-        not _contains_digits(claim)
-        and not _contains_metric_like_token(claim)
-        and not _contains_any(claim, _FINANCIAL_KEYWORDS)
-        and not _contains_any(claim, _STATISTICAL_KEYWORDS)
-        and not _contains_any(claim, _ROLLOUT_TERMS)
-        for claim in claims
+    support_text = _support_text(case)
+    return all(not _claim_is_specific(claim, support_text) for claim in claims)
+
+
+def _claim_is_specific(claim: str, support_text: str) -> bool:
+    if _contains_explicit_abstention_marker(claim):
+        return True
+    if (
+        _contains_digits(claim)
+        or _contains_metric_like_token(claim)
+        or _contains_any(claim, _FINANCIAL_KEYWORDS)
+        or _contains_any(claim, _STATISTICAL_KEYWORDS)
+        or _contains_any(claim, _ROLLOUT_TERMS)
+    ):
+        return True
+    tokens = [token for token in re.findall(r"[a-z]{4,}", claim.lower()) if token not in _STOPWORDS]
+    if len(tokens) < 2:
+        return False
+    matched_tokens = sum(1 for token in tokens if token in support_text)
+    return matched_tokens >= min(2, len(tokens))
+
+
+def _contains_explicit_abstention_marker(claim: str) -> bool:
+    normalized = claim.lower()
+    return any(
+        marker in normalized
+        for marker in (
+            "insufficient evidence",
+            "cannot determine",
+            "cannot be determined",
+            "cannot estimate",
+            "cannot be claimed",
+            "cannot be concluded",
+            "cannot conclude",
+            "cannot claim",
+            "need more data",
+            "needs more data",
+            "does not support",
+            "not support making definitive claims",
+            "not appropriate to claim",
+            "no grounded",
+            "unsupported",
+        )
     )
 
 
@@ -613,7 +644,9 @@ def _supported_financial_values(case: FactualityCase) -> tuple[float, ...]:
         _extract_numeric_from_object(case.business_impact.get("estimated_annualized_impact"))
     )
     for record in case.evidence:
-        values.extend(_extract_numeric_from_object(record.metadata.get("estimated_annualized_impact")))
+        values.extend(
+            _extract_numeric_from_object(record.metadata.get("estimated_annualized_impact"))
+        )
     return tuple(values)
 
 
@@ -786,13 +819,15 @@ def _contains_abstention_marker(text: str) -> bool:
 
 def _is_abstaining_claim(claim: str) -> bool:
     normalized = claim.lower()
-    return _contains_abstention_marker(normalized) or (
-        "no " in normalized and ("p-value" in normalized or "roi" in normalized)
-    ) or (
-        "does not provide" in normalized
-        and any(
-            phrase in normalized
-            for phrase in ("roi", "statistical significance", "definitive proof")
+    return (
+        _contains_abstention_marker(normalized)
+        or ("no " in normalized and ("p-value" in normalized or "roi" in normalized))
+        or (
+            "does not provide" in normalized
+            and any(
+                phrase in normalized
+                for phrase in ("roi", "statistical significance", "definitive proof")
+            )
         )
     )
 

@@ -1,0 +1,32 @@
+{
+  "experiment_id": "exp-001-payment-recommendation",
+  "name": "Adaptive Payment Method Recommendation",
+  "area": "payments",
+  "hypothesis": "Context-aware payment recommendations will improve conversion.",
+  "owner": {
+    "name": "CI Fixture Owner",
+    "team": "Experiment Platform"
+  },
+  "status": "completed",
+  "start_date": "2026-01-01",
+  "end_date": "2026-01-07",
+  "variants": [
+    {
+      "name": "control",
+      "description": "Standard payment method ordering."
+    },
+    {
+      "name": "treatment",
+      "description": "Recommended payment methods shown first."
+    }
+  ],
+  "primary_metric": "payment_success_rate",
+  "secondary_metrics": [
+    "wallet_share",
+    "checkout_conversion_rate"
+  ],
+  "imperfections": [
+    "synthetic ci fixture"
+  ],
+  "business_decision": "Roll out to clean markets while monitoring wallet telemetry."
+}

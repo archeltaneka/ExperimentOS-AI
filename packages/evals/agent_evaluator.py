@@ -506,8 +506,7 @@ def _evaluation_profile(normalized_question: str) -> dict[str, object]:
                     "document_id": "exp-003-search-ranking-doc-2",
                     "experiment_id": "exp-003-search-ranking",
                     "quote": (
-                        "Continue monitoring for long-tail query diversity before "
-                        "broader rollout."
+                        "Continue monitoring for long-tail query diversity before broader rollout."
                     ),
                     "section": "Recommendation",
                     "metadata": {
@@ -600,8 +599,7 @@ def _evaluation_profile(normalized_question: str) -> dict[str, object]:
             "affected_segment": "silver and gold members",
             "analysis_status": "completed",
             "analysis_summary": (
-                "Loyalty Tier Progress Nudges improved repeat_session_rate_14d in "
-                "treatment."
+                "Loyalty Tier Progress Nudges improved repeat_session_rate_14d in treatment."
             ),
             "hypothesis": "Progress nudges should increase short-term repeat sessions.",
             "findings": [
@@ -708,8 +706,7 @@ def _evaluation_profile(normalized_question: str) -> dict[str, object]:
                     "document_id": "exp-004-checkout-ux-doc-2",
                     "experiment_id": "exp-004-checkout-ux",
                     "quote": (
-                        "Roll out to returning users; keep first-time users on "
-                        "guided checkout."
+                        "Roll out to returning users; keep first-time users on guided checkout."
                     ),
                     "section": "Recommendation",
                     "metadata": {

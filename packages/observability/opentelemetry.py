@@ -168,9 +168,12 @@ class OpenTelemetryObservabilityProvider(BaseObservabilityProvider):
             exporter = trace_export_module.ConsoleSpanExporter()
             processors.append(self._build_span_processor(trace_export_module, exporter))
         elif exporter_type == "in_memory":
-            exporter = span_exporter or self._module_loader(
-                "opentelemetry.sdk.trace.export.in_memory_span_exporter"
-            ).InMemorySpanExporter()
+            exporter = (
+                span_exporter
+                or self._module_loader(
+                    "opentelemetry.sdk.trace.export.in_memory_span_exporter"
+                ).InMemorySpanExporter()
+            )
             processors.append(self._build_span_processor(trace_export_module, exporter))
         elif exporter_type == "otlp_http":
             exporter = self._module_loader(
@@ -400,9 +403,7 @@ class OpenTelemetryObservabilityProvider(BaseObservabilityProvider):
         if record.name in _WORKFLOW_NODE_NAMES:
             attributes["experimentos.agent_name"] = record.name
         return {
-            key: value
-            for key, value in attributes.items()
-            if _is_otel_safe_attribute_value(value)
+            key: value for key, value in attributes.items() if _is_otel_safe_attribute_value(value)
         }
 
     def _build_output_attributes(self, record: BufferedSpanRecord) -> dict[str, object]:
@@ -639,7 +640,7 @@ def _metrics_endpoint(endpoint: str | None) -> str | None:
         return None
     parsed = urlparse(endpoint)
     if parsed.path.endswith("/v1/traces"):
-        return parsed._replace(path=parsed.path[:-len("/v1/traces")] + "/v1/metrics").geturl()
+        return parsed._replace(path=parsed.path[: -len("/v1/traces")] + "/v1/metrics").geturl()
     return endpoint
 
 

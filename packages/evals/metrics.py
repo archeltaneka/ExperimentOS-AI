@@ -56,14 +56,9 @@ class EvaluationSummary:
         count = len(samples)
         return cls(
             question_count=count,
-            retrieval_success_rate=sum(
-                1 for sample in samples if sample.retrieval_success
-            )
-            / count,
+            retrieval_success_rate=sum(1 for sample in samples if sample.retrieval_success) / count,
             average_citation_coverage=sum(sample.citation_coverage for sample in samples) / count,
-            average_retrieval_latency_ms=sum(
-                sample.retrieval_latency_ms for sample in samples
-            )
+            average_retrieval_latency_ms=sum(sample.retrieval_latency_ms for sample in samples)
             / count,
             average_llm_latency_ms=sum(sample.llm_latency_ms for sample in samples) / count,
             average_similarity=sum(sample.average_similarity for sample in samples) / count,

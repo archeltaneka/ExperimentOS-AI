@@ -68,9 +68,7 @@ class AgentEvaluationSummary:
             )
 
         metric_samples = [
-            sample.metrics
-            for sample in samples
-            if getattr(sample, "metrics", None) is not None
+            sample.metrics for sample in samples if getattr(sample, "metrics", None) is not None
         ]
         if not metric_samples:
             return cls.from_samples([])
@@ -112,9 +110,7 @@ class AgentEvaluationSummary:
             / len(metric_samples),
             average_trace_completeness=sum(metric.trace_completeness for metric in metric_samples)
             / len(metric_samples),
-            planner_intent_accuracy=sum(
-                metric.planner_intent_accuracy for metric in metric_samples
-            )
+            planner_intent_accuracy=sum(metric.planner_intent_accuracy for metric in metric_samples)
             / len(metric_samples),
             routing_accuracy=sum(metric.routing_accuracy for metric in metric_samples)
             / len(metric_samples),

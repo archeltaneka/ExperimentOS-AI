@@ -66,8 +66,7 @@ class StubGraphExperimentAnalysisAgent:
             "experiment_metadata": {
                 "primary_metric": "payment_success_rate",
                 "business_decision": (
-                    "Roll out to AU, SG, and GB; hold JP pending wallet tracking "
-                    "fix."
+                    "Roll out to AU, SG, and GB; hold JP pending wallet tracking fix."
                 ),
             },
             "experiment_metrics": [
@@ -169,9 +168,7 @@ class StubGraphRiskAssessmentAgent:
                         "mitigation": "Ramp gradually and watch primary and guardrail metrics.",
                     }
                 ],
-                "mitigation_actions": [
-                    "Ramp gradually and watch primary and guardrail metrics."
-                ],
+                "mitigation_actions": ["Ramp gradually and watch primary and guardrail metrics."],
                 "evidence_citations": list(state["citations"]),
                 "confidence_level": "medium",
             },
@@ -306,8 +303,7 @@ class StubGraphExecutiveSummaryAgent:
                 ],
                 "business_impact_summary": str(state["business_impact"]["summary"]),
                 "risk_summary": (
-                    "Risk is currently assessed as medium with 1 material factor "
-                    "recorded."
+                    "Risk is currently assessed as medium with 1 material factor recorded."
                 ),
                 "decision_rationale": str(state["decision"]["rationale"]),
                 "recommended_next_actions": list(state["decision"]["recommended_next_actions"]),

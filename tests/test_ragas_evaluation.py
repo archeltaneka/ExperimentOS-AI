@@ -85,12 +85,8 @@ def test_prepare_ragas_dataset_converts_samples_and_excludes_errors() -> None:
     assert isinstance(prepared, PreparedRagasDataset)
     assert len(prepared.samples) == 1
     assert prepared.samples[0].question_id == "payment-decision"
-    assert prepared.samples[0].retrieved_context_ids == (
-        "Adaptive Payment Method Recommendation",
-    )
-    assert prepared.samples[0].reference_context_ids == (
-        "Adaptive Payment Method Recommendation",
-    )
+    assert prepared.samples[0].retrieved_context_ids == ("Adaptive Payment Method Recommendation",)
+    assert prepared.samples[0].reference_context_ids == ("Adaptive Payment Method Recommendation",)
     assert len(prepared.excluded_samples) == 1
     assert prepared.excluded_samples[0].question_id == "payment-error"
 
@@ -240,9 +236,7 @@ def test_write_ragas_reports_runs_offline_metrics_and_skips_live_defaults(
         "id_based_context_recall",
     )
     skipped = {
-        metric.name: metric.reason
-        for metric in report.metric_results
-        if metric.status == "skipped"
+        metric.name: metric.reason for metric in report.metric_results if metric.status == "skipped"
     }
     assert "context_precision" in skipped
     assert "judge llm provider `none`" in skipped["context_precision"]

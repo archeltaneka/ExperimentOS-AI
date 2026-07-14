@@ -80,9 +80,7 @@ def test_human_approval_agent_records_rejected_with_feedback() -> None:
     update = HumanApprovalAgent().run(state)
 
     assert update["human_approval"]["status"] == "rejected"
-    assert update["human_approval"]["feedback"] == (
-        "Do not proceed until JP telemetry is fixed."
-    )
+    assert update["human_approval"]["feedback"] == ("Do not proceed until JP telemetry is fixed.")
 
 
 def test_human_approval_agent_records_revision_requested() -> None:

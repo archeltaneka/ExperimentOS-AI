@@ -37,8 +37,7 @@ def load_prompt_experiment_definition(
             dataset_id=str(payload["dataset_id"]).strip(),
             assignment_strategy=str(payload["assignment_strategy"]).strip(),
             allocation={
-                str(key).strip(): float(value)
-                for key, value in dict(payload["allocation"]).items()
+                str(key).strip(): float(value) for key, value in dict(payload["allocation"]).items()
             },
             randomization_unit=str(payload["randomization_unit"]).strip(),
             seed=str(payload["seed"]).strip(),

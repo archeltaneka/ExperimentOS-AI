@@ -145,9 +145,8 @@ def _redact_string(
     if settings.redact_sensitive_data and key in SENSITIVE_KEYS:
         return "<redacted>"
     if key in CONTENT_KEYS or (not key and is_output):
-        if (
-            (is_output and not settings.trace_outputs)
-            or (not is_output and not settings.trace_inputs)
+        if (is_output and not settings.trace_outputs) or (
+            not is_output and not settings.trace_inputs
         ):
             if key in SAFE_KEYS:
                 return value

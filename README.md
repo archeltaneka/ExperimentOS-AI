@@ -274,6 +274,59 @@ uv run ruff check .
 uv run pytest
 ```
 
+## CI Parity
+
+The GitHub Actions baseline is defined in `.github/workflows/ci.yml`. It runs fully offline with
+`ASK_MODE=agent_workflow`, fake embeddings, mock LLMs, prompt experiments disabled by default, and
+external observability sinks turned off. `legacy_rag` remains supported and is still covered by the
+database-backed tier.
+
+Fast offline parity:
+
+```powershell
+$env:APP_ENV = "ci"
+$env:ASK_MODE = "agent_workflow"
+$env:EMBEDDING_PROVIDER = "fake"
+$env:LLM_PROVIDER = "mock"
+$env:PROMPT_EXPERIMENTS_ENABLED = "false"
+$env:EXPERIMENTOS_LANGSMITH_ENABLED = "false"
+$env:EXPERIMENTOS_PHOENIX_ENABLED = "false"
+$env:EXPERIMENTOS_OTEL_ENABLED = "false"
+$env:LANGSMITH_TRACING = "false"
+$env:LANGSMITH_API_KEY = ""
+$env:OPENAI_API_KEY = ""
+$env:GOOGLE_API_KEY = ""
+uv sync --group dev --frozen
+uv run ruff format --check .
+uv run ruff check .
+uv sync --group dev --group observability --frozen
+uv run python -m packages.llm.prompt_registry_cli validate
+uv run python -m packages.evals.run_prompt_experiment validate --experiment rag-answer-abstention-v1-v2
+uv run python -m packages.observability.cli validate --provider all
+uv sync --group dev --group eval --group observability --frozen
+uv run pytest tests/test_api_health.py tests/test_api_ask.py tests/test_agent_workflow.py tests/test_prompt_registry.py tests/test_prompt_registry_cli.py tests/test_prompt_experiment_cli.py tests/test_prompt_experiment_validation.py tests/test_observability_cli.py tests/test_prompt_regression.py tests/test_factuality.py tests/test_quality_policy.py tests/test_evaluation_harness.py tests/test_phase3_baseline.py tests/test_github_actions_ci.py -v
+New-Item -ItemType Directory -Force -Path artifacts/ci/offline/phase3 | Out-Null
+uv run python -m packages.evals.run_prompt_regression --prompt-id rag.answer --baseline-version 1 --candidate-version 1 --offline --dataset data/eval/ci_smoke_dataset.json --embedding-provider fake --llm-provider mock --output artifacts/ci/offline/phase3/prompt_regression.md --json-output artifacts/ci/offline/phase3/prompt_regression.json
+uv run python -m packages.evals.run_factuality --dataset data/eval/ci_smoke_dataset.json --agent-dataset data/eval/agent_dataset.json --target agent_workflow --mode offline --embedding-provider fake --llm-provider mock --output artifacts/ci/offline/phase3/factuality_report.md --json-output artifacts/ci/offline/phase3/factuality_report.json
+uv run python -m packages.evals.run_quality_policy --report-dir artifacts/ci/offline --warn-only --output artifacts/ci/offline/phase3/quality_policy.md --json-output artifacts/ci/offline/phase3/quality_policy.json
+```
+
+Database-backed parity:
+
+```powershell
+docker compose up -d postgres
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv sync --group dev --group eval --group observability --frozen
+uv run alembic upgrade head
+New-Item -ItemType Directory -Force -Path artifacts/ci/integration/phase3 | Out-Null
+uv run python -m packages.ingestion.load_experiment --experiment-dir tests/fixtures/ci/exp-001-payment-recommendation --embedding-provider fake
+uv run pytest tests/test_alembic_config.py tests/test_db_models.py tests/test_db_session.py tests/test_ingestion_load_experiment.py tests/test_retrieval_service.py tests/test_api_ask.py tests/test_agent_workflow.py tests/test_api_ask_db_integration.py -v
+uv run python -m packages.evals.run_baseline --dataset data/eval/ci_smoke_dataset.json --agent-dataset data/eval/agent_dataset.json --embedding-provider fake --llm-provider mock --rag-output artifacts/ci/integration/evaluation.md --agent-output artifacts/ci/integration/agent_evaluation.md --agent-e2e-output artifacts/ci/integration/agent_e2e_evaluation.md --factuality-output artifacts/ci/integration/phase3/factuality_report.md --factuality-json-output artifacts/ci/integration/phase3/factuality_report.json --quality-policy-output artifacts/ci/integration/phase3/quality_policy.md --quality-policy-json-output artifacts/ci/integration/phase3/quality_policy.json --output artifacts/ci/integration/phase3/baseline_report.md
+```
+
+See [GitHub Actions CI Baseline](docs/phase3/github_actions.md) for the job-by-job breakdown,
+cache summary, and artifact outputs.
+
 Database-backed path:
 
 ```powershell

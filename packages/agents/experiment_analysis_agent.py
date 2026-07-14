@@ -322,9 +322,7 @@ def _build_analysis(
             treatment_metric=variants["treatment"],
         )
         for metric_name, variants in grouped_metrics.items()
-        if metric_name != primary_metric
-        and "control" in variants
-        and "treatment" in variants
+        if metric_name != primary_metric and "control" in variants and "treatment" in variants
     ]
     analysis_confidence = _analysis_confidence(
         statistical_significance=statistical_significance,

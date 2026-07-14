@@ -159,8 +159,7 @@ class HuggingFaceEmbeddingProvider:
             show_progress_bar=False,
         )
         return [
-            self._fit_storage_dimension(self._as_float_list(embedding))
-            for embedding in embeddings
+            self._fit_storage_dimension(self._as_float_list(embedding)) for embedding in embeddings
         ]
 
     def _as_float_list(self, embedding: Any) -> list[float]:
@@ -205,8 +204,7 @@ class OllamaEmbeddingProvider:
         response = self.client.embed(model=self.model, input=list(texts))
         embeddings = response["embeddings"] if isinstance(response, dict) else response.embeddings
         return [
-            self._fit_storage_dimension(self._as_float_list(embedding))
-            for embedding in embeddings
+            self._fit_storage_dimension(self._as_float_list(embedding)) for embedding in embeddings
         ]
 
     def _as_float_list(self, embedding: Any) -> list[float]:

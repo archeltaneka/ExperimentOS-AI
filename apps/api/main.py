@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import os
+import sys
 import uuid
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
@@ -45,7 +47,11 @@ from packages.qa.question_answering_service import (
 )
 from packages.retrieval.service import RetrievalService
 
+if sys.platform == "win32" and hasattr(asyncio, "WindowsSelectorEventLoopPolicy"):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 load_environment()
+
 
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):

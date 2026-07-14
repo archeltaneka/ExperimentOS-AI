@@ -59,9 +59,7 @@ def build_business_impact_state():
             "unit": "rate",
             "p_value": 0.041,
         },
-        "limitations": [
-            "Sample ratio mismatch from late allocation rule change in mobile web."
-        ],
+        "limitations": ["Sample ratio mismatch from late allocation rule change in mobile web."],
         "evidence_citations": list(state["citations"]),
         "analysis_confidence": "high",
     }

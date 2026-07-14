@@ -22,7 +22,7 @@ from packages.evals.run import (
 from packages.ingestion.embeddings import build_embedding_provider
 from packages.ingestion.load_experiment import run_async
 from packages.observability.factory import resolve_observability_provider
-from packages.retrieval.service import RetrievalService
+from packages.retrieval.service import RetrievalMetrics, RetrievalResult, RetrievalService
 
 DEFAULT_MARKDOWN_REPORT_PATH = Path("reports/phase3/prompt_regression.md")
 DEFAULT_JSON_REPORT_PATH = Path("reports/phase3/prompt_regression.json")
@@ -99,7 +99,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 async def build_prompt_regression_report(args: argparse.Namespace):
+    initial_database_url = os.environ.get("DATABASE_URL", "").strip()
     args = resolve_runtime_options(args)
+    if args.offline and not initial_database_url:
+        return await _build_prompt_regression_report(args, None)
+
     observability_provider = resolve_observability_provider()
     root_span = observability_provider.start_root_span(
         "evaluation.prompt_regression",
@@ -118,6 +122,21 @@ async def build_prompt_regression_report(args: argparse.Namespace):
 
 async def _build_prompt_regression_report(args: argparse.Namespace, observability_provider):
     questions = _resolve_questions(args.dataset)
+    if observability_provider is None:
+        runner = PromptRegressionRunner(
+            prompt_id=args.prompt_id,
+            baseline_version=args.baseline_version,
+            candidate_version=args.candidate_version,
+            qa_questions=questions,
+            ask_cases=_build_legacy_ask_cases(questions),
+            retrieval_service=_OfflineFixtureRetrievalService(questions),
+            dataset_label=str(args.dataset),
+            judge_mode=args.judge,
+            deepeval_judge_provider=args.judge_provider,
+            deepeval_judge_model=args.judge_model,
+        )
+        return await runner.evaluate()
+
     engine = create_database_engine()
     session_factory = create_async_session_factory(engine)
     provider = build_embedding_provider(
@@ -171,7 +190,7 @@ async def _build_prompt_regression_report(args: argparse.Namespace, observabilit
                 current_span.finish(
                     outputs={
                         "status": "completed",
-                        "sample_count": len(report.samples),
+                        "sample_count": report.summary.cases_run,
                     }
                 )
             return report
@@ -199,6 +218,37 @@ def main(argv: list[str] | None = None) -> int:
 
 def _resolve_questions(dataset_path: Path) -> list[EvaluationQuestion]:
     return load_evaluation_dataset(dataset_path)
+
+
+class _OfflineFixtureRetrievalService:
+    def __init__(self, questions: list[EvaluationQuestion]) -> None:
+        self._question_map = {question.question: question for question in questions}
+        self.last_metrics = None
+
+    async def search_by_experiment(
+        self,
+        experiment_id: str,
+        query: str,
+        *,
+        top_k: int = 5,
+    ) -> list[RetrievalResult]:
+        question = self._question_map[query]
+        result = RetrievalResult(
+            experiment_id=experiment_id,
+            experiment_name=question.expected_documents[0],
+            document_id=f"{question.id}-document",
+            document_name=question.expected_documents[0],
+            chunk_text=question.reference_answer,
+            similarity=1.0,
+            metadata={"source": "prompt_regression_offline_fixture"},
+        )
+        self.last_metrics = RetrievalMetrics(
+            embedding_time_ms=0.0,
+            vector_search_time_ms=0.0,
+            retrieved_chunks=1,
+            average_similarity=1.0,
+        )
+        return [result][:top_k]
 
 
 def _build_legacy_ask_cases(questions: list[EvaluationQuestion]) -> list[AgentE2ECase]:

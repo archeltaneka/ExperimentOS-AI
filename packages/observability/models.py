@@ -173,9 +173,7 @@ class OpenTelemetrySettings(ProviderSettings):
         if self.protocol != "http/protobuf":
             errors.append("OpenTelemetry protocol must be 'http/protobuf' in this issue.")
         if self.exporter_type in {"otlp", "otlp_http"} and not self.endpoint:
-            errors.append(
-                "OpenTelemetry exporter_type 'otlp_http' requires an exporter endpoint."
-            )
+            errors.append("OpenTelemetry exporter_type 'otlp_http' requires an exporter endpoint.")
         if self.export_timeout_ms < 1:
             errors.append("OpenTelemetry export_timeout_ms must be at least 1.")
         if self.metric_export_interval_ms < 1:
@@ -370,8 +368,7 @@ def load_observability_settings() -> ObservabilitySettings:
             endpoint=_env_first("EXPERIMENTOS_PHOENIX_ENDPOINT"),
             api_key=_env_first("EXPERIMENTOS_PHOENIX_API_KEY"),
             project=_env_first("EXPERIMENTOS_PHOENIX_PROJECT") or "experimentos-local",
-            environment=_env_first("EXPERIMENTOS_PHOENIX_ENVIRONMENT", "APP_ENV")
-            or "development",
+            environment=_env_first("EXPERIMENTOS_PHOENIX_ENVIRONMENT", "APP_ENV") or "development",
             protocol=_env_first(
                 "EXPERIMENTOS_PHOENIX_PROTOCOL",
                 "EXPERIMENTOS_PHOENIX_TRANSPORT",
@@ -430,9 +427,7 @@ def load_observability_settings() -> ObservabilitySettings:
                 "OTEL_SERVICE_VERSION",
             )
             or "0.1.0",
-            exporter_type=(
-                _env_first("EXPERIMENTOS_OTEL_EXPORTER_TYPE") or "none"
-            ).lower(),
+            exporter_type=(_env_first("EXPERIMENTOS_OTEL_EXPORTER_TYPE") or "none").lower(),
             protocol=_env_first(
                 "EXPERIMENTOS_OTEL_PROTOCOL",
                 "OTEL_EXPORTER_OTLP_PROTOCOL",

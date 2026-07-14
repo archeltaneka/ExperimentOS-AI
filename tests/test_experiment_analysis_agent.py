@@ -61,8 +61,7 @@ class StubExperimentAnalysisRepository:
             metadata={
                 "area": "payment recommendation",
                 "business_decision": (
-                    "Roll out to AU, SG, and GB; hold JP pending wallet tracking "
-                    "fix."
+                    "Roll out to AU, SG, and GB; hold JP pending wallet tracking fix."
                 ),
             },
         )
@@ -184,12 +183,9 @@ def test_experiment_analysis_agent_builds_analysis_for_known_experiment() -> Non
     )
 
     assert update["experiment_analysis"]["status"] == "completed"
+    assert update["experiment_analysis"]["experiment_id"] == "exp-001-payment-recommendation"
     assert (
-        update["experiment_analysis"]["experiment_id"] == "exp-001-payment-recommendation"
-    )
-    assert (
-        update["experiment_analysis"]["experiment_name"]
-        == "Adaptive Payment Method Recommendation"
+        update["experiment_analysis"]["experiment_name"] == "Adaptive Payment Method Recommendation"
     )
     assert update["experiment_analysis"]["primary_metric"] == "payment_success_rate"
     assert update["experiment_analysis"]["control"]["value"] == 0.6760
@@ -263,9 +259,7 @@ def test_experiment_analysis_agent_can_resolve_experiment_from_retrieval_evidenc
     )
 
     assert update["experiment_analysis"]["status"] == "completed"
-    assert (
-        update["experiment_analysis"]["experiment_id"] == "exp-001-payment-recommendation"
-    )
+    assert update["experiment_analysis"]["experiment_id"] == "exp-001-payment-recommendation"
     assert update["metrics"]["experiment_analysis"]["resolved_experiment_count"] == 1
 
 

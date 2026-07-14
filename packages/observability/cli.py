@@ -97,10 +97,7 @@ def _run_dry_run(settings: ObservabilitySettings, *, provider: ProviderName) -> 
                     f"sampling_rate={provider_settings.sampling_rate:.2f} "
                     f"redaction={provider_settings.redact_sensitive_data}"
                 ),
-                (
-                    f"{provider_name}: instrumentation="
-                    f"{_instrumentation_status(provider_name)}"
-                ),
+                (f"{provider_name}: instrumentation={_instrumentation_status(provider_name)}"),
                 f"{provider_name}: input={json.dumps(payloads['input'], sort_keys=True)}",
                 f"{provider_name}: output={json.dumps(payloads['output'], sort_keys=True)}",
             ]

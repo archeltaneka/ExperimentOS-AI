@@ -80,11 +80,7 @@ def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
         },
     )
     return {
-        **{
-            key: value
-            for key, value in defaults.items()
-            if key != "question"
-        },
+        **{key: value for key, value in defaults.items() if key != "question"},
         "intent": plan.intent,
         "required_agents": plan.required_agents,
         "planner_notes": plan.planner_notes,

@@ -134,9 +134,7 @@ def prepare_agent_response_cases(
                 retrieval_context=retrieval_context,
                 metadata=metadata,
                 source_error=(
-                    None
-                    if sample.status_code == 200
-                    else _string_or_none(response.get("detail"))
+                    None if sample.status_code == 200 else _string_or_none(response.get("detail"))
                 ),
             )
         )

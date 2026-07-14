@@ -102,9 +102,7 @@ def build_agent_workflow_cases(
         evidence = tuple(
             EvidenceRecord(
                 source_id=str(
-                    chunk.get("document_id")
-                    or chunk.get("chunk_id")
-                    or f"chunk-{index + 1}"
+                    chunk.get("document_id") or chunk.get("chunk_id") or f"chunk-{index + 1}"
                 ),
                 source_type="document",
                 text=str(chunk.get("content", "")).strip(),
@@ -343,9 +341,7 @@ def build_factuality_report(
     )
     policy_result = apply_policy(
         case_results,
-        policy=policy or FactualityPolicy(
-            judge_metric_thresholds=dict(_DEFAULT_JUDGE_THRESHOLDS)
-        ),
+        policy=policy or FactualityPolicy(judge_metric_thresholds=dict(_DEFAULT_JUDGE_THRESHOLDS)),
         judge_metrics=judge_metrics,
     )
     limitations = (

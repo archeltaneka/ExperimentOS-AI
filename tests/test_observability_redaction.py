@@ -95,4 +95,3 @@ def test_redact_payload_limits_metadata_depth_and_collection_length() -> None:
 
     assert redacted["outer"]["inner"] == "<max-depth>"
     assert redacted["tags"] == [1, 2, "<truncated>"]
-

@@ -115,4 +115,3 @@ def test_llm_client_uses_ollama_provider_from_dotenv(monkeypatch, tmp_path: Path
 
     assert isinstance(client, StubOllamaClient)
     assert client.model == "qwen2.5:7b"
-

@@ -148,8 +148,9 @@ def test_legacy_phoenix_import_path_resolves_real_provider_behavior() -> None:
     assert provider.failure_count == 0
 
 
-def test_observability_settings_compatibility_properties_reflect_phoenix_only_configuration(
-) -> None:
+def test_observability_settings_compatibility_properties_reflect_phoenix_only_configuration() -> (
+    None
+):
     from packages.observability.models import ObservabilitySettings, PhoenixSettings
 
     settings = ObservabilitySettings(

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from dataclasses import asdict
+
 from packages.agents.observability import PHASE2_WORKFLOW_NODES
 from packages.evals.agent_evaluator import AgentEvaluationRun
 
@@ -97,6 +100,10 @@ def render_agent_evaluation_report(run: AgentEvaluationRun) -> str:
             lines.append(f"- `{case_id}`")
 
     return "\n".join(lines) + "\n"
+
+
+def agent_evaluation_report_to_json(run: AgentEvaluationRun) -> str:
+    return json.dumps(asdict(run), indent=2) + "\n"
 
 
 def _percent(value: float) -> str:

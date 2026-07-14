@@ -350,6 +350,7 @@ def test_cli_parser_accepts_dataset_output_and_provider_options() -> None:
     default_args = parse_args([])
 
     assert default_args.dataset == Path("data/eval/qa_dataset.json")
+    assert default_args.json_output == Path("reports/evaluation.json")
 
     args = parse_args(
         [
@@ -357,6 +358,8 @@ def test_cli_parser_accepts_dataset_output_and_provider_options() -> None:
             "custom.json",
             "--output",
             "reports/custom.md",
+            "--json-output",
+            "reports/custom.json",
             "--top-k",
             "4",
             "--embedding-provider",
@@ -372,6 +375,7 @@ def test_cli_parser_accepts_dataset_output_and_provider_options() -> None:
 
     assert args.dataset == Path("custom.json")
     assert args.output == Path("reports/custom.md")
+    assert args.json_output == Path("reports/custom.json")
     assert args.top_k == 4
     assert args.embedding_provider == "ollama"
     assert args.embedding_model == "nomic-embed-text"

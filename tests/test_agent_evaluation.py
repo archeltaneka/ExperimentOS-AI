@@ -500,11 +500,14 @@ def test_agent_cli_parser_accepts_dataset_and_output() -> None:
             "data/eval/agent_dataset.json",
             "--output",
             "reports/agent_evaluation.md",
+            "--json-output",
+            "reports/agent_evaluation.json",
         ]
     )
 
     assert args.dataset == Path("data/eval/agent_dataset.json")
     assert args.output == Path("reports/agent_evaluation.md")
+    assert args.json_output == Path("reports/agent_evaluation.json")
 
 
 def test_agent_e2e_evaluator_runs_default_and_fallback_cases() -> None:
@@ -546,6 +549,14 @@ def test_render_agent_e2e_report_includes_phase2_metrics() -> None:
 def test_agent_e2e_cli_parser_accepts_output() -> None:
     from packages.evals.run_agent_e2e import parse_args
 
-    args = parse_args(["--output", "reports/agent_e2e_evaluation.md"])
+    args = parse_args(
+        [
+            "--output",
+            "reports/agent_e2e_evaluation.md",
+            "--json-output",
+            "reports/agent_e2e_evaluation.json",
+        ]
+    )
 
     assert args.output == Path("reports/agent_e2e_evaluation.md")
+    assert args.json_output == Path("reports/agent_e2e_evaluation.json")

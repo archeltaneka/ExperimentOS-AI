@@ -11,6 +11,8 @@ DEFAULT_POLICY_PATH = Path("config/evaluation/quality_policy.yaml")
 DEFAULT_REPORT_DIR = Path("reports")
 DEFAULT_MARKDOWN_REPORT_PATH = Path("reports/phase3/quality_policy.md")
 DEFAULT_JSON_REPORT_PATH = Path("reports/phase3/quality_policy.json")
+QUALITY_POLICY_FAILURE_EXIT_CODE = 1
+QUALITY_POLICY_INFRASTRUCTURE_EXIT_CODE = 2
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -46,7 +48,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Return a non-zero exit code for warning or fail results.",
+        help="Alias for --warning-policy fail.",
+    )
+    parser.add_argument(
+        "--warning-policy",
+        choices=("allow", "fail"),
+        default="allow",
+        help="Whether warning-only policy outcomes should return a non-zero exit code.",
     )
     parser.add_argument(
         "--warn-only",
@@ -77,14 +85,24 @@ def write_quality_policy_reports(args: argparse.Namespace):
 
 def main(argv: list[str] | None = None, *, args: argparse.Namespace | None = None) -> int:
     parsed_args = args or parse_args(argv)
-    result = write_quality_policy_reports(parsed_args)
+    try:
+        result = write_quality_policy_reports(parsed_args)
+    except Exception as exc:
+        print(f"Quality policy evaluation error: {exc}")
+        return QUALITY_POLICY_INFRASTRUCTURE_EXIT_CODE
     print(f"Wrote quality policy report to {parsed_args.output}")
     print(result.overall_status)
     if parsed_args.warn_only:
         return 0
-    if parsed_args.strict:
-        return 1 if result.overall_status in {"warning", "fail"} else 0
-    return 1 if result.overall_status == "fail" else 0
+    if result.overall_status == "fail":
+        return QUALITY_POLICY_FAILURE_EXIT_CODE
+    if result.overall_status == "warning" and _fail_on_warning(parsed_args):
+        return QUALITY_POLICY_FAILURE_EXIT_CODE
+    return 0
+
+
+def _fail_on_warning(args: argparse.Namespace) -> bool:
+    return bool(args.strict or args.warning_policy == "fail")
 
 
 if __name__ == "__main__":

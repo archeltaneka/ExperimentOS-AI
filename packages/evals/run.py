@@ -14,7 +14,7 @@ from packages.db.models import Experiment
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.evals.dataset import DEFAULT_DATASET_PATH, EvaluationQuestion, load_evaluation_dataset
 from packages.evals.evaluator import OfflineEvaluator
-from packages.evals.report import render_evaluation_report
+from packages.evals.report import evaluation_report_to_json, render_evaluation_report
 from packages.ingestion.embeddings import (
     BGE_SMALL_EN_MODEL,
     GEMINI_EMBEDDING_MODEL,
@@ -38,6 +38,7 @@ from packages.qa.question_answering_service import (
 from packages.retrieval.service import RetrievalService
 
 DEFAULT_REPORT_PATH = Path("reports/evaluation.md")
+DEFAULT_JSON_REPORT_PATH = Path("reports/evaluation.json")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -53,6 +54,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=DEFAULT_REPORT_PATH,
         help="Path where the Markdown evaluation report should be written.",
+    )
+    parser.add_argument(
+        "--json-output",
+        type=Path,
+        default=DEFAULT_JSON_REPORT_PATH,
+        help="Path where the JSON evaluation report should be written.",
     )
     parser.add_argument("--top-k", type=int, default=5, help="Number of chunks to retrieve.")
     parser.add_argument(
@@ -160,6 +167,8 @@ async def run_evaluation(args: argparse.Namespace) -> str:
     report = render_evaluation_report(result)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(report, encoding="utf-8")
+    args.json_output.parent.mkdir(parents=True, exist_ok=True)
+    args.json_output.write_text(evaluation_report_to_json(result), encoding="utf-8")
     return report
 
 

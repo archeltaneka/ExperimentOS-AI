@@ -259,6 +259,32 @@ def _build_ragas_report(args: argparse.Namespace, observability_provider) -> Rag
 
     for metric_name in args.metrics:
         spec = get_ragas_metric_spec(metric_name)
+        if spec.name in {"id_based_context_precision", "id_based_context_recall"}:
+            scores = _compute_offline_id_based_scores(prepared.samples, spec.name)
+            if not scores:
+                metric_results.append(
+                    RagasMetricResult(
+                        name=spec.name,
+                        status="skipped",
+                        average_score=None,
+                        reason="No QA samples were eligible for RAGAS evaluation.",
+                        description=spec.description,
+                    )
+                )
+                continue
+            average_score = sum(scores) / len(scores)
+            metric_results.append(
+                RagasMetricResult(
+                    name=spec.name,
+                    status="computed",
+                    average_score=average_score,
+                    description=spec.description,
+                )
+            )
+            metrics_run.append(spec.name)
+            for prepared_sample, score in zip(prepared.samples, scores, strict=True):
+                per_case_scores[prepared_sample.question_id][spec.name] = score
+            continue
         skip_reason = _metric_skip_reason(
             spec.name,
             ragas_available=ragas_available,
@@ -343,6 +369,9 @@ def _build_ragas_report(args: argparse.Namespace, observability_provider) -> Rag
     )
 
     if not ragas_available:
+        limitations.append(
+            "Repository-owned ID-based precision and recall still run without the ragas package."
+        )
         for metric_name in args.metrics:
             if not any(result.name == metric_name for result in metric_results):
                 spec = get_ragas_metric_spec(metric_name)
@@ -540,6 +569,26 @@ def _extract_metric_scores(result: Any, metric_name: str) -> list[float | None]:
         numeric = float(value)
         values.append(None if math.isnan(numeric) else numeric)
     return values
+
+
+def _compute_offline_id_based_scores(
+    samples,
+    metric_name: str,
+) -> list[float]:
+    scores: list[float] = []
+    for sample in samples:
+        retrieved = set(sample.retrieved_context_ids)
+        expected = set(sample.reference_context_ids)
+        if metric_name == "id_based_context_precision":
+            denominator = len(retrieved)
+            score = 0.0 if denominator == 0 else len(retrieved & expected) / denominator
+        elif metric_name == "id_based_context_recall":
+            denominator = len(expected)
+            score = 0.0 if denominator == 0 else len(retrieved & expected) / denominator
+        else:  # pragma: no cover - protected by caller
+            raise ValueError(f"unsupported offline id metric: {metric_name}")
+        scores.append(score)
+    return scores
 
 
 def main() -> None:

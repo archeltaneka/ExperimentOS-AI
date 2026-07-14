@@ -625,3 +625,94 @@ def test_quality_policy_cli_writes_reports_and_enforces_exit_modes(
         ]
     )
     assert main(args=strict_args) == 0
+
+
+def test_quality_policy_cli_allows_warning_status_by_default(tmp_path: Path) -> None:
+    from packages.evals.run_quality_policy import main, parse_args
+
+    report_dir = tmp_path / "reports"
+    _write_base_reports(report_dir)
+    policy_path = _write_policy(
+        tmp_path / "quality_policy.yaml",
+        _base_policy_yaml().replace("value: 3000", "value: 10"),
+    )
+
+    args = parse_args(
+        [
+            "--policy",
+            str(policy_path),
+            "--report-dir",
+            str(report_dir),
+        ]
+    )
+
+    assert main(args=args) == 0
+
+
+def test_quality_policy_cli_can_fail_on_warning_with_explicit_policy(tmp_path: Path) -> None:
+    from packages.evals.run_quality_policy import main, parse_args
+
+    report_dir = tmp_path / "reports"
+    _write_base_reports(report_dir)
+    policy_path = _write_policy(
+        tmp_path / "quality_policy.yaml",
+        _base_policy_yaml().replace("value: 3000", "value: 10"),
+    )
+
+    args = parse_args(
+        [
+            "--policy",
+            str(policy_path),
+            "--report-dir",
+            str(report_dir),
+            "--warning-policy",
+            "fail",
+        ]
+    )
+
+    assert main(args=args) == 1
+
+
+def test_quality_policy_cli_strict_alias_fails_on_warning(tmp_path: Path) -> None:
+    from packages.evals.run_quality_policy import main, parse_args
+
+    report_dir = tmp_path / "reports"
+    _write_base_reports(report_dir)
+    policy_path = _write_policy(
+        tmp_path / "quality_policy.yaml",
+        _base_policy_yaml().replace("value: 3000", "value: 10"),
+    )
+
+    args = parse_args(
+        [
+            "--policy",
+            str(policy_path),
+            "--report-dir",
+            str(report_dir),
+            "--strict",
+        ]
+    )
+
+    assert main(args=args) == 1
+
+
+def test_quality_policy_cli_returns_distinct_exit_code_for_malformed_required_report(
+    tmp_path: Path,
+) -> None:
+    from packages.evals.run_quality_policy import main, parse_args
+
+    report_dir = tmp_path / "reports"
+    _write_base_reports(report_dir)
+    (report_dir / "phase3" / "ragas_report.json").write_text("{not-json}\n", encoding="utf-8")
+    policy_path = _write_policy(tmp_path / "quality_policy.yaml", _base_policy_yaml())
+
+    args = parse_args(
+        [
+            "--policy",
+            str(policy_path),
+            "--report-dir",
+            str(report_dir),
+        ]
+    )
+
+    assert main(args=args) == 2

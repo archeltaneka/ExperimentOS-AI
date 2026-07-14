@@ -1,8 +1,15 @@
 name: CI
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -12,14 +19,19 @@ env:
   ASK_MODE: agent_workflow
   EMBEDDING_PROVIDER: fake
   LLM_PROVIDER: mock
+  RAGAS_JUDGE_LLM_PROVIDER: none
+  RAGAS_JUDGE_EMBEDDING_PROVIDER: none
+  DEEPEVAL_JUDGE_PROVIDER: none
   PROMPT_EXPERIMENTS_ENABLED: "false"
   EXPERIMENTOS_LANGSMITH_ENABLED: "false"
   EXPERIMENTOS_PHOENIX_ENABLED: "false"
   EXPERIMENTOS_OTEL_ENABLED: "false"
+  EXPERIMENTOS_OTEL_EXPORTER_TYPE: none
   LANGSMITH_TRACING: "false"
   LANGSMITH_API_KEY: ""
   OPENAI_API_KEY: ""
   GOOGLE_API_KEY: ""
+  PYTHONHASHSEED: "0"
 
 jobs:
   format:
@@ -324,3 +336,136 @@ jobs:
           name: integration-db-reports
           path: artifacts/ci/integration
           if-no-files-found: warn
+
+  ai-quality-gate:
+    needs:
+      - format
+      - lint
+      - validate
+      - unit
+      - offline-eval-smoke
+      - integration-db
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: experimentos_ci
+          POSTGRES_USER: experimentos_ci
+          POSTGRES_PASSWORD: experimentos_ci
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U experimentos_ci -d experimentos_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql+psycopg://experimentos_ci:experimentos_ci@localhost:5433/experimentos_ci
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          cache-python: true
+          cache-dependency-glob: uv.lock
+
+      - name: Sync AI quality gate dependencies
+        run: uv sync --group dev --group eval --group observability --frozen
+
+      - name: Prepare AI quality artifact directory
+        run: mkdir -p artifacts/ci/ai-quality/phase3
+
+      - name: Wait for PostgreSQL readiness
+        timeout-minutes: 2
+        run: |
+          uv run python - <<'PY'
+          import time
+          import psycopg
+
+          deadline = time.time() + 120
+          dsn = "postgresql://experimentos_ci:experimentos_ci@localhost:5433/experimentos_ci"
+          last_error = None
+
+          while time.time() < deadline:
+              try:
+                  with psycopg.connect(dsn):
+                      print("postgres ready")
+                      raise SystemExit(0)
+              except Exception as exc:
+                  last_error = exc
+                  time.sleep(5)
+
+          raise SystemExit(f"postgres not ready: {last_error}")
+          PY
+
+      - name: Run Alembic migrations
+        run: uv run alembic upgrade head
+
+      - name: Detect quality policy changes
+        id: policy_changes
+        shell: bash
+        run: |
+          changed=false
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+          elif [[ -n "${{ github.event.before }}" && "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]]; then
+            base_sha="${{ github.event.before }}"
+          else
+            base_sha=""
+          fi
+
+          if [[ -n "$base_sha" ]] && git diff --name-only "$base_sha" "$GITHUB_SHA" -- | grep -Fxq "config/evaluation/quality_policy.yaml"; then
+            changed=true
+          fi
+
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - name: Validate AI quality environment
+        run: >-
+          uv run python scripts/validate_ci_environment.py
+          --output artifacts/ci/ai-quality/phase3/ci_environment.json
+
+      - name: Run AI quality gate
+        if: ${{ always() }}
+        run: >-
+          uv run python scripts/run_ai_quality_gate.py
+          --artifact-root artifacts/ci/ai-quality
+          --artifact-name ai-quality-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          --policy-changed ${{ steps.policy_changes.outputs.changed }}
+
+      - name: Publish AI quality summary
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          summary_path="artifacts/ci/ai-quality/phase3/github_summary.md"
+          if [[ -f "$summary_path" ]]; then
+            cat "$summary_path" >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "# AI Quality Gate Summary"
+              echo
+              echo "- Overall quality status: infrastructure_fail"
+              echo "- Infrastructure failure: summary file was not generated."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload AI quality artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-quality-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/ci/ai-quality
+          if-no-files-found: warn
+          retention-days: 14

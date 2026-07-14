@@ -1,7 +1,7 @@
 # GitHub Actions CI Baseline
 
-The Phase 3 CI workflow lives at `.github/workflows/ci.yml` and runs on every `push`,
-`pull_request`, and manual `workflow_dispatch`.
+The Phase 3 CI workflow lives at `.github/workflows/ci.yml` and runs on every
+`pull_request` plus manual `workflow_dispatch`.
 
 It is split into two tiers:
 

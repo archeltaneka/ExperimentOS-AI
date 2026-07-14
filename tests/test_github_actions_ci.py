@@ -6,7 +6,6 @@ from pathlib import Path
 def test_ci_workflow_declares_two_tier_jobs_and_offline_defaults() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
 
-    assert "push:" in workflow
     assert "pull_request:" in workflow
     assert "workflow_dispatch:" in workflow
 

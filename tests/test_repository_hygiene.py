@@ -47,6 +47,9 @@ def test_repository_docs_explain_reports_vs_artifacts() -> None:
     assert "artifacts/local" in readme
     assert "artifacts/local" in development
     assert "artifacts/local" in dataset
+    assert "--output reports/phase3/baseline_report.md" in readme
+    assert "--output reports/phase3/baseline_report.md" in development
+    assert "--output reports/phase3/baseline_report.md" in dataset
     assert "`reports/`" in hygiene
     assert "`artifacts/`" in hygiene
     assert "`data/eval/`" in hygiene

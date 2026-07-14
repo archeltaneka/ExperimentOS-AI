@@ -12,6 +12,7 @@ def test_gitignore_tracks_eval_inputs_and_ignores_runtime_outputs() -> None:
         "reports/evaluation.json",
         "reports/agent_evaluation.json",
         "reports/agent_e2e_evaluation.json",
+        ".superpowers/sdd/task-1-report.md",
         "docs/superpowers/plans/task.md",
         "docs/superpowers/specs/task.md",
         "data/synthetic/experiments/exp-001/metadata.json",
@@ -19,6 +20,7 @@ def test_gitignore_tracks_eval_inputs_and_ignores_runtime_outputs() -> None:
     tracked_paths = [
         "data/eval/qa_dataset.json",
         "data/eval/agent_dataset.json",
+        "data/eval/ci_smoke_dataset.json",
     ]
 
     for path in ignored_paths:

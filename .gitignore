@@ -222,9 +222,10 @@ __marimo__/
 # Dataset
 data/*
 !data/eval/
-data/eval/*
-!data/eval/qa_dataset.json
-!data/eval/agent_dataset.json
+!data/eval/**
+
+# Local scratch workspace
+.superpowers/
 
 # Local evaluation and CI outputs
 artifacts/

@@ -152,7 +152,7 @@ The harness:
    `Experiment.config["experiment_id"]`
 3. runs the Phase 1 QA flow that remains available behind `ASK_MODE=legacy_rag`
 4. aggregates retrieval, citation, latency, token, and category coverage metrics
-5. writes `reports/evaluation.md`
+5. writes `artifacts/local/evaluation.md` for routine local runs
 
 The optional RAGAS path reuses the same dataset rows, generated answers, and retrieved contexts.
 Its offline-safe context metrics also map `expected_documents` into RAGAS
@@ -165,7 +165,7 @@ Run it locally:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run --embedding-provider fake --llm-provider mock --output reports/evaluation.md
+uv run python -m packages.evals.run --embedding-provider fake --llm-provider mock --output artifacts/local/evaluation.md --json-output artifacts/local/evaluation.json
 ```
 
 Run the optional RAGAS report against the same dataset:
@@ -173,7 +173,7 @@ Run the optional RAGAS report against the same dataset:
 ```powershell
 uv sync --group eval
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output reports/phase3/ragas_report.md --json-output reports/phase3/ragas_report.json
+uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output artifacts/local/phase3/ragas_report.md --json-output artifacts/local/phase3/ragas_report.json
 ```
 
 Run the optional DeepEval report against the same dataset plus the existing workflow and `/ask`
@@ -182,7 +182,7 @@ surfaces:
 ```powershell
 uv sync --group eval
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run_deepeval --mode offline --embedding-provider fake --llm-provider mock --output reports/phase3/deepeval_report.md --json-output reports/phase3/deepeval_report.json
+uv run python -m packages.evals.run_deepeval --mode offline --embedding-provider fake --llm-provider mock --output artifacts/local/phase3/deepeval_report.md --json-output artifacts/local/phase3/deepeval_report.json
 ```
 
 ## Agent Workflow Evaluation Dataset
@@ -238,12 +238,12 @@ The harness:
 2. runs each prompt through `build_default_agent_workflow_service()`
 3. checks planner intent, required-agent routing, citation coverage, decision outputs, approval
    status, and trace completeness
-4. writes `reports/agent_evaluation.md`
+4. writes `artifacts/local/agent_evaluation.md` for routine local runs
 
 Run it locally:
 
 ```powershell
-uv run python -m packages.evals.run_agent --dataset data/eval/agent_dataset.json --output reports/agent_evaluation.md
+uv run python -m packages.evals.run_agent --dataset data/eval/agent_dataset.json --output artifacts/local/agent_evaluation.md
 ```
 
 ## `/ask` End-To-End Evaluation Cases
@@ -267,7 +267,7 @@ Current E2E coverage includes:
 Run it locally:
 
 ```powershell
-uv run python -m packages.evals.run_agent_e2e --output reports/agent_e2e_evaluation.md
+uv run python -m packages.evals.run_agent_e2e --output artifacts/local/agent_e2e_evaluation.md
 ```
 
 ## DeepEval Evaluation Surfaces

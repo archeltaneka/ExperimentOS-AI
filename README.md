@@ -198,8 +198,8 @@ Run the offline evaluation harness with deterministic local providers:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run --embedding-provider fake --llm-provider mock --output reports/evaluation.md
-Get-Content reports/evaluation.md
+uv run python -m packages.evals.run --embedding-provider fake --llm-provider mock --output artifacts/local/evaluation.md --json-output artifacts/local/evaluation.json
+Get-Content artifacts/local/evaluation.md
 ```
 
 Enable the optional RAGAS integration and run the offline-safe report:
@@ -207,8 +207,8 @@ Enable the optional RAGAS integration and run the offline-safe report:
 ```powershell
 uv sync --group eval
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output reports/phase3/ragas_report.md --json-output reports/phase3/ragas_report.json
-Get-Content reports/phase3/ragas_report.md
+uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output artifacts/local/phase3/ragas_report.md --json-output artifacts/local/phase3/ragas_report.json
+Get-Content artifacts/local/phase3/ragas_report.md
 ```
 
 By default this RAGAS path computes offline-safe ID-based context precision and recall from the
@@ -221,8 +221,8 @@ See [Dataset Guide](docs/dataset.md) and [Development Guide](docs/development.md
 Run the integrated `/ask` E2E evaluation:
 
 ```powershell
-uv run python -m packages.evals.run_agent_e2e --output reports/agent_e2e_evaluation.md
-Get-Content reports/agent_e2e_evaluation.md
+uv run python -m packages.evals.run_agent_e2e --output artifacts/local/agent_e2e_evaluation.md
+Get-Content artifacts/local/agent_e2e_evaluation.md
 ```
 
 Run the Phase 3 reliability baseline without external LLMOps tooling:
@@ -240,12 +240,43 @@ OpenTelemetry are still out of scope. See
 [Phase 3 Reliability Baseline](docs/phase3/reliability_baseline.md) and
 [LangSmith Observability](docs/phase3/langsmith_observability.md).
 
+Run the local equivalent of the blocking AI quality gate:
+
+```powershell
+$env:APP_ENV = "ci"
+$env:ASK_MODE = "agent_workflow"
+$env:EMBEDDING_PROVIDER = "fake"
+$env:LLM_PROVIDER = "mock"
+$env:RAGAS_JUDGE_LLM_PROVIDER = "none"
+$env:RAGAS_JUDGE_EMBEDDING_PROVIDER = "none"
+$env:DEEPEVAL_JUDGE_PROVIDER = "none"
+$env:PROMPT_EXPERIMENTS_ENABLED = "false"
+$env:EXPERIMENTOS_LANGSMITH_ENABLED = "false"
+$env:EXPERIMENTOS_PHOENIX_ENABLED = "false"
+$env:EXPERIMENTOS_OTEL_ENABLED = "false"
+$env:EXPERIMENTOS_OTEL_EXPORTER_TYPE = "none"
+$env:LANGSMITH_TRACING = "false"
+$env:LANGSMITH_API_KEY = ""
+$env:OPENAI_API_KEY = ""
+$env:GOOGLE_API_KEY = ""
+docker compose up -d postgres
+$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+uv sync --group dev --group eval --group observability --frozen
+uv run alembic upgrade head
+uv run python scripts/validate_ci_environment.py --output artifacts/ci/ai-quality/phase3/ci_environment.json
+uv run python scripts/run_ai_quality_gate.py --artifact-root artifacts/ci/ai-quality --artifact-name ai-quality-gate-local --policy-changed false
+```
+
+The gate writes reports under `artifacts/ci/ai-quality`. CI fails when a required deterministic
+evaluation report is missing or malformed, or when the centralized quality policy returns a
+blocking failure.
+
 Run prompt regression for a prompt-backed surface:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run_prompt_regression --prompt-id rag.answer --baseline-version 1 --candidate-version 1 --offline --embedding-provider fake --llm-provider mock --output reports/phase3/prompt_regression.md --json-output reports/phase3/prompt_regression.json
-Get-Content reports/phase3/prompt_regression.md
+uv run python -m packages.evals.run_prompt_regression --prompt-id rag.answer --baseline-version 1 --candidate-version 1 --offline --embedding-provider fake --llm-provider mock --output artifacts/local/phase3/prompt_regression.md --json-output artifacts/local/phase3/prompt_regression.json
+Get-Content artifacts/local/phase3/prompt_regression.md
 ```
 
 This command reuses the existing `legacy_rag` QA dataset, freezes retrieval between compared prompt
@@ -256,13 +287,13 @@ Run the offline prompt experiment workflow:
 
 ```powershell
 uv run python -m packages.evals.run_prompt_experiment validate --experiment rag-answer-abstention-v1-v2
-uv run python -m packages.evals.run_prompt_experiment run --experiment rag-answer-abstention-v1-v2 --mode offline --report-dir reports/phase3/prompt_experiments
-Get-Content reports/phase3/prompt_experiments/rag-answer-abstention-v1-v2.md
+uv run python -m packages.evals.run_prompt_experiment run --experiment rag-answer-abstention-v1-v2 --mode offline --report-dir artifacts/local/phase3/prompt_experiments
+Get-Content artifacts/local/phase3/prompt_experiments/rag-answer-abstention-v1-v2.md
 ```
 
 This workflow keeps runtime experimentation disabled by default, reuses the immutable prompt
-registry, and writes repository-owned Markdown and JSON artifacts without using production
-traffic. See [Phase 3 Prompt Experiments](docs/phase3/prompt_experiments.md).
+registry, and writes local Markdown and JSON artifacts without using production traffic. See
+[Phase 3 Prompt Experiments](docs/phase3/prompt_experiments.md).
 
 ## Development Workflow
 
@@ -288,10 +319,14 @@ $env:APP_ENV = "ci"
 $env:ASK_MODE = "agent_workflow"
 $env:EMBEDDING_PROVIDER = "fake"
 $env:LLM_PROVIDER = "mock"
+$env:RAGAS_JUDGE_LLM_PROVIDER = "none"
+$env:RAGAS_JUDGE_EMBEDDING_PROVIDER = "none"
+$env:DEEPEVAL_JUDGE_PROVIDER = "none"
 $env:PROMPT_EXPERIMENTS_ENABLED = "false"
 $env:EXPERIMENTOS_LANGSMITH_ENABLED = "false"
 $env:EXPERIMENTOS_PHOENIX_ENABLED = "false"
 $env:EXPERIMENTOS_OTEL_ENABLED = "false"
+$env:EXPERIMENTOS_OTEL_EXPORTER_TYPE = "none"
 $env:LANGSMITH_TRACING = "false"
 $env:LANGSMITH_API_KEY = ""
 $env:OPENAI_API_KEY = ""
@@ -322,10 +357,11 @@ New-Item -ItemType Directory -Force -Path artifacts/ci/integration/phase3 | Out-
 uv run python -m packages.ingestion.load_experiment --experiment-dir tests/fixtures/ci/exp-001-payment-recommendation --embedding-provider fake
 uv run pytest tests/test_alembic_config.py tests/test_db_models.py tests/test_db_session.py tests/test_ingestion_load_experiment.py tests/test_retrieval_service.py tests/test_api_ask.py tests/test_agent_workflow.py tests/test_api_ask_db_integration.py -v
 uv run python -m packages.evals.run_baseline --dataset data/eval/ci_smoke_dataset.json --agent-dataset data/eval/agent_dataset.json --embedding-provider fake --llm-provider mock --rag-output artifacts/ci/integration/evaluation.md --agent-output artifacts/ci/integration/agent_evaluation.md --agent-e2e-output artifacts/ci/integration/agent_e2e_evaluation.md --factuality-output artifacts/ci/integration/phase3/factuality_report.md --factuality-json-output artifacts/ci/integration/phase3/factuality_report.json --quality-policy-output artifacts/ci/integration/phase3/quality_policy.md --quality-policy-json-output artifacts/ci/integration/phase3/quality_policy.json --output artifacts/ci/integration/phase3/baseline_report.md
+uv run python scripts/run_ai_quality_gate.py --artifact-root artifacts/ci/ai-quality --artifact-name ai-quality-gate-local --policy-changed false
 ```
 
 See [GitHub Actions CI Baseline](docs/phase3/github_actions.md) for the job-by-job breakdown,
-cache summary, and artifact outputs.
+cache summary, artifact outputs, and the blocking AI quality gate.
 
 Database-backed path:
 

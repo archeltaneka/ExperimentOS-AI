@@ -36,3 +36,17 @@ def test_gitignore_tracks_eval_inputs_and_ignores_runtime_outputs() -> None:
             check=False,
         )
         assert result.returncode != 0, f"Expected {path} not to be ignored"
+
+
+def test_repository_docs_explain_reports_vs_artifacts() -> None:
+    readme = Path("README.md").read_text(encoding="utf-8")
+    development = Path("docs/development.md").read_text(encoding="utf-8")
+    dataset = Path("docs/dataset.md").read_text(encoding="utf-8")
+    hygiene = Path("docs/repository_hygiene.md").read_text(encoding="utf-8")
+
+    assert "artifacts/local" in readme
+    assert "artifacts/local" in development
+    assert "artifacts/local" in dataset
+    assert "`reports/`" in hygiene
+    assert "`artifacts/`" in hygiene
+    assert "`data/eval/`" in hygiene

@@ -82,14 +82,16 @@ def validate_ci_environment(
 
     ragas_judge_llm_provider = env.get("RAGAS_JUDGE_LLM_PROVIDER", "none").strip().lower()
     if ragas_judge_llm_provider not in {"", "none", "mock"}:
-        raise ValueError(
-            "RAGAS_JUDGE_LLM_PROVIDER must remain `none` or `mock` for offline CI."
-        )
+        raise ValueError("RAGAS_JUDGE_LLM_PROVIDER must remain `none` or `mock` for offline CI.")
 
-    ragas_judge_embedding_provider = env.get(
-        "RAGAS_JUDGE_EMBEDDING_PROVIDER",
-        "none",
-    ).strip().lower()
+    ragas_judge_embedding_provider = (
+        env.get(
+            "RAGAS_JUDGE_EMBEDDING_PROVIDER",
+            "none",
+        )
+        .strip()
+        .lower()
+    )
     if ragas_judge_embedding_provider not in {"", "none", "fake"}:
         raise ValueError(
             "RAGAS_JUDGE_EMBEDDING_PROVIDER must remain `none` or `fake` for offline CI."
@@ -284,9 +286,7 @@ def _assert_invariant(
     severity: str,
 ) -> None:
     if metric.operator != operator:
-        raise ValueError(
-            f"Critical invariant `{metric.metric_id}` must use operator `{operator}`."
-        )
+        raise ValueError(f"Critical invariant `{metric.metric_id}` must use operator `{operator}`.")
     if metric.value != value:
         raise ValueError(f"Critical invariant `{metric.metric_id}` must keep value `{value}`.")
     if metric.severity != severity:
@@ -308,8 +308,7 @@ def _observability_export_enabled(env: Mapping[str, str]) -> bool:
             _env_bool(env.get("LANGSMITH_TRACING", "false")),
             _env_bool(env.get("EXPERIMENTOS_PHOENIX_ENABLED", "false")),
             _env_bool(env.get("EXPERIMENTOS_OTEL_ENABLED", "false")),
-            env.get("EXPERIMENTOS_OTEL_EXPORTER_TYPE", "").strip().lower()
-            not in {"", "none"},
+            env.get("EXPERIMENTOS_OTEL_EXPORTER_TYPE", "").strip().lower() not in {"", "none"},
         )
     )
 

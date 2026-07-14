@@ -107,9 +107,7 @@ def test_build_artifact_manifest_tracks_required_and_optional_reports(tmp_path: 
             Path("phase3/quality_policy.json"),
             Path("agent_evaluation.md"),
         ),
-        optional_paths=(
-            Path("phase3/prompt_experiments/rag-answer-abstention-v1-v2.json"),
-        ),
+        optional_paths=(Path("phase3/prompt_experiments/rag-answer-abstention-v1-v2.json"),),
     )
 
     required = {artifact.relative_path: artifact.present for artifact in manifest.required_reports}

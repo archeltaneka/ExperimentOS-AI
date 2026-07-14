@@ -43,7 +43,14 @@ def test_repository_docs_explain_reports_vs_artifacts() -> None:
     development = Path("docs/development.md").read_text(encoding="utf-8")
     dataset = Path("docs/dataset.md").read_text(encoding="utf-8")
     hygiene = Path("docs/repository_hygiene.md").read_text(encoding="utf-8")
+    normalized_readme = " ".join(readme.split())
 
+    assert "Use `artifacts/local/...` for routine local verification output." in normalized_readme
+    assert (
+        "Use `reports/` only when intentionally refreshing curated baseline/reference artifacts "
+        "that belong in git."
+    ) in normalized_readme
+    assert "reports/                    Generated local evaluation reports" not in readme
     assert "artifacts/local" in readme
     assert "artifacts/local" in development
     assert "artifacts/local" in dataset

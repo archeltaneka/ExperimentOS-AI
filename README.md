@@ -110,10 +110,16 @@ packages/
   llm/                      LLM client abstractions and providers
   qa/                       Grounded question answering service
   retrieval/                Semantic retrieval CLI and service
-reports/                    Generated local evaluation reports
+reports/                    Curated baseline/reference artifacts versioned in git
 scripts/                    Utility scripts including synthetic data generation
 tests/                      Unit, API, migration, and integration tests
 ```
+
+## Repository Output Policy
+
+Use `artifacts/local/...` for routine local verification output.
+Use `reports/` only when intentionally refreshing curated baseline/reference artifacts that belong
+in git.
 
 ## Quick Start
 

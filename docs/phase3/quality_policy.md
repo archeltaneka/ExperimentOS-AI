@@ -104,8 +104,9 @@ Offline mode remains the default operating mode for the policy because it only c
 local reports. Optional judge-backed metrics from RAGAS and DeepEval are treated as advisory and
 can remain skipped without causing a failure.
 
-Future CI can consume `reports/phase3/quality_policy.json` directly. The policy is already
-machine-readable, but GitHub Actions enforcement is intentionally not implemented in this issue.
+GitHub Actions now consumes the structured policy outputs through the repository-owned AI quality
+gate scripts. The policy remains machine-readable and repository-owned; workflow YAML still does
+not duplicate thresholds.
 
 ## CLI
 
@@ -125,7 +126,8 @@ Useful options:
 
 - `--policy <path>` to load a different YAML policy
 - `--report-dir <path>` to point at another report bundle
-- `--strict` to return non-zero on warnings or failures
+- `--warning-policy allow|fail` to decide whether warning-only outcomes should fail
+- `--strict` as a short alias for `--warning-policy fail`
 - `--warn-only` to preserve report status but always return success
 
 ## Adding New Metrics

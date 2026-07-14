@@ -47,11 +47,31 @@ surfaces.
 
 Remaining quality policy gaps:
 
-- GitHub Actions enforcement is not wired yet
-- baseline runs rely on existing additive report artifacts for full policy coverage
-- no PR annotation, deployment blocking, or threshold auto-tuning exists
-- the authoritative local status is the latest `reports/phase3/quality_policy.*` output, not this
-  static document
+- GitHub Actions enforcement now runs through `ai-quality-gate`
+- baseline runs still rely on additive report artifacts for full policy coverage
+- no PR annotation, deployment blocking beyond repository CI, or threshold auto-tuning exists
+- the authoritative status is the latest quality-policy artifact, not this static document
+
+### CI Quality Gate
+
+- implementation status: enabled on `pull_request`, pushes to `main`, and manual dispatch
+- job name: `ai-quality-gate`
+- policy owner: `config/evaluation/quality_policy.yaml`
+- environment mode: offline and deterministic only
+- required suites:
+  - custom RAG
+  - custom agent workflow
+  - `/ask` end-to-end
+  - prompt regression
+  - factuality
+  - quality-policy aggregation
+- additive offline suites:
+  - prompt experiment sample
+  - RAGAS offline-safe metrics
+  - DeepEval offline deterministic metrics
+- artifact publication: always
+- branch-protection relationship: CI gate is designed to support blocking protection on `main`
+- remaining gap before PR reporting: no automated PR comment or inline annotation yet
 
 ### Prompt Experiment Framework
 

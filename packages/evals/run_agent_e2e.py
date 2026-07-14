@@ -5,10 +5,11 @@ import os
 from pathlib import Path
 
 from packages.evals.agent_e2e import AgentE2EEvaluator, build_default_agent_e2e_cases
-from packages.evals.agent_e2e_report import render_agent_e2e_report
+from packages.evals.agent_e2e_report import agent_e2e_report_to_json, render_agent_e2e_report
 from packages.observability.factory import resolve_observability_provider
 
 DEFAULT_AGENT_E2E_REPORT_PATH = Path("reports/agent_e2e_evaluation.md")
+DEFAULT_AGENT_E2E_JSON_REPORT_PATH = Path("reports/agent_e2e_evaluation.json")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -21,6 +22,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=DEFAULT_AGENT_E2E_REPORT_PATH,
         help="Path where the agent E2E Markdown report should be written.",
     )
+    parser.add_argument(
+        "--json-output",
+        type=Path,
+        default=DEFAULT_AGENT_E2E_JSON_REPORT_PATH,
+        help="Path where the agent E2E JSON report should be written.",
+    )
     return parser.parse_args(argv)
 
 
@@ -29,6 +36,8 @@ def run_evaluation(args: argparse.Namespace) -> str:
     report = render_agent_e2e_report(result)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(report, encoding="utf-8")
+    args.json_output.parent.mkdir(parents=True, exist_ok=True)
+    args.json_output.write_text(agent_e2e_report_to_json(result), encoding="utf-8")
     return report
 
 

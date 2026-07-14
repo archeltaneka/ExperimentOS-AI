@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from dataclasses import asdict
+
 from packages.evals.agent_e2e import AgentE2ERun
 
 KNOWN_LIMITATIONS = (
@@ -57,6 +60,10 @@ def render_agent_e2e_report(run: AgentE2ERun) -> str:
         lines.append(f"- {step}")
 
     return "\n".join(lines) + "\n"
+
+
+def agent_e2e_report_to_json(run: AgentE2ERun) -> str:
+    return json.dumps(asdict(run), indent=2) + "\n"
 
 
 def _percent(value: float) -> str:

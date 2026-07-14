@@ -222,9 +222,20 @@ __marimo__/
 # Dataset
 data/*
 !data/eval/
-data/eval/*
-!data/eval/qa_dataset.json
-!data/eval/agent_dataset.json
+!data/eval/**
+
+# Local scratch workspace
+.superpowers/
+
+# Local evaluation and CI outputs
+artifacts/
+reports/evaluation.json
+reports/agent_evaluation.json
+reports/agent_e2e_evaluation.json
+
+# Local planning notes. Repository-owned docs remain under docs/phase3/ and docs/.
+docs/superpowers/plans/
+docs/superpowers/specs/
 
 # Agents markdown
 *AGENTS.md

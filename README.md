@@ -110,10 +110,16 @@ packages/
   llm/                      LLM client abstractions and providers
   qa/                       Grounded question answering service
   retrieval/                Semantic retrieval CLI and service
-reports/                    Generated local evaluation reports
+reports/                    Curated baseline/reference artifacts versioned in git
 scripts/                    Utility scripts including synthetic data generation
 tests/                      Unit, API, migration, and integration tests
 ```
+
+## Repository Output Policy
+
+Use `artifacts/local/...` for routine local verification output.
+Use `reports/` only when intentionally refreshing curated baseline/reference artifacts that belong
+in git.
 
 ## Quick Start
 
@@ -198,8 +204,8 @@ Run the offline evaluation harness with deterministic local providers:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run --embedding-provider fake --llm-provider mock --output reports/evaluation.md
-Get-Content reports/evaluation.md
+uv run python -m packages.evals.run --embedding-provider fake --llm-provider mock --output artifacts/local/evaluation.md --json-output artifacts/local/evaluation.json
+Get-Content artifacts/local/evaluation.md
 ```
 
 Enable the optional RAGAS integration and run the offline-safe report:
@@ -207,8 +213,8 @@ Enable the optional RAGAS integration and run the offline-safe report:
 ```powershell
 uv sync --group eval
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output reports/phase3/ragas_report.md --json-output reports/phase3/ragas_report.json
-Get-Content reports/phase3/ragas_report.md
+uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output artifacts/local/phase3/ragas_report.md --json-output artifacts/local/phase3/ragas_report.json
+Get-Content artifacts/local/phase3/ragas_report.md
 ```
 
 By default this RAGAS path computes offline-safe ID-based context precision and recall from the
@@ -221,8 +227,8 @@ See [Dataset Guide](docs/dataset.md) and [Development Guide](docs/development.md
 Run the integrated `/ask` E2E evaluation:
 
 ```powershell
-uv run python -m packages.evals.run_agent_e2e --output reports/agent_e2e_evaluation.md
-Get-Content reports/agent_e2e_evaluation.md
+uv run python -m packages.evals.run_agent_e2e --output artifacts/local/agent_e2e_evaluation.md
+Get-Content artifacts/local/agent_e2e_evaluation.md
 ```
 
 Run the Phase 3 reliability baseline without external LLMOps tooling:
@@ -244,8 +250,8 @@ Run prompt regression for a prompt-backed surface:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run_prompt_regression --prompt-id rag.answer --baseline-version 1 --candidate-version 1 --offline --embedding-provider fake --llm-provider mock --output reports/phase3/prompt_regression.md --json-output reports/phase3/prompt_regression.json
-Get-Content reports/phase3/prompt_regression.md
+uv run python -m packages.evals.run_prompt_regression --prompt-id rag.answer --baseline-version 1 --candidate-version 1 --offline --embedding-provider fake --llm-provider mock --output artifacts/local/phase3/prompt_regression.md --json-output artifacts/local/phase3/prompt_regression.json
+Get-Content artifacts/local/phase3/prompt_regression.md
 ```
 
 This command reuses the existing `legacy_rag` QA dataset, freezes retrieval between compared prompt
@@ -256,13 +262,13 @@ Run the offline prompt experiment workflow:
 
 ```powershell
 uv run python -m packages.evals.run_prompt_experiment validate --experiment rag-answer-abstention-v1-v2
-uv run python -m packages.evals.run_prompt_experiment run --experiment rag-answer-abstention-v1-v2 --mode offline --report-dir reports/phase3/prompt_experiments
-Get-Content reports/phase3/prompt_experiments/rag-answer-abstention-v1-v2.md
+uv run python -m packages.evals.run_prompt_experiment run --experiment rag-answer-abstention-v1-v2 --mode offline --report-dir artifacts/local/phase3/prompt_experiments
+Get-Content artifacts/local/phase3/prompt_experiments/rag-answer-abstention-v1-v2.md
 ```
 
 This workflow keeps runtime experimentation disabled by default, reuses the immutable prompt
-registry, and writes repository-owned Markdown and JSON artifacts without using production
-traffic. See [Phase 3 Prompt Experiments](docs/phase3/prompt_experiments.md).
+registry, and writes local Markdown and JSON artifacts without using production traffic. See
+[Phase 3 Prompt Experiments](docs/phase3/prompt_experiments.md).
 
 ## Development Workflow
 
@@ -304,7 +310,7 @@ uv run python -m packages.llm.prompt_registry_cli validate
 uv run python -m packages.evals.run_prompt_experiment validate --experiment rag-answer-abstention-v1-v2
 uv run python -m packages.observability.cli validate --provider all
 uv sync --group dev --group eval --group observability --frozen
-uv run pytest tests/test_api_health.py tests/test_api_ask.py tests/test_agent_workflow.py tests/test_prompt_registry.py tests/test_prompt_registry_cli.py tests/test_prompt_experiment_cli.py tests/test_prompt_experiment_validation.py tests/test_observability_cli.py tests/test_prompt_regression.py tests/test_factuality.py tests/test_quality_policy.py tests/test_evaluation_harness.py tests/test_phase3_baseline.py tests/test_github_actions_ci.py -v
+uv run pytest tests/test_api_health.py tests/test_api_ask.py tests/test_agent_workflow.py tests/test_prompt_registry.py tests/test_prompt_registry_cli.py tests/test_prompt_experiment_cli.py tests/test_prompt_experiment_validation.py tests/test_observability_cli.py tests/test_prompt_regression.py tests/test_factuality.py tests/test_quality_policy.py tests/test_ci_quality_gate.py tests/test_evaluation_harness.py tests/test_ragas_evaluation.py tests/test_phase3_baseline.py tests/test_github_actions_ci.py tests/test_repository_hygiene.py -v
 New-Item -ItemType Directory -Force -Path artifacts/ci/offline/phase3 | Out-Null
 uv run python -m packages.evals.run_prompt_regression --prompt-id rag.answer --baseline-version 1 --candidate-version 1 --offline --dataset data/eval/ci_smoke_dataset.json --embedding-provider fake --llm-provider mock --output artifacts/ci/offline/phase3/prompt_regression.md --json-output artifacts/ci/offline/phase3/prompt_regression.json
 uv run python -m packages.evals.run_factuality --dataset data/eval/ci_smoke_dataset.json --agent-dataset data/eval/agent_dataset.json --target agent_workflow --mode offline --embedding-provider fake --llm-provider mock --output artifacts/ci/offline/phase3/factuality_report.md --json-output artifacts/ci/offline/phase3/factuality_report.json

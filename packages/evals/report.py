@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from collections import defaultdict
+from dataclasses import asdict
 
 from packages.evals.evaluator import EvaluationRun, EvaluationSampleResult
 
@@ -92,6 +94,10 @@ def render_evaluation_report(run: EvaluationRun) -> str:
             lines.append(f"- `{sample.question.id}`: {sample.question.question}")
 
     return "\n".join(lines) + "\n"
+
+
+def evaluation_report_to_json(run: EvaluationRun) -> str:
+    return json.dumps(asdict(run), indent=2) + "\n"
 
 
 def _samples_by_category(

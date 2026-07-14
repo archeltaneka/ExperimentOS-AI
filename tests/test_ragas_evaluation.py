@@ -245,6 +245,36 @@ def test_write_ragas_reports_runs_offline_metrics_and_skips_live_defaults(
     assert report.case_results[0].metric_scores["id_based_context_recall"] == 1.0
 
 
+def test_build_ragas_report_computes_id_metrics_without_ragas_dependency(monkeypatch) -> None:
+    from packages.evals import run_ragas
+
+    async def fake_build_qa_run(_args):
+        return build_qa_run()
+
+    monkeypatch.setattr(run_ragas, "build_qa_evaluation_run", fake_build_qa_run)
+    monkeypatch.setattr(
+        run_ragas,
+        "import_ragas_bindings",
+        lambda: (_ for _ in ()).throw(ModuleNotFoundError("ragas")),
+    )
+
+    report = run_ragas.build_ragas_report(
+        run_ragas.parse_args(["--embedding-provider", "fake", "--llm-provider", "mock"])
+    )
+
+    assert report.ragas_available is False
+    assert "id_based_context_precision" in report.metrics_run
+    assert "id_based_context_recall" in report.metrics_run
+    scores = {metric.name: metric.average_score for metric in report.metric_results}
+    assert scores["id_based_context_precision"] == 1.0
+    assert scores["id_based_context_recall"] == 1.0
+    skipped = {
+        metric.name: metric.reason for metric in report.metric_results if metric.status == "skipped"
+    }
+    assert "context_precision" in skipped
+    assert "RAGAS is not installed" in skipped["context_precision"]
+
+
 def test_build_ragas_dataset_uses_single_turn_sample_shape() -> None:
     prepared = prepare_ragas_dataset(build_qa_run())
 

@@ -133,20 +133,20 @@ Run the default local evaluation:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run --embedding-provider fake --llm-provider mock --output reports/evaluation.md
+uv run python -m packages.evals.run --embedding-provider fake --llm-provider mock --output artifacts/local/evaluation.md --json-output artifacts/local/evaluation.json
 ```
 
 Read the generated report:
 
 ```powershell
-Get-Content reports/evaluation.md
+Get-Content artifacts/local/evaluation.md
 ```
 
 Customize the run:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run --dataset data/eval/qa_dataset.json --output reports/evaluation.md --top-k 5 --embedding-provider fake --llm-provider mock
+uv run python -m packages.evals.run --dataset data/eval/qa_dataset.json --output artifacts/local/evaluation.md --top-k 5 --embedding-provider fake --llm-provider mock
 ```
 
 Optional RAGAS evaluation lives alongside the custom harness instead of replacing it.
@@ -161,7 +161,7 @@ Run the default offline-safe RAGAS report:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output reports/phase3/ragas_report.md --json-output reports/phase3/ragas_report.json
+uv run python -m packages.evals.run_ragas --embedding-provider fake --llm-provider mock --output artifacts/local/phase3/ragas_report.md --json-output artifacts/local/phase3/ragas_report.json
 ```
 
 Default RAGAS behavior:
@@ -188,7 +188,7 @@ Run the default offline DeepEval report:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run_deepeval --mode offline --embedding-provider fake --llm-provider mock --output reports/phase3/deepeval_report.md --json-output reports/phase3/deepeval_report.json
+uv run python -m packages.evals.run_deepeval --mode offline --embedding-provider fake --llm-provider mock --output artifacts/local/phase3/deepeval_report.md --json-output artifacts/local/phase3/deepeval_report.json
 ```
 
 Default DeepEval behavior:
@@ -226,7 +226,7 @@ Run the default offline prompt-regression report:
 
 ```powershell
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
-uv run python -m packages.evals.run_prompt_regression --prompt-id rag.answer --baseline-version 1 --candidate-version 1 --offline --embedding-provider fake --llm-provider mock --output reports/phase3/prompt_regression.md --json-output reports/phase3/prompt_regression.json
+uv run python -m packages.evals.run_prompt_regression --prompt-id rag.answer --baseline-version 1 --candidate-version 1 --offline --embedding-provider fake --llm-provider mock --output artifacts/local/phase3/prompt_regression.md --json-output artifacts/local/phase3/prompt_regression.json
 ```
 
 Default prompt-regression behavior:

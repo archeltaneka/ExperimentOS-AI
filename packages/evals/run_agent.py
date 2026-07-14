@@ -12,10 +12,14 @@ from packages.evals.agent_evaluator import (
     AgentWorkflowEvaluator,
     build_default_agent_workflow_service,
 )
-from packages.evals.agent_report import render_agent_evaluation_report
+from packages.evals.agent_report import (
+    agent_evaluation_report_to_json,
+    render_agent_evaluation_report,
+)
 from packages.observability.factory import resolve_observability_provider
 
 DEFAULT_AGENT_REPORT_PATH = Path("reports/agent_evaluation.md")
+DEFAULT_AGENT_JSON_REPORT_PATH = Path("reports/agent_evaluation.json")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -34,6 +38,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=DEFAULT_AGENT_REPORT_PATH,
         help="Path where the agent evaluation Markdown report should be written.",
     )
+    parser.add_argument(
+        "--json-output",
+        type=Path,
+        default=DEFAULT_AGENT_JSON_REPORT_PATH,
+        help="Path where the agent evaluation JSON report should be written.",
+    )
     return parser.parse_args(argv)
 
 
@@ -42,6 +52,8 @@ def run_evaluation(args: argparse.Namespace) -> str:
     report = render_agent_evaluation_report(result)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(report, encoding="utf-8")
+    args.json_output.parent.mkdir(parents=True, exist_ok=True)
+    args.json_output.write_text(agent_evaluation_report_to_json(result), encoding="utf-8")
     return report
 
 

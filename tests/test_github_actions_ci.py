@@ -33,6 +33,10 @@ def test_ci_workflow_declares_ai_quality_gate_and_offline_defaults() -> None:
     assert "PROMPT_EXPERIMENTS_ENABLED:" in workflow
     assert "--target agent_workflow" in workflow
     assert "tests/fixtures/ci/exp-001-payment-recommendation" in workflow
+    assert "tests/test_ci_quality_gate.py" in workflow
+    assert "tests/test_repository_hygiene.py" in workflow
+    assert "tests/test_ragas_evaluation.py" in workflow
+    assert "--policy-changed ${{ steps.policy_changes.outputs.changed || 'false' }}" in workflow
     assert "data/synthetic/experiments/exp-001-payment-recommendation" not in workflow
     assert "actions/upload-artifact@" in workflow
     assert "if: ${{ always() }}" in workflow

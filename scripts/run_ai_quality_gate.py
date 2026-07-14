@@ -156,6 +156,15 @@ def main(argv: list[str] | None = None) -> int:
         required_paths=REQUIRED_REPORT_PATHS,
         optional_paths=OPTIONAL_REPORT_PATHS,
     )
+    missing_required_reports = _missing_required_reports(manifest)
+    if missing_required_reports:
+        status = "infrastructure_fail"
+        missing_message = "Missing required artifacts: " + ", ".join(missing_required_reports)
+        if message and message != missing_message:
+            message = f"{message} {missing_message}"
+        else:
+            message = missing_message
+        exit_code = QUALITY_POLICY_INFRASTRUCTURE_EXIT_CODE
     manifest_path.write_text(json.dumps(asdict(manifest), indent=2) + "\n", encoding="utf-8")
     gate_result = GateResult(
         status=status,
@@ -457,6 +466,12 @@ def _fallback_fingerprint() -> CiEnvironmentFingerprint:
         external_judges_enabled=False,
         live_provider_configured=False,
         observability_export_enabled=False,
+    )
+
+
+def _missing_required_reports(manifest) -> tuple[str, ...]:
+    return tuple(
+        artifact.relative_path for artifact in manifest.required_reports if not artifact.present
     )
 
 

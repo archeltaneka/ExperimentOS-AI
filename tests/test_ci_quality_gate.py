@@ -227,3 +227,56 @@ def test_ci_quality_gate_result_json_round_trips(tmp_path: Path) -> None:
     assert payload["status"] == "quality_fail"
     assert payload["artifact_name"] == "ai-quality-gate-1234"
     assert payload["fingerprint"]["embedding_provider"] == "fake"
+
+
+def test_run_ai_quality_gate_fails_when_required_artifacts_are_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from packages.evals.ci_quality_gate import CiEnvironmentFingerprint
+    from packages.evals.run_quality_policy import QUALITY_POLICY_INFRASTRUCTURE_EXIT_CODE
+    from scripts import run_ai_quality_gate
+
+    artifact_root = tmp_path / "artifacts"
+    policy_path = tmp_path / "quality_policy.yaml"
+    policy_path.write_text("version: test\ncategories: []\nthresholds: []\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_ai_quality_gate,
+        "validate_ci_environment",
+        lambda _env: CiEnvironmentFingerprint(
+            ask_mode="agent_workflow",
+            embedding_provider="fake",
+            llm_provider="mock",
+            prompt_experiments_enabled=False,
+            external_judges_enabled=False,
+            live_provider_configured=False,
+            observability_export_enabled=False,
+        ),
+    )
+    monkeypatch.setattr(run_ai_quality_gate, "load_quality_policy", lambda _path: object())
+    monkeypatch.setattr(run_ai_quality_gate, "validate_policy_invariants", lambda _policy: None)
+    monkeypatch.setattr(run_ai_quality_gate, "_validate_inputs", lambda _args: None)
+    monkeypatch.setattr(run_ai_quality_gate, "_run_commands", lambda _args: (None, 0, []))
+
+    exit_code = run_ai_quality_gate.main(
+        [
+            "--artifact-root",
+            str(artifact_root),
+            "--policy",
+            str(policy_path),
+            "--policy-changed",
+            "false",
+        ]
+    )
+
+    payload = json.loads((artifact_root / "phase3" / "ai_quality_gate.json").read_text("utf-8"))
+
+    assert exit_code == QUALITY_POLICY_INFRASTRUCTURE_EXIT_CODE
+    assert payload["status"] == "infrastructure_fail"
+    assert "Missing required artifacts:" in payload["message"]
+    missing_required = {
+        artifact["relative_path"]
+        for artifact in payload["manifest"]["required_reports"]
+        if not artifact["present"]
+    }
+    assert "evaluation.md" in missing_required

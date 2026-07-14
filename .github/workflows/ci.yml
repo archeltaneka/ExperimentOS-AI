@@ -154,9 +154,12 @@ jobs:
           tests/test_prompt_regression.py
           tests/test_factuality.py
           tests/test_quality_policy.py
+          tests/test_ci_quality_gate.py
           tests/test_evaluation_harness.py
+          tests/test_ragas_evaluation.py
           tests/test_phase3_baseline.py
           tests/test_github_actions_ci.py
+          tests/test_repository_hygiene.py
           -v
 
   offline-eval-smoke:
@@ -443,7 +446,7 @@ jobs:
           uv run python scripts/run_ai_quality_gate.py
           --artifact-root artifacts/ci/ai-quality
           --artifact-name ai-quality-gate-${{ github.run_id }}-${{ github.run_attempt }}
-          --policy-changed ${{ steps.policy_changes.outputs.changed }}
+          --policy-changed ${{ steps.policy_changes.outputs.changed || 'false' }}
 
       - name: Publish AI quality summary
         if: ${{ always() }}

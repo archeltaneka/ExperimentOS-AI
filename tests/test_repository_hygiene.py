@@ -1,23 +1,38 @@
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
 
 def test_gitignore_tracks_eval_inputs_and_ignores_runtime_outputs() -> None:
-    gitignore = Path(".gitignore").read_text(encoding="utf-8")
+    repository_root = Path(__file__).resolve().parents[1]
 
-    required_rules = [
-        "artifacts/",
+    ignored_paths = [
+        "artifacts/run.json",
         "reports/evaluation.json",
         "reports/agent_evaluation.json",
         "reports/agent_e2e_evaluation.json",
-        "docs/superpowers/plans/",
-        "docs/superpowers/specs/",
-        "data/*",
-        "!data/eval/",
-        "!data/eval/qa_dataset.json",
-        "!data/eval/agent_dataset.json",
+        "docs/superpowers/plans/task.md",
+        "docs/superpowers/specs/task.md",
+        "data/synthetic/experiments/exp-001/metadata.json",
+    ]
+    tracked_paths = [
+        "data/eval/qa_dataset.json",
+        "data/eval/agent_dataset.json",
     ]
 
-    for rule in required_rules:
-        assert rule in gitignore
+    for path in ignored_paths:
+        result = subprocess.run(
+            ["git", "check-ignore", "--no-index", "--quiet", "--", path],
+            cwd=repository_root,
+            check=False,
+        )
+        assert result.returncode == 0, f"Expected {path} to be ignored"
+
+    for path in tracked_paths:
+        result = subprocess.run(
+            ["git", "check-ignore", "--no-index", "--quiet", "--", path],
+            cwd=repository_root,
+            check=False,
+        )
+        assert result.returncode != 0, f"Expected {path} not to be ignored"

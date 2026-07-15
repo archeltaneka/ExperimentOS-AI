@@ -87,3 +87,9 @@ def test_env_example_uses_explicit_offline_provider_defaults() -> None:
     assert "LLM_PROVIDER=mock" in example
     assert "EMBEDDING_PROVIDER=auto" not in example
     assert "LLM_PROVIDER=auto" not in example
+
+
+def test_duplicate_httpx2_dependency_is_absent() -> None:
+    project = Path("pyproject.toml").read_text(encoding="utf-8")
+
+    assert '"httpx2' not in project

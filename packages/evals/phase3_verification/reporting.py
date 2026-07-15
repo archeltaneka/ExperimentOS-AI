@@ -20,6 +20,8 @@ _JSON_PROMPT = re.compile(r'(?i)("(?:prompt|system_prompt|user_prompt)"\s*:\s*)"
 _JSON_RETRIEVED_CHUNKS = re.compile(
     r'(?is)("(?:retrieved_chunks|document_chunks)"\s*:\s*)\[[^\]]*\]'
 )
+_WINDOWS_ABSOLUTE_PATH = re.compile(r"(?i)\b[a-z]:[\\/][^\s\"']+")
+_POSIX_ABSOLUTE_PATH = re.compile(r"/(?:home|users|tmp|var|workspace)/[^\s\"']*", re.IGNORECASE)
 
 
 def final_review_to_dict(review: FinalReliabilityReview) -> dict[str, object]:
@@ -240,7 +242,9 @@ def _redact_text(value: str) -> str:
     redacted = _BEARER_TOKEN.sub("Bearer [REDACTED]", redacted)
     redacted = _SECRET_TOKEN.sub("[REDACTED]", redacted)
     redacted = _JSON_PROMPT.sub(r'\1"[REDACTED]"', redacted)
-    return _JSON_RETRIEVED_CHUNKS.sub(r"\1[\"[REDACTED]\"]", redacted)
+    redacted = _JSON_RETRIEVED_CHUNKS.sub(r"\1[\"[REDACTED]\"]", redacted)
+    redacted = _WINDOWS_ABSOLUTE_PATH.sub("[REDACTED_PATH]", redacted)
+    return _POSIX_ABSOLUTE_PATH.sub("[REDACTED_PATH]", redacted)
 
 
 def _summary(review: FinalReliabilityReview, key: str, fallback: str) -> str:

@@ -22,7 +22,11 @@ _REQUIRED_QUALITY_GATE_REPORT_KEYS = {
         "dataset_version",
     ),
     "quality_gate/phase3/ragas_report.json": ("metric_results", "case_results"),
-    "quality_gate/phase3/deepeval_report.json": ("metric_results", "case_results"),
+    "quality_gate/phase3/deepeval_report.json": (
+        "metric_results",
+        "response_case_count",
+        "workflow_case_count",
+    ),
     "quality_gate/phase3/prompt_regression.json": ("summary", "case_results"),
     "quality_gate/phase3/factuality_report.json": (
         "case_results",

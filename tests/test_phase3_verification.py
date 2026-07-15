@@ -28,6 +28,7 @@ from packages.evals.phase3_verification.runner import (
     build_verification_environment,
     discover_synthetic_fixtures,
     run_command,
+    run_phase3_verification,
 )
 from packages.evals.phase3_verification.validation import (
     VerificationError,
@@ -37,6 +38,7 @@ from packages.evals.phase3_verification.validation import (
     validate_final_review_files,
     validate_required_reports,
 )
+from scripts import verify_phase3
 
 
 def _passing_result() -> CommandResult:
@@ -549,3 +551,78 @@ def test_final_report_redacts_secrets_prompts_and_retrieved_chunks() -> None:
         assert sensitive not in payload_text
         assert sensitive not in markdown
     assert "[REDACTED]" in payload_text
+
+
+def test_cli_defaults_to_strict(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_run(**kwargs: object) -> FinalReliabilityReview:
+        captured.update(kwargs)
+        return _sample_final_review(mode="strict")
+
+    monkeypatch.setattr(verify_phase3, "run_phase3_verification", fake_run)
+
+    exit_code = verify_phase3.main(
+        ["--artifact-root", str(tmp_path / "artifacts"), "--report-root", str(tmp_path)]
+    )
+
+    assert exit_code == 0
+    assert captured["mode"] == "strict"
+
+
+def test_cli_offline_only_prints_non_closeout_label(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        verify_phase3,
+        "run_phase3_verification",
+        lambda **kwargs: _sample_final_review(
+            mode="offline_only",
+            recommendation="ready_with_documented_limitations",
+        ),
+    )
+
+    assert verify_phase3.main(["--offline-only", "--report-root", str(tmp_path)]) == 0
+    output = capsys.readouterr().out
+    assert "NON-CLOSEOUT DIAGNOSTIC" in output
+    assert "ready_to_close" not in output
+
+
+def test_cli_returns_nonzero_when_required_stage_fails(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        verify_phase3,
+        "run_phase3_verification",
+        lambda **kwargs: _sample_final_review(
+            recommendation="not_ready",
+            overall_status="fail",
+        ),
+    )
+
+    assert verify_phase3.main(["--report-root", str(tmp_path)]) != 0
+
+
+def test_strict_verification_without_database_writes_not_ready_reports(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    review = run_phase3_verification(
+        mode="strict",
+        artifact_root=tmp_path / "artifacts",
+        report_root=tmp_path / "reports",
+        repository_root=Path.cwd(),
+        source_environment={"PATH": os.environ["PATH"]},
+    )
+
+    assert review.recommendation == "not_ready"
+    assert review.overall_status == "fail"
+    assert review.commands[0].command_id == "configuration.database_url"
+    assert "docker compose up -d postgres" in review.commands[0].stderr_tail
+    assert (tmp_path / "reports/final_reliability_review.json").is_file()
+    assert (tmp_path / "reports/final_reliability_review.md").is_file()

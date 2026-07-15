@@ -31,9 +31,7 @@ def test_business_services_do_not_import_third_party_evaluation_or_sinks() -> No
         for path in root.glob("*.py"):
             imports = _imported_modules(path)
             assert not any(
-                module.startswith(prefix)
-                for module in imports
-                for prefix in _VENDOR_PREFIXES
+                module.startswith(prefix) for module in imports for prefix in _VENDOR_PREFIXES
             ), path
 
 

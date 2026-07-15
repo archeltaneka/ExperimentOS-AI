@@ -6,6 +6,7 @@ import time
 from collections.abc import Collection, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 from packages.evals.agent_dataset import (
     DEFAULT_AGENT_DATASET_PATH,
@@ -16,7 +17,9 @@ from packages.evals.dataset_manifest import build_dataset_manifest
 from packages.evals.phase3_verification.inventory import build_capability_inventory
 from packages.evals.phase3_verification.models import (
     CommandResult,
+    CommandStatus,
     FinalReliabilityReview,
+    MilestoneRecommendation,
     ReviewFinding,
     VerificationCommand,
     VerificationMode,
@@ -643,8 +646,8 @@ def _build_review(
     *,
     mode: VerificationMode,
     command_results: tuple[CommandResult, ...],
-    recommendation: str,
-    overall_status: str,
+    recommendation: MilestoneRecommendation,
+    overall_status: Literal["pass", "fail"],
     policy_payload: Mapping[str, object],
     factuality_invariants: dict[str, int],
     validation_errors: tuple[str, ...],
@@ -684,8 +687,8 @@ def _build_review(
         generated_at_utc=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         mode=mode,
         closeout_eligible=mode == "strict",
-        recommendation=recommendation,  # type: ignore[arg-type]
-        overall_status=overall_status,  # type: ignore[arg-type]
+        recommendation=recommendation,
+        overall_status=overall_status,
         commands=command_results,
         capability_inventory=build_capability_inventory(),
         findings=_review_findings(),
@@ -906,14 +909,14 @@ def _skipped_result(command: VerificationCommand, reason: str) -> CommandResult:
 def _synthetic_result(
     command_id: str,
     *,
-    status: str,
+    status: CommandStatus,
     exit_code: int | None,
     stderr: str,
 ) -> CommandResult:
     return CommandResult(
         command_id=command_id,
         argv=(),
-        status=status,  # type: ignore[arg-type]
+        status=status,
         exit_code=exit_code,
         duration_seconds=0.0,
         stdout_tail="",

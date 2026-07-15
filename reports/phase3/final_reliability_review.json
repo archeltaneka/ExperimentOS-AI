@@ -1,0 +1,1554 @@
+{
+  "capability_inventory": [
+    {
+      "capability_id": "evaluation.custom_rag",
+      "cli_commands": [
+        "uv run python -m packages.evals.run"
+      ],
+      "configuration": [
+        "data/eval/qa_dataset.json",
+        "EMBEDDING_PROVIDER",
+        "LLM_PROVIDER"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/reliability_baseline.md"
+      ],
+      "external_service_requirement": "local_postgres",
+      "generated_reports": [
+        "reports/evaluation.md",
+        "reports/evaluation.json"
+      ],
+      "implementation_locations": [
+        "packages/evals/evaluator.py",
+        "packages/evals/run.py"
+      ],
+      "known_limitations": [
+        "Offline mock generation is deterministic, not a live-model benchmark."
+      ],
+      "name": "Custom RAG evaluation",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_evaluation_harness.py"
+      ]
+    },
+    {
+      "capability_id": "evaluation.custom_agent",
+      "cli_commands": [
+        "uv run python -m packages.evals.run_agent"
+      ],
+      "configuration": [
+        "data/eval/agent_dataset.json",
+        "ASK_MODE=agent_workflow"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/reliability_baseline.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/agent_evaluation.md",
+        "reports/agent_evaluation.json"
+      ],
+      "implementation_locations": [
+        "packages/evals/agent_evaluator.py",
+        "packages/evals/run_agent.py"
+      ],
+      "known_limitations": [
+        "Uses repository-owned deterministic workflow fixtures."
+      ],
+      "name": "Custom deterministic agent evaluation",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_agent_evaluation.py"
+      ]
+    },
+    {
+      "capability_id": "evaluation.end_to_end",
+      "cli_commands": [
+        "uv run python -m packages.evals.run_agent_e2e"
+      ],
+      "configuration": [
+        "ASK_MODE=agent_workflow",
+        "legacy_rag fallback cases"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/reliability_baseline.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/agent_e2e_evaluation.md",
+        "reports/agent_e2e_evaluation.json"
+      ],
+      "implementation_locations": [
+        "packages/evals/agent_e2e.py",
+        "packages/evals/run_agent_e2e.py"
+      ],
+      "known_limitations": [
+        "Runs in-process with deterministic dependencies."
+      ],
+      "name": "POST /ask end-to-end evaluation",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_agent_e2e_evaluation.py",
+        "tests/test_agent_evaluation.py"
+      ]
+    },
+    {
+      "capability_id": "evaluation.ragas",
+      "cli_commands": [
+        "uv run python -m packages.evals.run_ragas"
+      ],
+      "configuration": [
+        "RAGAS_JUDGE_LLM_PROVIDER=none",
+        "RAGAS_JUDGE_EMBEDDING_PROVIDER=none"
+      ],
+      "default_state": "conditional",
+      "documentation": [
+        "docs/phase3/reliability_baseline.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/phase3/ragas_report.md",
+        "reports/phase3/ragas_report.json"
+      ],
+      "implementation_locations": [
+        "packages/evals/ragas_adapter.py",
+        "packages/evals/run_ragas.py"
+      ],
+      "known_limitations": [
+        "Judge-backed metrics are skipped unless explicitly enabled.",
+        "RAGAS 0.4.3 needs a local no-network shim for an eager optional VertexAI import."
+      ],
+      "name": "RAGAS adapter evaluation",
+      "optional_dependencies": [
+        "eval: ragas>=0.4.3"
+      ],
+      "tests": [
+        "tests/test_ragas_evaluation.py"
+      ]
+    },
+    {
+      "capability_id": "evaluation.deepeval",
+      "cli_commands": [
+        "uv run python -m packages.evals.run_deepeval"
+      ],
+      "configuration": [
+        "DEEPEVAL_JUDGE_PROVIDER=none",
+        "mode=offline"
+      ],
+      "default_state": "conditional",
+      "documentation": [
+        "docs/phase3/reliability_baseline.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/phase3/deepeval_report.md",
+        "reports/phase3/deepeval_report.json"
+      ],
+      "implementation_locations": [
+        "packages/evals/deepeval_adapter.py",
+        "packages/evals/run_deepeval.py"
+      ],
+      "known_limitations": [
+        "External judge metrics are opt-in and reported as skipped offline."
+      ],
+      "name": "DeepEval adapter evaluation",
+      "optional_dependencies": [
+        "eval: deepeval>=4.0.7"
+      ],
+      "tests": [
+        "tests/test_deepeval_evaluation.py"
+      ]
+    },
+    {
+      "capability_id": "evaluation.prompt_regression",
+      "cli_commands": [
+        "uv run python -m packages.evals.run_prompt_regression"
+      ],
+      "configuration": [
+        "prompt_id=rag.answer",
+        "offline mode"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/prompt_regression.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/phase3/prompt_regression.md",
+        "reports/phase3/prompt_regression.json"
+      ],
+      "implementation_locations": [
+        "packages/evals/prompt_regression.py",
+        "packages/evals/run_prompt_regression.py"
+      ],
+      "known_limitations": [
+        "Offline regressions do not establish production model behavior."
+      ],
+      "name": "Prompt regression",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_prompt_regression.py"
+      ]
+    },
+    {
+      "capability_id": "evaluation.factuality",
+      "cli_commands": [
+        "uv run python -m packages.evals.run_factuality"
+      ],
+      "configuration": [
+        "config/evaluation/factuality_policy.json",
+        "judge provider=none"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/factuality_and_hallucination.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/phase3/factuality_report.md",
+        "reports/phase3/factuality_report.json"
+      ],
+      "implementation_locations": [
+        "packages/evals/factuality",
+        "packages/evals/run_factuality.py"
+      ],
+      "known_limitations": [
+        "Deterministic detectors cover repository-defined critical claim classes."
+      ],
+      "name": "Factuality and hallucination checks",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_factuality.py"
+      ]
+    },
+    {
+      "capability_id": "evaluation.quality_policy",
+      "cli_commands": [
+        "uv run python -m packages.evals.run_quality_policy"
+      ],
+      "configuration": [
+        "config/evaluation/quality_policy.yaml"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/quality_policy.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/phase3/quality_policy.md",
+        "reports/phase3/quality_policy.json"
+      ],
+      "implementation_locations": [
+        "packages/evals/policy",
+        "packages/evals/run_quality_policy.py"
+      ],
+      "known_limitations": [
+        "Decisions apply to available repository-owned offline reports."
+      ],
+      "name": "Centralized quality policy",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_quality_policy.py",
+        "tests/test_ci_quality_gate.py"
+      ]
+    },
+    {
+      "capability_id": "prompt.registry",
+      "cli_commands": [
+        "uv run python -m packages.llm.prompt_registry_cli validate"
+      ],
+      "configuration": [
+        "packages/llm/prompts.py"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/prompt_registry.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/phase3/final_reliability_review.json"
+      ],
+      "implementation_locations": [
+        "packages/llm/prompt_registry.py",
+        "packages/llm/prompt_registry_cli.py"
+      ],
+      "known_limitations": [
+        "Only legitimate prompt-backed surfaces are registered."
+      ],
+      "name": "Immutable prompt registry",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_prompt_registry.py",
+        "tests/test_prompt_registry_cli.py"
+      ]
+    },
+    {
+      "capability_id": "prompt.provenance",
+      "cli_commands": [
+        "uv run python -m packages.llm.prompt_registry_cli show rag.answer"
+      ],
+      "configuration": [
+        "rag.answer active version"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/prompt_registry.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/evaluation.json"
+      ],
+      "implementation_locations": [
+        "packages/llm/prompt_registry.py",
+        "packages/qa/question_answering_service.py"
+      ],
+      "known_limitations": [
+        "Deterministic agents intentionally emit no prompt provenance."
+      ],
+      "name": "Prompt provenance",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_prompt_registry.py",
+        "tests/test_question_answering_service.py"
+      ]
+    },
+    {
+      "capability_id": "prompt.experiments",
+      "cli_commands": [
+        "uv run python -m packages.evals.run_prompt_experiment validate"
+      ],
+      "configuration": [
+        "config/prompt_experiments",
+        "PROMPT_EXPERIMENTS_ENABLED=false"
+      ],
+      "default_state": "disabled",
+      "documentation": [
+        "docs/phase3/prompt_experiments.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/phase3/prompt_experiments/rag-answer-abstention-v1-v2.json"
+      ],
+      "implementation_locations": [
+        "packages/evals/prompt_experiments",
+        "packages/evals/run_prompt_experiment.py"
+      ],
+      "known_limitations": [
+        "No production traffic, causal claim, promotion, or automatic optimization."
+      ],
+      "name": "Offline prompt experiments",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_prompt_experiment_runner.py",
+        "tests/test_prompt_experiment_validation.py"
+      ]
+    },
+    {
+      "capability_id": "observability.internal",
+      "cli_commands": [
+        "uv run python -m packages.observability.cli status --provider all"
+      ],
+      "configuration": [
+        "internal provider is authoritative"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/opentelemetry.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/phase3/final_reliability_review.json"
+      ],
+      "implementation_locations": [
+        "packages/observability/base.py",
+        "packages/observability/models.py"
+      ],
+      "known_limitations": [
+        "Portfolio evidence is local and does not prove production traffic scale."
+      ],
+      "name": "ExperimentOS internal tracing and metrics",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_observability_integration.py"
+      ]
+    },
+    {
+      "capability_id": "observability.langsmith",
+      "cli_commands": [
+        "uv run python -m packages.observability.cli dry-run --provider langsmith"
+      ],
+      "configuration": [
+        "EXPERIMENTOS_LANGSMITH_ENABLED=false"
+      ],
+      "default_state": "disabled",
+      "documentation": [
+        "docs/phase3/langsmith_observability.md"
+      ],
+      "external_service_requirement": "optional",
+      "generated_reports": [
+        "reports/phase3/final_reliability_review.json"
+      ],
+      "implementation_locations": [
+        "packages/observability/langsmith.py"
+      ],
+      "known_limitations": [
+        "Dry-run verification does not send data to LangSmith."
+      ],
+      "name": "LangSmith optional sink",
+      "optional_dependencies": [
+        "observability: langsmith>=0.9.8"
+      ],
+      "tests": [
+        "tests/test_observability_langsmith.py"
+      ]
+    },
+    {
+      "capability_id": "observability.phoenix",
+      "cli_commands": [
+        "uv run python -m packages.observability.cli dry-run --provider phoenix"
+      ],
+      "configuration": [
+        "EXPERIMENTOS_PHOENIX_ENABLED=false"
+      ],
+      "default_state": "disabled",
+      "documentation": [
+        "docs/phase3/phoenix_observability.md"
+      ],
+      "external_service_requirement": "optional",
+      "generated_reports": [
+        "reports/phase3/final_reliability_review.json"
+      ],
+      "implementation_locations": [
+        "packages/observability/phoenix.py"
+      ],
+      "known_limitations": [
+        "Dry-run verification does not send data to Phoenix."
+      ],
+      "name": "Phoenix optional sink",
+      "optional_dependencies": [
+        "observability: arize-phoenix-otel>=0.16.1"
+      ],
+      "tests": [
+        "tests/test_observability_phoenix.py"
+      ]
+    },
+    {
+      "capability_id": "observability.opentelemetry",
+      "cli_commands": [
+        "uv run python -m packages.observability.cli dry-run --provider opentelemetry"
+      ],
+      "configuration": [
+        "EXPERIMENTOS_OTEL_ENABLED=false",
+        "EXPERIMENTOS_OTEL_EXPORTER_TYPE=none"
+      ],
+      "default_state": "disabled",
+      "documentation": [
+        "docs/phase3/opentelemetry.md"
+      ],
+      "external_service_requirement": "optional",
+      "generated_reports": [
+        "reports/phase3/final_reliability_review.json"
+      ],
+      "implementation_locations": [
+        "packages/observability/opentelemetry.py"
+      ],
+      "known_limitations": [
+        "Default verification uses in-memory exporters only."
+      ],
+      "name": "OpenTelemetry export layer",
+      "optional_dependencies": [
+        "observability: opentelemetry-sdk>=1.43.0"
+      ],
+      "tests": [
+        "tests/test_observability_opentelemetry.py"
+      ]
+    },
+    {
+      "capability_id": "observability.composite",
+      "cli_commands": [
+        "uv run python -m packages.observability.cli validate --provider all"
+      ],
+      "configuration": [
+        "all external sinks disabled by default"
+      ],
+      "default_state": "conditional",
+      "documentation": [
+        "docs/phase3/opentelemetry.md"
+      ],
+      "external_service_requirement": "none",
+      "generated_reports": [
+        "reports/phase3/final_reliability_review.json"
+      ],
+      "implementation_locations": [
+        "packages/observability/composite.py",
+        "packages/observability/factory.py"
+      ],
+      "known_limitations": [
+        "Enabled sinks receive redacted sampled copies of internal telemetry."
+      ],
+      "name": "Composite provider and failure isolation",
+      "optional_dependencies": [
+        "observability dependency group"
+      ],
+      "tests": [
+        "tests/test_observability_composite.py",
+        "tests/test_observability_config.py"
+      ]
+    },
+    {
+      "capability_id": "ci.baseline",
+      "cli_commands": [
+        "uv run pytest",
+        "uv run ruff check ."
+      ],
+      "configuration": [
+        "Python 3.12",
+        "uv.lock"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/github_actions.md"
+      ],
+      "external_service_requirement": "optional",
+      "generated_reports": [
+        "GitHub job summaries"
+      ],
+      "implementation_locations": [
+        ".github/workflows/ci.yml"
+      ],
+      "known_limitations": [
+        "GitHub-hosted execution is orchestration, not a business-rule authority."
+      ],
+      "name": "GitHub Actions baseline",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_github_actions_ci.py"
+      ]
+    },
+    {
+      "capability_id": "ci.database",
+      "cli_commands": [
+        "uv run alembic upgrade head"
+      ],
+      "configuration": [
+        "DATABASE_URL",
+        "pgvector/pgvector:pg16"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/github_actions.md"
+      ],
+      "external_service_requirement": "local_postgres",
+      "generated_reports": [
+        "artifacts/ci/integration"
+      ],
+      "implementation_locations": [
+        "docker-compose.yml",
+        "migrations",
+        "packages/ingestion"
+      ],
+      "known_limitations": [
+        "Requires a local or CI PostgreSQL service with pgvector installed."
+      ],
+      "name": "PostgreSQL and pgvector integration",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_db_models.py",
+        "tests/test_ingestion_load_experiment.py"
+      ]
+    },
+    {
+      "capability_id": "ci.quality_gate",
+      "cli_commands": [
+        "uv run python scripts/run_ai_quality_gate.py"
+      ],
+      "configuration": [
+        "config/evaluation/quality_policy.yaml",
+        "fake/mock providers"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/ci_quality_gates.md"
+      ],
+      "external_service_requirement": "local_postgres",
+      "generated_reports": [
+        "artifacts/ci/ai-quality/phase3/ai_quality_gate.json"
+      ],
+      "implementation_locations": [
+        "scripts/run_ai_quality_gate.py",
+        "packages/evals/ci_quality_gate.py"
+      ],
+      "known_limitations": [
+        "Optional judge metrics remain skipped rather than scored as zero."
+      ],
+      "name": "Strict AI quality gate",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_ci_quality_gate.py"
+      ]
+    },
+    {
+      "capability_id": "ci.pr_reporting",
+      "cli_commands": [
+        "uv run python -m packages.evals.run_ci_report build"
+      ],
+      "configuration": [
+        "informational GitHub token write permission"
+      ],
+      "default_state": "enabled",
+      "documentation": [
+        "docs/phase3/pr_evaluation_reports.md"
+      ],
+      "external_service_requirement": "optional",
+      "generated_reports": [
+        "reports/phase3/ci/pr_quality_report.json",
+        "reports/phase3/ci/pr_comment.md"
+      ],
+      "implementation_locations": [
+        "packages/evals/ci_reporting",
+        "packages/evals/run_ci_report.py"
+      ],
+      "known_limitations": [
+        "PR comments are informational and unavailable for some fork permissions."
+      ],
+      "name": "Pull-request evaluation reports",
+      "optional_dependencies": [],
+      "tests": [
+        "tests/test_ci_reporting.py",
+        "tests/test_ci_reporting_github.py"
+      ]
+    }
+  ],
+  "closeout_eligible": true,
+  "commands": [
+    {
+      "argv": [
+        "uv",
+        "lock",
+        "--check"
+      ],
+      "command_id": "config.lock",
+      "duration_seconds": 0.051,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "Resolved 182 packages in 3ms\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "ruff",
+        "format",
+        "--check",
+        "."
+      ],
+      "command_id": "format.check",
+      "duration_seconds": 0.116,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "186 files already formatted\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "ruff",
+        "check",
+        "."
+      ],
+      "command_id": "lint",
+      "duration_seconds": 0.108,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "All checks passed!\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.llm.prompt_registry_cli",
+        "validate"
+      ],
+      "command_id": "prompt.registry.validate",
+      "duration_seconds": 0.229,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "Prompt registry is valid.\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.evals.run_prompt_experiment",
+        "validate",
+        "--experiment",
+        "rag-answer-abstention-v1-v2"
+      ],
+      "command_id": "prompt.experiment.validate",
+      "duration_seconds": 2.938,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "validated rag-answer-abstention-v1-v2\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.observability.cli",
+        "status",
+        "--provider",
+        "all"
+      ],
+      "command_id": "observability.status",
+      "duration_seconds": 1.792,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "Observability status\nsource_of_truth=ExperimentOS internal traces/metrics/reports\nlangsmith: enabled=False available=True endpoint_type=managed-default project=<unset> environment=local sampling_rate=0.00\nlangsmith: trace_inputs=False trace_outputs=False redaction=True instrumentation=manual ExperimentOS spans only\nopentelemetry: enabled=False available=True endpoint_type=unset project=experimentos-ai environment=local sampling_rate=1.00\nopentelemetry: trace_inputs=False trace_outputs=False redaction=True instrumentation=manual ExperimentOS spans plus optional FastAPI transport spans\nopentelemetry: service_name=experimentos-ai service_version=0.1.0 exporter_type=none protocol=http/protobuf\nopentelemetry: trace_enabled=True metrics_enabled=True propagation=True batch_export=True\nopentelemetry: processor_type=BatchSpanProcessor metric_reader_type=none init_state=disabled\nphoenix: enabled=False available=True endpoint_type=unset project=experimentos-local environment=local sampling_rate=1.00\nphoenix: trace_inputs=False trace_outputs=False redaction=True instrumentation=manual ExperimentOS spans only; auto-instrumentation disabled\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.observability.cli",
+        "validate",
+        "--provider",
+        "all"
+      ],
+      "command_id": "observability.validate",
+      "duration_seconds": 0.464,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "All external observability sinks are disabled. Configuration is valid for local default use.\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.observability.cli",
+        "dry-run",
+        "--provider",
+        "langsmith"
+      ],
+      "command_id": "observability.dry_run.langsmith",
+      "duration_seconds": 1.517,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "Observability dry-run\nsource_of_truth=ExperimentOS internal traces/metrics/reports\nlangsmith: enabled=False available=True endpoint_type=managed-default project=<unset> sampling_rate=0.00 redaction=True\nlangsmith: instrumentation=manual ExperimentOS spans only\nlangsmith: input={\"authorization\": \"<redacted>\", \"prompt\": \"[REDACTED]\", \"question\": \"Should we roll out the payment recommendation experiment?\", \"request_id\": \"req-dry-run\", \"retrieved_chunks\": \"<omitted>\"}\nlangsmith: output={\"answer\": \"<omitted>\", \"citation_count\": 2, \"status\": \"completed\"}\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.observability.cli",
+        "dry-run",
+        "--provider",
+        "phoenix"
+      ],
+      "command_id": "observability.dry_run.phoenix",
+      "duration_seconds": 1.122,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "Observability dry-run\nsource_of_truth=ExperimentOS internal traces/metrics/reports\nphoenix: enabled=False available=True endpoint_type=unset project=experimentos-local sampling_rate=1.00 redaction=True\nphoenix: instrumentation=manual ExperimentOS spans only; auto-instrumentation disabled\nphoenix: input={\"authorization\": \"<redacted>\", \"prompt\": \"[REDACTED]\", \"question\": \"Should we roll out the payment recommendation experiment?\", \"request_id\": \"req-dry-run\", \"retrieved_chunks\": \"<omitted>\"}\nphoenix: output={\"answer\": \"<omitted>\", \"citation_count\": 2, \"status\": \"completed\"}\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.observability.cli",
+        "dry-run",
+        "--provider",
+        "opentelemetry"
+      ],
+      "command_id": "observability.dry_run.opentelemetry",
+      "duration_seconds": 0.546,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "Observability dry-run\nsource_of_truth=ExperimentOS internal traces/metrics/reports\nopentelemetry: enabled=False available=True endpoint_type=unset project=experimentos-ai sampling_rate=1.00 redaction=True\nopentelemetry: instrumentation=manual ExperimentOS spans plus optional FastAPI transport spans\nopentelemetry: input={\"authorization\": \"<redacted>\", \"prompt\": \"[REDACTED]\", \"question\": \"Should we roll out the payment recommendation experiment?\", \"request_id\": \"req-dry-run\", \"retrieved_chunks\": \"<omitted>\"}\nopentelemetry: output={\"answer\": \"<omitted>\", \"citation_count\": 2, \"status\": \"completed\"}\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "pytest",
+        "-q",
+        "tests/test_phase3_dataset_integrity.py",
+        "tests/test_phase3_architecture.py",
+        "tests/test_env_config.py",
+        "tests/test_api_health.py",
+        "tests/test_api_ask.py",
+        "tests/test_agent_workflow.py",
+        "tests/test_evaluation_harness.py",
+        "tests/test_agent_evaluation.py",
+        "tests/test_agent_e2e_evaluation.py",
+        "tests/test_ragas_evaluation.py",
+        "tests/test_deepeval_evaluation.py",
+        "tests/test_prompt_registry.py",
+        "tests/test_prompt_registry_cli.py",
+        "tests/test_prompt_regression.py",
+        "tests/test_prompt_experiment_validation.py",
+        "tests/test_prompt_experiment_runner.py",
+        "tests/test_prompt_experiment_cli.py",
+        "tests/test_factuality.py",
+        "tests/test_quality_policy.py",
+        "tests/test_observability_config.py",
+        "tests/test_observability_cli.py",
+        "tests/test_observability_langsmith.py",
+        "tests/test_observability_phoenix.py",
+        "tests/test_observability_opentelemetry.py",
+        "tests/test_observability_composite.py",
+        "tests/test_observability_redaction.py",
+        "tests/test_observability_integration.py",
+        "tests/test_ci_quality_gate.py",
+        "tests/test_ci_reporting.py",
+        "tests/test_github_actions_ci.py",
+        "tests/test_repository_hygiene.py",
+        "tests/test_phase3_verification.py"
+      ],
+      "command_id": "tests.focused",
+      "duration_seconds": 35.961,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "........................................................................ [ 22%]\n........................................................................ [ 45%]\n........................................................................ [ 68%]\n........................................................................ [ 91%]\n............................                                             [100%]Running teardown with pytest sessionfinish...\n\n============================== warnings summary ===============================\ntests/test_ragas_evaluation.py::test_installed_ragas_v04_bindings_use_supported_metric_namespaces\n  [REDACTED_PATH] Projects\\ExperimentOS-AI\\packages\\evals\\ragas_adapter.py:211: DeprecationWarning: `langchain-community` is being sunset and is no longer actively maintained. See https://github.com/langchain-ai/langchain-community/issues/674 for details and migration guidance toward standalone integration packages.\n    import langchain_community.chat_models.vertexai  # noqa: F401\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n316 passed, 1 warning in 23.94s\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "alembic",
+        "upgrade",
+        "head"
+      ],
+      "command_id": "database.migrate",
+      "duration_seconds": 1.473,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.\nINFO  [alembic.runtime.migration] Will assume transactional DDL.\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-001-payment-recommendation",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.1.exp-001-payment-recommendation",
+      "duration_seconds": 1.344,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Adaptive Payment Method Recommendation\nINFO Experiment loaded: Adaptive Payment Method Recommendation\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-002-hotel-image-quality",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.1.exp-002-hotel-image-quality",
+      "duration_seconds": 1.268,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Hotel Gallery Image Quality Boost\nINFO Experiment loaded: Hotel Gallery Image Quality Boost\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-003-search-ranking",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.1.exp-003-search-ranking",
+      "duration_seconds": 1.306,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Intent-Aware Search Ranking\nINFO Experiment loaded: Intent-Aware Search Ranking\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-004-checkout-ux",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.1.exp-004-checkout-ux",
+      "duration_seconds": 1.248,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: One-Page Checkout UX\nINFO Experiment loaded: One-Page Checkout UX\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-005-pricing",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.1.exp-005-pricing",
+      "duration_seconds": 1.312,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Transparent Discount Price Framing\nINFO Experiment loaded: Transparent Discount Price Framing\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-006-loyalty",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.1.exp-006-loyalty",
+      "duration_seconds": 1.34,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Loyalty Tier Progress Nudges\nINFO Experiment loaded: Loyalty Tier Progress Nudges\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-007-crm-notifications",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.1.exp-007-crm-notifications",
+      "duration_seconds": 1.409,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: CRM Back-in-Stock Notification Timing\nINFO Experiment loaded: CRM Back-in-Stock Notification Timing\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-008-recommendation-systems",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.1.exp-008-recommendation-systems",
+      "duration_seconds": 1.306,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Personalized Similar-Item Recommendations\nINFO Experiment loaded: Personalized Similar-Item Recommendations\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-009-search-filters",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.1.exp-009-search-filters",
+      "duration_seconds": 1.333,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Dynamic Search Filter Shortcuts\nINFO Experiment loaded: Dynamic Search Filter Shortcuts\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-010-premium-subscriptions",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.1.exp-010-premium-subscriptions",
+      "duration_seconds": 1.36,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Premium Subscription Trial Offer\nINFO Experiment loaded: Premium Subscription Trial Offer\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-001-payment-recommendation",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.2.exp-001-payment-recommendation",
+      "duration_seconds": 1.341,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Adaptive Payment Method Recommendation\nINFO Experiment loaded: Adaptive Payment Method Recommendation\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-002-hotel-image-quality",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.2.exp-002-hotel-image-quality",
+      "duration_seconds": 1.266,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Hotel Gallery Image Quality Boost\nINFO Experiment loaded: Hotel Gallery Image Quality Boost\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-003-search-ranking",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.2.exp-003-search-ranking",
+      "duration_seconds": 1.506,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Intent-Aware Search Ranking\nINFO Experiment loaded: Intent-Aware Search Ranking\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-004-checkout-ux",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.2.exp-004-checkout-ux",
+      "duration_seconds": 1.582,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: One-Page Checkout UX\nINFO Experiment loaded: One-Page Checkout UX\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-005-pricing",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.2.exp-005-pricing",
+      "duration_seconds": 1.478,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Transparent Discount Price Framing\nINFO Experiment loaded: Transparent Discount Price Framing\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-006-loyalty",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.2.exp-006-loyalty",
+      "duration_seconds": 1.651,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Loyalty Tier Progress Nudges\nINFO Experiment loaded: Loyalty Tier Progress Nudges\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-007-crm-notifications",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.2.exp-007-crm-notifications",
+      "duration_seconds": 1.597,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: CRM Back-in-Stock Notification Timing\nINFO Experiment loaded: CRM Back-in-Stock Notification Timing\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-008-recommendation-systems",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.2.exp-008-recommendation-systems",
+      "duration_seconds": 1.529,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Personalized Similar-Item Recommendations\nINFO Experiment loaded: Personalized Similar-Item Recommendations\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-009-search-filters",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.2.exp-009-search-filters",
+      "duration_seconds": 1.287,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Dynamic Search Filter Shortcuts\nINFO Experiment loaded: Dynamic Search Filter Shortcuts\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.ingestion.load_experiment",
+        "--experiment-dir",
+        "data\\synthetic\\experiments\\exp-010-premium-subscriptions",
+        "--embedding-provider",
+        "fake"
+      ],
+      "command_id": "database.ingest.2.exp-010-premium-subscriptions",
+      "duration_seconds": 1.409,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Premium Subscription Trial Offer\nINFO Experiment loaded: Premium Subscription Trial Offer\nINFO Metrics rows inserted: 10\nINFO Document inserted: report.md\nINFO Document chunks inserted: 9\n",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "pytest",
+        "-q"
+      ],
+      "command_id": "tests.full",
+      "duration_seconds": 36.104,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "........................................................................ [ 14%]\n........................................................................ [ 29%]\n........................................................................ [ 44%]\n........................................................................ [ 59%]\n........................................................................ [ 74%]\n........................................................................ [ 89%]\n....................................................                     [100%]Running teardown with pytest sessionfinish...\n\n============================== warnings summary ===============================\ntests/test_prompt_experiment_runner.py::test_prompt_experiment_runner_reuses_same_retrieval_for_control_and_treatment\n  [REDACTED_PATH] Projects\\ExperimentOS-AI\\packages\\evals\\ragas_adapter.py:211: DeprecationWarning: `langchain-community` is being sunset and is no longer actively maintained. See https://github.com/langchain-ai/langchain-community/issues/674 for details and migration guidance toward standalone integration packages.\n    import langchain_community.chat_models.vertexai  # noqa: F401\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n484 passed, 1 warning in 26.60s\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "pytest",
+        "-q",
+        "tests/test_alembic_config.py",
+        "tests/test_db_models.py",
+        "tests/test_ingestion_load_experiment.py",
+        "tests/test_retrieval_service.py",
+        "tests/test_retrieval_agent.py",
+        "tests/test_api_ask_db_integration.py"
+      ],
+      "command_id": "tests.database",
+      "duration_seconds": 15.038,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "..............................                                           [100%]Running teardown with pytest sessionfinish...\n\n30 passed in 3.70s\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "scripts/run_ai_quality_gate.py",
+        "--artifact-root",
+        "artifacts\\phase3\\verification\\quality_gate",
+        "--dataset",
+        "data/eval/qa_dataset.json",
+        "--agent-dataset",
+        "data/eval/agent_dataset.json"
+      ],
+      "command_id": "quality_gate.full",
+      "duration_seconds": 97.112,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "INFO Replaced existing records for experiment: Adaptive Payment Method Recommendation\nINFO Experiment loaded: Adaptive Payment Method Recommendation\nINFO Metrics rows inserted: 3\nINFO Document inserted: report.md\nINFO Document chunks inserted: 3\n",
+      "stdout_tail": "Prompt registry is valid.\nvalidated rag-answer-abstention-v1-v2\nWrote evaluation report to artifacts\\phase3\\verification\\quality_gate\\evaluation.md\n# Evaluation Harness Report\nWrote agent evaluation report to artifacts\\phase3\\verification\\quality_gate\\agent_evaluation.md\n# Agent Workflow Evaluation Report\nWrote agent E2E evaluation report to artifacts\\phase3\\verification\\quality_gate\\agent_e2e_evaluation.md\n# Agent Workflow E2E Evaluation Report\nWrote factuality report to artifacts\\phase3\\verification\\quality_gate\\phase3\\factuality_report.md\npass\nartifacts\\phase3\\verification\\quality_gate\\phase3\\prompt_experiments\\rag-answer-abstention-v1-v2.md\nWrote RAGAS report to artifacts\\phase3\\verification\\quality_gate\\phase3\\ragas_report.md\nid_based_context_precision\nWrote DeepEval report to artifacts\\phase3\\verification\\quality_gate\\phase3\\deepeval_report.md\ncitation_coverage\nWrote quality policy report to artifacts\\phase3\\verification\\quality_gate\\phase3\\quality_policy.md\npass\nRunning seed_integration_fixture: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.ingestion.load_experiment --experiment-dir tests\\fixtures\\ci\\exp-001-payment-recommendation --embedding-provider fake\nRunning validate_prompt_registry: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.llm.prompt_registry_cli validate\nRunning validate_prompt_experiment: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.evals.run_prompt_experiment validate --experiment rag-answer-abstention-v1-v2\nRunning custom_rag_evaluation: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.evals.run --dataset data\\eval\\qa_dataset.json --output artifacts\\phase3\\verification\\quality_gate\\evaluation.md --json-output artifacts\\phase3\\verification\\quality_gate\\evaluation.json --embedding-provider fake --llm-provider mock\nRunning custom_agent_evaluation: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.evals.run_agent --dataset data\\eval\\agent_dataset.json --output artifacts\\phase3\\verification\\quality_gate\\agent_evaluation.md --json-output artifacts\\phase3\\verification\\quality_gate\\agent_evaluation.json\nRunning end_to_end_evaluation: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.evals.run_agent_e2e --output artifacts\\phase3\\verification\\quality_gate\\agent_e2e_evaluation.md --json-output artifacts\\phase3\\verification\\quality_gate\\agent_e2e_evaluation.json\nRunning prompt_regression: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.evals.run_prompt_regression --prompt-id rag.answer --baseline-version 1 --candidate-version 1 --offline --dataset data\\eval\\qa_dataset.json --embedding-provider fake --llm-provider mock --output artifacts\\phase3\\verification\\quality_gate\\phase3\\prompt_regression.md --json-output artifacts\\phase3\\verification\\quality_gate\\phase3\\prompt_regression.json\nRunning factuality: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.evals.run_factuality --dataset data\\eval\\qa_dataset.json --agent-dataset data\\eval\\agent_dataset.json --target all --mode offline --embedding-provider fake --llm-provider mock --output artifacts\\phase3\\verification\\quality_gate\\phase3\\factuality_report.md --json-output artifacts\\phase3\\verification\\quality_gate\\phase3\\factuality_report.json\nRunning prompt_experiment_sample: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.evals.run_prompt_experiment run --experiment rag-answer-abstention-v1-v2 --mode offline --dataset data\\eval\\qa_dataset.json --report-dir artifacts\\phase3\\verification\\quality_gate\\phase3\\prompt_experiments\nRunning ragas_offline: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.evals.run_ragas --dataset data\\eval\\qa_dataset.json --output artifacts\\phase3\\verification\\quality_gate\\phase3\\ragas_report.md --json-output artifacts\\phase3\\verification\\quality_gate\\phase3\\ragas_report.json --embedding-provider fake --llm-provider mock --judge-llm-provider none --judge-embedding-provider none\nRunning deepeval_offline: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.evals.run_deepeval --mode offline --dataset data\\eval\\qa_dataset.json --agent-dataset data\\eval\\agent_dataset.json --output artifacts\\phase3\\verification\\quality_gate\\phase3\\deepeval_report.md --json-output artifacts\\phase3\\verification\\quality_gate\\phase3\\deepeval_report.json --embedding-provider fake --llm-provider mock --judge-provider none\nRunning quality_policy: [REDACTED_PATH] Projects\\ExperimentOS-AI\\.venv\\Scripts\\python.exe -m packages.evals.run_quality_policy --policy config\\evaluation\\quality_policy.yaml --report-dir artifacts\\phase3\\verification\\quality_gate --output artifacts\\phase3\\verification\\quality_gate\\phase3\\quality_policy.md --json-output artifacts\\phase3\\verification\\quality_gate\\phase3\\quality_policy.json\n# AI Quality Gate Summary\n\n- Overall quality status: pass\n- Policy version: `2026-07-13`\n- Artifact bundle: `ai-quality-gate-local`\n- External judges used: no\n- Live providers called: no\n- Observability exports enabled: no\n\n## Category Status\n\n- Retrieval: pass\n- Answer Quality: pass\n- Workflow: pass\n- Prompt: pass\n- Factuality: pass\n- Reliability: pass\n\n## Required Suites\n\n- `evaluation.md`: present\n- `evaluation.json`: present\n- `agent_evaluation.md`: present\n- `agent_evaluation.json`: present\n- `agent_e2e_evaluation.md`: present\n- `agent_e2e_evaluation.json`: present\n- `phase3/prompt_regression.md`: present\n- `phase3/prompt_regression.json`: present\n- `phase3/factuality_report.md`: present\n- `phase3/factuality_report.json`: present\n- `phase3/ragas_report.md`: present\n- `phase3/ragas_report.json`: present\n- `phase3/deepeval_report.md`: present\n- `phase3/deepeval_report.json`: present\n- `phase3/quality_policy.md`: present\n- `phase3/quality_policy.json`: present\n- `phase3/ci_environment.json`: present\n- `phase3/ai_quality_gate.json`: present\n- `phase3/github_summary.md`: present\n\n## Critical Violations\n\n- None.\n\n## Warnings\n\n- None.\n\n## Skipped Optional Metrics\n\n- `ragas.answer_relevancy`: judge llm provider `none` does not enable RAGAS judge metrics\n- `ragas.faithfulness`: judge llm provider `none` does not enable RAGAS judge metrics\n- `deepeval.answer_relevancy.average_score`: Judge metrics are disabled in offline mode to avoid implicit live provider calls.\n- `deepeval.faithfulness.average_score`: Judge metrics are disabled in offline mode to avoid implicit live provider calls.\n- `deepeval.hallucination.average_score`: Judge metrics are disabled in offline mode to avoid implicit live provider calls.\n- `deepeval.contextual_relevancy.average_score`: Judge metrics are disabled in offline mode to avoid implicit live provider calls.\n\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.evals.run_ci_report",
+        "build",
+        "--report-dir",
+        "artifacts\\phase3\\verification\\quality_gate",
+        "--quality-policy-report",
+        "artifacts\\phase3\\verification\\quality_gate\\phase3\\quality_policy.json",
+        "--output",
+        "artifacts\\phase3\\verification\\ci\\pr_quality_report.json",
+        "--format",
+        "all",
+        "--strict"
+      ],
+      "command_id": "ci_report.build",
+      "duration_seconds": 0.288,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "Wrote CI quality report to artifacts\\phase3\\verification\\ci\\pr_quality_report.json\n"
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.evals.run_ci_report",
+        "render",
+        "--input",
+        "artifacts\\phase3\\verification\\ci\\pr_quality_report.json",
+        "--format",
+        "pr-comment",
+        "--output",
+        "artifacts\\phase3\\verification\\ci\\pr_comment.md"
+      ],
+      "command_id": "ci_report.render",
+      "duration_seconds": 0.296,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": ""
+    },
+    {
+      "argv": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "packages.evals.run_ci_report",
+        "validate",
+        "--input",
+        "artifacts\\phase3\\verification\\ci\\pr_quality_report.json"
+      ],
+      "command_id": "ci_report.validate",
+      "duration_seconds": 0.271,
+      "exit_code": 0,
+      "report_paths": [],
+      "status": "pass",
+      "stderr_tail": "",
+      "stdout_tail": "CI report is valid.\n"
+    }
+  ],
+  "compatibility": {
+    "ask_mode_default": "agent_workflow",
+    "deterministic_agents": "pass",
+    "legacy_rag": "pass",
+    "post_ask_contract": "pass",
+    "third_party_run_ids_public": "absent"
+  },
+  "dataset_versions": {
+    "agent.golden": "sha256:cc199ca52d184acdd250bbc7cf7994a59f860840401bb347aed885df48aef09c",
+    "qa.golden": "sha256:c21efa36423b351c4a8ca2089c3b2955694fc184071b7d4091d87beb682df746"
+  },
+  "factuality_invariants": {
+    "approval_state_contradiction": 0,
+    "fabricated_experiment_result": 0,
+    "fabricated_revenue_or_roi": 0,
+    "fabricated_statistical_significance": 0,
+    "structured_decision_contradiction": 0
+  },
+  "findings": [
+    {
+      "area": "evaluation",
+      "evidence": [
+        "packages/evals/dataset_manifest.py"
+      ],
+      "finding_id": "P3-001",
+      "severity": "critical",
+      "status": "fixed",
+      "summary": "Evaluation reports lacked immutable dataset provenance."
+    },
+    {
+      "area": "configuration",
+      "evidence": [
+        "apps/api/main.py",
+        ".env.example"
+      ],
+      "finding_id": "P3-002",
+      "severity": "critical",
+      "status": "fixed",
+      "summary": "Missing provider settings could implicitly select live providers."
+    },
+    {
+      "area": "evaluation",
+      "evidence": [
+        "config/evaluation/quality_policy.yaml"
+      ],
+      "finding_id": "P3-003",
+      "severity": "critical",
+      "status": "fixed",
+      "summary": "The central policy omitted fabricated experiment-result zero tolerance."
+    },
+    {
+      "area": "ci",
+      "evidence": [
+        ".github/workflows/ci.yml"
+      ],
+      "finding_id": "P3-004",
+      "severity": "critical",
+      "status": "fixed",
+      "summary": "The quality-gate job could mask failed prerequisite jobs."
+    },
+    {
+      "area": "security",
+      "evidence": [
+        ".github/workflows/ci.yml"
+      ],
+      "finding_id": "P3-005",
+      "severity": "warning",
+      "status": "fixed",
+      "summary": "Several write-capable GitHub Actions were tag-pinned instead of SHA-pinned."
+    },
+    {
+      "area": "reliability",
+      "evidence": [
+        "scripts/verify_phase3.py"
+      ],
+      "finding_id": "P3-006",
+      "severity": "critical",
+      "status": "fixed",
+      "summary": "No repository-owned strict Phase 3 closeout command or report contract existed."
+    },
+    {
+      "area": "configuration",
+      "evidence": [
+        "packages/config/env.py",
+        "tests/test_env_config.py"
+      ],
+      "finding_id": "P3-007",
+      "severity": "critical",
+      "status": "fixed",
+      "summary": "Dotenv loading silently overrode explicit CI and verification settings."
+    },
+    {
+      "area": "dependencies",
+      "evidence": [
+        "packages/evals/ragas_adapter.py",
+        "tests/test_ragas_evaluation.py"
+      ],
+      "finding_id": "P3-008",
+      "severity": "warning",
+      "status": "fixed",
+      "summary": "RAGAS 0.4.3 metric namespace changes made the installed adapter unavailable."
+    },
+    {
+      "area": "dependencies",
+      "evidence": [
+        "pyproject.toml",
+        "uv.lock"
+      ],
+      "finding_id": "P3-009",
+      "severity": "warning",
+      "status": "fixed",
+      "summary": "The development group included an unused duplicate httpx2 distribution."
+    },
+    {
+      "area": "documentation",
+      "evidence": [
+        "docs/phase3/phase3_closeout.md"
+      ],
+      "finding_id": "P3-010",
+      "severity": "warning",
+      "status": "fixed",
+      "summary": "Phase 3 guides retained stale commands, scope, and CI-enforcement claims."
+    }
+  ],
+  "generated_at_utc": "2026-07-15T13:06:57.359477Z",
+  "limitations": [
+    "Live OpenAI, LangSmith, Phoenix, and OTLP services are outside default verification.",
+    "Dry-runs and in-memory exporters establish integration behavior, not production scale.",
+    "Judge metrics are optional and skipped values are never interpreted as zero."
+  ],
+  "mode": "strict",
+  "overall_status": "pass",
+  "policy_version": "2026-07-13",
+  "provider_configuration": {
+    "ask_mode": "agent_workflow",
+    "embedding": "fake",
+    "external_observability_exports": "disabled",
+    "judges": "none",
+    "llm": "mock",
+    "prompt_experiments": "disabled"
+  },
+  "recommendation": "ready_to_close",
+  "schema_version": "phase3-final-review-v1",
+  "section_summaries": {
+    "architecture": "ExperimentOS models remain authoritative; external evaluation and observability integrations remain adapters or optional sinks.",
+    "ci": "Prerequisite exit codes, strict policy failure, always-uploaded artifacts, and informational PR reporting are verified.",
+    "database": "Alembic, deterministic repeated ingestion, retrieval, API, and workflow database tests are required in strict mode.",
+    "documentation": "Commands, defaults, limits, and branch-protection guidance are reviewed.",
+    "evaluations": "Repository-owned evaluation reports are consumed through the centralized quality policy.",
+    "files_changed": "See the feature branch diff linked to GitHub issue #68.",
+    "observability": "NoOp, optional sink dry-runs, composite isolation, redaction, and OpenTelemetry in-memory exporters are covered without network calls.",
+    "phase4": "Prioritize deployment-specific load validation and operational alerting only after Phase 3 closeout; do not infer production scale from this review.",
+    "quality_policy": "Authoritative policy status: pass.",
+    "security": "External network access is test-blocked, secrets are redacted, and live providers and exports are disabled in verification.",
+    "tests": "38 command stages passed and 0 did not pass in strict closeout mode.",
+    "validation": "all required evidence valid"
+  },
+  "unresolved_risks": [
+    "Live vendor connectivity and production load behavior require deployment-specific validation."
+  ]
+}

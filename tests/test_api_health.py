@@ -35,6 +35,7 @@ def test_embedding_provider_name_uses_dotenv(monkeypatch, tmp_path: Path) -> Non
     dotenv_path.write_text("EMBEDDING_PROVIDER=huggingface\n", encoding="utf-8")
 
     monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("EMBEDDING_PROVIDER", raising=False)
 
     assert get_embedding_provider_name() == "huggingface"
 
@@ -60,6 +61,10 @@ def test_llm_client_auto_prefers_gemini_when_api_key_is_set(monkeypatch, tmp_pat
     )
 
     monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_MODEL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setattr(main_module, "GeminiLLMClient", StubGeminiClient)
 
     client = get_llm_client()

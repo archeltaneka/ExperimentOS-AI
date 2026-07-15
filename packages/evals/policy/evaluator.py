@@ -15,6 +15,15 @@ from packages.evals.policy.models import (
 _STATUS_ORDER: dict[MetricStatus, int] = {"pass": 0, "skipped": 1, "warning": 2, "fail": 3}
 
 
+def repository_relative_path(path: Path | str, *, root: Path | None = None) -> str:
+    candidate = Path(path)
+    base = (root or Path.cwd()).resolve()
+    try:
+        return candidate.resolve().relative_to(base).as_posix()
+    except ValueError:
+        return candidate.name
+
+
 class PolicyEvaluator:
     def __init__(self, *, policy: QualityPolicy, report_dir: Path) -> None:
         self.policy = policy
@@ -54,7 +63,7 @@ class PolicyEvaluator:
 
         return PolicyEvaluationResult(
             policy_version=self.policy.version,
-            report_dir=str(self.report_dir),
+            report_dir=repository_relative_path(self.report_dir),
             overall_status=overall_status,
             category_results=category_results,
             metrics_evaluated=tuple(evaluated_metrics),
@@ -157,7 +166,7 @@ class PolicyEvaluator:
             metric_id=metric.metric_id,
             source=metric.source,
             category=metric.category,
-            source_path=str(source_path),
+            source_path=repository_relative_path(source_path),
             observed_value=observed_value,
             operator=metric.operator,
             threshold_value=metric.value,

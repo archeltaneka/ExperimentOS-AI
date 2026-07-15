@@ -432,6 +432,22 @@ def test_quality_policy_evaluator_passes_and_tracks_skipped_optional_metrics(
     assert "deepeval.answer_relevancy.average_score" in skipped_ids
 
 
+def test_quality_policy_result_paths_are_repository_relative(tmp_path: Path) -> None:
+    from packages.evals.policy.config import load_quality_policy
+    from packages.evals.policy.evaluator import PolicyEvaluator
+
+    report_dir = tmp_path / "reports"
+    _write_base_reports(report_dir)
+    policy = load_quality_policy(
+        _write_policy(tmp_path / "quality_policy.yaml", _base_policy_yaml())
+    )
+
+    result = PolicyEvaluator(policy=policy, report_dir=report_dir).evaluate()
+
+    assert not Path(result.report_dir).is_absolute()
+    assert all(not Path(metric.source_path).is_absolute() for metric in result.metrics_evaluated)
+
+
 def test_quality_policy_evaluator_warns_for_warning_only_thresholds(tmp_path: Path) -> None:
     from packages.evals.policy.config import load_quality_policy
     from packages.evals.policy.evaluator import PolicyEvaluator

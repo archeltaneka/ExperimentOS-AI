@@ -7,6 +7,20 @@ from fastapi.testclient import TestClient
 from apps.api.main import app, get_embedding_provider_name, get_llm_client
 
 
+def test_missing_provider_settings_ignore_live_api_keys(monkeypatch, tmp_path: Path) -> None:
+    from packages.llm.client import MockLLMClient
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("EMBEDDING_PROVIDER", raising=False)
+    monkeypatch.setenv("PYTHON_DOTENV_DISABLED", "1")
+    monkeypatch.setenv("OPENAI_API_KEY", "must-not-be-used")
+    monkeypatch.setenv("GEMINI_API_KEY", "must-not-be-used")
+
+    assert isinstance(get_llm_client(), MockLLMClient)
+    assert get_embedding_provider_name() == "fake"
+
+
 def test_health_endpoint_returns_ok() -> None:
     client = TestClient(app)
 

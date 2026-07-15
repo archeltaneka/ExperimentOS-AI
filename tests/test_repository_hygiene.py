@@ -78,3 +78,12 @@ def test_ruff_import_classification_keeps_migrations_stable_across_ci_environmen
     assert "from alembic import context\nfrom sqlalchemy import engine_from_config, pool" in env
     assert "import sqlalchemy as sa\nfrom alembic import op\nfrom sqlalchemy.dialects" in initial
     assert "import sqlalchemy as sa\nfrom alembic import op" in content
+
+
+def test_env_example_uses_explicit_offline_provider_defaults() -> None:
+    example = Path(".env.example").read_text(encoding="utf-8")
+
+    assert "EMBEDDING_PROVIDER=fake" in example
+    assert "LLM_PROVIDER=mock" in example
+    assert "EMBEDDING_PROVIDER=auto" not in example
+    assert "LLM_PROVIDER=auto" not in example

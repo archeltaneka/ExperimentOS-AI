@@ -776,6 +776,38 @@ def _review_findings() -> tuple[ReviewFinding, ...]:
             ),
             evidence=("scripts/verify_phase3.py",),
         ),
+        ReviewFinding(
+            finding_id="P3-007",
+            area="configuration",
+            severity="critical",
+            status="fixed",
+            summary="Dotenv loading silently overrode explicit CI and verification settings.",
+            evidence=("packages/config/env.py", "tests/test_env_config.py"),
+        ),
+        ReviewFinding(
+            finding_id="P3-008",
+            area="dependencies",
+            severity="warning",
+            status="fixed",
+            summary="RAGAS 0.4.3 metric namespace changes made the installed adapter unavailable.",
+            evidence=("packages/evals/ragas_adapter.py", "tests/test_ragas_evaluation.py"),
+        ),
+        ReviewFinding(
+            finding_id="P3-009",
+            area="dependencies",
+            severity="warning",
+            status="fixed",
+            summary="The development group included an unused duplicate httpx2 distribution.",
+            evidence=("pyproject.toml", "uv.lock"),
+        ),
+        ReviewFinding(
+            finding_id="P3-010",
+            area="documentation",
+            severity="warning",
+            status="fixed",
+            summary="Phase 3 guides retained stale commands, scope, and CI-enforcement claims.",
+            evidence=("docs/phase3/phase3_closeout.md",),
+        ),
     )
 
 

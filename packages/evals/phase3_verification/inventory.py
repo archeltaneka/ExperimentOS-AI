@@ -83,7 +83,10 @@ def build_capability_inventory() -> tuple[CapabilityInventoryItem, ...]:
             ("docs/phase3/reliability_baseline.md",),
             dependencies=("eval: ragas>=0.4.3",),
             default_state="conditional",
-            limitations=("Judge-backed metrics are skipped unless explicitly enabled.",),
+            limitations=(
+                "Judge-backed metrics are skipped unless explicitly enabled.",
+                "RAGAS 0.4.3 needs a local no-network shim for an eager optional VertexAI import.",
+            ),
         ),
         _capability(
             "evaluation.deepeval",

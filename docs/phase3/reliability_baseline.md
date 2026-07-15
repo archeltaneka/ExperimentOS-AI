@@ -5,6 +5,11 @@ Phoenix, and OpenTelemetry observability adapters in addition to the existing RA
 workflow, prompt regression, prompt experiments, RAGAS, DeepEval, and centralized quality policy
 surfaces.
 
+The optional RAGAS 0.4.3 adapter uses its current metric namespaces and applies a local,
+no-network compatibility shim because RAGAS eagerly imports a removed optional VertexAI module in
+the resolved LangChain environment. Offline ID-based metrics remain repository-safe; judge metrics
+still require explicit providers.
+
 ### Quality Policy
 
 - implementation status: available

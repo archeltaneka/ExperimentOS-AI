@@ -139,6 +139,8 @@ environment.
 - Live OpenAI, LangSmith, Phoenix, and OTLP connectivity is not exercised by default.
 - Optional judge-backed semantic metrics are opt-in and supplementary.
 - Vendor dry-runs and in-memory exporters do not prove collector or hosted-service availability.
+- RAGAS 0.4.3 currently needs a local no-network shim for its eager optional VertexAI import; its
+  adapter compatibility is covered by tests.
 - Prompt experiments use offline deterministic assignment and do not measure production causality.
 - There is no automatic answer repair, prompt optimization/promotion, scheduled evaluation, or
   production alerting.

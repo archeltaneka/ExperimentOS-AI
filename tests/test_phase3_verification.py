@@ -272,6 +272,9 @@ def test_strict_plan_contains_database_full_quality_and_ci_report_stages(tmp_pat
     assert any("data/eval/qa_dataset.json" in argv for argv in argv_text)
     assert any("packages.evals.run_ci_report build" in argv for argv in argv_text)
     assert any("packages.evals.run_ci_report validate" in argv for argv in argv_text)
+    full_tests = [command for command in commands if command.command_id == "tests.full"]
+    assert len(full_tests) == 1
+    assert full_tests[0].argv == ("uv", "run", "pytest", "-q")
     database_commands = [
         command for command in commands if command.command_id.startswith("database.")
     ]

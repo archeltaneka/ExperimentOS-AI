@@ -506,6 +506,15 @@ def _strict_commands(artifact_root: Path) -> tuple[VerificationCommand, ...]:
     )
     return (
         _command(
+            "tests.full",
+            "uv",
+            "run",
+            "pytest",
+            "-q",
+            timeout=1200,
+            strict_only=True,
+        ),
+        _command(
             "tests.database",
             "uv",
             "run",

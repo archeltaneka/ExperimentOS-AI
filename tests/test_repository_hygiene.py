@@ -62,3 +62,19 @@ def test_repository_docs_explain_reports_vs_artifacts() -> None:
     assert "`reports/`" in hygiene
     assert "`artifacts/`" in hygiene
     assert "`data/eval/`" in hygiene
+
+
+def test_ruff_import_classification_keeps_migrations_stable_across_ci_environments() -> None:
+    pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+    env = Path("migrations/env.py").read_text(encoding="utf-8")
+    initial = Path("migrations/versions/20260703_0001_initial_schema.py").read_text(
+        encoding="utf-8"
+    )
+    content = Path("migrations/versions/20260704_0002_add_document_content.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'known-third-party = ["alembic", "pgvector", "sqlalchemy"]' in pyproject
+    assert "from alembic import context\nfrom sqlalchemy import engine_from_config, pool" in env
+    assert "import sqlalchemy as sa\nfrom alembic import op\nfrom sqlalchemy.dialects" in initial
+    assert "import sqlalchemy as sa\nfrom alembic import op" in content

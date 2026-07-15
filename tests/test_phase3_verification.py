@@ -4,13 +4,25 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Literal
 
 import pytest
 
 from packages.evals.phase3_verification import validation as phase3_validation
 from packages.evals.phase3_verification.inventory import build_capability_inventory
-from packages.evals.phase3_verification.models import CommandResult, VerificationCommand
+from packages.evals.phase3_verification.models import (
+    CommandResult,
+    FinalReliabilityReview,
+    MilestoneRecommendation,
+    VerificationCommand,
+    VerificationMode,
+)
 from packages.evals.phase3_verification.network_guard import ensure_network_address_allowed
+from packages.evals.phase3_verification.reporting import (
+    final_review_to_dict,
+    render_final_review_markdown,
+    write_final_review,
+)
 from packages.evals.phase3_verification.runner import (
     build_verification_commands,
     build_verification_environment,
@@ -22,6 +34,7 @@ from packages.evals.phase3_verification.validation import (
     derive_recommendation,
     extract_factuality_invariants,
     load_json_object,
+    validate_final_review_files,
     validate_required_reports,
 )
 
@@ -87,6 +100,39 @@ def _write_required_report_set(root: Path) -> None:
         path = root / relative_path
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("# Verified report\n", encoding="utf-8")
+
+
+def _sample_final_review(
+    *,
+    mode: VerificationMode = "strict",
+    recommendation: MilestoneRecommendation = "ready_to_close",
+    overall_status: Literal["pass", "fail"] = "pass",
+    commands: tuple[CommandResult, ...] | None = None,
+) -> FinalReliabilityReview:
+    return FinalReliabilityReview(
+        schema_version="phase3-final-review-v1",
+        generated_at_utc="2026-07-15T00:00:00Z",
+        mode=mode,
+        closeout_eligible=mode == "strict",
+        recommendation=recommendation,
+        overall_status=overall_status,
+        commands=commands or (_passing_result(),),
+        capability_inventory=build_capability_inventory(),
+        findings=(),
+        dataset_versions={"qa.golden": "sha256:" + "a" * 64},
+        policy_version="phase3-v1",
+        provider_configuration={"embedding": "fake", "llm": "mock", "judges": "none"},
+        factuality_invariants=_zero_factuality_invariants(),
+        compatibility={
+            "ask_mode_default": "agent_workflow",
+            "legacy_rag": "pass",
+            "post_ask_contract": "pass",
+            "deterministic_agents": "pass",
+        },
+        limitations=("External sinks were verified with dry-runs and in-memory exporters.",),
+        unresolved_risks=(),
+        section_summaries={"architecture": "Ownership boundaries verified."},
+    )
 
 
 def test_capability_inventory_covers_every_phase3_domain() -> None:
@@ -421,3 +467,85 @@ def test_offline_only_is_never_ready_to_close() -> None:
         )
         == "ready_with_documented_limitations"
     )
+
+
+def test_final_report_generation_writes_markdown_and_json(tmp_path: Path) -> None:
+    review = _sample_final_review(mode="strict")
+    markdown_path = tmp_path / "final.md"
+    json_path = tmp_path / "final.json"
+
+    write_final_review(review, markdown_path=markdown_path, json_path=json_path)
+
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert payload["recommendation"] == "ready_to_close"
+    assert payload["capability_inventory"]
+    validate_final_review_files(json_path, markdown_path)
+    for heading in (
+        "Files Changed",
+        "Capability Inventory",
+        "Architecture Review",
+        "Defects Fixed",
+        "Configuration and Security Findings",
+        "Commands Run",
+        "Test Results",
+        "Database Verification",
+        "Evaluation Results",
+        "Factuality Invariants",
+        "Quality Policy",
+        "Observability",
+        "CI and PR Reporting",
+        "API Compatibility",
+        "Documentation Changes",
+        "Known Limitations",
+        "Unresolved Risks",
+        "Recommended Phase 4 Direction",
+        "Milestone Recommendation",
+    ):
+        assert f"## {heading}" in markdown
+    assert str(tmp_path.resolve()) not in markdown
+
+
+def test_final_report_generation_is_deterministic(tmp_path: Path) -> None:
+    review = _sample_final_review()
+    first_markdown = tmp_path / "first.md"
+    first_json = tmp_path / "first.json"
+    second_markdown = tmp_path / "second.md"
+    second_json = tmp_path / "second.json"
+
+    write_final_review(review, markdown_path=first_markdown, json_path=first_json)
+    write_final_review(review, markdown_path=second_markdown, json_path=second_json)
+
+    assert first_markdown.read_bytes() == second_markdown.read_bytes()
+    assert first_json.read_bytes() == second_json.read_bytes()
+
+
+def test_final_report_redacts_secrets_prompts_and_retrieved_chunks() -> None:
+    sensitive_result = CommandResult(
+        command_id="sensitive",
+        argv=("python", "-V"),
+        status="pass",
+        exit_code=0,
+        duration_seconds=0.1,
+        stdout_tail=(
+            "OPENAI_API_KEY=sk-1234567890abcdef Authorization: Bearer token-value "
+            '"prompt":"full private prompt" '
+            '"retrieved_chunks":["full private chunk"]'
+        ),
+        stderr_tail="",
+        report_paths=(),
+    )
+    review = _sample_final_review(commands=(sensitive_result,))
+
+    payload_text = json.dumps(final_review_to_dict(review))
+    markdown = render_final_review_markdown(review)
+
+    for sensitive in (
+        "sk-1234567890abcdef",
+        "token-value",
+        "full private prompt",
+        "full private chunk",
+    ):
+        assert sensitive not in payload_text
+        assert sensitive not in markdown
+    assert "[REDACTED]" in payload_text

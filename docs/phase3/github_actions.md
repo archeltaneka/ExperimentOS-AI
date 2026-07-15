@@ -168,3 +168,33 @@ present, which keeps command failures visible without hiding partial output.
 - whether external judges were used
 - whether live providers were configured
 - whether the quality policy file changed in the current revision
+
+## Pull Request Evaluation Report
+
+After the AI quality gate completes, CI always derives `pr_quality_report.json` and Markdown from
+the existing structured evaluation artifacts. The gate job appends the concise Markdown report to
+the GitHub job summary and uploads it with the existing artifact bundle, even when policy or
+infrastructure failures occur.
+
+For pull-request events only, the separate `pr-quality-comment` job downloads the artifact and
+updates one bot-authored comment identified by `<!-- experimentos-ai-quality-report -->`. This job
+has the only `pull-requests: write` permission; push workflows retain read-only permissions.
+Fork tokens may be read-only, in which case the summary and artifacts remain available and the
+comment is skipped without changing the gate result. The workflow deliberately avoids
+`pull_request_target`.
+
+See [PR evaluation reports](pr_evaluation_reports.md) for source reports, local preview commands,
+truncation, and troubleshooting.
+
+## Branch Protection Guidance
+
+Keep the existing stable checks as the required checks on `main`:
+
+- `format`
+- `lint`
+- `unit`
+- `integration-db`
+- `ai-quality-gate`
+
+`pr-quality-comment` is informational and must not be required. Fork token restrictions or a GitHub
+comment API outage should never block a merge when the authoritative quality gate has passed.

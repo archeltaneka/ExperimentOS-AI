@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import Literal
@@ -523,6 +524,32 @@ def test_final_report_generation_is_deterministic(tmp_path: Path) -> None:
 
     assert first_markdown.read_bytes() == second_markdown.read_bytes()
     assert first_json.read_bytes() == second_json.read_bytes()
+
+
+def test_validation_module_entrypoint_has_no_runpy_warning(tmp_path: Path) -> None:
+    markdown_path = tmp_path / "final.md"
+    json_path = tmp_path / "final.json"
+    write_final_review(
+        _sample_final_review(),
+        markdown_path=markdown_path,
+        json_path=json_path,
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "packages.evals.phase3_verification.validation",
+            str(json_path),
+            str(markdown_path),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert "RuntimeWarning" not in completed.stderr
 
 
 def test_final_report_redacts_secrets_prompts_and_retrieved_chunks() -> None:

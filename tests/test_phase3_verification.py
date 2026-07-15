@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 from pathlib import Path
 
 import pytest
 
+from packages.evals.phase3_verification import validation as phase3_validation
 from packages.evals.phase3_verification.inventory import build_capability_inventory
-from packages.evals.phase3_verification.models import VerificationCommand
+from packages.evals.phase3_verification.models import CommandResult, VerificationCommand
 from packages.evals.phase3_verification.network_guard import ensure_network_address_allowed
 from packages.evals.phase3_verification.runner import (
     build_verification_commands,
@@ -15,6 +17,76 @@ from packages.evals.phase3_verification.runner import (
     discover_synthetic_fixtures,
     run_command,
 )
+from packages.evals.phase3_verification.validation import (
+    VerificationError,
+    derive_recommendation,
+    extract_factuality_invariants,
+    load_json_object,
+    validate_required_reports,
+)
+
+
+def _passing_result() -> CommandResult:
+    return CommandResult(
+        command_id="passing",
+        argv=("python", "-V"),
+        status="pass",
+        exit_code=0,
+        duration_seconds=0.1,
+        stdout_tail="",
+        stderr_tail="",
+        report_paths=(),
+    )
+
+
+def _zero_factuality_invariants() -> dict[str, int]:
+    return {
+        "fabricated_revenue_or_roi": 0,
+        "fabricated_statistical_significance": 0,
+        "fabricated_experiment_result": 0,
+        "structured_decision_contradiction": 0,
+        "approval_state_contradiction": 0,
+    }
+
+
+def _passing_factuality_payload() -> dict[str, object]:
+    return {
+        "checks_executed": [
+            "numerical_grounding",
+            "financial_guardrails",
+            "statistical_validation",
+            "abstention_correctness",
+            "structured_consistency",
+        ],
+        "findings_by_category": {},
+        "findings_detail": [],
+        "policy_result": {"status": "pass"},
+    }
+
+
+def _write_required_report_set(root: Path) -> None:
+    for (
+        relative_path,
+        required_keys,
+    ) in phase3_validation._REQUIRED_QUALITY_GATE_REPORT_KEYS.items():
+        payload: dict[str, object] = {key: {} for key in required_keys}
+        if "prompt_experiments/" in relative_path:
+            payload.update(
+                {
+                    "recommendation": {"outcome": "retain_control"},
+                    "production_traffic_involved": False,
+                    "limitations": [
+                        "Offline evaluation results do not establish production causal impact."
+                    ],
+                }
+            )
+        path = root / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload), encoding="utf-8")
+    for relative_path in phase3_validation._REQUIRED_MARKDOWN_REPORTS:
+        path = root / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("# Verified report\n", encoding="utf-8")
 
 
 def test_capability_inventory_covers_every_phase3_domain() -> None:
@@ -207,3 +279,145 @@ def test_network_guard_allows_only_local_addresses(address: object) -> None:
 def test_network_guard_rejects_external_addresses() -> None:
     with pytest.raises(RuntimeError, match="external network access is disabled"):
         ensure_network_address_allowed(("api.openai.com", 443))
+
+
+def test_required_report_validation_rejects_missing_file(tmp_path: Path) -> None:
+    with pytest.raises(VerificationError, match="missing required report"):
+        validate_required_reports(tmp_path)
+
+
+def test_required_report_validation_rejects_malformed_json(tmp_path: Path) -> None:
+    path = tmp_path / "evaluation.json"
+    path.write_text("{broken", encoding="utf-8")
+
+    with pytest.raises(VerificationError, match="valid JSON"):
+        load_json_object(path)
+
+
+def test_required_report_validation_accepts_complete_report_set(tmp_path: Path) -> None:
+    _write_required_report_set(tmp_path)
+
+    payloads = validate_required_reports(tmp_path)
+
+    assert len(payloads) == len(phase3_validation._REQUIRED_QUALITY_GATE_REPORT_KEYS)
+
+
+def test_required_report_validation_rejects_production_prompt_claim(tmp_path: Path) -> None:
+    _write_required_report_set(tmp_path)
+    relative_path = "quality_gate/phase3/prompt_experiments/rag-answer-abstention-v1-v2.json"
+    path = tmp_path / relative_path
+    payload = load_json_object(path)
+    payload["production_traffic_involved"] = True
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(VerificationError, match="production_traffic_involved"):
+        validate_required_reports(tmp_path)
+
+
+def test_factuality_extraction_requires_all_deterministic_checks() -> None:
+    payload = _passing_factuality_payload()
+    payload["checks_executed"] = ["numerical_grounding"]
+
+    with pytest.raises(VerificationError, match="structured_consistency"):
+        extract_factuality_invariants(payload)
+
+
+def test_factuality_extraction_splits_structured_contradictions() -> None:
+    payload = _passing_factuality_payload()
+    payload["findings_detail"] = [
+        {
+            "category": "contradiction_with_structured_experiment_data",
+            "structured_field_ids": ["decision.recommendation"],
+        },
+        {
+            "category": "contradiction_with_structured_experiment_data",
+            "structured_field_ids": ["approval_status"],
+        },
+    ]
+
+    invariants = extract_factuality_invariants(payload)
+
+    assert invariants["structured_decision_contradiction"] == 1
+    assert invariants["approval_state_contradiction"] == 1
+
+
+def test_policy_failure_forces_not_ready() -> None:
+    recommendation = derive_recommendation(
+        mode="strict",
+        command_results=(_passing_result(),),
+        policy_payload={"overall_status": "fail"},
+        factuality_invariants=_zero_factuality_invariants(),
+        unresolved_critical_findings=0,
+    )
+
+    assert recommendation == "not_ready"
+
+
+@pytest.mark.parametrize("invariant", tuple(_zero_factuality_invariants()))
+def test_each_factuality_violation_forces_not_ready(invariant: str) -> None:
+    invariants = _zero_factuality_invariants()
+    invariants[invariant] = 1
+
+    assert (
+        derive_recommendation(
+            mode="strict",
+            command_results=(_passing_result(),),
+            policy_payload={"overall_status": "pass"},
+            factuality_invariants=invariants,
+            unresolved_critical_findings=0,
+        )
+        == "not_ready"
+    )
+
+
+def test_failed_required_command_forces_not_ready() -> None:
+    failed = CommandResult(
+        command_id="failed",
+        argv=("python", "-V"),
+        status="fail",
+        exit_code=9,
+        duration_seconds=0.1,
+        stdout_tail="",
+        stderr_tail="failure",
+        report_paths=(),
+    )
+
+    assert (
+        derive_recommendation(
+            mode="strict",
+            command_results=(failed,),
+            policy_payload={"overall_status": "pass"},
+            factuality_invariants=_zero_factuality_invariants(),
+            unresolved_critical_findings=0,
+        )
+        == "not_ready"
+    )
+
+
+def test_optional_metric_skip_does_not_block_strict_closeout() -> None:
+    assert (
+        derive_recommendation(
+            mode="strict",
+            command_results=(_passing_result(),),
+            policy_payload={
+                "overall_status": "pass",
+                "skipped_metrics": [{"required": False, "status": "skipped"}],
+            },
+            factuality_invariants=_zero_factuality_invariants(),
+            unresolved_critical_findings=0,
+        )
+        == "ready_to_close"
+    )
+
+
+def test_offline_only_is_never_ready_to_close() -> None:
+    assert (
+        derive_recommendation(
+            mode="offline_only",
+            command_results=(_passing_result(),),
+            policy_payload={"overall_status": "pass"},
+            factuality_invariants=_zero_factuality_invariants(),
+            unresolved_critical_findings=0,
+        )
+        == "ready_with_documented_limitations"
+    )

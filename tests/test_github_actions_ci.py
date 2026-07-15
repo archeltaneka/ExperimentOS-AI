@@ -61,6 +61,27 @@ def test_ci_workflow_generates_reports_without_granting_push_runs_comment_permis
     assert "pull_request_target" not in workflow
 
 
+def test_github_actions_are_pinned_to_full_commit_shas() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+
+    for line in workflow.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("uses: actions/"):
+            reference = stripped.rsplit("@", 1)[1].split()[0]
+            assert len(reference) == 40
+            assert all(character in "0123456789abcdef" for character in reference)
+
+
+def test_authoritative_gate_preserves_prerequisite_failures() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+
+    assert "id: prerequisites" in workflow
+    assert "prerequisite_exit_code" in workflow
+    for job in ("format", "lint", "validate", "unit", "offline-eval-smoke", "integration-db"):
+        assert f"needs.{job}.result" in workflow
+    assert "if: ${{ always() }}" in workflow
+
+
 def test_pr_reporting_documentation_covers_local_preview_and_fork_safety() -> None:
     document = Path("docs/phase3/pr_evaluation_reports.md").read_text(encoding="utf-8")
 

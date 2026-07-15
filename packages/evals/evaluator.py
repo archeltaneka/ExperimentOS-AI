@@ -37,6 +37,8 @@ class EvaluationSampleResult:
 class EvaluationRun:
     samples: list[EvaluationSampleResult]
     summary: EvaluationSummary
+    dataset_id: str = ""
+    dataset_version: str = ""
     embedding_provider: str = ""
     embedding_model: str = ""
     llm_provider: str = ""
@@ -57,6 +59,8 @@ class OfflineEvaluator:
         embedding_model: str = "",
         llm_provider: str = "",
         llm_model: str = "",
+        dataset_id: str = "",
+        dataset_version: str = "",
     ) -> None:
         self.qa_service = qa_service
         self.questions = list(questions)
@@ -68,6 +72,8 @@ class OfflineEvaluator:
         self.embedding_model = embedding_model
         self.llm_provider = llm_provider
         self.llm_model = llm_model
+        self.dataset_id = dataset_id
+        self.dataset_version = dataset_version
 
     async def evaluate(self) -> EvaluationRun:
         samples: list[EvaluationSampleResult] = []
@@ -132,6 +138,8 @@ class OfflineEvaluator:
             summary=EvaluationSummary.from_samples(
                 [sample.metrics for sample in samples if sample.metrics is not None]
             ),
+            dataset_id=self.dataset_id,
+            dataset_version=self.dataset_version,
             embedding_provider=self.embedding_provider,
             embedding_model=self.embedding_model,
             llm_provider=self.llm_provider,

@@ -6,6 +6,33 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_AGENT_DATASET_PATH = Path("data/eval/agent_dataset.json")
+_VALID_CATEGORIES = {
+    "approval_workflow",
+    "business_impact",
+    "insufficient_evidence",
+    "lookup",
+    "risk_guardrail",
+    "rollout_decision",
+}
+_VALID_INTENTS = {
+    "business_impact",
+    "decision_support",
+    "executive_summary",
+    "experiment_lookup",
+    "risk_assessment",
+}
+_VALID_REQUIRED_AGENTS = {
+    "business_impact",
+    "decision",
+    "executive_summary",
+    "experiment_analysis",
+    "human_approval",
+    "retrieval",
+    "risk_assessment",
+}
+_VALID_DECISION_STATUSES = {None, "decided", "needs_more_data"}
+_VALID_SUMMARY_STATUSES = {None, "generated", "partial_summary"}
+_VALID_FAILURE_MODES = {None, "insufficient_business_evidence"}
 _VALID_APPROVAL_STATUSES = {
     "not_requested",
     "skipped",
@@ -80,7 +107,7 @@ def _case_from_mapping(item: Any, *, index: int) -> AgentEvaluationCase:
             "must be a known approval status"
         )
 
-    return AgentEvaluationCase(
+    case = AgentEvaluationCase(
         id=_required_string(item, "id", index=index),
         question=_required_string(item, "question", index=index),
         category=_required_string(item, "category", index=index),
@@ -114,6 +141,53 @@ def _case_from_mapping(item: Any, *, index: int) -> AgentEvaluationCase:
         ),
         notes=_optional_string(item, "notes", index=index),
     )
+    _require_known(case.category, field="category", allowed=_VALID_CATEGORIES, index=index)
+    _require_known(
+        case.expected_intent,
+        field="expected_intent",
+        allowed=_VALID_INTENTS,
+        index=index,
+    )
+    for required_agent in case.expected_required_agents:
+        _require_known(
+            required_agent,
+            field="expected_required_agents",
+            allowed=_VALID_REQUIRED_AGENTS,
+            index=index,
+        )
+    _require_known(
+        case.expected_decision_status,
+        field="expected_decision_status",
+        allowed=_VALID_DECISION_STATUSES,
+        index=index,
+    )
+    _require_known(
+        case.expected_summary_status,
+        field="expected_summary_status",
+        allowed=_VALID_SUMMARY_STATUSES,
+        index=index,
+    )
+    _require_known(
+        case.expected_failure_mode,
+        field="expected_failure_mode",
+        allowed=_VALID_FAILURE_MODES,
+        index=index,
+    )
+    return case
+
+
+def _require_known(
+    value: str | None,
+    *,
+    field: str,
+    allowed: set[str | None],
+    index: int,
+) -> None:
+    if value not in allowed:
+        rendered = ", ".join(sorted(item for item in allowed if item is not None))
+        raise ValueError(
+            f"agent evaluation dataset item {index} field {field!r} must be one of: {rendered}"
+        )
 
 
 def _required_string(item: dict[str, Any], key: str, *, index: int) -> str:

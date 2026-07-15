@@ -39,6 +39,8 @@ class AgentEvaluationSampleResult:
 class AgentEvaluationRun:
     samples: list[AgentEvaluationSampleResult]
     summary: AgentEvaluationSummary
+    dataset_id: str = ""
+    dataset_version: str = ""
 
 
 class AgentWorkflowEvaluator:
@@ -47,9 +49,13 @@ class AgentWorkflowEvaluator:
         *,
         workflow_service: AgentWorkflowServiceLike,
         cases: list[AgentEvaluationCase],
+        dataset_id: str = "",
+        dataset_version: str = "",
     ) -> None:
         self.workflow_service = workflow_service
         self.cases = list(cases)
+        self.dataset_id = dataset_id
+        self.dataset_version = dataset_version
 
     def evaluate(self) -> AgentEvaluationRun:
         samples: list[AgentEvaluationSampleResult] = []
@@ -81,6 +87,8 @@ class AgentWorkflowEvaluator:
         return AgentEvaluationRun(
             samples=samples,
             summary=AgentEvaluationSummary.from_samples(samples),
+            dataset_id=self.dataset_id,
+            dataset_version=self.dataset_version,
         )
 
 

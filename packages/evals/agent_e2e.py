@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import json
 import os
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from time import perf_counter
 from typing import Literal
 
@@ -14,6 +15,7 @@ from apps.api.main import (
     get_question_answering_service,
 )
 from packages.agents.state import AgentState, create_initial_state
+from packages.evals.dataset_manifest import build_payload_manifest
 from packages.llm.client import LLMMetrics
 from packages.qa.question_answering_service import Citation, QAResponse
 from packages.retrieval.service import RetrievalMetrics, RetrievalResult
@@ -164,6 +166,8 @@ class AgentE2ESummary:
 class AgentE2ERun:
     samples: list[AgentE2ESampleResult]
     summary: AgentE2ESummary
+    dataset_id: str = ""
+    dataset_version: str = ""
 
 
 @dataclass
@@ -218,7 +222,22 @@ class AgentE2EEvaluator:
 
     def evaluate(self) -> AgentE2ERun:
         samples = [self._evaluate_case(case) for case in self.cases]
-        return AgentE2ERun(samples=samples, summary=AgentE2ESummary.from_samples(samples))
+        manifest = build_payload_manifest(
+            json.dumps(
+                [asdict(case) for case in self.cases],
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8"),
+            dataset_id="agent_e2e.default",
+            relative_path="packages/evals/agent_e2e.py",
+            case_count=len(self.cases),
+        )
+        return AgentE2ERun(
+            samples=samples,
+            summary=AgentE2ESummary.from_samples(samples),
+            dataset_id=manifest.dataset_id,
+            dataset_version=manifest.version,
+        )
 
     def _evaluate_case(self, case: AgentE2ECase) -> AgentE2ESampleResult:
         previous_ask_mode = os.environ.get("ASK_MODE")

@@ -50,6 +50,8 @@ def test_ci_workflow_generates_reports_without_granting_push_runs_comment_permis
     assert "id: quality_gate" in workflow
     assert "id: ci_report" in workflow
     assert "packages.evals.cli ci-report build" in workflow
+    assert '--base-ref "${{ github.base_ref }}"' in workflow
+    assert '--head-ref "${{ github.head_ref }}"' in workflow
     assert "Restore AI quality gate result" in workflow
     assert "gate_exit_code" in workflow
     assert "report_exit_code" in workflow

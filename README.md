@@ -241,10 +241,10 @@ Get-Content reports/phase3/baseline_report.md
 
 This baseline coordinates the existing repository-local QA, agent workflow, and `/ask` E2E
 evaluations. The baseline remains deterministic and repository-owned; optional RAGAS reporting and
-optional LangSmith tracing now live beside it rather than replacing it. Phoenix and
-OpenTelemetry are still out of scope. See
+optional LangSmith, Phoenix, and OpenTelemetry sinks now live beside it rather than replacing it.
+All are disabled by default, and ExperimentOS-owned traces and reports remain authoritative. See
 [Phase 3 Reliability Baseline](docs/phase3/reliability_baseline.md) and
-[LangSmith Observability](docs/phase3/langsmith_observability.md).
+[Phase 3 Closeout](docs/phase3/phase3_closeout.md).
 
 Run prompt regression for a prompt-backed surface:
 
@@ -269,6 +269,16 @@ Get-Content artifacts/local/phase3/prompt_experiments/rag-answer-abstention-v1-v
 This workflow keeps runtime experimentation disabled by default, reuses the immutable prompt
 registry, and writes local Markdown and JSON artifacts without using production traffic. See
 [Phase 3 Prompt Experiments](docs/phase3/prompt_experiments.md).
+
+Run the strict Phase 3 closeout after starting PostgreSQL and setting `DATABASE_URL`:
+
+```powershell
+uv run python scripts/verify_phase3.py
+```
+
+Without PostgreSQL, `uv run python scripts/verify_phase3.py --offline-only` runs an explicitly
+non-closeout diagnostic and can never recommend `ready_to_close`. See
+[Phase 3 Closeout](docs/phase3/phase3_closeout.md) for setup, guarantees, and boundaries.
 
 ## Development Workflow
 
@@ -364,9 +374,9 @@ Current repository assets are placeholders rather than captured UI screenshots:
 | --- | --- |
 | Retrieval quality | Improve ranking, filtering, and metadata-aware search. |
 | Dataset depth | Expand evaluation coverage and retrieval regression checks. |
-| API hardening | Add production-focused configuration, observability, and error handling. |
+| Deployment validation | Add load, soak, and operational readiness checks for a real target environment. |
 | Event support | Ingest `events.csv` into the experiment knowledge model. |
-| Analysis workflows | Build agent- and evaluation-oriented orchestration on top of current packages. |
+| Operational reliability | Add deployment-specific alerting and runbooks without weakening repository-owned policy. |
 
 ## Future Work
 

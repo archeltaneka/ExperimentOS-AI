@@ -85,7 +85,7 @@ def test_authoritative_gate_preserves_prerequisite_failures() -> None:
 def test_pr_reporting_documentation_covers_local_preview_and_fork_safety() -> None:
     document = Path("docs/phase3/pr_evaluation_reports.md").read_text(encoding="utf-8")
 
-    assert "ci-report build" in document
+    assert "packages.evals.run_ci_report build" in document
     assert "fork" in document.lower()
     assert "pull_request_target" in document
     assert "<!-- experimentos-ai-quality-report -->" in document

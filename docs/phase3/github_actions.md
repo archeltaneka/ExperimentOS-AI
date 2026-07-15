@@ -188,6 +188,9 @@ truncation, and troubleshooting.
 
 ## Branch Protection Guidance
 
+The AI quality gate is the authoritative AI reliability result. PR reporting is informational and
+not required for merge eligibility.
+
 Keep the existing stable checks as the required checks on `main`:
 
 - `format`

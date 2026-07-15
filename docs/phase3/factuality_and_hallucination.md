@@ -103,7 +103,8 @@ The policy result is one of:
 - `warning`
 - `skipped`
 
-This policy is not connected to production blocking or CI gates in this issue.
+The deterministic policy is consumed by the centralized quality policy and enforced by the CI
+`ai-quality-gate`. It does not block or rewrite production responses at runtime.
 
 ### CLI And Reports
 

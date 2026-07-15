@@ -32,7 +32,7 @@ Registered prompts currently cover:
   - status: `experimental`
   - purpose: backward-compatible summary helper template from `packages.llm.prompts`
 
-Only `rag.answer` is active in production behavior today.
+Only `rag.answer` is active in current prompt-backed runtime behavior today.
 
 ## Architecture
 

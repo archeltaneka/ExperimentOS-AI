@@ -8,7 +8,7 @@ evaluation outputs into a single ExperimentOS pass, warning, fail, or skipped de
 - policy config: `config/evaluation/quality_policy.yaml`
 - evaluator package: `packages/evals/policy/`
 - CLI entrypoint: `packages.evals.run_quality_policy`
-- shared CLI subcommand: `python -m packages.evals.cli quality-policy`
+- primary CLI: `python -m packages.evals.run_quality_policy`
 - default outputs:
   - `reports/phase3/quality_policy.md`
   - `reports/phase3/quality_policy.json`
@@ -114,12 +114,6 @@ Run the policy directly:
 
 ```powershell
 uv run python -m packages.evals.run_quality_policy
-```
-
-Use the shared evaluation CLI:
-
-```powershell
-uv run python -m packages.evals.cli quality-policy
 ```
 
 Useful options:

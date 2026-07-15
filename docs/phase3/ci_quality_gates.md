@@ -12,8 +12,9 @@ Flow:
 4. the gate validates the CI environment and policy invariants
 5. deterministic evaluation suites run in a fixed order
 6. the centralized quality policy aggregates report artifacts
-7. artifacts upload with `if: ${{ always() }}`
-8. a concise summary is written to `$GITHUB_STEP_SUMMARY`
+7. the PR-report projection reads the completed structured artifacts
+8. artifacts upload with `if: ${{ always() }}`
+9. a concise summary is written to `$GITHUB_STEP_SUMMARY`
 
 GitHub Actions only orchestrates the runner, database, and artifact plumbing. The gate logic lives in:
 
@@ -187,8 +188,20 @@ uv run python scripts/run_ai_quality_gate.py --artifact-root artifacts/ci/ai-qua
 
 Still out of scope:
 
-- PR comments or inline annotations
+- inline source annotations without reliable mappings
 - automatic baseline updates
 - threshold auto-tuning
 - live judge-model evaluation
 - scheduled nightly reporting
+
+## Pull Request Reporting
+
+`pr_quality_report.json` is an ExperimentOS-owned projection of the policy, gate, manifest,
+environment, and suite JSON artifacts. It does not evaluate thresholds. It surfaces bounded
+findings, skipped metrics, compatible deltas, suite status, and offline execution details in the
+job summary and, when allowed, one updateable PR comment.
+
+The job captures the quality-gate exit code before always-run reporting steps and restores it last.
+The authoritative `ai-quality-gate` check therefore still fails on policy and infrastructure
+errors. A separate PR-only comment job has `pull-requests: write`; push runs do not. Read-only fork
+tokens merely prevent comment publication and never suppress summaries or artifacts.

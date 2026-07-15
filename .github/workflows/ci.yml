@@ -348,6 +348,7 @@ jobs:
       - unit
       - offline-eval-smoke
       - integration-db
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     services:
@@ -441,18 +442,42 @@ jobs:
           --output artifacts/ci/ai-quality/phase3/ci_environment.json
 
       - name: Run AI quality gate
+        id: quality_gate
         if: ${{ always() }}
-        run: >-
-          uv run python scripts/run_ai_quality_gate.py
-          --artifact-root artifacts/ci/ai-quality
-          --artifact-name ai-quality-gate-${{ github.run_id }}-${{ github.run_attempt }}
-          --policy-changed ${{ steps.policy_changes.outputs.changed || 'false' }}
+        shell: bash
+        run: |
+          set +e
+          uv run python scripts/run_ai_quality_gate.py \
+            --artifact-root artifacts/ci/ai-quality \
+            --artifact-name ai-quality-gate-${{ github.run_id }}-${{ github.run_attempt }} \
+            --policy-changed ${{ steps.policy_changes.outputs.changed || 'false' }}
+          exit_code=$?
+          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Build pull request quality report
+        id: ci_report
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set +e
+          uv run python -m packages.evals.cli ci-report build \
+            --report-dir artifacts/ci/ai-quality \
+            --output artifacts/ci/ai-quality/phase3/pr_quality_report.json \
+            --workflow-run-id ${{ github.run_id }} \
+            --repository ${{ github.repository }} \
+            --commit-sha ${{ github.sha }} \
+            --base-ref ${{ github.base_ref }} \
+            --head-ref ${{ github.head_ref }}
+          exit_code=$?
+          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
+          exit 0
 
       - name: Publish AI quality summary
         if: ${{ always() }}
         shell: bash
         run: |
-          summary_path="artifacts/ci/ai-quality/phase3/github_summary.md"
+          summary_path="artifacts/ci/ai-quality/phase3/pr_quality_report.md"
           if [[ -f "$summary_path" ]]; then
             cat "$summary_path" >> "$GITHUB_STEP_SUMMARY"
           else
@@ -472,3 +497,63 @@ jobs:
           path: artifacts/ci/ai-quality
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Restore AI quality gate result
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          gate_exit_code="${{ steps.quality_gate.outputs.exit_code || '2' }}"
+          report_exit_code="${{ steps.ci_report.outputs.exit_code || '2' }}"
+          if [[ "$gate_exit_code" != "0" ]]; then
+            exit "$gate_exit_code"
+          fi
+          exit "$report_exit_code"
+
+  pr-quality-comment:
+    needs:
+      - ai-quality-gate
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          cache-python: true
+          cache-dependency-glob: uv.lock
+
+      - name: Sync reporting dependencies
+        run: uv sync --group dev --frozen
+
+      - name: Download AI quality artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: ai-quality-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/ci/ai-quality
+
+      - name: Update pull request quality comment
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          body_path="artifacts/ci/ai-quality/phase3/pr_comment.md"
+          if [[ ! -f "$body_path" ]]; then
+            echo "PR comment skipped: CI report artifact was unavailable."
+            exit 0
+          fi
+          uv run python -m packages.evals.cli ci-report comment \
+            --body-file "$body_path" \
+            --repository "${{ github.repository }}" \
+            --pull-request-number "${{ github.event.pull_request.number }}" || \
+            echo "PR comment was unavailable; job summary and artifacts remain authoritative."

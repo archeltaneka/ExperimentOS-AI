@@ -379,3 +379,8 @@ Current repository assets are placeholders rather than captured UI screenshots:
 ## License
 
 This project is licensed under the terms of the [LICENSE](LICENSE).
+# Pull Request AI Quality Reports
+
+Pull requests receive a concise AI quality summary in the GitHub job summary and, when permissions
+allow, one updateable PR comment. The `ai-quality-gate` check controls merge eligibility; full
+structured and Markdown reports are always available as CI artifacts.

@@ -62,3 +62,6 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-third-party = ["alembic", "pgvector", "sqlalchemy"]

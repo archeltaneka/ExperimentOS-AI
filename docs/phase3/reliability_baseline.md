@@ -71,7 +71,23 @@ Remaining quality policy gaps:
   - DeepEval offline deterministic metrics
 - artifact publication: always
 - branch-protection relationship: CI gate is designed to support blocking protection on `main`
-- remaining gap before PR reporting: no automated PR comment or inline annotation yet
+- branch-protection relationship: the AI quality-gate check remains authoritative; PR comments are
+  informational and intentionally not required checks
+
+### Pull Request Evaluation Reporting
+
+- implementation status: available through the `ci-report` CLI and CI workflow integration
+- job-summary status: generated from structured artifacts after pass, policy failure, or recoverable
+  infrastructure failure
+- PR-comment status: one marker-owned update-or-create comment on pull requests when token
+  permissions allow
+- fork fallback: job summary and artifacts remain available; comment publication is informational
+  and may be unavailable with a read-only token
+- metric delta coverage: only policy- and dataset-version-compatible supplied baselines are shown
+- artifact linking: artifact name and workflow run identifier are shown; local reports do not expose
+  private direct URLs
+- remaining CI feedback gaps: no inline annotations, automatic baseline updates, or scheduled
+  reporting
 
 ### Prompt Experiment Framework
 

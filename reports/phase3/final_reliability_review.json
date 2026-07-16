@@ -631,7 +631,7 @@
         "--check"
       ],
       "command_id": "config.lock",
-      "duration_seconds": 0.051,
+      "duration_seconds": 0.049,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -648,7 +648,7 @@
         "."
       ],
       "command_id": "format.check",
-      "duration_seconds": 0.116,
+      "duration_seconds": 0.12,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -664,7 +664,7 @@
         "."
       ],
       "command_id": "lint",
-      "duration_seconds": 0.108,
+      "duration_seconds": 0.112,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -681,7 +681,7 @@
         "validate"
       ],
       "command_id": "prompt.registry.validate",
-      "duration_seconds": 0.229,
+      "duration_seconds": 0.218,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -700,7 +700,7 @@
         "rag-answer-abstention-v1-v2"
       ],
       "command_id": "prompt.experiment.validate",
-      "duration_seconds": 2.938,
+      "duration_seconds": 2.83,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -719,7 +719,7 @@
         "all"
       ],
       "command_id": "observability.status",
-      "duration_seconds": 1.792,
+      "duration_seconds": 1.524,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -738,7 +738,7 @@
         "all"
       ],
       "command_id": "observability.validate",
-      "duration_seconds": 0.464,
+      "duration_seconds": 0.395,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -757,7 +757,7 @@
         "langsmith"
       ],
       "command_id": "observability.dry_run.langsmith",
-      "duration_seconds": 1.517,
+      "duration_seconds": 1.445,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -776,7 +776,7 @@
         "phoenix"
       ],
       "command_id": "observability.dry_run.phoenix",
-      "duration_seconds": 1.122,
+      "duration_seconds": 1.016,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -795,7 +795,7 @@
         "opentelemetry"
       ],
       "command_id": "observability.dry_run.opentelemetry",
-      "duration_seconds": 0.546,
+      "duration_seconds": 0.507,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -842,12 +842,12 @@
         "tests/test_phase3_verification.py"
       ],
       "command_id": "tests.focused",
-      "duration_seconds": 35.961,
+      "duration_seconds": 35.804,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
       "stderr_tail": "",
-      "stdout_tail": "........................................................................ [ 22%]\n........................................................................ [ 45%]\n........................................................................ [ 68%]\n........................................................................ [ 91%]\n............................                                             [100%]Running teardown with pytest sessionfinish...\n\n============================== warnings summary ===============================\ntests/test_ragas_evaluation.py::test_installed_ragas_v04_bindings_use_supported_metric_namespaces\n  [REDACTED_PATH] Projects\\ExperimentOS-AI\\packages\\evals\\ragas_adapter.py:211: DeprecationWarning: `langchain-community` is being sunset and is no longer actively maintained. See https://github.com/langchain-ai/langchain-community/issues/674 for details and migration guidance toward standalone integration packages.\n    import langchain_community.chat_models.vertexai  # noqa: F401\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n316 passed, 1 warning in 23.94s\n"
+      "stdout_tail": "........................................................................ [ 22%]\n........................................................................ [ 45%]\n........................................................................ [ 68%]\n........................................................................ [ 91%]\n............................                                             [100%]Running teardown with pytest sessionfinish...\n\n============================== warnings summary ===============================\ntests/test_ragas_evaluation.py::test_installed_ragas_v04_bindings_use_supported_metric_namespaces\n  [REDACTED_PATH] Projects\\ExperimentOS-AI\\packages\\evals\\ragas_adapter.py:211: DeprecationWarning: `langchain-community` is being sunset and is no longer actively maintained. See https://github.com/langchain-ai/langchain-community/issues/674 for details and migration guidance toward standalone integration packages.\n    import langchain_community.chat_models.vertexai  # noqa: F401\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n316 passed, 1 warning in 24.37s\n"
     },
     {
       "argv": [
@@ -858,7 +858,7 @@
         "head"
       ],
       "command_id": "database.migrate",
-      "duration_seconds": 1.473,
+      "duration_seconds": 1.471,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -878,7 +878,7 @@
         "fake"
       ],
       "command_id": "database.ingest.1.exp-001-payment-recommendation",
-      "duration_seconds": 1.344,
+      "duration_seconds": 1.664,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -898,7 +898,7 @@
         "fake"
       ],
       "command_id": "database.ingest.1.exp-002-hotel-image-quality",
-      "duration_seconds": 1.268,
+      "duration_seconds": 1.438,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -918,7 +918,7 @@
         "fake"
       ],
       "command_id": "database.ingest.1.exp-003-search-ranking",
-      "duration_seconds": 1.306,
+      "duration_seconds": 1.391,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -938,7 +938,7 @@
         "fake"
       ],
       "command_id": "database.ingest.1.exp-004-checkout-ux",
-      "duration_seconds": 1.248,
+      "duration_seconds": 1.394,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -958,7 +958,7 @@
         "fake"
       ],
       "command_id": "database.ingest.1.exp-005-pricing",
-      "duration_seconds": 1.312,
+      "duration_seconds": 1.435,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -978,7 +978,7 @@
         "fake"
       ],
       "command_id": "database.ingest.1.exp-006-loyalty",
-      "duration_seconds": 1.34,
+      "duration_seconds": 1.402,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -998,7 +998,7 @@
         "fake"
       ],
       "command_id": "database.ingest.1.exp-007-crm-notifications",
-      "duration_seconds": 1.409,
+      "duration_seconds": 1.41,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1018,7 +1018,7 @@
         "fake"
       ],
       "command_id": "database.ingest.1.exp-008-recommendation-systems",
-      "duration_seconds": 1.306,
+      "duration_seconds": 1.484,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1038,7 +1038,7 @@
         "fake"
       ],
       "command_id": "database.ingest.1.exp-009-search-filters",
-      "duration_seconds": 1.333,
+      "duration_seconds": 1.414,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1058,7 +1058,7 @@
         "fake"
       ],
       "command_id": "database.ingest.1.exp-010-premium-subscriptions",
-      "duration_seconds": 1.36,
+      "duration_seconds": 1.393,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1078,7 +1078,7 @@
         "fake"
       ],
       "command_id": "database.ingest.2.exp-001-payment-recommendation",
-      "duration_seconds": 1.341,
+      "duration_seconds": 1.388,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1098,7 +1098,7 @@
         "fake"
       ],
       "command_id": "database.ingest.2.exp-002-hotel-image-quality",
-      "duration_seconds": 1.266,
+      "duration_seconds": 1.396,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1118,7 +1118,7 @@
         "fake"
       ],
       "command_id": "database.ingest.2.exp-003-search-ranking",
-      "duration_seconds": 1.506,
+      "duration_seconds": 1.415,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1138,7 +1138,7 @@
         "fake"
       ],
       "command_id": "database.ingest.2.exp-004-checkout-ux",
-      "duration_seconds": 1.582,
+      "duration_seconds": 1.369,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1158,7 +1158,7 @@
         "fake"
       ],
       "command_id": "database.ingest.2.exp-005-pricing",
-      "duration_seconds": 1.478,
+      "duration_seconds": 1.548,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1178,7 +1178,7 @@
         "fake"
       ],
       "command_id": "database.ingest.2.exp-006-loyalty",
-      "duration_seconds": 1.651,
+      "duration_seconds": 1.444,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1198,7 +1198,7 @@
         "fake"
       ],
       "command_id": "database.ingest.2.exp-007-crm-notifications",
-      "duration_seconds": 1.597,
+      "duration_seconds": 1.454,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1218,7 +1218,7 @@
         "fake"
       ],
       "command_id": "database.ingest.2.exp-008-recommendation-systems",
-      "duration_seconds": 1.529,
+      "duration_seconds": 1.407,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1238,7 +1238,7 @@
         "fake"
       ],
       "command_id": "database.ingest.2.exp-009-search-filters",
-      "duration_seconds": 1.287,
+      "duration_seconds": 1.369,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1258,7 +1258,7 @@
         "fake"
       ],
       "command_id": "database.ingest.2.exp-010-premium-subscriptions",
-      "duration_seconds": 1.409,
+      "duration_seconds": 1.428,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1273,12 +1273,12 @@
         "-q"
       ],
       "command_id": "tests.full",
-      "duration_seconds": 36.104,
+      "duration_seconds": 36.139,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
       "stderr_tail": "",
-      "stdout_tail": "........................................................................ [ 14%]\n........................................................................ [ 29%]\n........................................................................ [ 44%]\n........................................................................ [ 59%]\n........................................................................ [ 74%]\n........................................................................ [ 89%]\n....................................................                     [100%]Running teardown with pytest sessionfinish...\n\n============================== warnings summary ===============================\ntests/test_prompt_experiment_runner.py::test_prompt_experiment_runner_reuses_same_retrieval_for_control_and_treatment\n  [REDACTED_PATH] Projects\\ExperimentOS-AI\\packages\\evals\\ragas_adapter.py:211: DeprecationWarning: `langchain-community` is being sunset and is no longer actively maintained. See https://github.com/langchain-ai/langchain-community/issues/674 for details and migration guidance toward standalone integration packages.\n    import langchain_community.chat_models.vertexai  # noqa: F401\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n484 passed, 1 warning in 26.60s\n"
+      "stdout_tail": "........................................................................ [ 14%]\n........................................................................ [ 29%]\n........................................................................ [ 44%]\n........................................................................ [ 59%]\n........................................................................ [ 74%]\n........................................................................ [ 89%]\n....................................................                     [100%]Running teardown with pytest sessionfinish...\n\n============================== warnings summary ===============================\ntests/test_prompt_experiment_runner.py::test_prompt_experiment_runner_reuses_same_retrieval_for_control_and_treatment\n  [REDACTED_PATH] Projects\\ExperimentOS-AI\\packages\\evals\\ragas_adapter.py:211: DeprecationWarning: `langchain-community` is being sunset and is no longer actively maintained. See https://github.com/langchain-ai/langchain-community/issues/674 for details and migration guidance toward standalone integration packages.\n    import langchain_community.chat_models.vertexai  # noqa: F401\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n484 passed, 1 warning in 26.29s\n"
     },
     {
       "argv": [
@@ -1294,12 +1294,12 @@
         "tests/test_api_ask_db_integration.py"
       ],
       "command_id": "tests.database",
-      "duration_seconds": 15.038,
+      "duration_seconds": 15.56,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
       "stderr_tail": "",
-      "stdout_tail": "..............................                                           [100%]Running teardown with pytest sessionfinish...\n\n30 passed in 3.70s\n"
+      "stdout_tail": "..............................                                           [100%]Running teardown with pytest sessionfinish...\n\n30 passed in 3.87s\n"
     },
     {
       "argv": [
@@ -1315,7 +1315,7 @@
         "data/eval/agent_dataset.json"
       ],
       "command_id": "quality_gate.full",
-      "duration_seconds": 97.112,
+      "duration_seconds": 96.385,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1341,7 +1341,7 @@
         "--strict"
       ],
       "command_id": "ci_report.build",
-      "duration_seconds": 0.288,
+      "duration_seconds": 0.324,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1364,7 +1364,7 @@
         "artifacts\\phase3\\verification\\ci\\pr_comment.md"
       ],
       "command_id": "ci_report.render",
-      "duration_seconds": 0.296,
+      "duration_seconds": 0.24,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1383,7 +1383,7 @@
         "artifacts\\phase3\\verification\\ci\\pr_quality_report.json"
       ],
       "command_id": "ci_report.validate",
-      "duration_seconds": 0.271,
+      "duration_seconds": 0.288,
       "exit_code": 0,
       "report_paths": [],
       "status": "pass",
@@ -1515,7 +1515,7 @@
       "summary": "Phase 3 guides retained stale commands, scope, and CI-enforcement claims."
     }
   ],
-  "generated_at_utc": "2026-07-15T13:06:57.359477Z",
+  "generated_at_utc": "2026-07-16T00:52:41.994955Z",
   "limitations": [
     "Live OpenAI, LangSmith, Phoenix, and OTLP services are outside default verification.",
     "Dry-runs and in-memory exporters establish integration behavior, not production scale.",

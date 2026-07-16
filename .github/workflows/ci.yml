@@ -248,26 +248,6 @@ jobs:
     env:
       DATABASE_URL: postgresql+psycopg://experimentos_ci:experimentos_ci@localhost:5433/experimentos_ci
     steps:
-      - name: Record prerequisite status
-        id: prerequisites
-        if: ${{ always() }}
-        env:
-          FORMAT_RESULT: ${{ needs.format.result }}
-          LINT_RESULT: ${{ needs.lint.result }}
-          VALIDATE_RESULT: ${{ needs.validate.result }}
-          UNIT_RESULT: ${{ needs.unit.result }}
-          OFFLINE_EVAL_RESULT: ${{ needs.offline-eval-smoke.result }}
-          INTEGRATION_RESULT: ${{ needs.integration-db.result }}
-        shell: bash
-        run: |
-          prerequisite_exit_code=0
-          for result in "$FORMAT_RESULT" "$LINT_RESULT" "$VALIDATE_RESULT" "$UNIT_RESULT" "$OFFLINE_EVAL_RESULT" "$INTEGRATION_RESULT"; do
-            if [[ "$result" != "success" ]]; then
-              prerequisite_exit_code=2
-            fi
-          done
-          echo "prerequisite_exit_code=$prerequisite_exit_code" >> "$GITHUB_OUTPUT"
-
       - name: Check out repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -388,6 +368,26 @@ jobs:
     env:
       DATABASE_URL: postgresql+psycopg://experimentos_ci:experimentos_ci@localhost:5433/experimentos_ci
     steps:
+      - name: Record prerequisite status
+        id: prerequisites
+        if: ${{ always() }}
+        env:
+          FORMAT_RESULT: ${{ needs.format.result }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          VALIDATE_RESULT: ${{ needs.validate.result }}
+          UNIT_RESULT: ${{ needs.unit.result }}
+          OFFLINE_EVAL_RESULT: ${{ needs.offline-eval-smoke.result }}
+          INTEGRATION_RESULT: ${{ needs.integration-db.result }}
+        shell: bash
+        run: |
+          prerequisite_exit_code=0
+          for result in "$FORMAT_RESULT" "$LINT_RESULT" "$VALIDATE_RESULT" "$UNIT_RESULT" "$OFFLINE_EVAL_RESULT" "$INTEGRATION_RESULT"; do
+            if [[ "$result" != "success" ]]; then
+              prerequisite_exit_code=2
+            fi
+          done
+          echo "prerequisite_exit_code=$prerequisite_exit_code" >> "$GITHUB_OUTPUT"
+
       - name: Check out repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:

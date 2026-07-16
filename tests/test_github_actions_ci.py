@@ -2,6 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
+
+def _workflow_jobs() -> dict[str, object]:
+    workflow = yaml.safe_load(Path(".github/workflows/ci.yml").read_text(encoding="utf-8"))
+    return workflow["jobs"]
+
 
 def test_ci_workflow_declares_ai_quality_gate_and_offline_defaults() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
@@ -74,9 +81,14 @@ def test_github_actions_are_pinned_to_full_commit_shas() -> None:
 
 def test_authoritative_gate_preserves_prerequisite_failures() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    jobs = _workflow_jobs()
+    quality_gate_steps = jobs["ai-quality-gate"]["steps"]
+    integration_steps = jobs["integration-db"]["steps"]
 
     assert "id: prerequisites" in workflow
     assert "prerequisite_exit_code" in workflow
+    assert any(step.get("id") == "prerequisites" for step in quality_gate_steps)
+    assert all(step.get("id") != "prerequisites" for step in integration_steps)
     for job in ("format", "lint", "validate", "unit", "offline-eval-smoke", "integration-db"):
         assert f"needs.{job}.result" in workflow
     assert "if: ${{ always() }}" in workflow

@@ -1,7 +1,7 @@
 # Phase 3 Final Reliability Review
 
 - Schema: `phase3-final-review-v1`
-- Generated: `2026-07-15T13:06:57.359477Z`
+- Generated: `2026-07-16T00:52:41.994955Z`
 - Mode: `strict`
 - Closeout eligible: `yes`
 - Overall status: `pass`
@@ -69,44 +69,44 @@ External network access is test-blocked, secrets are redacted, and live provider
 
 | Command | Status | Exit | Duration (s) | Expected reports |
 | --- | --- | ---: | ---: | --- |
-| config.lock: uv lock --check | pass | 0 | 0.051 | none |
-| format.check: uv run ruff format --check . | pass | 0 | 0.116 | none |
-| lint: uv run ruff check . | pass | 0 | 0.108 | none |
-| prompt.registry.validate: uv run python -m packages.llm.prompt_registry_cli validate | pass | 0 | 0.229 | none |
-| prompt.experiment.validate: uv run python -m packages.evals.run_prompt_experiment validate --experiment rag-answer-abstention-v1-v2 | pass | 0 | 2.938 | none |
-| observability.status: uv run python -m packages.observability.cli status --provider all | pass | 0 | 1.792 | none |
-| observability.validate: uv run python -m packages.observability.cli validate --provider all | pass | 0 | 0.464 | none |
-| observability.dry_run.langsmith: uv run python -m packages.observability.cli dry-run --provider langsmith | pass | 0 | 1.517 | none |
-| observability.dry_run.phoenix: uv run python -m packages.observability.cli dry-run --provider phoenix | pass | 0 | 1.122 | none |
-| observability.dry_run.opentelemetry: uv run python -m packages.observability.cli dry-run --provider opentelemetry | pass | 0 | 0.546 | none |
-| tests.focused: uv run pytest -q tests/test_phase3_dataset_integrity.py tests/test_phase3_architecture.py tests/test_env_config.py tests/test_api_health.py tests/test_api_ask.py tests/test_agent_workflow.py tests/test_evaluation_harness.py tests/test_agent_evaluation.py tests/test_agent_e2e_evaluation.py tests/test_ragas_evaluation.py tests/test_deepeval_evaluation.py tests/test_prompt_registry.py tests/test_prompt_registry_cli.py tests/test_prompt_regression.py tests/test_prompt_experiment_validation.py tests/test_prompt_experiment_runner.py tests/test_prompt_experiment_cli.py tests/test_factuality.py tests/test_quality_policy.py tests/test_observability_config.py tests/test_observability_cli.py tests/test_observability_langsmith.py tests/test_observability_phoenix.py tests/test_observability_opentelemetry.py tests/test_observability_composite.py tests/test_observability_redaction.py tests/test_observability_integration.py tests/test_ci_quality_gate.py tests/test_ci_reporting.py tests/test_github_actions_ci.py tests/test_repository_hygiene.py tests/test_phase3_verification.py | pass | 0 | 35.961 | none |
-| database.migrate: uv run alembic upgrade head | pass | 0 | 1.473 | none |
-| database.ingest.1.exp-001-payment-recommendation: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-001-payment-recommendation --embedding-provider fake | pass | 0 | 1.344 | none |
-| database.ingest.1.exp-002-hotel-image-quality: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-002-hotel-image-quality --embedding-provider fake | pass | 0 | 1.268 | none |
-| database.ingest.1.exp-003-search-ranking: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-003-search-ranking --embedding-provider fake | pass | 0 | 1.306 | none |
-| database.ingest.1.exp-004-checkout-ux: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-004-checkout-ux --embedding-provider fake | pass | 0 | 1.248 | none |
-| database.ingest.1.exp-005-pricing: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-005-pricing --embedding-provider fake | pass | 0 | 1.312 | none |
-| database.ingest.1.exp-006-loyalty: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-006-loyalty --embedding-provider fake | pass | 0 | 1.34 | none |
-| database.ingest.1.exp-007-crm-notifications: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-007-crm-notifications --embedding-provider fake | pass | 0 | 1.409 | none |
-| database.ingest.1.exp-008-recommendation-systems: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-008-recommendation-systems --embedding-provider fake | pass | 0 | 1.306 | none |
-| database.ingest.1.exp-009-search-filters: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-009-search-filters --embedding-provider fake | pass | 0 | 1.333 | none |
-| database.ingest.1.exp-010-premium-subscriptions: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-010-premium-subscriptions --embedding-provider fake | pass | 0 | 1.36 | none |
-| database.ingest.2.exp-001-payment-recommendation: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-001-payment-recommendation --embedding-provider fake | pass | 0 | 1.341 | none |
-| database.ingest.2.exp-002-hotel-image-quality: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-002-hotel-image-quality --embedding-provider fake | pass | 0 | 1.266 | none |
-| database.ingest.2.exp-003-search-ranking: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-003-search-ranking --embedding-provider fake | pass | 0 | 1.506 | none |
-| database.ingest.2.exp-004-checkout-ux: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-004-checkout-ux --embedding-provider fake | pass | 0 | 1.582 | none |
-| database.ingest.2.exp-005-pricing: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-005-pricing --embedding-provider fake | pass | 0 | 1.478 | none |
-| database.ingest.2.exp-006-loyalty: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-006-loyalty --embedding-provider fake | pass | 0 | 1.651 | none |
-| database.ingest.2.exp-007-crm-notifications: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-007-crm-notifications --embedding-provider fake | pass | 0 | 1.597 | none |
-| database.ingest.2.exp-008-recommendation-systems: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-008-recommendation-systems --embedding-provider fake | pass | 0 | 1.529 | none |
-| database.ingest.2.exp-009-search-filters: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-009-search-filters --embedding-provider fake | pass | 0 | 1.287 | none |
-| database.ingest.2.exp-010-premium-subscriptions: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-010-premium-subscriptions --embedding-provider fake | pass | 0 | 1.409 | none |
-| tests.full: uv run pytest -q | pass | 0 | 36.104 | none |
-| tests.database: uv run pytest -q tests/test_alembic_config.py tests/test_db_models.py tests/test_ingestion_load_experiment.py tests/test_retrieval_service.py tests/test_retrieval_agent.py tests/test_api_ask_db_integration.py | pass | 0 | 15.038 | none |
-| quality_gate.full: uv run python scripts/run_ai_quality_gate.py --artifact-root artifacts\phase3\verification\quality_gate --dataset data/eval/qa_dataset.json --agent-dataset data/eval/agent_dataset.json | pass | 0 | 97.112 | none |
-| ci_report.build: uv run python -m packages.evals.run_ci_report build --report-dir artifacts\phase3\verification\quality_gate --quality-policy-report artifacts\phase3\verification\quality_gate\phase3\quality_policy.json --output artifacts\phase3\verification\ci\pr_quality_report.json --format all --strict | pass | 0 | 0.288 | none |
-| ci_report.render: uv run python -m packages.evals.run_ci_report render --input artifacts\phase3\verification\ci\pr_quality_report.json --format pr-comment --output artifacts\phase3\verification\ci\pr_comment.md | pass | 0 | 0.296 | none |
-| ci_report.validate: uv run python -m packages.evals.run_ci_report validate --input artifacts\phase3\verification\ci\pr_quality_report.json | pass | 0 | 0.271 | none |
+| config.lock: uv lock --check | pass | 0 | 0.049 | none |
+| format.check: uv run ruff format --check . | pass | 0 | 0.12 | none |
+| lint: uv run ruff check . | pass | 0 | 0.112 | none |
+| prompt.registry.validate: uv run python -m packages.llm.prompt_registry_cli validate | pass | 0 | 0.218 | none |
+| prompt.experiment.validate: uv run python -m packages.evals.run_prompt_experiment validate --experiment rag-answer-abstention-v1-v2 | pass | 0 | 2.83 | none |
+| observability.status: uv run python -m packages.observability.cli status --provider all | pass | 0 | 1.524 | none |
+| observability.validate: uv run python -m packages.observability.cli validate --provider all | pass | 0 | 0.395 | none |
+| observability.dry_run.langsmith: uv run python -m packages.observability.cli dry-run --provider langsmith | pass | 0 | 1.445 | none |
+| observability.dry_run.phoenix: uv run python -m packages.observability.cli dry-run --provider phoenix | pass | 0 | 1.016 | none |
+| observability.dry_run.opentelemetry: uv run python -m packages.observability.cli dry-run --provider opentelemetry | pass | 0 | 0.507 | none |
+| tests.focused: uv run pytest -q tests/test_phase3_dataset_integrity.py tests/test_phase3_architecture.py tests/test_env_config.py tests/test_api_health.py tests/test_api_ask.py tests/test_agent_workflow.py tests/test_evaluation_harness.py tests/test_agent_evaluation.py tests/test_agent_e2e_evaluation.py tests/test_ragas_evaluation.py tests/test_deepeval_evaluation.py tests/test_prompt_registry.py tests/test_prompt_registry_cli.py tests/test_prompt_regression.py tests/test_prompt_experiment_validation.py tests/test_prompt_experiment_runner.py tests/test_prompt_experiment_cli.py tests/test_factuality.py tests/test_quality_policy.py tests/test_observability_config.py tests/test_observability_cli.py tests/test_observability_langsmith.py tests/test_observability_phoenix.py tests/test_observability_opentelemetry.py tests/test_observability_composite.py tests/test_observability_redaction.py tests/test_observability_integration.py tests/test_ci_quality_gate.py tests/test_ci_reporting.py tests/test_github_actions_ci.py tests/test_repository_hygiene.py tests/test_phase3_verification.py | pass | 0 | 35.804 | none |
+| database.migrate: uv run alembic upgrade head | pass | 0 | 1.471 | none |
+| database.ingest.1.exp-001-payment-recommendation: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-001-payment-recommendation --embedding-provider fake | pass | 0 | 1.664 | none |
+| database.ingest.1.exp-002-hotel-image-quality: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-002-hotel-image-quality --embedding-provider fake | pass | 0 | 1.438 | none |
+| database.ingest.1.exp-003-search-ranking: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-003-search-ranking --embedding-provider fake | pass | 0 | 1.391 | none |
+| database.ingest.1.exp-004-checkout-ux: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-004-checkout-ux --embedding-provider fake | pass | 0 | 1.394 | none |
+| database.ingest.1.exp-005-pricing: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-005-pricing --embedding-provider fake | pass | 0 | 1.435 | none |
+| database.ingest.1.exp-006-loyalty: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-006-loyalty --embedding-provider fake | pass | 0 | 1.402 | none |
+| database.ingest.1.exp-007-crm-notifications: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-007-crm-notifications --embedding-provider fake | pass | 0 | 1.41 | none |
+| database.ingest.1.exp-008-recommendation-systems: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-008-recommendation-systems --embedding-provider fake | pass | 0 | 1.484 | none |
+| database.ingest.1.exp-009-search-filters: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-009-search-filters --embedding-provider fake | pass | 0 | 1.414 | none |
+| database.ingest.1.exp-010-premium-subscriptions: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-010-premium-subscriptions --embedding-provider fake | pass | 0 | 1.393 | none |
+| database.ingest.2.exp-001-payment-recommendation: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-001-payment-recommendation --embedding-provider fake | pass | 0 | 1.388 | none |
+| database.ingest.2.exp-002-hotel-image-quality: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-002-hotel-image-quality --embedding-provider fake | pass | 0 | 1.396 | none |
+| database.ingest.2.exp-003-search-ranking: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-003-search-ranking --embedding-provider fake | pass | 0 | 1.415 | none |
+| database.ingest.2.exp-004-checkout-ux: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-004-checkout-ux --embedding-provider fake | pass | 0 | 1.369 | none |
+| database.ingest.2.exp-005-pricing: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-005-pricing --embedding-provider fake | pass | 0 | 1.548 | none |
+| database.ingest.2.exp-006-loyalty: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-006-loyalty --embedding-provider fake | pass | 0 | 1.444 | none |
+| database.ingest.2.exp-007-crm-notifications: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-007-crm-notifications --embedding-provider fake | pass | 0 | 1.454 | none |
+| database.ingest.2.exp-008-recommendation-systems: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-008-recommendation-systems --embedding-provider fake | pass | 0 | 1.407 | none |
+| database.ingest.2.exp-009-search-filters: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-009-search-filters --embedding-provider fake | pass | 0 | 1.369 | none |
+| database.ingest.2.exp-010-premium-subscriptions: uv run python -m packages.ingestion.load_experiment --experiment-dir data\synthetic\experiments\exp-010-premium-subscriptions --embedding-provider fake | pass | 0 | 1.428 | none |
+| tests.full: uv run pytest -q | pass | 0 | 36.139 | none |
+| tests.database: uv run pytest -q tests/test_alembic_config.py tests/test_db_models.py tests/test_ingestion_load_experiment.py tests/test_retrieval_service.py tests/test_retrieval_agent.py tests/test_api_ask_db_integration.py | pass | 0 | 15.56 | none |
+| quality_gate.full: uv run python scripts/run_ai_quality_gate.py --artifact-root artifacts\phase3\verification\quality_gate --dataset data/eval/qa_dataset.json --agent-dataset data/eval/agent_dataset.json | pass | 0 | 96.385 | none |
+| ci_report.build: uv run python -m packages.evals.run_ci_report build --report-dir artifacts\phase3\verification\quality_gate --quality-policy-report artifacts\phase3\verification\quality_gate\phase3\quality_policy.json --output artifacts\phase3\verification\ci\pr_quality_report.json --format all --strict | pass | 0 | 0.324 | none |
+| ci_report.render: uv run python -m packages.evals.run_ci_report render --input artifacts\phase3\verification\ci\pr_quality_report.json --format pr-comment --output artifacts\phase3\verification\ci\pr_comment.md | pass | 0 | 0.24 | none |
+| ci_report.validate: uv run python -m packages.evals.run_ci_report validate --input artifacts\phase3\verification\ci\pr_quality_report.json | pass | 0 | 0.288 | none |
 
 ## Test Results
 

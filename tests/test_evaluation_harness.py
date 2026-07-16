@@ -272,6 +272,8 @@ def test_offline_evaluator_invokes_question_answering_service() -> None:
         questions=[question],
         top_k=3,
         experiment_id_resolver=lambda item: experiment_id,
+        dataset_id="qa.golden",
+        dataset_version="sha256:" + "a" * 64,
     )
 
     result = run(evaluator.evaluate())
@@ -283,6 +285,16 @@ def test_offline_evaluator_invokes_question_answering_service() -> None:
     assert result.samples[0].error is None
     assert result.samples[0].prompt_id == "rag.answer"
     assert result.samples[0].prompt_version == "1"
+    assert result.dataset_id == "qa.golden"
+    assert result.dataset_version == "sha256:" + "a" * 64
+
+
+def test_evaluation_dataset_ids_distinguish_defaults_and_custom_paths() -> None:
+    from packages.evals.run import _dataset_id_for_path
+
+    assert _dataset_id_for_path(Path("data/eval/qa_dataset.json")) == "qa.golden"
+    assert _dataset_id_for_path(Path("data/eval/ci_smoke_dataset.json")) == "qa.ci_smoke"
+    assert _dataset_id_for_path(Path("custom.json")) == "qa.custom"
 
 
 def test_report_renderer_includes_summary_and_low_performing_rows() -> None:

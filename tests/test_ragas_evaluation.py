@@ -4,6 +4,8 @@ import types
 import uuid
 from pathlib import Path
 
+import pytest
+
 from packages.evals.dataset import EvaluationQuestion
 from packages.evals.evaluator import EvaluationRun, EvaluationSampleResult
 from packages.evals.metrics import EvaluationSummary, SampleMetrics
@@ -306,3 +308,20 @@ def test_build_ragas_dataset_uses_single_turn_sample_shape() -> None:
     assert dataset.samples[0].payload["retrieved_context_ids"] == [
         "Adaptive Payment Method Recommendation"
     ]
+
+
+def test_installed_ragas_v04_bindings_use_supported_metric_namespaces() -> None:
+    from importlib.metadata import PackageNotFoundError, version
+
+    from packages.evals.ragas_adapter import import_ragas_bindings
+
+    try:
+        installed_version = version("ragas")
+    except PackageNotFoundError:
+        pytest.skip("RAGAS optional dependency is not installed")
+
+    bindings = import_ragas_bindings()
+
+    assert bindings.version == installed_version
+    assert bindings.metric_factories["context_precision"]
+    assert bindings.metric_factories["answer_relevancy"]

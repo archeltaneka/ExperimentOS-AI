@@ -6,6 +6,22 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_DATASET_PATH = Path("data/eval/qa_dataset.json")
+_VALID_CATEGORIES = {
+    "business_impact",
+    "decision",
+    "factual_retrieval",
+    "insufficient_evidence",
+    "legacy_rag_fallback",
+    "result_interpretation",
+    "risk_guardrail",
+    "rollout_decision",
+}
+_VALID_DIFFICULTIES = {"easy", "medium", "hard"}
+_VALID_FAILURE_MODES = {
+    None,
+    "unsupported_business_estimate",
+    "unsupported_significance_or_roi",
+}
 
 
 @dataclass(frozen=True)
@@ -59,7 +75,7 @@ def _question_from_mapping(item: Any, *, index: int) -> EvaluationQuestion:
     if missing:
         raise ValueError(f"evaluation dataset item {index} is missing: {', '.join(missing)}")
 
-    return EvaluationQuestion(
+    question = EvaluationQuestion(
         id=_required_string(item, "id", index=index),
         experiment_id=_required_string(item, "experiment_id", index=index),
         question=_required_string(item, "question", index=index),
@@ -77,6 +93,39 @@ def _question_from_mapping(item: Any, *, index: int) -> EvaluationQuestion:
         expected_failure_mode=_optional_string(item, "expected_failure_mode", index=index),
         notes=_optional_string(item, "notes", index=index),
     )
+    _require_known(
+        question.category,
+        field="category",
+        allowed=_VALID_CATEGORIES,
+        index=index,
+    )
+    _require_known(
+        question.difficulty,
+        field="difficulty",
+        allowed=_VALID_DIFFICULTIES,
+        index=index,
+    )
+    _require_known(
+        question.expected_failure_mode,
+        field="expected_failure_mode",
+        allowed=_VALID_FAILURE_MODES,
+        index=index,
+    )
+    return question
+
+
+def _require_known(
+    value: str | None,
+    *,
+    field: str,
+    allowed: set[str | None],
+    index: int,
+) -> None:
+    if value not in allowed:
+        rendered = ", ".join(sorted(item for item in allowed if item is not None))
+        raise ValueError(
+            f"evaluation dataset item {index} field {field!r} must be one of: {rendered}"
+        )
 
 
 def _required_string(item: dict[str, Any], key: str, *, index: int) -> str:

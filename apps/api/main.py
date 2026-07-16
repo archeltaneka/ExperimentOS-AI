@@ -71,7 +71,7 @@ def get_session_factory() -> async_sessionmaker:
 
 def get_llm_client() -> LLMClient:
     load_environment()
-    provider = os.environ.get("LLM_PROVIDER", "auto").lower()
+    provider = os.environ.get("LLM_PROVIDER", "mock").lower()
     if provider == "mock":
         return MockLLMClient()
     if provider == "ollama":
@@ -89,7 +89,7 @@ def get_llm_client() -> LLMClient:
 
 def get_embedding_provider_name() -> str:
     load_environment()
-    return os.environ.get("EMBEDDING_PROVIDER", "auto").lower()
+    return os.environ.get("EMBEDDING_PROVIDER", "fake").lower()
 
 
 class QuestionAnsweringDependency(Protocol):

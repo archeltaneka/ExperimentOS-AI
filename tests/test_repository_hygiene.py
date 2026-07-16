@@ -78,3 +78,51 @@ def test_ruff_import_classification_keeps_migrations_stable_across_ci_environmen
     assert "from alembic import context\nfrom sqlalchemy import engine_from_config, pool" in env
     assert "import sqlalchemy as sa\nfrom alembic import op\nfrom sqlalchemy.dialects" in initial
     assert "import sqlalchemy as sa\nfrom alembic import op" in content
+
+
+def test_env_example_uses_explicit_offline_provider_defaults() -> None:
+    example = Path(".env.example").read_text(encoding="utf-8")
+
+    assert "EMBEDDING_PROVIDER=fake" in example
+    assert "LLM_PROVIDER=mock" in example
+    assert "EMBEDDING_PROVIDER=auto" not in example
+    assert "LLM_PROVIDER=auto" not in example
+
+
+def test_duplicate_httpx2_dependency_is_absent() -> None:
+    project = Path("pyproject.toml").read_text(encoding="utf-8")
+
+    assert '"httpx2' not in project
+
+
+def test_phase3_closeout_docs_describe_strict_and_diagnostic_modes() -> None:
+    closeout = Path("docs/phase3/phase3_closeout.md").read_text(encoding="utf-8")
+
+    assert "uv run python scripts/verify_phase3.py" in closeout
+    assert "--offline-only" in closeout
+    assert "non-closeout diagnostic" in closeout.lower()
+    assert "production-oriented portfolio system" in closeout
+    assert "not proof of production deployment at scale" in closeout
+
+
+def test_phase3_docs_do_not_retain_known_closeout_drift() -> None:
+    baseline = Path("docs/phase3/reliability_baseline.md").read_text(encoding="utf-8")
+    factuality = Path("docs/phase3/factuality_and_hallucination.md").read_text(encoding="utf-8")
+    pr_reports = Path("docs/phase3/pr_evaluation_reports.md").read_text(encoding="utf-8")
+    readme = Path("README.md").read_text(encoding="utf-8")
+
+    assert "CI enforcement is not implemented" not in baseline
+    assert "no CI quality gate consumes the experiment recommendation yet" not in baseline
+    assert "not connected to production blocking or CI gates" not in factuality
+    assert "packages.evals.cli ci-report" not in pr_reports
+    assert "Phoenix and\nOpenTelemetry are still out of scope" not in readme
+
+
+def test_branch_protection_docs_keep_pr_reporting_informational() -> None:
+    docs = Path("docs/phase3/github_actions.md").read_text(encoding="utf-8")
+
+    assert "AI quality gate" in docs
+    assert "PR reporting" in docs
+    assert "not required" in docs
+    for check in ("format", "lint", "unit", "integration-db", "ai-quality-gate"):
+        assert f"`{check}`" in docs

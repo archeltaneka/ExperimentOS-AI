@@ -5,11 +5,16 @@ Phoenix, and OpenTelemetry observability adapters in addition to the existing RA
 workflow, prompt regression, prompt experiments, RAGAS, DeepEval, and centralized quality policy
 surfaces.
 
+The optional RAGAS 0.4.3 adapter uses its current metric namespaces and applies a local,
+no-network compatibility shim because RAGAS eagerly imports a removed optional VertexAI module in
+the resolved LangChain environment. Offline ID-based metrics remain repository-safe; judge metrics
+still require explicit providers.
+
 ### Quality Policy
 
 - implementation status: available
 - entrypoint: `packages.evals.run_quality_policy`
-- shared CLI surface: `packages.evals.cli quality-policy`
+- primary CLI surface: `python -m packages.evals.run_quality_policy`
 - config path: `config/evaluation/quality_policy.yaml`
 - default outputs:
   - `reports/phase3/quality_policy.md`
@@ -113,7 +118,8 @@ Remaining prompt experiment gaps:
 - runtime assignment is intentionally not wired into public traffic
 - offline CLI defaults use deterministic fixture retrieval rather than a database-backed corpus
 - no automatic prompt promotion exists
-- no CI quality gate consumes the experiment recommendation yet
+- CI generates and validates the offline experiment artifact, but its recommendation never
+  promotes a prompt or claims production impact
 
 ### Observability Status
 
@@ -173,7 +179,7 @@ Remaining observability gaps:
 ### Factuality Evaluation
 
 - entrypoint: `packages.evals.run_factuality`
-- CLI wrapper: `packages.evals.cli`
+- CLI surface: `python -m packages.evals.run_factuality`
 - default outputs:
   - `reports/phase3/factuality_report.md`
   - `reports/phase3/factuality_report.json`
@@ -221,6 +227,7 @@ The factuality layer improves Phase 3 readiness for later quality gates, but sev
 - production responses are not blocked yet
 - no automatic answer repair or regeneration exists
 - no human fact-check review UI exists
-- quality policy thresholds are repository-owned now, but CI enforcement is not implemented yet
+- quality policy thresholds are repository-owned and enforced by the `ai-quality-gate`; they do
+  not directly block production responses at runtime
 
 This keeps the repository honest about what the current checks can and cannot prove.

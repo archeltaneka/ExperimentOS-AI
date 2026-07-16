@@ -181,12 +181,10 @@ def import_ragas_bindings() -> RagasBindings:
     from ragas.embeddings import embedding_factory
     from ragas.llms import llm_factory
     from ragas.metrics.collections import (
+        AnswerRelevancy,
         ContextPrecision,
         ContextRecall,
         Faithfulness,
-        IDBasedContextPrecision,
-        IDBasedContextRecall,
-        ResponseRelevancy,
     )
     from ragas.run_config import RunConfig
 
@@ -199,12 +197,10 @@ def import_ragas_bindings() -> RagasBindings:
         llm_factory=llm_factory,
         embedding_factory=embedding_factory,
         metric_factories={
-            "id_based_context_precision": IDBasedContextPrecision,
-            "id_based_context_recall": IDBasedContextRecall,
             "context_precision": ContextPrecision,
             "context_recall": ContextRecall,
             "faithfulness": Faithfulness,
-            "answer_relevancy": ResponseRelevancy,
+            "answer_relevancy": AnswerRelevancy,
         },
         shimmed_vertexai=shimmed_vertexai,
     )

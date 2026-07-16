@@ -70,16 +70,16 @@ fork token restrictions must not block a valid merge for the wrong reason.
 
 ## Artifacts and local preview
 
-The AI quality artifact includes `phase3/pr_quality_report.json`,
-`phase3/pr_quality_report.md`, and `phase3/pr_comment.md`, alongside the source reports.
+The AI quality artifact includes the generated `pr_quality_report.json`, companion Markdown, and
+`pr_comment.md` below its CI report directory, alongside the source reports.
 Artifact retention is controlled by the existing AI quality artifact configuration.
 
 Build, preview, and validate locally without live providers:
 
 ```powershell
-uv run python -m packages.evals.cli ci-report build --report-dir artifacts/ci/ai-quality --output reports/phase3/ci/pr_quality_report.json --strict
-uv run python -m packages.evals.cli ci-report render --input reports/phase3/ci/pr_quality_report.json --format pr-comment
-uv run python -m packages.evals.cli ci-report validate --input reports/phase3/ci/pr_quality_report.json
+uv run python -m packages.evals.run_ci_report build --report-dir artifacts/ci/ai-quality --quality-policy-report artifacts/ci/ai-quality/phase3/quality_policy.json --output artifacts/ci/ai-quality/ci/pr_quality_report.json --format all --strict
+uv run python -m packages.evals.run_ci_report render --input artifacts/ci/ai-quality/ci/pr_quality_report.json --format pr-comment --output artifacts/ci/ai-quality/ci/pr_comment.md
+uv run python -m packages.evals.run_ci_report validate --input artifacts/ci/ai-quality/ci/pr_quality_report.json
 ```
 
 ## Troubleshooting

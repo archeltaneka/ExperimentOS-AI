@@ -355,6 +355,15 @@ metrics:
     required: true
     weight: 1.5
     description: Fabricated significance claims are never allowed.
+  - metric_id: factuality.findings.fabricated_experiment_result
+    source: factuality
+    category: Factuality
+    operator: lte
+    value: 0
+    severity: critical
+    required: true
+    weight: 1.5
+    description: Fabricated experiment result claims are never allowed.
   - metric_id: factuality.findings.contradiction_with_structured_experiment_data
     source: factuality
     category: Factuality

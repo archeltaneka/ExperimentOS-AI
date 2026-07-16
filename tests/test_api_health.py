@@ -7,6 +7,20 @@ from fastapi.testclient import TestClient
 from apps.api.main import app, get_embedding_provider_name, get_llm_client
 
 
+def test_missing_provider_settings_ignore_live_api_keys(monkeypatch, tmp_path: Path) -> None:
+    from packages.llm.client import MockLLMClient
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("EMBEDDING_PROVIDER", raising=False)
+    monkeypatch.setenv("PYTHON_DOTENV_DISABLED", "1")
+    monkeypatch.setenv("OPENAI_API_KEY", "must-not-be-used")
+    monkeypatch.setenv("GEMINI_API_KEY", "must-not-be-used")
+
+    assert isinstance(get_llm_client(), MockLLMClient)
+    assert get_embedding_provider_name() == "fake"
+
+
 def test_health_endpoint_returns_ok() -> None:
     client = TestClient(app)
 
@@ -21,6 +35,7 @@ def test_embedding_provider_name_uses_dotenv(monkeypatch, tmp_path: Path) -> Non
     dotenv_path.write_text("EMBEDDING_PROVIDER=huggingface\n", encoding="utf-8")
 
     monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("EMBEDDING_PROVIDER", raising=False)
 
     assert get_embedding_provider_name() == "huggingface"
 
@@ -46,6 +61,10 @@ def test_llm_client_auto_prefers_gemini_when_api_key_is_set(monkeypatch, tmp_pat
     )
 
     monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_MODEL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setattr(main_module, "GeminiLLMClient", StubGeminiClient)
 
     client = get_llm_client()

@@ -174,7 +174,8 @@ uv run python -m packages.observability.cli smoke-test --dry-run
 
 - LangSmith prompt hub is not integrated
 - LangSmith datasets and hosted evaluation are not integrated
-- Phoenix and OpenTelemetry are still out of scope
+- Phoenix and OpenTelemetry are available as separate optional sinks through the shared provider
+  boundary
 - cross-service distributed tracing is still out of scope
 - production alerting is not implemented
 - agent node spans are exported from final workflow state summaries rather than live node callbacks

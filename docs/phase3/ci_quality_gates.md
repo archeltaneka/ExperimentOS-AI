@@ -176,6 +176,16 @@ uv run python scripts/validate_ci_environment.py --output artifacts/ci/ai-qualit
 uv run python scripts/run_ai_quality_gate.py --artifact-root artifacts/ci/ai-quality --artifact-name ai-quality-gate-local --policy-changed false
 ```
 
+For the milestone-wide strict review, use the repository-owned wrapper after the same database
+setup:
+
+```powershell
+uv run python scripts/verify_phase3.py
+```
+
+`uv run python scripts/verify_phase3.py --offline-only` is a non-closeout diagnostic. It skips the
+database-backed quality gate and can never recommend `ready_to_close`.
+
 ## Troubleshooting
 
 - PostgreSQL readiness or migration failure: infrastructure failure, check the job log before the evaluation commands.

@@ -69,6 +69,37 @@ def test_validate_policy_invariants_enforces_zero_tolerance_rules() -> None:
 
     validate_policy_invariants(policy)
 
+    metric = next(
+        item
+        for item in policy.metrics
+        if item.metric_id == "factuality.findings.fabricated_experiment_result"
+    )
+    assert metric.operator == "lte"
+    assert metric.value == 0
+    assert metric.severity == "critical"
+    assert metric.required is True
+
+
+def test_validate_policy_invariants_rejects_missing_experiment_result_guardrail(
+    tmp_path: Path,
+) -> None:
+    from packages.evals.ci_quality_gate import validate_policy_invariants
+    from packages.evals.policy.config import load_quality_policy
+
+    policy_path = tmp_path / "quality_policy.yaml"
+    policy_path.write_text(
+        Path("config/evaluation/quality_policy.yaml")
+        .read_text(encoding="utf-8")
+        .replace(
+            "factuality.findings.fabricated_experiment_result",
+            "factuality.findings.disabled_experiment_result",
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="fabricated_experiment_result"):
+        validate_policy_invariants(load_quality_policy(policy_path))
+
 
 def test_validate_policy_invariants_rejects_weakened_critical_threshold(tmp_path: Path) -> None:
     from packages.evals.ci_quality_gate import validate_policy_invariants

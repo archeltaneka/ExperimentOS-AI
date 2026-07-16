@@ -13,6 +13,7 @@ from packages.config.env import load_environment, resolve_setting
 from packages.db.models import Experiment
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.evals.dataset import DEFAULT_DATASET_PATH, EvaluationQuestion, load_evaluation_dataset
+from packages.evals.dataset_manifest import build_dataset_manifest
 from packages.evals.evaluator import OfflineEvaluator
 from packages.evals.report import evaluation_report_to_json, render_evaluation_report
 from packages.ingestion.embeddings import (
@@ -193,6 +194,11 @@ async def build_evaluation_run(args: argparse.Namespace):
 
 async def _build_evaluation_run(args: argparse.Namespace, observability_provider):
     questions = load_evaluation_dataset(args.dataset)
+    dataset_manifest = build_dataset_manifest(
+        args.dataset,
+        dataset_id=_dataset_id_for_path(args.dataset),
+        case_count=len(questions),
+    )
     engine = create_database_engine()
     session_factory = create_async_session_factory(engine)
     provider = build_embedding_provider(
@@ -226,6 +232,8 @@ async def _build_evaluation_run(args: argparse.Namespace, observability_provider
                 embedding_model=_embedding_model_label(args),
                 llm_provider=args.llm_provider,
                 llm_model=_llm_model_label(args),
+                dataset_id=dataset_manifest.dataset_id,
+                dataset_version=dataset_manifest.version,
             )
             result = await evaluator.evaluate()
             root_metadata = {
@@ -249,6 +257,15 @@ async def _build_evaluation_run(args: argparse.Namespace, observability_provider
             return result
     finally:
         await engine.dispose()
+
+
+def _dataset_id_for_path(path: Path) -> str:
+    resolved = path.resolve()
+    if resolved == DEFAULT_DATASET_PATH.resolve():
+        return "qa.golden"
+    if resolved == Path("data/eval/ci_smoke_dataset.json").resolve():
+        return "qa.ci_smoke"
+    return "qa.custom"
 
 
 def _build_llm_client(args: argparse.Namespace) -> Any:

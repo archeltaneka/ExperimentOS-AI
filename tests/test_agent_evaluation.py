@@ -471,6 +471,8 @@ def test_agent_evaluator_runs_small_fake_dataset() -> None:
     evaluator = AgentWorkflowEvaluator(
         workflow_service=build_default_agent_workflow_service(),
         cases=cases,
+        dataset_id="agent.golden",
+        dataset_version="sha256:" + "b" * 64,
     )
 
     run_result = evaluator.evaluate()
@@ -481,6 +483,8 @@ def test_agent_evaluator_runs_small_fake_dataset() -> None:
     assert run_result.summary.planner_intent_accuracy == pytest.approx(1.0)
     assert run_result.summary.routing_accuracy == pytest.approx(1.0)
     assert run_result.summary.citation_coverage >= 1.0
+    assert run_result.dataset_id == "agent.golden"
+    assert run_result.dataset_version == "sha256:" + "b" * 64
     assert {
         "lookup",
         "rollout_decision",
@@ -489,6 +493,13 @@ def test_agent_evaluator_runs_small_fake_dataset() -> None:
         "approval_workflow",
         "insufficient_evidence",
     }.issubset({case.category for case in cases})
+
+
+def test_agent_dataset_ids_distinguish_default_and_custom_paths() -> None:
+    from packages.evals.run_agent import _dataset_id_for_path
+
+    assert _dataset_id_for_path(Path("data/eval/agent_dataset.json")) == "agent.golden"
+    assert _dataset_id_for_path(Path("custom.json")) == "agent.custom"
 
 
 def test_agent_cli_parser_accepts_dataset_and_output() -> None:

@@ -156,6 +156,7 @@ def validate_policy_invariants(policy: QualityPolicy) -> None:
     required_invariants = {
         "factuality.findings.fabricated_revenue_or_roi": ("lte", 0, "critical"),
         "factuality.findings.fabricated_statistical_significance": ("lte", 0, "critical"),
+        "factuality.findings.fabricated_experiment_result": ("lte", 0, "critical"),
         "factuality.findings.contradiction_with_structured_experiment_data": (
             "lte",
             0,

@@ -9,7 +9,7 @@ from packages.config.env import load_environment
 from packages.db.session import get_database_url
 
 
-def test_load_environment_overrides_stale_shell_values(monkeypatch, tmp_path: Path) -> None:
+def test_load_environment_preserves_explicit_shell_values(monkeypatch, tmp_path: Path) -> None:
     dotenv_path = tmp_path / ".env"
     dotenv_path.write_text("LLM_PROVIDER=gemini\n", encoding="utf-8")
 
@@ -17,6 +17,20 @@ def test_load_environment_overrides_stale_shell_values(monkeypatch, tmp_path: Pa
     monkeypatch.setenv("LLM_PROVIDER", "ollama")
 
     load_environment()
+
+    assert os.environ["LLM_PROVIDER"] == "ollama"
+
+
+def test_load_environment_can_explicitly_override_stale_values(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text("LLM_PROVIDER=gemini\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("LLM_PROVIDER", "ollama")
+
+    load_environment(override=True)
 
     assert os.environ["LLM_PROVIDER"] == "gemini"
 
@@ -32,6 +46,23 @@ def test_get_database_url_loads_dotenv(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
     assert get_database_url() == "postgresql+psycopg://file:pass@localhost:5433/app"
+
+
+def test_get_database_url_prefers_explicit_process_environment(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    (tmp_path / ".env").write_text(
+        "DATABASE_URL=postgresql+psycopg://file:pass@localhost:5433/file_db\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://shell:pass@localhost:5433/shell_db",
+    )
+
+    assert get_database_url() == "postgresql+psycopg://shell:pass@localhost:5433/shell_db"
 
 
 def test_ingestion_cli_loads_dotenv_before_running(monkeypatch, tmp_path: Path) -> None:

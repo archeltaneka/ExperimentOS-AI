@@ -16,6 +16,7 @@ from packages.evals.agent_report import (
     agent_evaluation_report_to_json,
     render_agent_evaluation_report,
 )
+from packages.evals.dataset_manifest import build_dataset_manifest
 from packages.observability.factory import resolve_observability_provider
 
 DEFAULT_AGENT_REPORT_PATH = Path("reports/agent_evaluation.md")
@@ -72,9 +73,16 @@ def build_evaluation_run(args: argparse.Namespace):
 
 def _build_evaluation_run(args: argparse.Namespace, observability_provider):
     cases = load_agent_evaluation_dataset(args.dataset)
+    dataset_manifest = build_dataset_manifest(
+        args.dataset,
+        dataset_id=_dataset_id_for_path(args.dataset),
+        case_count=len(cases),
+    )
     evaluator = AgentWorkflowEvaluator(
         workflow_service=build_default_agent_workflow_service(observability_provider),
         cases=cases,
+        dataset_id=dataset_manifest.dataset_id,
+        dataset_version=dataset_manifest.version,
     )
     result = evaluator.evaluate()
     current_span = observability_provider.current_span()
@@ -97,6 +105,12 @@ def _build_evaluation_run(args: argparse.Namespace, observability_provider):
             }
         )
     return result
+
+
+def _dataset_id_for_path(path: Path) -> str:
+    if path.resolve() == DEFAULT_AGENT_DATASET_PATH.resolve():
+        return "agent.golden"
+    return "agent.custom"
 
 
 def main() -> None:

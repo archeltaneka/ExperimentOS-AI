@@ -24,8 +24,9 @@ dependencies = [
 [dependency-groups]
 dev = [
   "httpx>=0.27.2",
+  "mypy>=1.18.2",
   "pytest>=8.3.3",
-  "ruff>=0.7.0"
+  "ruff>=0.7.0",
 ]
 eval = [
     "deepeval>=4.0.7",
@@ -54,6 +55,11 @@ default-groups = ["dev"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["packages/experiments/analysis"]
 
 [tool.ruff]
 line-length = 100

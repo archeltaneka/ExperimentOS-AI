@@ -18,6 +18,7 @@ from packages.experiments.analysis import (
     MetricDefinition,
     MetricType,
     MetricUnit,
+    ObservationalAnalysisMethod,
     OutcomeDirection,
     OutcomeMetric,
     PopulationDefinition,
@@ -38,6 +39,7 @@ from packages.experiments.analysis import (
 from tests.analysis_contract_fixtures import (
     covariate,
     observational_request,
+    quasi_experimental_request,
     randomized_design,
     randomized_request,
     utc,
@@ -345,12 +347,43 @@ def test_pre_treatment_metrics_must_end_before_randomized_treatment() -> None:
         randomized_request(pre_treatment_metrics=(metric,))
 
 
+def test_quasi_pre_treatment_metric_rejects_end_after_post_period_start() -> None:
+    metric = PreTreatmentMetric(
+        metric=covariate().metric,
+        measurement_period=TimePeriod(
+            start=utc(2026, 6, 1),
+            end=utc(2026, 7, 2),
+        ),
+    )
+    with pytest.raises(ValidationError, match="pre-treatment metric"):
+        quasi_experimental_request(pre_treatment_metrics=(metric,))
+
+
+def test_quasi_pre_treatment_metric_accepts_end_at_post_period_start() -> None:
+    metric = PreTreatmentMetric(
+        metric=covariate().metric,
+        measurement_period=TimePeriod(
+            start=utc(2026, 6, 1),
+            end=utc(2026, 7, 1),
+        ),
+    )
+    request = quasi_experimental_request(pre_treatment_metrics=(metric,))
+    assert request.pre_treatment_metrics == (metric,)
+
+
 @pytest.mark.parametrize("level", [0.0, 1.0, -0.1, 1.1])
 def test_requested_uncertainty_levels_are_open_probabilities(level: float) -> None:
     with pytest.raises(ValidationError):
         RequestedConfidenceLevel(level=level)
     with pytest.raises(ValidationError):
         RequestedCredibleLevel(level=level)
+
+
+def test_constructs_request_with_requested_credible_level() -> None:
+    uncertainty = RequestedCredibleLevel(level=0.95)
+    request = randomized_request(uncertainty=uncertainty)
+    assert request.uncertainty.kind == "credible"
+    assert request.uncertainty.level == 0.95
 
 
 def test_task_two_method_enum_values_are_stable() -> None:
@@ -362,3 +395,9 @@ def test_task_two_method_enum_values_are_stable() -> None:
         "heterogeneous_treatment_effect",
     ]
     assert [member.value for member in QuasiExperimentalMethod] == ["difference_in_differences"]
+    assert [member.value for member in ObservationalAnalysisMethod] == [
+        "propensity_score",
+        "weighting",
+        "double_machine_learning",
+        "heterogeneous_treatment_effect",
+    ]

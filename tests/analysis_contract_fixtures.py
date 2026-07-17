@@ -22,9 +22,12 @@ from packages.experiments.analysis import (
     OutcomeMetric,
     PopulationDefinition,
     PreTreatmentMetric,
+    QuasiExperimentalDesign,
+    QuasiExperimentalMethod,
     RandomizedAnalysisMethod,
     RandomizedExperimentDesign,
     RequestedConfidenceLevel,
+    RequestedUncertainty,
     SampleCounts,
     TimePeriod,
     TreatmentDefinition,
@@ -37,6 +40,9 @@ RANDOMIZED_START = datetime(2026, 7, 1, tzinfo=UTC)
 RANDOMIZED_END = datetime(2026, 7, 15, tzinfo=UTC)
 OBSERVATIONAL_START = datetime(2026, 6, 1, tzinfo=UTC)
 OBSERVATIONAL_END = datetime(2026, 6, 30, tzinfo=UTC)
+QUASI_PRE_START = datetime(2026, 6, 1, tzinfo=UTC)
+QUASI_POST_START = datetime(2026, 7, 1, tzinfo=UTC)
+QUASI_POST_END = datetime(2026, 7, 15, tzinfo=UTC)
 
 
 def utc(year: int, month: int, day: int) -> datetime:
@@ -125,6 +131,7 @@ def randomized_request(
     control_label: str = "Standard payment",
     control_assignment_value: str = "control",
     pre_treatment_metrics: tuple[PreTreatmentMetric, ...] = (),
+    uncertainty: RequestedUncertainty | None = None,
 ) -> AnalysisRequest:
     return AnalysisRequest(
         population=population(),
@@ -143,6 +150,45 @@ def randomized_request(
         outcome=outcome(),
         estimand=EstimandDefinition(kind=EstimandKind.INTENTION_TO_TREAT),
         study_design=randomized_design(),
+        unit_of_analysis=AnalysisUnit(unit_id="order", label="Order"),
+        clustering=NoClustering(),
+        sample_counts=SampleCounts(total=200, treatment=100, control=100),
+        uncertainty=uncertainty or RequestedConfidenceLevel(level=0.95),
+        pre_treatment_metrics=pre_treatment_metrics,
+    )
+
+
+def quasi_experimental_request(
+    *,
+    pre_treatment_metrics: tuple[PreTreatmentMetric, ...] = (),
+) -> AnalysisRequest:
+    return AnalysisRequest(
+        population=population(),
+        treatment=TreatmentDefinition(
+            treatment_id="ranked_payment",
+            label="Ranked payment",
+            assignment_value="treatment",
+            description="Rank payment methods using the recommendation model.",
+        ),
+        control=ControlDefinition(
+            control_id="standard_payment",
+            label="Standard payment",
+            assignment_value="control",
+            description="Use the standard payment-method ordering.",
+        ),
+        outcome=outcome(),
+        estimand=EstimandDefinition(kind=EstimandKind.AVERAGE_TREATMENT_EFFECT),
+        study_design=QuasiExperimentalDesign(
+            method=QuasiExperimentalMethod.DIFFERENCE_IN_DIFFERENCES,
+            pre_treatment_period=TimePeriod(
+                start=QUASI_PRE_START,
+                end=QUASI_POST_START,
+            ),
+            post_treatment_period=TimePeriod(
+                start=QUASI_POST_START,
+                end=QUASI_POST_END,
+            ),
+        ),
         unit_of_analysis=AnalysisUnit(unit_id="order", label="Order"),
         clustering=NoClustering(),
         sample_counts=SampleCounts(total=200, treatment=100, control=100),

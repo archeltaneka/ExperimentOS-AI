@@ -76,6 +76,23 @@ from .results import (
     FailedAnalysisResult,
     InconclusiveAnalysisResult,
 )
+from .serialization import (
+    ANALYSIS_FINDING_ADAPTER,
+    ANALYSIS_OUTCOME_ADAPTER,
+    ANALYSIS_REQUEST_ADAPTER,
+    BUSINESS_IMPACT_PROJECTION_ADAPTER,
+    EFFECT_ESTIMATE_ADAPTER,
+    ESTIMAND_ADAPTER,
+    STUDY_DESIGN_ADAPTER,
+    analysis_finding_from_json,
+    analysis_outcome_from_json,
+    analysis_request_from_json,
+    business_impact_projection_from_json,
+    effect_estimate_from_json,
+    estimand_from_json,
+    study_design_from_json,
+    to_canonical_json,
+)
 from .study_designs import (
     Clustered,
     ClusteringSpecification,
@@ -110,7 +127,14 @@ from .uncertainty import (
 )
 
 __all__ = [
+    "ANALYSIS_FINDING_ADAPTER",
+    "ANALYSIS_OUTCOME_ADAPTER",
+    "ANALYSIS_REQUEST_ADAPTER",
+    "BUSINESS_IMPACT_PROJECTION_ADAPTER",
+    "EFFECT_ESTIMATE_ADAPTER",
+    "ESTIMAND_ADAPTER",
     "SCHEMA_VERSION",
+    "STUDY_DESIGN_ADAPTER",
     "AnalysisStatus",
     "AnalysisFailure",
     "AnalysisFinding",
@@ -203,4 +227,12 @@ __all__ = [
     "Diagnostic",
     "DiagnosticOutcome",
     "DiagnosticSeverity",
+    "analysis_finding_from_json",
+    "analysis_outcome_from_json",
+    "analysis_request_from_json",
+    "business_impact_projection_from_json",
+    "effect_estimate_from_json",
+    "estimand_from_json",
+    "study_design_from_json",
+    "to_canonical_json",
 ]

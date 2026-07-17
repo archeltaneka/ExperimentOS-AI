@@ -1,3 +1,5 @@
+"""Supported estimand vocabulary and conditional-estimand contracts."""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -10,6 +12,8 @@ from .populations import SegmentDefinition
 
 
 class EstimandKind(StrEnum):
+    """Stable identifiers for the effect quantities an analysis may target."""
+
     DIFFERENCE_IN_MEANS = "difference_in_means"
     DIFFERENCE_IN_PROPORTIONS = "difference_in_proportions"
     ABSOLUTE_LIFT = "absolute_lift"
@@ -21,6 +25,8 @@ class EstimandKind(StrEnum):
 
 
 class EstimandDefinition(ContractModel):
+    """An estimand kind with optional conditioning used only for CATE."""
+
     kind: EstimandKind
     conditioning_segment: SegmentDefinition | None = None
 

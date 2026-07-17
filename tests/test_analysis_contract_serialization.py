@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from importlib import import_module
 from pathlib import Path
 
 import pytest
@@ -41,6 +42,7 @@ from packages.experiments.analysis import (
 )
 from tests.analysis_contract_fixtures import (
     abstained_result,
+    count_unit,
     effect_details,
     observational_request,
     outcome,
@@ -187,6 +189,35 @@ def test_business_projection_round_trips_through_public_boundary() -> None:
     assert restored == projection
     assert isinstance(restored, BusinessImpactProjection)
     assert BUSINESS_IMPACT_PROJECTION_ADAPTER.validate_json(payload) == projection
+    assert (
+        restored.projected_incremental_outcome.uncertainty
+        == projection.projected_incremental_outcome.uncertainty
+    )
+    assert (
+        restored.projected_financial_impact.uncertainty
+        == projection.projected_financial_impact.uncertainty
+    )
+    assert "uncertainty" not in type(restored).model_fields
+
+
+def test_projected_value_round_trips_through_public_boundary() -> None:
+    analysis = import_module("packages.experiments.analysis")
+    serialization = import_module("packages.experiments.analysis.serialization")
+    projected_value_type = getattr(analysis, "ProjectedValue", None)
+    decoder = getattr(serialization, "projected_value_from_json", None)
+    adapter = getattr(serialization, "PROJECTED_VALUE_ADAPTER", None)
+    assert projected_value_type is not None
+    assert decoder is not None
+    assert adapter is not None
+
+    original = projected_value_type(
+        value={"value": 550.0, "unit": count_unit().model_dump(mode="json")},
+        uncertainty=effect_details().uncertainty,
+    )
+    payload = to_canonical_json(original)
+
+    assert decoder(payload) == original
+    assert adapter.validate_json(payload) == original
 
 
 def test_canonical_json_is_compact_sorted_unicode_and_repeatable() -> None:
@@ -264,6 +295,10 @@ def test_phase4_contract_documentation_records_boundaries_and_examples() -> None
     assert "## Observational Request Example" in documentation
     assert "## Abstention Example" in documentation
     assert "## Business-Impact Projection Inputs" in documentation
+    assert "## Projected Value Shape" in documentation
+    assert "canonical normalized proportions" in documentation
+    assert '"projected_incremental_outcome"' in documentation
+    assert '"projected_financial_impact"' in documentation
     assert "No estimator is implemented" in documentation
     assert "POST /ask" in documentation
 

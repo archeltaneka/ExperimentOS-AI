@@ -16,7 +16,7 @@ from .base import (
     Probability,
 )
 from .estimates import ConclusionType, EffectEstimate
-from .metrics import MeasuredValue, MetricUnit, UnitDimension
+from .metrics import MeasuredValue, MetricUnit, UnitDimension, ValueScale
 from .provenance import (
     AnalysisWarning,
     AssumptionAssessment,
@@ -43,7 +43,7 @@ class SourcedQuantity(ContractModel):
 
 
 class SourcedProportion(ContractModel):
-    """Bounded proportion with an explicit proportion unit and provenance."""
+    """Canonical normalized proportion supported by explicit provenance."""
 
     value: Probability
     unit: MetricUnit
@@ -51,8 +51,15 @@ class SourcedProportion(ContractModel):
 
     @model_validator(mode="after")
     def validate_proportion_unit(self) -> Self:
-        if self.unit.dimension is not UnitDimension.PROPORTION:
-            raise ValueError("sourced proportion requires a proportion unit")
+        if (
+            self.unit.dimension is not UnitDimension.PROPORTION
+            or self.unit.value_scale is not ValueScale.PROPORTION
+            or self.unit.scale_to_base_unit != 1.0
+        ):
+            raise ValueError(
+                "sourced proportion requires a canonical proportion unit "
+                "with proportion scale and scale_to_base_unit 1.0"
+            )
         return self
 
 
@@ -98,6 +105,8 @@ class BusinessImpactInputs(ContractModel):
 
     @model_validator(mode="after")
     def validate_input_currencies(self) -> Self:
+        if self.exposure_frequency.value < 0:
+            raise ValueError("exposure_frequency must be greater than or equal to zero")
         currency = self.currency.value
         if self.average_order_value.unit.currency_code != currency:
             raise ValueError("average order value currency must match sourced currency")
@@ -109,6 +118,13 @@ class BusinessImpactInputs(ContractModel):
         return self
 
 
+class ProjectedValue(ContractModel):
+    """One projected measured value paired with uncertainty for that output."""
+
+    value: MeasuredValue
+    uncertainty: UncertaintyBundle
+
+
 class BusinessImpactProjection(ContractModel):
     """Projected business impact that preserves its source estimate's evidence category."""
 
@@ -118,9 +134,8 @@ class BusinessImpactProjection(ContractModel):
     conclusion_type: Literal[ConclusionType.PROJECTION]
     inputs: BusinessImpactInputs
     source_estimate: EffectEstimate
-    projected_incremental_outcome: MeasuredValue
-    projected_financial_impact: MeasuredValue
-    uncertainty: UncertaintyBundle
+    projected_incremental_outcome: ProjectedValue
+    projected_financial_impact: ProjectedValue
     assumptions: tuple[AssumptionAssessment, ...]
     diagnostics: tuple[Diagnostic, ...]
     warnings: tuple[AnalysisWarning, ...]
@@ -128,7 +143,7 @@ class BusinessImpactProjection(ContractModel):
 
     @model_validator(mode="after")
     def validate_projected_currency(self) -> Self:
-        unit = self.projected_financial_impact.unit
+        unit = self.projected_financial_impact.value.unit
         if unit.dimension is not UnitDimension.CURRENCY:
             raise ValueError("projected financial impact requires a currency unit")
         if unit.currency_code != self.inputs.currency.value:

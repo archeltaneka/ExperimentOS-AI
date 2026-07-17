@@ -1,3 +1,5 @@
+"""Shared immutable model, status, version, and validated scalar contracts."""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -25,6 +27,8 @@ type ScalarValue = StrictBool | StrictInt | StrictFloat | NonEmptyStr
 
 
 class AnalysisStatus(StrEnum):
+    """Lifecycle status shared by analysis requests, findings, and outcomes."""
+
     ELIGIBLE = "eligible"
     ELIGIBLE_WITH_WARNINGS = "eligible_with_warnings"
     INELIGIBLE = "ineligible"
@@ -36,4 +40,6 @@ class AnalysisStatus(StrEnum):
 
 
 class ContractModel(BaseModel):
+    """Frozen strict base for every ExperimentOS analysis contract."""
+
     model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)

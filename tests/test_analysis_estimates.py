@@ -19,6 +19,7 @@ from packages.experiments.analysis import (
     DiagnosticOutcome,
     DiagnosticSeverity,
     MeasuredValue,
+    MetricUnit,
     ObservationalEstimate,
     PosteriorProbability,
     ProvenanceRecord,
@@ -29,6 +30,8 @@ from packages.experiments.analysis import (
     StandardError,
     UncertaintyBundle,
     UncertaintyUnavailable,
+    UnitDimension,
+    ValueScale,
 )
 from tests.analysis_contract_fixtures import (
     effect_details,
@@ -257,3 +260,34 @@ def test_effect_estimate_rejects_terminal_status_and_invalid_sample_counts() -> 
     payload["sample_counts"]["total"] = 201
     with pytest.raises(ValidationError, match="total"):
         type(effect_details()).model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    ("value_scale", "expected_multiplier", "invalid_multiplier"),
+    [
+        (ValueScale.PROPORTION, 1.0, 0.01),
+        (ValueScale.PERCENT, 0.01, 1.0),
+        (ValueScale.PERCENTAGE_POINT, 0.01, 0.0001),
+        (ValueScale.BASIS_POINT, 0.0001, 0.01),
+    ],
+)
+def test_standardized_proportion_scales_require_exact_conversion_multipliers(
+    value_scale: ValueScale,
+    expected_multiplier: float,
+    invalid_multiplier: float,
+) -> None:
+    unit = MetricUnit(
+        dimension=UnitDimension.PROPORTION,
+        value_scale=value_scale,
+        symbol=value_scale.value,
+        scale_to_base_unit=expected_multiplier,
+    )
+    assert unit.scale_to_base_unit == expected_multiplier
+
+    with pytest.raises(ValidationError, match="scale_to_base_unit"):
+        MetricUnit(
+            dimension=UnitDimension.PROPORTION,
+            value_scale=value_scale,
+            symbol=value_scale.value,
+            scale_to_base_unit=invalid_multiplier,
+        )

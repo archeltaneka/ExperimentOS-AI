@@ -1,3 +1,5 @@
+"""Public internal contracts for statistical, causal, and projected analysis."""
+
 from .base import (
     SCHEMA_VERSION,
     AnalysisStatus,
@@ -14,6 +16,7 @@ from .base import (
 from .business_impact import (
     BusinessImpactInputs,
     BusinessImpactProjection,
+    ProjectedValue,
     SourcedCount,
     SourcedCurrency,
     SourcedMoney,
@@ -83,6 +86,7 @@ from .serialization import (
     BUSINESS_IMPACT_PROJECTION_ADAPTER,
     EFFECT_ESTIMATE_ADAPTER,
     ESTIMAND_ADAPTER,
+    PROJECTED_VALUE_ADAPTER,
     STUDY_DESIGN_ADAPTER,
     analysis_finding_from_json,
     analysis_outcome_from_json,
@@ -90,6 +94,7 @@ from .serialization import (
     business_impact_projection_from_json,
     effect_estimate_from_json,
     estimand_from_json,
+    projected_value_from_json,
     study_design_from_json,
     to_canonical_json,
 )
@@ -133,6 +138,7 @@ __all__ = [
     "BUSINESS_IMPACT_PROJECTION_ADAPTER",
     "EFFECT_ESTIMATE_ADAPTER",
     "ESTIMAND_ADAPTER",
+    "PROJECTED_VALUE_ADAPTER",
     "SCHEMA_VERSION",
     "STUDY_DESIGN_ADAPTER",
     "AnalysisStatus",
@@ -191,6 +197,7 @@ __all__ = [
     "PreTreatmentMetric",
     "PositiveFiniteFloat",
     "PositiveInt",
+    "ProjectedValue",
     "Probability",
     "ProvenanceRecord",
     "ProvenanceRecords",
@@ -233,6 +240,7 @@ __all__ = [
     "business_impact_projection_from_json",
     "effect_estimate_from_json",
     "estimand_from_json",
+    "projected_value_from_json",
     "study_design_from_json",
     "to_canonical_json",
 ]

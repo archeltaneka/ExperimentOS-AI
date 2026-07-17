@@ -1,3 +1,5 @@
+"""Typed selection criteria, populations, segments, and their scalar aliases."""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -9,6 +11,8 @@ from .base import ContractModel, NonEmptyStr, ScalarValue
 
 
 class CriterionOperator(StrEnum):
+    """Comparison operators supported by structured selection criteria."""
+
     EQUAL = "equal"
     NOT_EQUAL = "not_equal"
     GREATER_THAN = "greater_than"
@@ -20,6 +24,8 @@ class CriterionOperator(StrEnum):
 
 
 class SelectionCriterion(ContractModel):
+    """A typed predicate over one population or segment attribute."""
+
     attribute: NonEmptyStr
     operator: CriterionOperator
     value: ScalarValue | tuple[ScalarValue, ...]
@@ -38,12 +44,16 @@ class SelectionCriterion(ContractModel):
 
 
 class PopulationDefinition(ContractModel):
+    """A named analysis population and its structured selection criteria."""
+
     population_id: NonEmptyStr
     label: NonEmptyStr
     criteria: tuple[SelectionCriterion, ...]
 
 
 class SegmentDefinition(ContractModel):
+    """A named population subset and its structured selection criteria."""
+
     segment_id: NonEmptyStr
     label: NonEmptyStr
     criteria: tuple[SelectionCriterion, ...]

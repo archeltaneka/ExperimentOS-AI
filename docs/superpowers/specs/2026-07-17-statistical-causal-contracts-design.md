@@ -89,10 +89,12 @@ Enums inherit from `StrEnum` and use stable lowercase values. Immutable sequence
 - `custom_dimension_name`: required only for custom dimensions.
 
 Currency codes are exactly three uppercase ASCII letters. Percentage-like scales are valid only
-for proportion dimensions. Currency metadata is forbidden on non-currency units. These rules make
-`0.05`, `5%`, five percentage points, and 500 basis points impossible to confuse silently. Product-
-specific units such as `orders/user-day` remain representable through an explicit dimension,
-scale, and symbol rather than an ambiguous string.
+for proportion dimensions. Their conversion multipliers are standardized: proportion uses `1.0`,
+percent and percentage point use `0.01`, and basis point uses `0.0001`. Raw and custom scales keep
+an explicitly supplied positive finite multiplier. Currency metadata is forbidden on non-currency
+units. These rules make `0.05`, `5%`, five percentage points, and 500 basis points impossible to
+confuse silently. Product-specific units such as `orders/user-day` remain representable through an
+explicit dimension, scale, and symbol rather than an ambiguous string.
 
 ### Analysis units and sample counts
 
@@ -304,23 +306,37 @@ Business impact is a projection domain, not a causal-estimate synonym.
 - currency.
 
 Sourced count, quantity, proportion, money, currency, and time-period models each require a
-non-empty provenance tuple. Missing inputs or missing provenance fail construction. Safe structural
-validation enforces positive population, finite quantities, bounded baseline and rollout
-proportions, valid currency codes, and ordered horizons. Contribution margin preserves its explicit
-unit rather than assuming a percentage or currency amount.
+non-empty provenance tuple. Missing inputs or missing provenance fail construction. A
+`SourcedProportion` is canonical normalized data: its value is in `[0, 1]`, its unit dimension and
+value scale are both proportion, and its multiplier is `1.0`. General `MetricUnit` and
+`MeasuredValue` contracts may still represent percent, percentage-point, and basis-point values.
+Safe structural validation enforces positive population, non-negative exposure frequency, finite
+quantities, bounded baseline and rollout proportions, valid currency codes, and ordered horizons.
+Zero exposure frequency remains representable. Contribution margin preserves its explicit unit
+rather than assuming a percentage or currency amount.
 
 `BusinessImpactProjection` carries `schema_version="1"` and requires:
 
 - the complete input set;
 - the complete source effect estimate;
-- numeric projected incremental outcomes;
-- numeric projected financial impact with an explicit currency unit;
-- an uncertainty bundle;
+- a projected incremental outcome composed from a measured value and its uncertainty bundle;
+- a projected financial impact composed from a measured value and its uncertainty bundle, with an
+  explicit currency unit;
 - assumptions, diagnostics, warnings, provenance, and status.
 
-The projected currency must match the sourced currency input. Because the complete source estimate
-is embedded, an associative estimate remains visibly associative and cannot be promoted to a causal
-effect by the projection wrapper. No projection calculation is implemented.
+The reusable `ProjectedValue` contract attaches one non-empty uncertainty bundle to exactly one
+measured output. `BusinessImpactProjection` has no shared projection-level `uncertainty` field, so
+the uncertainty for one output cannot be mistaken for the other. The projected financial value's
+currency must match the sourced currency input. Because the complete source estimate is embedded,
+an associative estimate remains visibly associative and cannot be promoted to a causal effect by
+the projection wrapper. No projection calculation is implemented.
+
+## Public Contract Documentation
+
+Every public module and every exported enum, model, and runtime type contract in
+`packages.experiments.analysis` has a concise useful docstring. Public type aliases are documented
+at module level and with nearby explanatory text because aliases cannot reliably carry runtime
+docstrings; wrapper classes are not introduced solely for documentation.
 
 ## Serialization
 

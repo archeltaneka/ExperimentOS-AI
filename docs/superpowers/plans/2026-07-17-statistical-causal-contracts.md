@@ -22,6 +22,14 @@
 - Use Python 3.12, line length 100, deterministic fixtures, and no network or service dependency in tests.
 - Update `pyproject.toml` and `uv.lock` together for the mypy development dependency.
 - Use bracketed commit subjects only after the task's tests pass.
+- Standardize proportion-scale multipliers as `1.0`, `0.01`, `0.01`, and `0.0001` for
+  proportion, percent, percentage point, and basis point respectively; keep raw/custom positive
+  multipliers explicit.
+- Keep `SourcedProportion` canonical: proportion dimension, proportion scale, multiplier `1.0`, and
+  value in `[0, 1]`.
+- Attach uncertainty independently to each business projection output through `ProjectedValue`;
+  do not retain a projection-level shared `uncertainty` field.
+- Reject negative exposure frequency while allowing zero.
 
 ---
 
@@ -1395,6 +1403,87 @@ Expected: all new documentation tests and the pre-change 48 compatibility tests 
 git add docs/phase4/statistical_analysis_contracts.md docs/architecture.md tests/test_analysis_contract_serialization.py
 git commit -m "[Improvement] Document Phase 4 analysis contracts"
 ```
+
+---
+
+### Review-Fix Task: Harden Units, Projections, Frequencies, and Public Documentation
+
+**Files:**
+- Modify: `docs/superpowers/specs/2026-07-17-statistical-causal-contracts-design.md`
+- Modify: `docs/superpowers/plans/2026-07-17-statistical-causal-contracts.md`
+- Modify: `tests/test_analysis_estimates.py`
+- Modify: `tests/test_business_impact_contracts.py`
+- Modify: `tests/test_analysis_contract_serialization.py`
+- Create: `tests/test_analysis_contract_documentation.py`
+- Modify: `tests/analysis_contract_fixtures.py`
+- Modify: `packages/experiments/analysis/metrics.py`
+- Modify: `packages/experiments/analysis/business_impact.py`
+- Modify: `packages/experiments/analysis/serialization.py`
+- Modify: `packages/experiments/analysis/__init__.py`
+- Modify: public modules under `packages/experiments/analysis/` that lack useful documentation
+- Modify: `docs/phase4/statistical_analysis_contracts.md`
+
+**Interfaces:**
+- Produces: canonical `MetricUnit` multipliers; canonical `SourcedProportion`; non-negative
+  `BusinessImpactInputs.exposure_frequency`; public `ProjectedValue(value: MeasuredValue,
+  uncertainty: UncertaintyBundle)`; independently uncertain projection outputs; documented public
+  contracts; unchanged `schema_version="1"` and `POST /ask`.
+
+- [ ] **Step 1: Add RED tests for standardized multipliers and canonical sourced proportions**
+
+Parameterize all four standardized scales and mismatched multipliers in
+`tests/test_analysis_estimates.py`, expecting `MetricUnit` validation to fail. Add
+`tests/test_business_impact_contracts.py` cases proving `SourcedProportion` rejects otherwise-valid
+percent, percentage-point, and basis-point units while accepting the canonical normalized unit.
+
+- [ ] **Step 2: Add RED tests for exposure frequency and projected output uncertainty**
+
+Assert negative `exposure_frequency.value` is rejected and zero is accepted. Construct
+`ProjectedValue` independently for outcome and finance fields, assert canonical serialization and
+validated round trip preserve both bundles, and assert projection-level `uncertainty` is absent
+from output and rejected as an extra input.
+
+- [ ] **Step 3: Add RED documentation audit**
+
+Add an AST/`inspect` audit over public analysis modules, exported runtime models, and enums. Require
+useful docstrings without asserting private implementation symbols; document type aliases through
+module docstrings and nearby source comments rather than wrapper classes.
+
+- [ ] **Step 4: Run focused RED and capture expected failures**
+
+Run: `uv run pytest tests/test_analysis_estimates.py tests/test_business_impact_contracts.py tests/test_analysis_contract_serialization.py tests/test_analysis_contract_documentation.py -q`
+
+Expected: failures identify unconstrained standardized multipliers, permissive sourced proportion
+units, accepted negative frequency, missing `ProjectedValue`, the old shared uncertainty shape, and
+missing public documentation.
+
+- [ ] **Step 5: Implement the minimal GREEN schema changes**
+
+Enforce exact standardized multipliers in `MetricUnit`; keep raw/custom explicit positive values.
+Require canonical dimension, scale, and multiplier in `SourcedProportion`. Validate only
+`exposure_frequency.value >= 0`. Add and export `ProjectedValue`, change both projection output
+fields to that model, remove the shared uncertainty field, and update adapters, fixtures, and
+serialization without changing schema version.
+
+- [ ] **Step 6: Complete public documentation and Phase 4 examples**
+
+Add concise useful module and public enum/model/type documentation throughout the analysis package.
+Update `docs/phase4/statistical_analysis_contracts.md` to explain canonical sourced proportions and
+show each projected output as `{value, uncertainty}`.
+
+- [ ] **Step 7: Run focused GREEN**
+
+Run the Step 4 command again.
+
+Expected: all focused contract tests pass.
+
+- [ ] **Step 8: Run fresh repository verification and commit once**
+
+Run `uv lock --check`, `uv run mypy --strict packages/experiments/analysis`,
+`uv run ruff format --check .`, `uv run ruff check .`, `uv run pytest`, documentation example
+validation, `git diff --check`, and a final scope/status audit. Only after all are green, commit the
+focused hardening as `[Fix] Clarify analysis unit and projection semantics` and write exact evidence
+to `.superpowers/sdd/final-review-fixes-report.md`.
 
 ---
 

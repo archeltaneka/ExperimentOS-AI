@@ -31,6 +31,7 @@ from packages.experiments.analysis import (
     OutcomeMetric,
     PopulationDefinition,
     PreTreatmentMetric,
+    ProjectedValue,
     ProvenanceRecord,
     ProvenanceSourceType,
     QuasiExperimentalDesign,
@@ -362,12 +363,17 @@ def valid_projection(
         conclusion_type=ConclusionType.PROJECTION,
         inputs=valid_business_inputs(input_currency=input_currency),
         source_estimate=randomized_estimate(),
-        projected_incremental_outcome=MeasuredValue(value=550.0, unit=count_unit()),
-        projected_financial_impact=MeasuredValue(
-            value=13_200.0,
-            unit=currency_unit(projected_currency),
+        projected_incremental_outcome=ProjectedValue(
+            value=MeasuredValue(value=550.0, unit=count_unit()),
+            uncertainty=effect_details().uncertainty,
         ),
-        uncertainty=effect_details().uncertainty,
+        projected_financial_impact=ProjectedValue(
+            value=MeasuredValue(
+                value=13_200.0,
+                unit=currency_unit(projected_currency),
+            ),
+            uncertainty=effect_details().uncertainty,
+        ),
         assumptions=(),
         diagnostics=(),
         warnings=(),

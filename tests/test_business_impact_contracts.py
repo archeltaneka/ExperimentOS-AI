@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from importlib import import_module
 
 import pytest
 from pydantic import ValidationError
@@ -11,12 +12,15 @@ from packages.experiments.analysis import (
     BusinessImpactInputs,
     BusinessImpactProjection,
     ConclusionType,
+    MetricUnit,
     SourcedCount,
     SourcedCurrency,
     SourcedMoney,
     SourcedProportion,
     SourcedQuantity,
     SourcedTimePeriod,
+    UnitDimension,
+    ValueScale,
 )
 from tests.analysis_contract_fixtures import (
     count_unit,
@@ -98,6 +102,40 @@ def test_sourced_values_require_semantically_explicit_units_and_currency() -> No
         SourcedCurrency(value="usd", provenance=provenance)
 
 
+@pytest.mark.parametrize(
+    ("value_scale", "scale_to_base_unit"),
+    [
+        (ValueScale.PERCENT, 0.01),
+        (ValueScale.PERCENTAGE_POINT, 0.01),
+        (ValueScale.BASIS_POINT, 0.0001),
+    ],
+)
+def test_sourced_proportion_rejects_noncanonical_percentage_units(
+    value_scale: ValueScale,
+    scale_to_base_unit: float,
+) -> None:
+    unit = MetricUnit(
+        dimension=UnitDimension.PROPORTION,
+        value_scale=value_scale,
+        symbol=value_scale.value,
+        scale_to_base_unit=scale_to_base_unit,
+    )
+
+    with pytest.raises(ValidationError, match="canonical proportion unit"):
+        SourcedProportion(value=0.2, unit=unit, provenance=(source(),))
+
+
+def test_sourced_proportion_accepts_canonical_normalized_unit() -> None:
+    proportion = SourcedProportion(
+        value=0.2,
+        unit=proportion_unit(),
+        provenance=(source(),),
+    )
+
+    assert proportion.unit.value_scale is ValueScale.PROPORTION
+    assert proportion.unit.scale_to_base_unit == 1.0
+
+
 @pytest.mark.parametrize("field", ["baseline_rate", "rollout_proportion"])
 def test_business_inputs_reject_unsourced_plain_proportions(field: str) -> None:
     payload = valid_business_inputs().model_dump(mode="json")
@@ -113,6 +151,23 @@ def test_business_inputs_reject_plain_money_without_currency_unit() -> None:
 
     with pytest.raises(ValidationError):
         BusinessImpactInputs.model_validate(payload)
+
+
+def test_business_inputs_reject_negative_exposure_frequency() -> None:
+    payload = valid_business_inputs().model_dump(mode="json")
+    payload["exposure_frequency"]["value"] = -0.01
+
+    with pytest.raises(ValidationError, match="exposure_frequency"):
+        BusinessImpactInputs.model_validate(payload)
+
+
+def test_business_inputs_allow_zero_exposure_frequency() -> None:
+    payload = valid_business_inputs().model_dump(mode="json")
+    payload["exposure_frequency"]["value"] = 0.0
+
+    inputs = BusinessImpactInputs.model_validate(payload)
+
+    assert inputs.exposure_frequency.value == 0.0
 
 
 def test_sourced_time_period_rejects_naive_or_reversed_horizons() -> None:
@@ -202,16 +257,48 @@ def test_projection_has_stable_business_impact_serialization_shape() -> None:
     assert payload["inputs"]["currency"]["value"] == "USD"
     assert payload["source_estimate"]["finding_type"] == "randomized_experiment_estimate"
     assert payload["source_estimate"]["conclusion_type"] == "causal_effect"
-    assert payload["projected_incremental_outcome"] == {
+    assert payload["projected_incremental_outcome"]["value"] == {
         "value": 550.0,
         "unit": count_unit().model_dump(mode="json"),
     }
-    assert payload["projected_financial_impact"] == {
+    assert payload["projected_financial_impact"]["value"] == {
         "value": 13_200.0,
         "unit": currency_unit().model_dump(mode="json"),
     }
-    assert payload["uncertainty"]["measures"][0]["kind"] == "confidence_interval"
+    assert (
+        payload["projected_incremental_outcome"]["uncertainty"]["measures"][0]["kind"]
+        == "confidence_interval"
+    )
+    assert (
+        payload["projected_financial_impact"]["uncertainty"]["measures"][0]["kind"]
+        == "confidence_interval"
+    )
+    assert "uncertainty" not in payload
     assert payload["provenance"][0]["source_id"] == "exp-001-payment-recommendation"
+
+
+def test_projected_value_attaches_uncertainty_to_one_output_and_round_trips() -> None:
+    analysis = import_module("packages.experiments.analysis")
+    projected_value_type = getattr(analysis, "ProjectedValue", None)
+    assert projected_value_type is not None, "ProjectedValue must be a public analysis contract"
+
+    uncertainty = effect_details().uncertainty
+    projected = projected_value_type(
+        value={"value": 550.0, "unit": count_unit().model_dump(mode="json")},
+        uncertainty=uncertainty,
+    )
+    restored = projected_value_type.model_validate(projected.model_dump(mode="json"))
+
+    assert restored == projected
+    assert restored.uncertainty == uncertainty
+
+
+def test_projection_rejects_ambiguous_shared_uncertainty_field() -> None:
+    payload = valid_projection().model_dump(mode="json")
+    payload["uncertainty"] = effect_details().uncertainty.model_dump(mode="json")
+
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        BusinessImpactProjection.model_validate(payload)
 
 
 def test_projection_is_frozen_and_forbids_unknown_fields() -> None:

@@ -295,9 +295,14 @@ estimate, preventing an unavailable analysis from being represented with a fabri
 ## Business-Impact Projection Inputs
 
 `BusinessImpactProjection` is a projection contract, not a causal estimator. It embeds the complete
-source estimate, the following complete sourced inputs, projected numeric outputs with units, an
-uncertainty bundle, assumptions, diagnostics, warnings, and projection provenance. An
-associational source estimate remains associational inside the projection.
+source estimate, the following complete sourced inputs, independently uncertain projected values,
+assumptions, diagnostics, warnings, and projection provenance. An associational source estimate
+remains associational inside the projection.
+
+Business-impact rates and shares use canonical normalized proportions: values are in `[0, 1]`, the
+unit dimension and value scale are `proportion`, and `scale_to_base_unit` is `1.0`. General metric
+and measured-value contracts can still express percent (`0.01`), percentage point (`0.01`), and
+basis point (`0.0001`) scales when that representation is the supplied measurement.
 
 ```json
 {
@@ -411,16 +416,73 @@ associational source estimate remains associational inside the projection.
 }
 ```
 
-The contracts validate that the projection currency matches these inputs, but do not calculate
-incremental outcomes or financial impact.
+## Projected Value Shape
+
+Each projected output is a `ProjectedValue`: one `MeasuredValue` under `value` and the
+`UncertaintyBundle` that applies to that value under `uncertainty`. There is no shared
+projection-level uncertainty field because one bundle cannot unambiguously describe two outputs.
+The following excerpt shows the output portion of a valid projection payload:
+
+```json
+{
+  "projected_incremental_outcome": {
+    "value": {
+      "value": 550.0,
+      "unit": {
+        "dimension": "count",
+        "value_scale": "raw",
+        "symbol": "count",
+        "scale_to_base_unit": 1.0
+      }
+    },
+    "uncertainty": {
+      "measures": [
+        {
+          "kind": "confidence_interval",
+          "lower": 20.0,
+          "upper": 1080.0,
+          "confidence_level": 0.95
+        }
+      ]
+    }
+  },
+  "projected_financial_impact": {
+    "value": {
+      "value": 13200.0,
+      "unit": {
+        "dimension": "currency",
+        "value_scale": "raw",
+        "symbol": "USD",
+        "scale_to_base_unit": 1.0,
+        "currency_code": "USD"
+      }
+    },
+    "uncertainty": {
+      "measures": [
+        {
+          "kind": "confidence_interval",
+          "lower": 480.0,
+          "upper": 25920.0,
+          "confidence_level": 0.95
+        }
+      ]
+    }
+  }
+}
+```
+
+The contracts validate that exposure frequency is non-negative and that the projected financial
+value's currency matches the sourced currency input, but do not calculate incremental outcomes or
+financial impact.
 
 ## Validation Boundary
 
 The contract layer rejects unambiguous structural contradictions: missing or empty identifiers,
-non-finite numbers, invalid units or scales, equal treatment and control values, inconsistent
-sample totals, invalid allocations, unordered periods or intervals, invalid probability levels,
-invalid CATE conditioning, incompatible status/result shapes, missing required provenance,
-incomplete business inputs, and mismatched projection currency.
+non-finite numbers, invalid units or standardized scale multipliers, equal treatment and control
+values, inconsistent sample totals, invalid allocations, unordered periods or intervals, invalid
+probability levels, invalid CATE conditioning, incompatible status/result shapes, missing required
+provenance, incomplete business inputs, negative exposure frequency, ambiguous shared projection
+uncertainty, and mismatched projection currency.
 
 It deliberately does not decide statistical power, sample-ratio mismatch, overlap, positivity,
 exchangeability, consistency, interference, parallel trends, CUPED suitability, sequential plans,

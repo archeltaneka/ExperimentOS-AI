@@ -7,7 +7,7 @@ import json
 from pydantic import TypeAdapter
 
 from .base import ContractModel
-from .business_impact import BusinessImpactProjection
+from .business_impact import BusinessImpactProjection, ProjectedValue
 from .estimands import EstimandDefinition
 from .estimates import AnalysisFinding, EffectEstimate
 from .requests import AnalysisRequest
@@ -23,6 +23,7 @@ ANALYSIS_OUTCOME_ADAPTER: TypeAdapter[AnalysisOutcome] = TypeAdapter(AnalysisOut
 BUSINESS_IMPACT_PROJECTION_ADAPTER: TypeAdapter[BusinessImpactProjection] = TypeAdapter(
     BusinessImpactProjection
 )
+PROJECTED_VALUE_ADAPTER: TypeAdapter[ProjectedValue] = TypeAdapter(ProjectedValue)
 
 
 def to_canonical_json(model: ContractModel) -> str:
@@ -68,3 +69,8 @@ def analysis_outcome_from_json(payload: str | bytes) -> AnalysisOutcome:
 def business_impact_projection_from_json(payload: str | bytes) -> BusinessImpactProjection:
     """Validate JSON as a business-impact projection."""
     return BUSINESS_IMPACT_PROJECTION_ADAPTER.validate_json(payload)
+
+
+def projected_value_from_json(payload: str | bytes) -> ProjectedValue:
+    """Validate JSON as one independently uncertain projected value."""
+    return PROJECTED_VALUE_ADAPTER.validate_json(payload)

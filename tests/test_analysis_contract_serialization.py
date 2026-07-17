@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -253,3 +254,21 @@ def test_public_decoders_reject_unknown_discriminators(
 
     with pytest.raises(ValidationError):
         decoder(json.dumps(payload))  # type: ignore[operator]
+
+
+def test_phase4_contract_documentation_records_boundaries_and_examples() -> None:
+    documentation = Path("docs/phase4/statistical_analysis_contracts.md").read_text(
+        encoding="utf-8"
+    )
+    assert "## Randomized Request Example" in documentation
+    assert "## Observational Request Example" in documentation
+    assert "## Abstention Example" in documentation
+    assert "## Business-Impact Projection Inputs" in documentation
+    assert "No estimator is implemented" in documentation
+    assert "POST /ask" in documentation
+
+
+def test_architecture_names_the_phase4_contract_boundary() -> None:
+    architecture = Path("docs/architecture.md").read_text(encoding="utf-8")
+    assert "packages.experiments.analysis" in architecture
+    assert "not yet integrated" in architecture.lower()

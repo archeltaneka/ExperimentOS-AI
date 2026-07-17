@@ -132,6 +132,19 @@ Key design choices:
 - Chunk embeddings are stored in `DocumentChunk.embedding` using pgvector.
 - `DocumentChunk.chunk_metadata` stores retrieval-friendly metadata such as chunk index and section labels.
 
+### Phase 4 Domain Contracts
+
+`packages.experiments.analysis` is the public internal boundary for immutable, versioned
+statistical and causal request, finding, outcome, uncertainty, provenance, and business-impact
+projection models. It preserves descriptive, associational, randomized, quasi-experimental,
+observational, and projected evidence as distinct structures and exposes validated serialization
+helpers without leaking third-party result types.
+
+The contract package is not yet integrated with estimators, agents, persistence, observability
+emission, evaluation policy, or the public API. It performs no statistical or business-impact
+calculations and implements no eligibility policy. In particular, `POST /ask`, `AgentState`, the
+current workflows, and existing evaluation behavior remain unchanged.
+
 ### Retrieval Layer
 
 `packages/retrieval/` performs semantic search over stored document chunks.
@@ -236,6 +249,7 @@ Outputs:
 | `packages/qa` | Grounded question answering service and response models |
 | `packages/evals` | Evaluation dataset loading, orchestration, metrics, reports |
 | `packages/experiments` | Reserved boundary for future experiment domain logic |
+| `packages.experiments.analysis` | Versioned statistical and causal domain contracts |
 | `packages/agents` | Phase 2 LangGraph workflow, agents, shared state, and observability |
 
 ## Extension Points

@@ -390,12 +390,15 @@ Production implementation follows strict red-green-refactor cycles. New tests ar
 - `tests/test_analysis_results.py`
 - `tests/test_business_impact_contracts.py`
 - `tests/test_analysis_contract_serialization.py`
+- `tests/test_analysis_contract_documentation.py`
 
 The tests cover valid randomized and observational requests; invalid treatments, units, interval
 bounds, levels, sample counts, allocations, and time periods; post-treatment and unknown-timing
 covariates; estimand, estimate, diagnostic, and abstention serialization; business-input provenance;
 incomplete financial inputs; canonical and normal round trips; enum stability; immutable models;
-and rejection of unknown fields.
+rejection of unknown fields; canonical standardized multipliers and normalized
+`SourcedProportion` units; per-output `ProjectedValue` uncertainty; nonnegative exposure frequency;
+and public module and contract docstrings.
 
 Each behavior is first expressed by a test and observed failing for the intended missing behavior
 before minimal production code is added.

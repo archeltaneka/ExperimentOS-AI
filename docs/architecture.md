@@ -248,7 +248,7 @@ Outputs:
 | `packages/llm` | LLM client abstractions and provider-specific implementations |
 | `packages/qa` | Grounded question answering service and response models |
 | `packages/evals` | Evaluation dataset loading, orchestration, metrics, reports |
-| `packages/experiments` | Reserved boundary for future experiment domain logic |
+| `packages/experiments` | Experiment-domain namespace; top-level exports remain reserved and unchanged |
 | `packages.experiments.analysis` | Versioned statistical and causal domain contracts |
 | `packages/agents` | Phase 2 LangGraph workflow, agents, shared state, and observability |
 

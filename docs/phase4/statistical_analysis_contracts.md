@@ -14,8 +14,11 @@ fields.
 
 The public internal boundary is `packages.experiments.analysis`. Consumers should import its
 models and serialization helpers from that package; `packages.experiments` deliberately does not
-re-export them. Contract JSON uses `schema_version: "1"`, stable lowercase enum values, explicit
-discriminators, finite numeric values, and ISO 8601 timestamps with timezones.
+re-export them. Top-level requests, outcomes, and business-impact projections use
+`schema_version: "1"`. Nested findings and value objects are versioned through their enclosing
+top-level payload and do not carry a separate `schema_version` field. Contract JSON uses stable
+lowercase enum values, explicit discriminators, finite numeric values, and ISO 8601 timestamps
+with timezones.
 
 The models describe declared inputs and typed outcomes. Method names such as `fixed_horizon_ab`
 and `double_machine_learning` identify intended analysis structure; they do not select, configure,

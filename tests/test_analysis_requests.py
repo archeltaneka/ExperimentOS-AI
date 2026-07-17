@@ -4,6 +4,8 @@ import pytest
 from pydantic import ValidationError
 
 from packages.experiments.analysis import (
+    SCHEMA_VERSION,
+    AnalysisStatus,
     AnalysisUnit,
     CriterionOperator,
     EstimandDefinition,
@@ -33,6 +35,17 @@ def proportion_unit() -> MetricUnit:
 
 
 def test_task_one_enum_values_are_stable() -> None:
+    assert SCHEMA_VERSION == "1"
+    assert [member.value for member in AnalysisStatus] == [
+        "eligible",
+        "eligible_with_warnings",
+        "ineligible",
+        "needs_more_data",
+        "completed",
+        "inconclusive",
+        "abstained",
+        "failed",
+    ]
     assert [member.value for member in UnitDimension] == [
         "dimensionless",
         "proportion",

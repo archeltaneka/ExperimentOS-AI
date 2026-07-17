@@ -95,6 +95,27 @@ def test_eligibility_assessment_accepts_only_eligibility_states(
     assert assessment.status is status
 
 
+@pytest.mark.parametrize(
+    "status",
+    [
+        AnalysisStatus.COMPLETED,
+        AnalysisStatus.INCONCLUSIVE,
+        AnalysisStatus.ABSTAINED,
+        AnalysisStatus.FAILED,
+    ],
+)
+def test_eligibility_assessment_rejects_terminal_states(status: AnalysisStatus) -> None:
+    with pytest.raises(ValidationError):
+        EligibilityAssessment(
+            outcome_type="eligibility",
+            status=status,
+            diagnostics=(),
+            warnings=(),
+            required_data=(),
+            provenance=(source(),),
+        )
+
+
 def test_inconclusive_result_requires_inconclusive_findings() -> None:
     result = InconclusiveAnalysisResult(
         status=AnalysisStatus.INCONCLUSIVE,
@@ -107,9 +128,23 @@ def test_inconclusive_result_requires_inconclusive_findings() -> None:
 
 
 def test_terminal_outcomes_are_ready_for_discriminated_round_trips() -> None:
+    eligibility = EligibilityAssessment(
+        status=AnalysisStatus.ELIGIBLE_WITH_WARNINGS,
+        diagnostics=(),
+        warnings=(),
+        required_data=(),
+        provenance=(source(),),
+    )
     completed = CompletedAnalysisResult(
         status=AnalysisStatus.COMPLETED,
         findings=(randomized_estimate(),),
+        diagnostics=(),
+        warnings=(),
+        provenance=(source(),),
+    )
+    inconclusive = InconclusiveAnalysisResult(
+        status=AnalysisStatus.INCONCLUSIVE,
+        findings=(randomized_estimate(analysis_status=AnalysisStatus.INCONCLUSIVE),),
         diagnostics=(),
         warnings=(),
         provenance=(source(),),
@@ -128,5 +163,16 @@ def test_terminal_outcomes_are_ready_for_discriminated_round_trips() -> None:
         provenance=(source(),),
     )
     adapter = TypeAdapter(AnalysisOutcome)
-    for outcome in (completed, abstained_result(), failed):
-        assert adapter.validate_python(outcome.model_dump(mode="json")) == outcome
+    outcomes = (eligibility, completed, inconclusive, abstained_result(), failed)
+    restored = tuple(
+        adapter.validate_python(outcome.model_dump(mode="json")) for outcome in outcomes
+    )
+    assert restored == outcomes
+    assert [type(outcome) for outcome in restored] == [type(outcome) for outcome in outcomes]
+    assert [outcome.outcome_type for outcome in restored] == [
+        "eligibility",
+        "completed",
+        "inconclusive",
+        "abstained",
+        "failed",
+    ]

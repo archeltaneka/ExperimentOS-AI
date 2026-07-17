@@ -9,6 +9,7 @@ from packages.experiments.analysis import (
     AnalysisFinding,
     AnalysisStatus,
     AssociationalEstimate,
+    AssumptionStatus,
     ConclusionType,
     ConfidenceInterval,
     CredibleInterval,
@@ -197,6 +198,53 @@ def test_effect_categories_remain_distinct_through_finding_union_round_trip() ->
         "observational_estimate",
     ]
     assert restored == findings
+
+
+def test_observational_estimate_accepts_an_explicit_causal_conclusion() -> None:
+    estimate = ObservationalEstimate(
+        conclusion_type=ConclusionType.CAUSAL_EFFECT,
+        estimate=effect_details(),
+    )
+    assert estimate.conclusion_type is ConclusionType.CAUSAL_EFFECT
+
+
+def test_task_four_public_enum_vocabularies_are_stable() -> None:
+    assert [member.value for member in DescriptiveStatisticType] == [
+        "sample_mean",
+        "sample_proportion",
+        "sample_count",
+    ]
+    assert [member.value for member in ConclusionType] == [
+        "association",
+        "causal_effect",
+        "projection",
+    ]
+    assert [member.value for member in ProvenanceSourceType] == [
+        "experiment_data",
+        "analysis_request",
+        "report",
+        "configuration",
+        "derived",
+        "user_supplied",
+        "external_reference",
+    ]
+    assert [member.value for member in AssumptionStatus] == [
+        "supported",
+        "violated",
+        "unassessed",
+        "untestable",
+    ]
+    assert [member.value for member in DiagnosticSeverity] == [
+        "info",
+        "warning",
+        "error",
+        "fatal",
+    ]
+    assert [member.value for member in DiagnosticOutcome] == [
+        "passed",
+        "failed",
+        "unavailable",
+    ]
 
 
 def test_effect_estimate_rejects_terminal_status_and_invalid_sample_counts() -> None:

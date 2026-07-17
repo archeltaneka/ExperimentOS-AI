@@ -11,6 +11,16 @@ from .base import (
     Probability,
     ScalarValue,
 )
+from .business_impact import (
+    BusinessImpactInputs,
+    BusinessImpactProjection,
+    SourcedCount,
+    SourcedCurrency,
+    SourcedMoney,
+    SourcedProportion,
+    SourcedQuantity,
+    SourcedTimePeriod,
+)
 from .estimands import EstimandDefinition, EstimandKind
 from .estimates import (
     AnalysisFinding,
@@ -113,6 +123,8 @@ __all__ = [
     "AssociationalEstimate",
     "AssumptionAssessment",
     "AssumptionStatus",
+    "BusinessImpactInputs",
+    "BusinessImpactProjection",
     "ContractModel",
     "Clustered",
     "ClusteringSpecification",
@@ -174,6 +186,12 @@ __all__ = [
     "SelectionCriterion",
     "StandardError",
     "StudyDesign",
+    "SourcedCount",
+    "SourcedCurrency",
+    "SourcedMoney",
+    "SourcedProportion",
+    "SourcedQuantity",
+    "SourcedTimePeriod",
     "TimePeriod",
     "TreatmentDefinition",
     "TreatmentRelationship",

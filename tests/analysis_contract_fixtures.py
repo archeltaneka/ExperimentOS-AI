@@ -8,6 +8,8 @@ from packages.experiments.analysis import (
     AnalysisRequest,
     AnalysisStatus,
     AnalysisUnit,
+    BusinessImpactInputs,
+    BusinessImpactProjection,
     Clustered,
     ConclusionType,
     ConfidenceInterval,
@@ -39,6 +41,12 @@ from packages.experiments.analysis import (
     RequestedConfidenceLevel,
     RequestedUncertainty,
     SampleCounts,
+    SourcedCount,
+    SourcedCurrency,
+    SourcedMoney,
+    SourcedProportion,
+    SourcedQuantity,
+    SourcedTimePeriod,
     TimePeriod,
     TreatmentDefinition,
     TreatmentRelationship,
@@ -75,6 +83,16 @@ def count_unit() -> MetricUnit:
         value_scale=ValueScale.RAW,
         symbol="count",
         scale_to_base_unit=1.0,
+    )
+
+
+def currency_unit(currency_code: str = "USD") -> MetricUnit:
+    return MetricUnit(
+        dimension=UnitDimension.CURRENCY,
+        value_scale=ValueScale.RAW,
+        symbol=currency_code,
+        scale_to_base_unit=1.0,
+        currency_code=currency_code,
     )
 
 
@@ -288,6 +306,72 @@ def randomized_estimate(
         finding_type="randomized_experiment_estimate",
         conclusion_type=ConclusionType.CAUSAL_EFFECT,
         estimate=effect_details(analysis_status=analysis_status),
+    )
+
+
+def valid_business_inputs(*, input_currency: str = "USD") -> BusinessImpactInputs:
+    provenance = (source(),)
+    return BusinessImpactInputs(
+        eligible_population=SourcedCount(value=100_000, provenance=provenance),
+        exposure_frequency=SourcedQuantity(
+            value=2.0,
+            unit=MetricUnit(
+                dimension=UnitDimension.CUSTOM,
+                value_scale=ValueScale.CUSTOM,
+                symbol="exposures/user/month",
+                scale_to_base_unit=1.0,
+                custom_dimension_name="exposures per user per month",
+            ),
+            provenance=provenance,
+        ),
+        baseline_rate=SourcedProportion(
+            value=0.20,
+            unit=proportion_unit(),
+            provenance=provenance,
+        ),
+        average_order_value=SourcedMoney(
+            value=80.0,
+            unit=currency_unit(input_currency),
+            provenance=provenance,
+        ),
+        contribution_margin=SourcedProportion(
+            value=0.30,
+            unit=proportion_unit(),
+            provenance=provenance,
+        ),
+        rollout_proportion=SourcedProportion(
+            value=0.50,
+            unit=proportion_unit(),
+            provenance=provenance,
+        ),
+        analysis_horizon=SourcedTimePeriod(
+            value=TimePeriod(start=utc(2026, 8, 1), end=utc(2026, 9, 1)),
+            provenance=provenance,
+        ),
+        currency=SourcedCurrency(value=input_currency, provenance=provenance),
+    )
+
+
+def valid_projection(
+    *,
+    projected_currency: str = "USD",
+    input_currency: str = "USD",
+) -> BusinessImpactProjection:
+    return BusinessImpactProjection(
+        status=AnalysisStatus.COMPLETED,
+        conclusion_type=ConclusionType.PROJECTION,
+        inputs=valid_business_inputs(input_currency=input_currency),
+        source_estimate=randomized_estimate(),
+        projected_incremental_outcome=MeasuredValue(value=550.0, unit=count_unit()),
+        projected_financial_impact=MeasuredValue(
+            value=13_200.0,
+            unit=currency_unit(projected_currency),
+        ),
+        uncertainty=effect_details().uncertainty,
+        assumptions=(),
+        diagnostics=(),
+        warnings=(),
+        provenance=(source(),),
     )
 
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 import pytest
 from pydantic import ValidationError
 
@@ -7,6 +9,8 @@ from packages.experiments.analysis import (
     SCHEMA_VERSION,
     AnalysisStatus,
     AnalysisUnit,
+    CovariateRole,
+    CovariateTiming,
     CriterionOperator,
     EstimandDefinition,
     EstimandKind,
@@ -17,11 +21,26 @@ from packages.experiments.analysis import (
     OutcomeDirection,
     OutcomeMetric,
     PopulationDefinition,
+    PreTreatmentMetric,
+    QuasiExperimentalDesign,
+    QuasiExperimentalMethod,
+    RandomizedAnalysisMethod,
+    RequestedConfidenceLevel,
+    RequestedCredibleLevel,
     SampleCounts,
     SegmentDefinition,
     SelectionCriterion,
+    TimePeriod,
+    TreatmentRelationship,
     UnitDimension,
     ValueScale,
+)
+from tests.analysis_contract_fixtures import (
+    covariate,
+    observational_request,
+    randomized_design,
+    randomized_request,
+    utc,
 )
 
 
@@ -234,3 +253,112 @@ def test_contract_models_are_frozen_and_reject_unknown_fields() -> None:
         unit.symbol = "%"  # type: ignore[misc]
     with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
         MetricUnit.model_validate({**unit.model_dump(), "presentation": "5%"})
+
+
+def test_constructs_valid_randomized_experiment_request() -> None:
+    request = randomized_request()
+    assert request.study_design.design_type == "randomized_experiment"
+    assert request.study_design.randomization_unit.unit_id == "account"
+    assert request.unit_of_analysis.unit_id == "order"
+    assert request.clustering.kind == "none"
+    assert request.estimand.kind is EstimandKind.INTENTION_TO_TREAT
+
+
+def test_constructs_valid_observational_analysis_request() -> None:
+    request = observational_request()
+    assert request.study_design.design_type == "observational_study"
+    assert request.study_design.method == "double_machine_learning"
+    assert request.clustering.unit.unit_id == "customer"
+    assert request.estimand.kind is EstimandKind.AVERAGE_TREATMENT_EFFECT_ON_TREATED
+
+
+def test_request_rejects_equal_treatment_and_control_definitions() -> None:
+    with pytest.raises(ValidationError, match="assignment values must differ"):
+        randomized_request(control_assignment_value="treatment")
+    with pytest.raises(ValidationError, match="identifiers must differ"):
+        randomized_request(control_id="ranked_payment")
+    with pytest.raises(ValidationError, match="labels must differ"):
+        randomized_request(control_label="Ranked payment")
+
+
+@pytest.mark.parametrize(
+    ("treatment", "control"),
+    [(0.0, 1.0), (1.0, 0.0), (0.7, 0.4), (-0.1, 1.1)],
+)
+def test_randomized_design_rejects_invalid_allocations(treatment: float, control: float) -> None:
+    with pytest.raises(ValidationError):
+        randomized_design(treatment_allocation=treatment, control_allocation=control)
+
+
+def test_time_period_rejects_naive_or_reversed_timestamps() -> None:
+    with pytest.raises(ValidationError, match="timezone-aware"):
+        TimePeriod(start=datetime(2026, 1, 2), end=datetime(2026, 1, 3))
+    with pytest.raises(ValidationError, match="before end"):
+        TimePeriod(start=utc(2026, 1, 3), end=utc(2026, 1, 2))
+
+
+def test_post_treatment_and_unknown_covariates_are_explicitly_representable() -> None:
+    post = covariate(timing=CovariateTiming.POST_TREATMENT)
+    unknown = covariate(
+        timing=CovariateTiming.UNKNOWN,
+        treatment_relationship=TreatmentRelationship.UNKNOWN,
+    )
+    assert post.timing is CovariateTiming.POST_TREATMENT
+    assert unknown.timing is CovariateTiming.UNKNOWN
+    assert unknown.treatment_relationship is TreatmentRelationship.UNKNOWN
+
+
+def test_leakage_and_invalid_cuped_roles_remain_representable() -> None:
+    questionable = covariate(
+        timing=CovariateTiming.POST_TREATMENT,
+        role=CovariateRole.CUPED,
+        treatment_relationship=TreatmentRelationship.PROXY,
+    )
+    assert questionable.role is CovariateRole.CUPED
+    assert questionable.treatment_relationship is TreatmentRelationship.PROXY
+
+
+def test_quasi_experimental_periods_must_not_overlap() -> None:
+    with pytest.raises(ValidationError, match="must end no later"):
+        QuasiExperimentalDesign(
+            method=QuasiExperimentalMethod.DIFFERENCE_IN_DIFFERENCES,
+            pre_treatment_period=TimePeriod(
+                start=utc(2026, 1, 1),
+                end=utc(2026, 2, 2),
+            ),
+            post_treatment_period=TimePeriod(
+                start=utc(2026, 2, 1),
+                end=utc(2026, 3, 1),
+            ),
+        )
+
+
+def test_pre_treatment_metrics_must_end_before_randomized_treatment() -> None:
+    metric = PreTreatmentMetric(
+        metric=covariate().metric,
+        measurement_period=TimePeriod(
+            start=utc(2026, 6, 1),
+            end=utc(2026, 7, 2),
+        ),
+    )
+    with pytest.raises(ValidationError, match="pre-treatment metric"):
+        randomized_request(pre_treatment_metrics=(metric,))
+
+
+@pytest.mark.parametrize("level", [0.0, 1.0, -0.1, 1.1])
+def test_requested_uncertainty_levels_are_open_probabilities(level: float) -> None:
+    with pytest.raises(ValidationError):
+        RequestedConfidenceLevel(level=level)
+    with pytest.raises(ValidationError):
+        RequestedCredibleLevel(level=level)
+
+
+def test_task_two_method_enum_values_are_stable() -> None:
+    assert [member.value for member in RandomizedAnalysisMethod] == [
+        "fixed_horizon_ab",
+        "cuped",
+        "sequential_ab",
+        "bayesian_ab",
+        "heterogeneous_treatment_effect",
+    ]
+    assert [member.value for member in QuasiExperimentalMethod] == ["difference_in_differences"]

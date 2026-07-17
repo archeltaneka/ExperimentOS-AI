@@ -3,15 +3,22 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from packages.experiments.analysis import (
+    AbstainedAnalysisResult,
+    AbstentionReason,
     AnalysisRequest,
+    AnalysisStatus,
     AnalysisUnit,
     Clustered,
+    ConclusionType,
+    ConfidenceInterval,
     ControlDefinition,
     CovariateDefinition,
     CovariateRole,
     CovariateTiming,
+    EffectEstimateDetails,
     EstimandDefinition,
     EstimandKind,
+    MeasuredValue,
     MetricDefinition,
     MetricType,
     MetricUnit,
@@ -22,16 +29,20 @@ from packages.experiments.analysis import (
     OutcomeMetric,
     PopulationDefinition,
     PreTreatmentMetric,
+    ProvenanceRecord,
+    ProvenanceSourceType,
     QuasiExperimentalDesign,
     QuasiExperimentalMethod,
     RandomizedAnalysisMethod,
     RandomizedExperimentDesign,
+    RandomizedExperimentEstimate,
     RequestedConfidenceLevel,
     RequestedUncertainty,
     SampleCounts,
     TimePeriod,
     TreatmentDefinition,
     TreatmentRelationship,
+    UncertaintyBundle,
     UnitDimension,
     ValueScale,
 )
@@ -232,4 +243,64 @@ def observational_request() -> AnalysisRequest:
         sample_counts=SampleCounts(total=300, treatment=120, control=180),
         uncertainty=RequestedConfidenceLevel(level=0.95),
         covariates=(covariate(),),
+    )
+
+
+def source() -> ProvenanceRecord:
+    return ProvenanceRecord(
+        source_type=ProvenanceSourceType.EXPERIMENT_DATA,
+        source_id="exp-001-payment-recommendation",
+    )
+
+
+def effect_details(
+    *,
+    analysis_status: AnalysisStatus = AnalysisStatus.COMPLETED,
+) -> EffectEstimateDetails:
+    request = randomized_request()
+    return EffectEstimateDetails(
+        status=analysis_status,
+        estimand=request.estimand,
+        outcome=request.outcome,
+        point_estimate=MeasuredValue(value=0.055, unit=proportion_unit()),
+        uncertainty=UncertaintyBundle(
+            measures=(
+                ConfidenceInterval(
+                    lower=0.002,
+                    upper=0.108,
+                    confidence_level=0.95,
+                ),
+            )
+        ),
+        sample_counts=request.sample_counts,
+        assumptions=(),
+        diagnostics=(),
+        warnings=(),
+        provenance=(source(),),
+    )
+
+
+def randomized_estimate(
+    *,
+    analysis_status: AnalysisStatus = AnalysisStatus.COMPLETED,
+) -> RandomizedExperimentEstimate:
+    return RandomizedExperimentEstimate(
+        finding_type="randomized_experiment_estimate",
+        conclusion_type=ConclusionType.CAUSAL_EFFECT,
+        estimate=effect_details(analysis_status=analysis_status),
+    )
+
+
+def abstained_result() -> AbstainedAnalysisResult:
+    return AbstainedAnalysisResult(
+        outcome_type="abstained",
+        status=AnalysisStatus.ABSTAINED,
+        reason=AbstentionReason(
+            code="covariate_timing_unknown",
+            message="Causal adjustment is unsafe.",
+            missing_or_invalid_information=("covariate timing",),
+        ),
+        diagnostics=(),
+        warnings=(),
+        provenance=(source(),),
     )

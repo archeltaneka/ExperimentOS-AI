@@ -6,18 +6,35 @@ import pytest
 from pydantic import TypeAdapter, ValidationError
 
 from packages.experiments.analysis import (
+    AnalysisFinding,
+    AnalysisStatus,
+    AssociationalEstimate,
+    ConclusionType,
     ConfidenceInterval,
     CredibleInterval,
+    DescriptiveStatistic,
+    DescriptiveStatisticType,
     Diagnostic,
     DiagnosticOutcome,
     DiagnosticSeverity,
+    MeasuredValue,
+    ObservationalEstimate,
     PosteriorProbability,
     ProvenanceRecord,
     ProvenanceRecords,
     ProvenanceSourceType,
+    QuasiExperimentalEstimate,
+    RandomizedExperimentEstimate,
     StandardError,
     UncertaintyBundle,
     UncertaintyUnavailable,
+)
+from tests.analysis_contract_fixtures import (
+    effect_details,
+    outcome,
+    proportion_unit,
+    randomized_estimate,
+    source,
 )
 
 
@@ -107,3 +124,88 @@ def test_diagnostic_serializes_with_stable_enum_values() -> None:
         "observed_value": None,
         "threshold": None,
     }
+
+
+def test_associational_estimate_cannot_claim_a_causal_conclusion() -> None:
+    with pytest.raises(ValidationError):
+        AssociationalEstimate(
+            finding_type="associational_estimate",
+            conclusion_type=ConclusionType.CAUSAL_EFFECT,
+            estimate=effect_details(analysis_status=AnalysisStatus.COMPLETED),
+        )
+
+
+def test_randomized_estimate_requires_an_explicit_conclusion_type() -> None:
+    with pytest.raises(ValidationError):
+        RandomizedExperimentEstimate.model_validate(
+            {
+                "finding_type": "randomized_experiment_estimate",
+                "estimate": effect_details().model_dump(mode="json"),
+            }
+        )
+
+
+def test_estimand_and_estimate_serialize_with_stable_values() -> None:
+    estimate = randomized_estimate()
+    payload = estimate.model_dump(mode="json")
+    assert payload["finding_type"] == "randomized_experiment_estimate"
+    assert payload["conclusion_type"] == "causal_effect"
+    assert payload["estimate"]["estimand"]["kind"] == "intention_to_treat"
+    assert payload["estimate"]["uncertainty"]["measures"][0]["kind"] == ("confidence_interval")
+
+
+def test_descriptive_statistic_has_distinct_evidence_shape_without_estimand() -> None:
+    statistic = DescriptiveStatistic(
+        finding_type="descriptive_statistic",
+        statistic_type=DescriptiveStatisticType.SAMPLE_PROPORTION,
+        status=AnalysisStatus.COMPLETED,
+        metric=outcome().metric,
+        value=MeasuredValue(value=0.2, unit=proportion_unit()),
+        uncertainty=effect_details().uncertainty,
+        sample_size=200,
+        provenance=(source(),),
+    )
+    payload = statistic.model_dump(mode="json")
+    assert payload["statistic_type"] == "sample_proportion"
+    assert payload["provenance"][0]["source_type"] == "experiment_data"
+    assert "estimand" not in payload
+
+
+def test_effect_categories_remain_distinct_through_finding_union_round_trip() -> None:
+    details = effect_details()
+    findings = (
+        AssociationalEstimate(
+            conclusion_type=ConclusionType.ASSOCIATION,
+            estimate=details,
+        ),
+        randomized_estimate(),
+        QuasiExperimentalEstimate(
+            conclusion_type=ConclusionType.CAUSAL_EFFECT,
+            estimate=details,
+        ),
+        ObservationalEstimate(
+            conclusion_type=ConclusionType.ASSOCIATION,
+            estimate=details,
+        ),
+    )
+    adapter = TypeAdapter(AnalysisFinding)
+    restored = tuple(adapter.validate_python(item.model_dump(mode="json")) for item in findings)
+    assert [item.finding_type for item in restored] == [
+        "associational_estimate",
+        "randomized_experiment_estimate",
+        "quasi_experimental_estimate",
+        "observational_estimate",
+    ]
+    assert restored == findings
+
+
+def test_effect_estimate_rejects_terminal_status_and_invalid_sample_counts() -> None:
+    payload = effect_details().model_dump(mode="json")
+    payload["status"] = "failed"
+    with pytest.raises(ValidationError):
+        type(effect_details()).model_validate(payload)
+
+    payload = effect_details().model_dump(mode="json")
+    payload["sample_counts"]["total"] = 201
+    with pytest.raises(ValidationError, match="total"):
+        type(effect_details()).model_validate(payload)

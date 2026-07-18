@@ -258,10 +258,10 @@ def _start_validation_span(
         "design": request.study_design.design_type,
         "validation_started": True,
     }
-    before_failures = provider.failure_count
+    before_failures = _provider_failure_count(provider)
     try:
         parent = provider.current_span()
-        if parent is not None:
+        if parent is not None and parent.provider is provider:
             return provider.start_span(
                 "analysis_validation",
                 inputs=inputs,
@@ -357,19 +357,34 @@ def _run_observability_operation(
     provider: BaseObservabilityProvider,
     operation: Callable[[], None],
 ) -> None:
-    before_failures = provider.failure_count
+    before_failures = _provider_failure_count(provider)
     try:
         operation()
     except Exception:
         _increment_provider_failure(provider, before_failures)
 
 
+def _provider_failure_count(provider: BaseObservabilityProvider) -> int | None:
+    try:
+        return provider.failure_count
+    except Exception:
+        return None
+
+
 def _increment_provider_failure(
     provider: BaseObservabilityProvider,
-    before_failures: int,
+    before_failures: int | None,
 ) -> None:
     try:
-        if provider.failure_count == before_failures:
+        current_failures = provider.failure_count
+    except Exception:
+        current_failures = None
+    try:
+        if (
+            before_failures is None
+            or current_failures is None
+            or current_failures == before_failures
+        ):
             provider.increment_failure()
     except Exception:
         return

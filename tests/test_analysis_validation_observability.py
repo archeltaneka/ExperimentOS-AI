@@ -54,6 +54,81 @@ class FailingStartProvider(RecordingProvider):
         raise RuntimeError("observability start failed")
 
 
+class ControlledLifecycleSpan(BufferedSpan):
+    def __init__(
+        self,
+        provider: BaseObservabilityProvider,
+        record: BufferedSpanRecord,
+        *,
+        failing_operation: str,
+    ) -> None:
+        super().__init__(provider, record)
+        self.failing_operation = failing_operation
+        self.calls: list[str] = []
+
+    def add_metadata(self, metadata: dict[str, object]) -> None:
+        self.calls.append("add_metadata")
+        if self.failing_operation == "add_metadata":
+            raise RuntimeError("metadata lifecycle failed")
+        super().add_metadata(metadata)
+
+    def record_error(
+        self,
+        error: BaseException | str,
+        *,
+        details: dict[str, object] | None = None,
+    ) -> None:
+        self.calls.append("record_error")
+        if self.failing_operation == "record_error":
+            raise RuntimeError("error lifecycle failed")
+        super().record_error(error, details=details)
+
+    def finish(self, *, outputs: dict[str, object] | None = None) -> None:
+        self.calls.append("finish")
+        if self.failing_operation == "finish":
+            raise RuntimeError("finish lifecycle failed")
+        super().finish(outputs=outputs)
+
+
+class ControlledLifecycleProvider(RecordingProvider):
+    def __init__(self, failing_operation: str) -> None:
+        super().__init__()
+        self.failing_operation = failing_operation
+        self.spans: list[ControlledLifecycleSpan] = []
+
+    def start_root_span(
+        self,
+        name: str,
+        *,
+        trace_id: str | None = None,
+        run_type: str = "chain",
+        inputs: dict[str, object] | None = None,
+        metadata: dict[str, object] | None = None,
+        tags: tuple[str, ...] | list[str] = (),
+    ) -> BufferedSpan:
+        span = super().start_root_span(
+            name,
+            trace_id=trace_id,
+            run_type=run_type,
+            inputs=inputs,
+            metadata=metadata,
+            tags=tags,
+        )
+        controlled_span = ControlledLifecycleSpan(
+            self,
+            span.record,
+            failing_operation=self.failing_operation,
+        )
+        self.spans.append(controlled_span)
+        return controlled_span
+
+
+class FailingFailureCountProvider(RecordingProvider):
+    @property
+    def failure_count(self) -> int:
+        raise RuntimeError("failure counter unavailable")
+
+
 def _eligible_request() -> AnalysisRequest:
     request = randomized_request()
     design = request.study_design
@@ -173,6 +248,43 @@ def test_validation_uses_one_child_span_inside_an_active_trace() -> None:
     assert parent.record.children[0].status == "completed"
 
 
+def test_default_provider_does_not_attach_to_a_foreign_recording_span() -> None:
+    recording_provider = RecordingProvider()
+    foreign_parent = recording_provider.start_root_span("foreign_operation")
+
+    with foreign_parent.activate():
+        result = _implemented_service().validate(
+            _eligible_request(),
+            _eligible_table(),
+            _eligible_binding(),
+        )
+    foreign_parent.finish(outputs={"status": result.status.value})
+
+    assert result.status is AnalysisStatus.ELIGIBLE
+    assert foreign_parent.record.children == []
+    assert recording_provider.records == [foreign_parent.record]
+
+
+def test_recording_provider_exports_root_inside_a_foreign_noop_span() -> None:
+    recording_provider = RecordingProvider()
+    noop_provider = NoOpObservabilityProvider()
+    foreign_parent = noop_provider.start_root_span("foreign_operation")
+
+    with foreign_parent.activate():
+        result = _implemented_service(recording_provider).validate(
+            _eligible_request(),
+            _eligible_table(),
+            _eligible_binding(),
+        )
+    foreign_parent.finish(outputs={"status": result.status.value})
+
+    assert result.status is AnalysisStatus.ELIGIBLE
+    assert foreign_parent.record.children == []
+    assert len(recording_provider.records) == 1
+    assert recording_provider.records[0].name == "analysis_validation"
+    assert recording_provider.records[0].parent is None
+
+
 @pytest.mark.parametrize("provider_type", [FailingEmitProvider, FailingStartProvider])
 def test_provider_failure_does_not_change_validation_result(
     provider_type: type[BaseObservabilityProvider],
@@ -192,6 +304,77 @@ def test_provider_failure_does_not_change_validation_result(
 
     assert actual == expected
     assert provider.failure_count == 1
+
+
+@pytest.mark.parametrize("failing_operation", ["add_metadata", "finish"])
+def test_successful_result_is_unchanged_when_span_completion_fails(
+    failing_operation: str,
+) -> None:
+    expected = _implemented_service().validate(
+        _eligible_request(),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+    provider = ControlledLifecycleProvider(failing_operation)
+
+    actual = _implemented_service(provider).validate(
+        _eligible_request(),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+
+    assert actual == expected
+    assert provider.failure_count == 1
+    assert failing_operation in provider.spans[0].calls
+
+
+@pytest.mark.parametrize(
+    "failing_operation",
+    ["add_metadata", "record_error", "finish"],
+)
+def test_original_validator_error_survives_error_lifecycle_failure_without_leaking(
+    monkeypatch: pytest.MonkeyPatch,
+    failing_operation: str,
+) -> None:
+    provider = ControlledLifecycleProvider(failing_operation)
+    original = RuntimeError("validator failed with sensitive-customer-17")
+
+    def raising_validator(*args: object, **kwargs: object) -> tuple[()]:
+        raise original
+
+    monkeypatch.setattr(service_module, "validate_request_consistency", raising_validator)
+
+    with pytest.raises(RuntimeError) as captured:
+        _implemented_service(provider).validate(
+            _eligible_request(),
+            _eligible_table(),
+            _eligible_binding(),
+        )
+
+    assert captured.value is original
+    assert provider.failure_count == 1
+    assert failing_operation in provider.spans[0].calls
+    record = provider.spans[0].record
+    serialized = repr(record.error) + repr(record.metadata) + repr(record.outputs)
+    assert "sensitive-customer-17" not in serialized
+
+
+def test_failure_counter_property_cannot_escape_observability_isolation() -> None:
+    expected = _implemented_service().validate(
+        _eligible_request(),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+    provider = FailingFailureCountProvider()
+
+    actual = _implemented_service(provider).validate(
+        _eligible_request(),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+
+    assert actual == expected
+    assert len(provider.records) == 1
 
 
 def test_default_provider_is_noop() -> None:

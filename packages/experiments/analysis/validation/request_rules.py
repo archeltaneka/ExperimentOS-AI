@@ -295,13 +295,56 @@ def _unit_and_clustering_diagnostics(
                 context={"randomization_unit": randomization_unit},
             )
 
-    if request.clustering.kind == "clustered" and context.binding.clustering_unit_column is None:
-        yield _blocking(
-            code="unit.cluster_identifier_required",
-            category=ValidationCategory.UNIT,
-            message="Clustered analysis requires a clustering-unit column binding.",
-            context={"clustering_unit": request.clustering.unit.unit_id},
-        )
+        randomization_column = context.binding.randomization_unit_column
+        if (
+            design.randomization_unit == request.unit_of_analysis
+            and randomization_column is not None
+            and randomization_column != context.binding.observation_unit_column
+        ):
+            yield _binding_mismatch(
+                first_role="randomization_unit",
+                first_column=randomization_column,
+                second_role="observation_unit",
+                second_column=context.binding.observation_unit_column,
+                unit_id=design.randomization_unit.unit_id,
+            )
+
+        if request.clustering.kind == "clustered":
+            clustering_column = context.binding.clustering_unit_column
+            if (
+                design.randomization_unit == request.clustering.unit
+                and randomization_column is not None
+                and clustering_column is not None
+                and randomization_column != clustering_column
+            ):
+                yield _binding_mismatch(
+                    first_role="randomization_unit",
+                    first_column=randomization_column,
+                    second_role="clustering_unit",
+                    second_column=clustering_column,
+                    unit_id=design.randomization_unit.unit_id,
+                )
+
+    if request.clustering.kind == "clustered":
+        clustering_column = context.binding.clustering_unit_column
+        if clustering_column is None:
+            yield _blocking(
+                code="unit.cluster_identifier_required",
+                category=ValidationCategory.UNIT,
+                message="Clustered analysis requires a clustering-unit column binding.",
+                context={"clustering_unit": request.clustering.unit.unit_id},
+            )
+        elif (
+            request.clustering.unit == request.unit_of_analysis
+            and clustering_column != context.binding.observation_unit_column
+        ):
+            yield _binding_mismatch(
+                first_role="observation_unit",
+                first_column=context.binding.observation_unit_column,
+                second_role="clustering_unit",
+                second_column=clustering_column,
+                unit_id=request.unit_of_analysis.unit_id,
+            )
 
 
 def _treatment_cutoff(context: ValidationContext) -> datetime | None:
@@ -323,6 +366,28 @@ def _covariate_blocking(
         category=ValidationCategory.COVARIATE,
         message=message,
         context={"metric_id": covariate.metric.metric_id},
+    )
+
+
+def _binding_mismatch(
+    *,
+    first_role: str,
+    first_column: str,
+    second_role: str,
+    second_column: str,
+    unit_id: str,
+) -> EligibilityDiagnostic:
+    return _blocking(
+        code="unit.binding_mismatch",
+        category=ValidationCategory.UNIT,
+        message="Equal logical analysis units must use the same physical column binding.",
+        context={
+            "first_column": first_column,
+            "first_role": first_role,
+            "second_column": second_column,
+            "second_role": second_role,
+            "unit_id": unit_id,
+        },
     )
 
 

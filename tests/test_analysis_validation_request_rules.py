@@ -28,7 +28,9 @@ from packages.experiments.analysis.validation.capabilities import (
     MethodCapability,
     MethodCapabilityRegistry,
 )
+from packages.experiments.analysis.validation.context import ValidationContext
 from packages.experiments.analysis.validation.models import (
+    DiagnosticDisposition,
     MethodContractStatus,
     MethodImplementationStatus,
 )
@@ -428,6 +430,79 @@ def test_clustered_request_requires_cluster_identifier_binding() -> None:
     diagnostics = validate_request_consistency(context_for(request))
 
     assert "unit.cluster_identifier_required" in {item.code for item in diagnostics}
+
+
+def randomization_clustering_binding_mismatch_context() -> ValidationContext:
+    request = randomized_request().model_copy(
+        update={"clustering": Clustered(unit=requested_unit("account"))}
+    )
+    binding = analysis_binding_fixture().model_copy(update={"clustering_unit_column": "order_id"})
+    return context_for(request, binding=binding)
+
+
+def randomization_observation_binding_mismatch_context() -> ValidationContext:
+    request = randomized_request()
+    design = request.study_design.model_copy(
+        update={"randomization_unit": request.unit_of_analysis}
+    )
+    return context_for(request.model_copy(update={"study_design": design}))
+
+
+def clustering_observation_binding_mismatch_context() -> ValidationContext:
+    binding = analysis_binding_fixture().model_copy(
+        update={
+            "randomization_unit_column": None,
+            "clustering_unit_column": "account_id",
+        }
+    )
+    return context_for(observational_request(), binding=binding)
+
+
+@pytest.mark.parametrize(
+    ("context_factory", "expected_context"),
+    [
+        (
+            randomization_clustering_binding_mismatch_context,
+            {
+                "first_column": "account_id",
+                "first_role": "randomization_unit",
+                "second_column": "order_id",
+                "second_role": "clustering_unit",
+                "unit_id": "account",
+            },
+        ),
+        (
+            randomization_observation_binding_mismatch_context,
+            {
+                "first_column": "account_id",
+                "first_role": "randomization_unit",
+                "second_column": "order_id",
+                "second_role": "observation_unit",
+                "unit_id": "order",
+            },
+        ),
+        (
+            clustering_observation_binding_mismatch_context,
+            {
+                "first_column": "order_id",
+                "first_role": "observation_unit",
+                "second_column": "account_id",
+                "second_role": "clustering_unit",
+                "unit_id": "customer",
+            },
+        ),
+    ],
+)
+def test_equal_logical_units_require_equal_physical_bindings(
+    context_factory: Callable[[], ValidationContext],
+    expected_context: dict[str, str],
+) -> None:
+    diagnostics = validate_request_consistency(context_factory())
+
+    item = next(item for item in diagnostics if item.code == "unit.binding_mismatch")
+    assert item.disposition is DiagnosticDisposition.BLOCKING
+    assert {entry.key: entry.value for entry in item.context} == expected_context
+    assert tuple(entry.key for entry in item.context) == tuple(sorted(expected_context))
 
 
 def test_request_diagnostics_follow_fixed_rule_order() -> None:

@@ -4,11 +4,14 @@ from collections.abc import Mapping
 
 from packages.experiments.analysis import (
     AbstentionReason,
+    AnalysisRequest,
     AnalysisStatus,
     DiagnosticOutcome,
     DiagnosticSeverity,
 )
 from packages.experiments.analysis.validation import (
+    AnalysisDataBinding,
+    AnalysisTable,
     DatasetSummary,
     DiagnosticDisposition,
     EligibilityDiagnostic,
@@ -23,7 +26,45 @@ from packages.experiments.analysis.validation import (
     TreatmentSummary,
     UnitIntegritySummary,
     ValidationCategory,
+    ValidationPolicy,
 )
+from packages.experiments.analysis.validation.bindings import OutcomeDataBinding
+from packages.experiments.analysis.validation.context import ValidationContext
+from tests.analysis_contract_fixtures import randomized_request
+
+
+def analysis_table_fixture() -> AnalysisTable:
+    return AnalysisTable(
+        columns=("order_id", "account_id", "arm", "outcome"),
+        rows=(
+            ("order-1", "account-1", "control", 0.0),
+            ("order-2", "account-2", "treatment", 1.0),
+        ),
+    )
+
+
+def analysis_binding_fixture() -> AnalysisDataBinding:
+    return AnalysisDataBinding(
+        treatment_column="arm",
+        outcome=OutcomeDataBinding(value_column="outcome"),
+        observation_unit_column="order_id",
+        randomization_unit_column="account_id",
+    )
+
+
+def context_for(
+    request: AnalysisRequest | None = None,
+    *,
+    table: AnalysisTable | None = None,
+    binding: AnalysisDataBinding | None = None,
+    policy: ValidationPolicy | None = None,
+) -> ValidationContext:
+    return ValidationContext(
+        request=request if request is not None else randomized_request(),
+        table=table if table is not None else analysis_table_fixture(),
+        binding=binding if binding is not None else analysis_binding_fixture(),
+        policy=policy if policy is not None else ValidationPolicy(),
+    )
 
 
 def diagnostic_fixture(

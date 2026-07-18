@@ -6,8 +6,12 @@ from packages.experiments.analysis import (
     AbstentionReason,
     AnalysisRequest,
     AnalysisStatus,
+    CriterionOperator,
     DiagnosticOutcome,
     DiagnosticSeverity,
+    MetricType,
+    PopulationDefinition,
+    SelectionCriterion,
 )
 from packages.experiments.analysis.validation import (
     AnalysisDataBinding,
@@ -65,6 +69,167 @@ def context_for(
         binding=binding if binding is not None else analysis_binding_fixture(),
         policy=policy if policy is not None else ValidationPolicy(),
     )
+
+
+def context_for_table(table: AnalysisTable) -> ValidationContext:
+    return context_for(table=table)
+
+
+def table_without(column: str) -> AnalysisTable:
+    table = analysis_table_fixture()
+    column_index = table.columns.index(column)
+    return AnalysisTable(
+        columns=tuple(name for index, name in enumerate(table.columns) if index != column_index),
+        rows=tuple(
+            tuple(value for index, value in enumerate(row) if index != column_index)
+            for row in table.rows
+        ),
+    )
+
+
+def table_with_arm_values(values: tuple[object, ...]) -> AnalysisTable:
+    return AnalysisTable(
+        columns=("order_id", "account_id", "arm", "outcome"),
+        rows=tuple(
+            (f"order-{index}", f"account-{index}", value, float(index % 2))
+            for index, value in enumerate(values, start=1)
+        ),
+    )
+
+
+def control_only_table() -> AnalysisTable:
+    return table_with_arm_values(("control", "control"))
+
+
+def context_with_country_population(countries: tuple[object, ...]) -> ValidationContext:
+    request = randomized_request().model_copy(
+        update={
+            "population": PopulationDefinition(
+                population_id="australian_checkout_users",
+                label="Australian checkout users",
+                criteria=(
+                    SelectionCriterion(
+                        attribute="country",
+                        operator=CriterionOperator.EQUAL,
+                        value="AU",
+                    ),
+                ),
+            )
+        }
+    )
+    table = AnalysisTable(
+        columns=("order_id", "account_id", "arm", "outcome", "country"),
+        rows=tuple(
+            (
+                f"order-{index}",
+                f"account-{index}",
+                "control" if index % 2 == 0 else "treatment",
+                float(index % 2),
+                country,
+            )
+            for index, country in enumerate(countries)
+        ),
+    )
+    return context_for(request, table=table)
+
+
+def context_with_outcomes(
+    metric_type: MetricType,
+    values: tuple[object, ...],
+    *,
+    policy: ValidationPolicy | None = None,
+    outcome_binding: OutcomeDataBinding | None = None,
+) -> ValidationContext:
+    request = randomized_request()
+    metric = request.outcome.metric.model_copy(update={"metric_type": metric_type})
+    request = request.model_copy(
+        update={"outcome": request.outcome.model_copy(update={"metric": metric})}
+    )
+    table = AnalysisTable(
+        columns=("order_id", "account_id", "arm", "outcome"),
+        rows=tuple(
+            (
+                f"order-{index}",
+                f"account-{index}",
+                "control" if index % 2 == 0 else "treatment",
+                value,
+            )
+            for index, value in enumerate(values)
+        ),
+    )
+    binding = analysis_binding_fixture()
+    if outcome_binding is not None:
+        binding = binding.model_copy(update={"outcome": outcome_binding})
+    return context_for(request, table=table, binding=binding, policy=policy)
+
+
+def ratio_context(
+    *,
+    numerators: tuple[object, ...],
+    denominators: tuple[object, ...],
+) -> ValidationContext:
+    if len(numerators) != len(denominators):
+        raise ValueError("ratio fixture columns must have equal lengths")
+    request = randomized_request()
+    metric = request.outcome.metric.model_copy(update={"metric_type": MetricType.RATIO})
+    request = request.model_copy(
+        update={"outcome": request.outcome.model_copy(update={"metric": metric})}
+    )
+    table = AnalysisTable(
+        columns=("order_id", "account_id", "arm", "numerator", "denominator"),
+        rows=tuple(
+            (
+                f"order-{index}",
+                f"account-{index}",
+                "control" if index % 2 == 0 else "treatment",
+                numerator,
+                denominator,
+            )
+            for index, (numerator, denominator) in enumerate(
+                zip(numerators, denominators, strict=True)
+            )
+        ),
+    )
+    binding = analysis_binding_fixture().model_copy(
+        update={
+            "outcome": OutcomeDataBinding(
+                numerator_column="numerator",
+                denominator_column="denominator",
+            )
+        }
+    )
+    return context_for(request, table=table, binding=binding)
+
+
+def context_with_arm_outcome_values(
+    assignments: tuple[object, ...],
+    outcomes: tuple[object, ...],
+    *,
+    policy: ValidationPolicy | None = None,
+) -> ValidationContext:
+    if len(assignments) != len(outcomes):
+        raise ValueError("assignment and outcome fixture columns must have equal lengths")
+    table = AnalysisTable(
+        columns=("order_id", "account_id", "arm", "outcome"),
+        rows=tuple(
+            (f"order-{index}", f"account-{index}", assignment, outcome_value)
+            for index, (assignment, outcome_value) in enumerate(
+                zip(assignments, outcomes, strict=True)
+            )
+        ),
+    )
+    return context_for(table=table, policy=policy)
+
+
+def context_with_arm_sizes(
+    *,
+    treatment: int,
+    control: int,
+    policy: ValidationPolicy | None = None,
+) -> ValidationContext:
+    assignments = ("treatment",) * treatment + ("control",) * control
+    outcomes = tuple(float(index % 2) for index in range(len(assignments)))
+    return context_with_arm_outcome_values(assignments, outcomes, policy=policy)
 
 
 def diagnostic_fixture(

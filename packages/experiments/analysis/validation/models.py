@@ -63,16 +63,6 @@ class DiagnosticContextEntry(ContractModel):
     value: ScalarValue
 
 
-def _context_key(value: object) -> str:
-    if isinstance(value, DiagnosticContextEntry):
-        return value.key
-    if isinstance(value, Mapping):
-        key = value.get("key")
-        if isinstance(key, str):
-            return key
-    raise ValueError("diagnostic context entries require string keys")
-
-
 class EligibilityDiagnostic(ContractModel):
     """Deterministic validation evidence without raw row-level values."""
 
@@ -87,24 +77,24 @@ class EligibilityDiagnostic(ContractModel):
 
     @field_validator("context", mode="before")
     @classmethod
-    def canonicalize_context(cls, value: object) -> object:
+    def expand_context_mapping(cls, value: object) -> object:
         if isinstance(value, Mapping):
             if any(not isinstance(key, str) for key in value):
                 raise ValueError("diagnostic context keys must be strings")
-            return tuple(
-                {"key": key, "value": item}
-                for key, item in sorted(value.items(), key=lambda entry: entry[0])
-            )
-        if isinstance(value, (list, tuple)):
-            return tuple(sorted(value, key=_context_key))
+            return tuple({"key": key, "value": item} for key, item in value.items())
         return value
 
-    @model_validator(mode="after")
-    def validate_unique_context_keys(self) -> Self:
-        keys = tuple(entry.key for entry in self.context)
+    @field_validator("context")
+    @classmethod
+    def canonicalize_context(
+        cls,
+        value: tuple[DiagnosticContextEntry, ...],
+    ) -> tuple[DiagnosticContextEntry, ...]:
+        canonical = tuple(sorted(value, key=lambda entry: entry.key))
+        keys = tuple(entry.key for entry in canonical)
         if len(keys) != len(set(keys)):
             raise ValueError("diagnostic context keys must be unique")
-        return self
+        return canonical
 
 
 class DatasetSummary(ContractModel):

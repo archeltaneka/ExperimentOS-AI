@@ -107,6 +107,16 @@ def test_diagnostic_context_order_is_canonical() -> None:
     assert [entry.key for entry in diagnostic.context] == ["a", "z"]
 
 
+def test_diagnostic_context_is_sorted_after_key_normalization() -> None:
+    diagnostic = diagnostic_fixture(context={" z": 2, "a ": 1})
+    assert [entry.key for entry in diagnostic.context] == ["a", "z"]
+
+
+def test_diagnostic_context_rejects_duplicate_normalized_keys() -> None:
+    with pytest.raises(ValidationError, match="context keys must be unique"):
+        diagnostic_fixture(context={"a": 1, " a ": 2})
+
+
 def test_policy_defaults_ignore_ambient_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("EXPERIMENTOS_MINIMUM_TOTAL", "999")
     assert ValidationPolicy().minimum_total == 30

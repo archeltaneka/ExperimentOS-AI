@@ -13,6 +13,7 @@ from .estimates import AnalysisFinding, EffectEstimate
 from .requests import AnalysisRequest
 from .results import AnalysisOutcome
 from .study_designs import StudyDesign
+from .validation.models import EligibilityValidationResult
 
 ANALYSIS_REQUEST_ADAPTER: TypeAdapter[AnalysisRequest] = TypeAdapter(AnalysisRequest)
 STUDY_DESIGN_ADAPTER: TypeAdapter[StudyDesign] = TypeAdapter(StudyDesign)
@@ -24,6 +25,9 @@ BUSINESS_IMPACT_PROJECTION_ADAPTER: TypeAdapter[BusinessImpactProjection] = Type
     BusinessImpactProjection
 )
 PROJECTED_VALUE_ADAPTER: TypeAdapter[ProjectedValue] = TypeAdapter(ProjectedValue)
+ELIGIBILITY_VALIDATION_RESULT_ADAPTER: TypeAdapter[EligibilityValidationResult] = TypeAdapter(
+    EligibilityValidationResult
+)
 
 
 def to_canonical_json(model: ContractModel) -> str:
@@ -74,3 +78,10 @@ def business_impact_projection_from_json(payload: str | bytes) -> BusinessImpact
 def projected_value_from_json(payload: str | bytes) -> ProjectedValue:
     """Validate JSON as one independently uncertain projected value."""
     return PROJECTED_VALUE_ADAPTER.validate_json(payload)
+
+
+def eligibility_validation_result_from_json(
+    payload: str | bytes,
+) -> EligibilityValidationResult:
+    """Validate JSON as a pre-estimator eligibility validation result."""
+    return ELIGIBILITY_VALIDATION_RESULT_ADAPTER.validate_json(payload)

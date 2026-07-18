@@ -1,6 +1,7 @@
 """ExperimentOS-owned statistical input validation contracts."""
 
 from .bindings import AnalysisDataBinding, MetricColumnBinding, OutcomeDataBinding
+from .capabilities import MethodCapabilityRegistry
 from .models import (
     DatasetSummary,
     DiagnosticContextEntry,
@@ -19,10 +20,12 @@ from .models import (
     ValidationCategory,
 )
 from .policy import ValidationPolicy
+from .service import AnalysisEligibilityService, aggregate_status
 from .table import AnalysisTable, AnalysisTableError
 
 __all__ = [
     "AnalysisDataBinding",
+    "AnalysisEligibilityService",
     "AnalysisTable",
     "AnalysisTableError",
     "DatasetSummary",
@@ -32,6 +35,7 @@ __all__ = [
     "EligibilityValidationResult",
     "MetricColumnBinding",
     "MethodContractStatus",
+    "MethodCapabilityRegistry",
     "MethodImplementationStatus",
     "MethodSupportAssessment",
     "MissingnessSummary",
@@ -43,4 +47,5 @@ __all__ = [
     "UnitIntegritySummary",
     "ValidationPolicy",
     "ValidationCategory",
+    "aggregate_status",
 ]

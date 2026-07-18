@@ -13,6 +13,7 @@ from packages.experiments.analysis import (
     ANALYSIS_REQUEST_ADAPTER,
     BUSINESS_IMPACT_PROJECTION_ADAPTER,
     EFFECT_ESTIMATE_ADAPTER,
+    ELIGIBILITY_VALIDATION_RESULT_ADAPTER,
     ESTIMAND_ADAPTER,
     STUDY_DESIGN_ADAPTER,
     AnalysisFailure,
@@ -36,6 +37,7 @@ from packages.experiments.analysis import (
     analysis_request_from_json,
     business_impact_projection_from_json,
     effect_estimate_from_json,
+    eligibility_validation_result_from_json,
     estimand_from_json,
     study_design_from_json,
     to_canonical_json,
@@ -51,6 +53,7 @@ from tests.analysis_contract_fixtures import (
     source,
     valid_projection,
 )
+from tests.analysis_validation_fixtures import eligible_result_fixture
 
 
 def _finding_variants() -> tuple[object, ...]:
@@ -165,6 +168,16 @@ def test_every_analysis_outcome_round_trips_through_public_union(original: objec
 
     assert analysis_outcome_from_json(payload) == original
     assert ANALYSIS_OUTCOME_ADAPTER.validate_json(payload) == original
+
+
+def test_eligibility_validation_result_uses_its_own_public_round_trip() -> None:
+    original = eligible_result_fixture()
+    payload = to_canonical_json(original)
+
+    assert eligibility_validation_result_from_json(payload) == original
+    assert ELIGIBILITY_VALIDATION_RESULT_ADAPTER.validate_json(payload) == original
+    with pytest.raises(ValidationError):
+        analysis_outcome_from_json(payload)
 
 
 def test_diagnostic_has_deterministic_canonical_serialization() -> None:

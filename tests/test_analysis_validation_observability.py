@@ -1,0 +1,262 @@
+from __future__ import annotations
+
+import pytest
+
+from packages.experiments.analysis import (
+    AnalysisRequest,
+    AnalysisStatus,
+    RandomizedAnalysisMethod,
+    RandomizedExperimentDesign,
+)
+from packages.experiments.analysis.validation import (
+    AnalysisDataBinding,
+    AnalysisEligibilityService,
+    AnalysisTable,
+    MethodCapabilityRegistry,
+)
+from packages.experiments.analysis.validation import service as service_module
+from packages.observability.base import (
+    BaseObservabilityProvider,
+    BufferedSpan,
+    BufferedSpanRecord,
+)
+from packages.observability.models import ProviderSettings
+from packages.observability.noop import NoOpObservabilityProvider
+from tests.analysis_contract_fixtures import randomized_request
+from tests.analysis_validation_fixtures import analysis_binding_fixture
+
+
+class RecordingProvider(BaseObservabilityProvider):
+    def __init__(self) -> None:
+        super().__init__(ProviderSettings(enabled=True, sampling_rate=1.0))
+        self.records: list[BufferedSpanRecord] = []
+
+    def _emit_root(self, record: BufferedSpanRecord) -> None:
+        self.records.append(record)
+
+
+class FailingEmitProvider(RecordingProvider):
+    def _emit_root(self, record: BufferedSpanRecord) -> None:
+        raise RuntimeError("observability transport failed")
+
+
+class FailingStartProvider(RecordingProvider):
+    def start_root_span(
+        self,
+        name: str,
+        *,
+        trace_id: str | None = None,
+        run_type: str = "chain",
+        inputs: dict[str, object] | None = None,
+        metadata: dict[str, object] | None = None,
+        tags: tuple[str, ...] | list[str] = (),
+    ) -> BufferedSpan:
+        raise RuntimeError("observability start failed")
+
+
+def _eligible_request() -> AnalysisRequest:
+    request = randomized_request()
+    design = request.study_design
+    assert isinstance(design, RandomizedExperimentDesign)
+    return request.model_copy(
+        update={
+            "study_design": design.model_copy(
+                update={"randomization_unit": request.unit_of_analysis}
+            )
+        }
+    )
+
+
+def _eligible_binding() -> AnalysisDataBinding:
+    return analysis_binding_fixture().model_copy(update={"randomization_unit_column": "order_id"})
+
+
+def _eligible_table(*, row_count: int = 100) -> AnalysisTable:
+    return AnalysisTable(
+        columns=("order_id", "arm", "outcome"),
+        rows=tuple(
+            (
+                f"order-{index}",
+                "control" if index % 2 == 0 else "treatment",
+                float(index % 2),
+            )
+            for index in range(row_count)
+        ),
+    )
+
+
+def _implemented_service(
+    provider: BaseObservabilityProvider | None = None,
+) -> AnalysisEligibilityService:
+    return AnalysisEligibilityService(
+        capability_registry=MethodCapabilityRegistry.with_implemented_methods(
+            (RandomizedAnalysisMethod.FIXED_HORIZON_AB,)
+        ),
+        observability_provider=provider,
+    )
+
+
+def test_validation_span_contains_only_logical_metadata_without_table_content() -> None:
+    provider = RecordingProvider()
+    table = AnalysisTable(
+        columns=("secret_unit_column", "secret_arm_column", "secret_outcome_column"),
+        rows=tuple(
+            (
+                f"sensitive-customer-{index}",
+                "control" if index % 2 == 0 else "treatment",
+                float(index % 2),
+            )
+            for index in range(100)
+        ),
+    )
+    binding = _eligible_binding()
+    binding = binding.model_copy(
+        update={
+            "treatment_column": "secret_arm_column",
+            "outcome": binding.outcome.model_copy(update={"value_column": "secret_outcome_column"}),
+            "observation_unit_column": "secret_unit_column",
+            "randomization_unit_column": "secret_unit_column",
+        }
+    )
+
+    result = _implemented_service(provider).validate(_eligible_request(), table, binding)
+
+    assert len(provider.records) == 1
+    record = provider.records[0]
+    assert record.name == "analysis_validation"
+    assert record.inputs == {"row_count": 100, "column_count": 3}
+    assert record.metadata["method"] == "fixed_horizon_ab"
+    assert record.metadata["design"] == "randomized_experiment"
+    assert record.metadata["status"] == result.status.value
+    assert record.metadata["blocking_diagnostic_count"] == 0
+    assert record.metadata["warning_diagnostic_count"] == 0
+    assert record.metadata["needs_more_data"] is False
+    assert record.metadata["method_unavailable"] is False
+    assert record.metadata["validator_failure"] is False
+    assert record.metadata["validation_started"] is True
+    assert record.metadata["validation_completed"] is True
+    assert isinstance(record.metadata["duration_ms"], float)
+    assert record.metadata["duration_ms"] >= 0.0
+    assert record.outputs == {
+        "status": result.status.value,
+        "validation_completed": True,
+    }
+    assert record.status == "completed"
+    assert record.ended_at is not None
+    serialized = repr(record.inputs) + repr(record.metadata) + repr(record.outputs)
+    for forbidden in (
+        "sensitive-customer",
+        "secret_unit_column",
+        "secret_arm_column",
+        "secret_outcome_column",
+        "control",
+        "treatment",
+    ):
+        assert forbidden not in serialized
+
+
+def test_validation_uses_one_child_span_inside_an_active_trace() -> None:
+    provider = RecordingProvider()
+    parent = provider.start_root_span("outer_operation")
+
+    with parent.activate():
+        result = _implemented_service(provider).validate(
+            _eligible_request(),
+            _eligible_table(),
+            _eligible_binding(),
+        )
+    parent.finish(outputs={"status": result.status.value})
+
+    assert len(provider.records) == 1
+    assert provider.records[0] is parent.record
+    assert [child.name for child in parent.record.children] == ["analysis_validation"]
+    assert parent.record.children[0].status == "completed"
+
+
+@pytest.mark.parametrize("provider_type", [FailingEmitProvider, FailingStartProvider])
+def test_provider_failure_does_not_change_validation_result(
+    provider_type: type[BaseObservabilityProvider],
+) -> None:
+    expected = _implemented_service().validate(
+        _eligible_request(),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+    provider = provider_type()
+
+    actual = _implemented_service(provider).validate(
+        _eligible_request(),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+
+    assert actual == expected
+    assert provider.failure_count == 1
+
+
+def test_default_provider_is_noop() -> None:
+    service = _implemented_service()
+
+    result = service.validate(_eligible_request(), _eligible_table(), _eligible_binding())
+
+    assert isinstance(service.observability_provider, NoOpObservabilityProvider)
+    assert result.status is AnalysisStatus.ELIGIBLE
+    assert service.observability_provider.failure_count == 0
+
+
+def test_method_unavailable_is_recorded_as_a_logical_flag() -> None:
+    provider = RecordingProvider()
+
+    result = AnalysisEligibilityService(observability_provider=provider).validate(
+        _eligible_request(),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+
+    assert result.status is AnalysisStatus.INELIGIBLE
+    assert provider.records[0].metadata["method_unavailable"] is True
+    assert provider.records[0].metadata["needs_more_data"] is False
+
+
+def test_needs_more_data_is_recorded_as_a_logical_flag() -> None:
+    provider = RecordingProvider()
+
+    result = _implemented_service(provider).validate(
+        _eligible_request(),
+        _eligible_table(row_count=20),
+        _eligible_binding(),
+    )
+
+    assert result.status is AnalysisStatus.NEEDS_MORE_DATA
+    assert provider.records[0].metadata["needs_more_data"] is True
+    assert provider.records[0].metadata["method_unavailable"] is False
+
+
+def test_unexpected_validator_failure_is_safely_recorded_and_reraised(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = RecordingProvider()
+
+    def raising_validator(*args: object, **kwargs: object) -> tuple[()]:
+        raise RuntimeError("validator failed with sensitive-customer-17")
+
+    monkeypatch.setattr(service_module, "validate_request_consistency", raising_validator)
+    service = _implemented_service(provider)
+
+    with pytest.raises(RuntimeError, match="validator failed with sensitive-customer-17"):
+        service.validate(_eligible_request(), _eligible_table(), _eligible_binding())
+
+    assert len(provider.records) == 1
+    record = provider.records[0]
+    assert record.error == {
+        "type": "RuntimeError",
+        "message": "Analysis validation failed.",
+        "stage": "request_and_capability",
+    }
+    assert record.metadata["validator_failure"] is True
+    assert record.metadata["validator_failure_stage"] == "request_and_capability"
+    assert record.metadata["validation_completed"] is False
+    assert record.outputs == {"validation_completed": False}
+    assert record.status == "error"
+    serialized = repr(record.error) + repr(record.metadata) + repr(record.outputs)
+    assert "sensitive-customer-17" not in serialized

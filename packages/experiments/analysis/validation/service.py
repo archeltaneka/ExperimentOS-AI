@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from time import perf_counter
 
 from pydantic import ValidationError
+
+from packages.observability.base import BaseObservabilityProvider, BufferedSpan
+from packages.observability.noop import NoOpObservabilityProvider
 
 from ..base import AnalysisStatus
 from ..provenance import DiagnosticOutcome, DiagnosticSeverity
@@ -68,6 +72,7 @@ class AnalysisEligibilityService:
         policy: ValidationPolicy | None = None,
         capability_registry: MethodCapabilityRegistry | None = None,
         configuration_provenance: str = "explicit defaults",
+        observability_provider: BaseObservabilityProvider | None = None,
     ) -> None:
         self._policy = policy if policy is not None else ValidationPolicy()
         self._capability_registry = (
@@ -76,6 +81,7 @@ class AnalysisEligibilityService:
             else MethodCapabilityRegistry.default()
         )
         self._configuration_provenance = configuration_provenance
+        self.observability_provider = observability_provider or NoOpObservabilityProvider()
 
     def validate(
         self,
@@ -84,65 +90,94 @@ class AnalysisEligibilityService:
         binding: AnalysisDataBinding,
     ) -> EligibilityValidationResult:
         """Validate one immutable request/table/binding bundle in a fixed order."""
-        context = ValidationContext(
-            request=request,
-            table=table,
-            binding=binding,
-            policy=self._policy,
-        )
-        request_diagnostics = _validate_request_and_capability(
-            context,
-            self._capability_registry,
-        )
-        data_result = validate_data(context)
-        dependency_diagnostics: tuple[EligibilityDiagnostic, ...]
-        if _schema_is_unreadable(data_result):
-            dependency_diagnostics = (_dependent_rules_unavailable(),)
-            design_result = _empty_design_result(context)
-        else:
-            dependency_diagnostics = ()
-            design_result = validate_design(context, data_result)
+        started_at = perf_counter()
+        span = _start_validation_span(self.observability_provider, request, table)
+        failure_stage = "context"
+        try:
+            context = ValidationContext(
+                request=request,
+                table=table,
+                binding=binding,
+                policy=self._policy,
+            )
+            failure_stage = "request_and_capability"
+            request_diagnostics = _validate_request_and_capability(
+                context,
+                self._capability_registry,
+            )
+            failure_stage = "data"
+            data_result = validate_data(context)
+            dependency_diagnostics: tuple[EligibilityDiagnostic, ...]
+            failure_stage = "design"
+            if _schema_is_unreadable(data_result):
+                dependency_diagnostics = (_dependent_rules_unavailable(),)
+                design_result = _empty_design_result(context)
+            else:
+                dependency_diagnostics = ()
+                design_result = validate_design(context, data_result)
 
-        diagnostics = (
-            request_diagnostics
-            + data_result.diagnostics
-            + dependency_diagnostics
-            + design_result.diagnostics
+            failure_stage = "aggregation"
+            diagnostics = (
+                request_diagnostics
+                + data_result.diagnostics
+                + dependency_diagnostics
+                + design_result.diagnostics
+            )
+            data_eligible = not any(
+                diagnostic.code not in _CAPABILITY_DIAGNOSTIC_CODES
+                and diagnostic.disposition
+                in {DiagnosticDisposition.BLOCKING, DiagnosticDisposition.NEEDS_MORE_DATA}
+                for diagnostic in diagnostics
+            )
+            method_support = self._capability_registry.assess(
+                request,
+                data_eligible=data_eligible,
+            )
+            status = aggregate_status(diagnostics)
+            result = EligibilityValidationResult(
+                status=status,
+                requested_method=context.method,
+                experiment_design=context.design_type,
+                diagnostics=diagnostics,
+                blocking_diagnostics=tuple(
+                    item
+                    for item in diagnostics
+                    if item.disposition is DiagnosticDisposition.BLOCKING
+                ),
+                warnings=tuple(
+                    item
+                    for item in diagnostics
+                    if item.disposition is DiagnosticDisposition.WARNING
+                ),
+                dataset_summary=data_result.dataset_summary,
+                treatment_summary=data_result.treatment_summary,
+                outcome_summary=data_result.outcome_summary,
+                missingness_summary=data_result.missingness_summary,
+                unit_integrity_summary=design_result.unit_integrity_summary,
+                time_summary=design_result.time_summary,
+                segment_summary=design_result.segment_summary,
+                method_support=method_support,
+                abstention_reason=_abstention_reason(status, diagnostics),
+                policy_version=self._policy.policy_version,
+                configuration_provenance=self._configuration_provenance,
+            )
+        except Exception as error:
+            _finish_validation_failure(
+                self.observability_provider,
+                span,
+                error=error,
+                failure_stage=failure_stage,
+                duration_ms=(perf_counter() - started_at) * 1000.0,
+            )
+            raise
+
+        _finish_validation_success(
+            self.observability_provider,
+            span,
+            result=result,
+            duration_ms=(perf_counter() - started_at) * 1000.0,
         )
-        data_eligible = not any(
-            diagnostic.code not in _CAPABILITY_DIAGNOSTIC_CODES
-            and diagnostic.disposition
-            in {DiagnosticDisposition.BLOCKING, DiagnosticDisposition.NEEDS_MORE_DATA}
-            for diagnostic in diagnostics
-        )
-        method_support = self._capability_registry.assess(
-            request,
-            data_eligible=data_eligible,
-        )
-        status = aggregate_status(diagnostics)
-        return EligibilityValidationResult(
-            status=status,
-            requested_method=context.method,
-            experiment_design=context.design_type,
-            diagnostics=diagnostics,
-            blocking_diagnostics=tuple(
-                item for item in diagnostics if item.disposition is DiagnosticDisposition.BLOCKING
-            ),
-            warnings=tuple(
-                item for item in diagnostics if item.disposition is DiagnosticDisposition.WARNING
-            ),
-            dataset_summary=data_result.dataset_summary,
-            treatment_summary=data_result.treatment_summary,
-            outcome_summary=data_result.outcome_summary,
-            missingness_summary=data_result.missingness_summary,
-            unit_integrity_summary=design_result.unit_integrity_summary,
-            time_summary=design_result.time_summary,
-            segment_summary=design_result.segment_summary,
-            method_support=method_support,
-            abstention_reason=_abstention_reason(status, diagnostics),
-            policy_version=self._policy.policy_version,
-            configuration_provenance=self._configuration_provenance,
-        )
+        return result
 
     def validate_payload(
         self,
@@ -207,6 +242,137 @@ class AnalysisEligibilityService:
             policy_version=self._policy.policy_version,
             configuration_provenance=self._configuration_provenance,
         )
+
+
+def _start_validation_span(
+    provider: BaseObservabilityProvider,
+    request: AnalysisRequest,
+    table: AnalysisTable,
+) -> BufferedSpan | None:
+    inputs: dict[str, object] = {
+        "row_count": len(table.rows),
+        "column_count": len(table.columns),
+    }
+    metadata = {
+        "method": request.study_design.method.value,
+        "design": request.study_design.design_type,
+        "validation_started": True,
+    }
+    before_failures = provider.failure_count
+    try:
+        parent = provider.current_span()
+        if parent is not None:
+            return provider.start_span(
+                "analysis_validation",
+                inputs=inputs,
+                metadata=metadata,
+                parent=parent,
+            )
+        return provider.start_root_span(
+            "analysis_validation",
+            inputs=inputs,
+            metadata=metadata,
+        )
+    except Exception:
+        _increment_provider_failure(provider, before_failures)
+        return None
+
+
+def _finish_validation_success(
+    provider: BaseObservabilityProvider,
+    span: BufferedSpan | None,
+    *,
+    result: EligibilityValidationResult,
+    duration_ms: float,
+) -> None:
+    if span is None:
+        return
+    _run_observability_operation(
+        provider,
+        lambda: span.add_metadata(
+            {
+                "status": result.status.value,
+                "blocking_diagnostic_count": len(result.blocking_diagnostics),
+                "warning_diagnostic_count": len(result.warnings),
+                "duration_ms": duration_ms,
+                "needs_more_data": result.status is AnalysisStatus.NEEDS_MORE_DATA,
+                "method_unavailable": (
+                    result.method_support.implementation_status
+                    is MethodImplementationStatus.UNAVAILABLE
+                ),
+                "validator_failure": False,
+                "validation_completed": True,
+            }
+        ),
+    )
+    _run_observability_operation(
+        provider,
+        lambda: span.finish(
+            outputs={
+                "status": result.status.value,
+                "validation_completed": True,
+            }
+        ),
+    )
+
+
+def _finish_validation_failure(
+    provider: BaseObservabilityProvider,
+    span: BufferedSpan | None,
+    *,
+    error: Exception,
+    failure_stage: str,
+    duration_ms: float,
+) -> None:
+    if span is None:
+        return
+    _run_observability_operation(
+        provider,
+        lambda: span.add_metadata(
+            {
+                "duration_ms": duration_ms,
+                "validator_failure": True,
+                "validator_failure_stage": failure_stage,
+                "validation_completed": False,
+            }
+        ),
+    )
+    _run_observability_operation(
+        provider,
+        lambda: span.record_error(
+            "Analysis validation failed.",
+            details={
+                "type": error.__class__.__name__,
+                "stage": failure_stage,
+            },
+        ),
+    )
+    _run_observability_operation(
+        provider,
+        lambda: span.finish(outputs={"validation_completed": False}),
+    )
+
+
+def _run_observability_operation(
+    provider: BaseObservabilityProvider,
+    operation: Callable[[], None],
+) -> None:
+    before_failures = provider.failure_count
+    try:
+        operation()
+    except Exception:
+        _increment_provider_failure(provider, before_failures)
+
+
+def _increment_provider_failure(
+    provider: BaseObservabilityProvider,
+    before_failures: int,
+) -> None:
+    try:
+        if provider.failure_count == before_failures:
+            provider.increment_failure()
+    except Exception:
+        return
 
 
 def _validate_request_and_capability(

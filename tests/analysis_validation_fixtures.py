@@ -318,9 +318,7 @@ def _clustered_request() -> AnalysisRequest:
     design = request.study_design
     if not isinstance(design, RandomizedExperimentDesign):
         raise RuntimeError("randomized fixture returned a non-randomized design")
-    return request.model_copy(
-        update={"clustering": Clustered(unit=design.randomization_unit)}
-    )
+    return request.model_copy(update={"clustering": Clustered(unit=design.randomization_unit)})
 
 
 def context_with_missing_cluster() -> ValidationContext:
@@ -361,9 +359,7 @@ def _request_with_covariate() -> AnalysisRequest:
 
 def _covariate_binding(*, with_timestamp: bool) -> AnalysisDataBinding:
     update: dict[str, object] = {
-        "covariates": (
-            MetricColumnBinding(metric_id="prior_order_count", column="prior_orders"),
-        )
+        "covariates": (MetricColumnBinding(metric_id="prior_order_count", column="prior_orders"),)
     }
     if with_timestamp:
         update["timestamp_column"] = "observed_at"
@@ -391,6 +387,74 @@ def context_with_missing_optional_covariate_values() -> ValidationContext:
         ),
         request=_request_with_covariate(),
         binding=_covariate_binding(with_timestamp=False),
+    )
+
+
+def context_with_longitudinal_covariate(*, missing_inside_period: bool) -> ValidationContext:
+    request = _request_with_covariate().model_copy(
+        update={"clustering": _clustered_request().clustering}
+    )
+    binding = _covariate_binding(with_timestamp=True).model_copy(
+        update={"clustering_unit_column": "account_id"}
+    )
+    first_value = None if missing_inside_period else 3
+    return _table_context(
+        ("order_id", "account_id", "arm", "outcome", "prior_orders", "observed_at"),
+        (
+            ("unit-1", "cluster-1", "control", 0.0, first_value, "2026-05-01T00:00:00Z"),
+            ("unit-1", "cluster-1", "control", 1.0, None, "2026-06-01T00:00:00Z"),
+            ("unit-1", "cluster-1", "control", 0.0, None, "2026-07-01T00:00:00Z"),
+            ("unit-2", "cluster-2", "treatment", 1.0, 4, "2026-05-01T00:00:00Z"),
+            ("unit-2", "cluster-2", "treatment", 0.0, None, "2026-06-01T00:00:00Z"),
+            ("unit-2", "cluster-2", "treatment", 1.0, None, "2026-07-01T00:00:00Z"),
+        ),
+        request=request,
+        binding=binding,
+    )
+
+
+def context_with_bound_treatment_timestamps(
+    values: tuple[object, object],
+) -> ValidationContext:
+    binding = analysis_binding_fixture().model_copy(
+        update={"treatment_timestamp_column": "treated_at"}
+    )
+    return _table_context(
+        ("order_id", "account_id", "arm", "outcome", "treated_at"),
+        (
+            ("order-1", "account-1", "control", 0.0, values[0]),
+            ("order-2", "account-2", "treatment", 1.0, values[1]),
+        ),
+        binding=binding,
+    )
+
+
+def context_with_overlapping_assignment_conflict() -> ValidationContext:
+    binding = analysis_binding_fixture().model_copy(
+        update={
+            "randomization_unit_column": "order_id",
+            "timestamp_column": "observed_at",
+        }
+    )
+    return _table_context(
+        ("order_id", "account_id", "arm", "outcome", "observed_at"),
+        (
+            ("unit-1", "account-1", "control", 0.0, "2026-07-01T00:00:00Z"),
+            ("unit-1", "account-1", "treatment", 1.0, "2026-07-02T00:00:00Z"),
+        ),
+        binding=binding,
+    )
+
+
+def context_with_stable_unit_mapping_mismatch() -> ValidationContext:
+    binding = analysis_binding_fixture().model_copy(update={"timestamp_column": "observed_at"})
+    return _table_context(
+        ("order_id", "account_id", "arm", "outcome", "observed_at"),
+        (
+            ("unit-1", True, "control", 0.0, "2026-07-01T00:00:00Z"),
+            ("unit-1", 1, "control", 1.0, "2026-07-02T00:00:00Z"),
+        ),
+        binding=binding,
     )
 
 
@@ -457,9 +521,7 @@ def _segment_context(
             float(index % 2),
             country,
         )
-        for index, (country, assignment) in enumerate(
-            zip(countries, assignments, strict=True)
-        )
+        for index, (country, assignment) in enumerate(zip(countries, assignments, strict=True))
     )
     return _table_context(
         ("order_id", "account_id", "arm", "outcome", "country"),

@@ -57,10 +57,7 @@ def validate_design(
     segment_diagnostics, segment_summary = _validate_segment(context, data_result)
     return DesignRuleResult(
         diagnostics=(
-            unit_diagnostics
-            + covariate_diagnostics
-            + time_diagnostics
-            + segment_diagnostics
+            unit_diagnostics + covariate_diagnostics + time_diagnostics + segment_diagnostics
         ),
         unit_integrity_summary=unit_summary,
         time_summary=time_summary,
@@ -156,8 +153,7 @@ def _validate_segment(
     incompatible_count = 0
     for row_index in indexes:
         row_values = {
-            column: context.table.rows[row_index][index]
-            for column, index in column_indexes.items()
+            column: context.table.rows[row_index][index] for column, index in column_indexes.items()
         }
         if any(row_values[attribute] is None for attribute in attributes):
             continue
@@ -275,13 +271,11 @@ def _validate_time(
 ]:
     timestamp_column = context.binding.timestamp_column
     indexes = data_result.population_row_indexes
-    if (
-        timestamp_column is None
-        or timestamp_column not in context.table.columns
-        or not indexes
-        or len(context.table.columns) != len(set(context.table.columns))
-    ):
+    if not indexes or len(context.table.columns) != len(set(context.table.columns)):
         return (), None, None
+    treatment_diagnostics = _treatment_time_diagnostics(context, indexes)
+    if timestamp_column is None or timestamp_column not in context.table.columns:
+        return treatment_diagnostics, None, None
 
     timestamp_index = context.table.columns.index(timestamp_column)
     parsed: dict[int, datetime] = {}
@@ -350,7 +344,7 @@ def _validate_time(
             )
         )
 
-    diagnostics.extend(_treatment_time_diagnostics(context, indexes))
+    diagnostics.extend(treatment_diagnostics)
     return (
         tuple(diagnostics),
         TimeDesignSummary(
@@ -397,8 +391,12 @@ def _validate_covariates(
         if column not in context.table.columns:
             continue
         covariate_index = context.table.columns.index(column)
-        missing_count = sum(
-            context.table.rows[row_index][covariate_index] is None for row_index in indexes
+        missing_count = _covariate_missing_count(
+            context,
+            indexes,
+            covariate_index,
+            covariate.measurement_period,
+            time_evidence,
         )
         if missing_count:
             diagnostics.append(
@@ -431,6 +429,23 @@ def _validate_covariates(
     return tuple(diagnostics)
 
 
+def _covariate_missing_count(
+    context: ValidationContext,
+    indexes: tuple[int, ...],
+    covariate_index: int,
+    period: TimePeriod,
+    time_evidence: _TimeEvidence | None,
+) -> int:
+    if time_evidence is None:
+        return sum(context.table.rows[row_index][covariate_index] is None for row_index in indexes)
+    return sum(
+        context.table.rows[row_index][covariate_index] is None
+        and row_index in time_evidence.by_row_index
+        and _in_period(time_evidence.by_row_index[row_index], period)
+        for row_index in indexes
+    )
+
+
 def _covariate_period_unavailable_count(
     context: ValidationContext,
     indexes: tuple[int, ...],
@@ -444,8 +459,7 @@ def _covariate_period_unavailable_count(
     observation_index = context.table.columns.index(observation_column)
     groups = _exact_groups(
         tuple(
-            (row_index, context.table.rows[row_index][observation_index])
-            for row_index in indexes
+            (row_index, context.table.rows[row_index][observation_index]) for row_index in indexes
         )
     )
     if time_evidence is None:
@@ -489,8 +503,7 @@ def _missing_period_units(
     observation_index = context.table.columns.index(observation_column)
     groups = _exact_groups(
         tuple(
-            (row_index, context.table.rows[row_index][observation_index])
-            for row_index in indexes
+            (row_index, context.table.rows[row_index][observation_index]) for row_index in indexes
         )
     )
     missing_pre = sum(
@@ -519,10 +532,12 @@ def _treatment_time_diagnostics(
     treatment_time_index = context.table.columns.index(treatment_time_column)
     observation_index = context.table.columns.index(observation_column)
     invalid_count = 0
+    missing_count = 0
     parsed: dict[int, datetime] = {}
     for row_index in indexes:
         value = context.table.rows[row_index][treatment_time_index]
         if value is None:
+            missing_count += 1
             continue
         timestamp = _parse_timestamp(value)
         if timestamp is None:
@@ -530,6 +545,18 @@ def _treatment_time_diagnostics(
         else:
             parsed[row_index] = timestamp
     diagnostics: list[EligibilityDiagnostic] = []
+    if missing_count:
+        diagnostics.append(
+            _blocking(
+                code="time.treatment_timestamp_missing",
+                category=ValidationCategory.TIME,
+                message="Bound treatment timestamps must be present for selected rows.",
+                context={
+                    "column": treatment_time_column,
+                    "missing_count": missing_count,
+                },
+            )
+        )
     if invalid_count:
         diagnostics.append(
             _blocking(
@@ -541,8 +568,7 @@ def _treatment_time_diagnostics(
         )
     observation_groups = _exact_groups(
         tuple(
-            (row_index, context.table.rows[row_index][observation_index])
-            for row_index in indexes
+            (row_index, context.table.rows[row_index][observation_index]) for row_index in indexes
         )
     )
     inconsistent_count = sum(
@@ -603,8 +629,7 @@ def _validate_units(
     observation_index = column_indexes[binding.observation_unit_column]
     treatment_index = column_indexes.get(binding.treatment_column)
     observations = tuple(
-        (row_index, context.table.rows[row_index][observation_index])
-        for row_index in indexes
+        (row_index, context.table.rows[row_index][observation_index]) for row_index in indexes
     )
     missing_identifier_count = sum(value is None for _, value in observations)
     observation_groups = _exact_groups(observations)
@@ -645,29 +670,33 @@ def _validate_units(
             )
         )
 
-    switching_count = 0
+    switching_identifiers: tuple[object, ...] = ()
     if treatment_index is not None:
-        switching_count = sum(
-            len(_recognized_assignments(context, row_indexes, treatment_index)) > 1
-            for _, row_indexes in duplicate_groups
+        switching_identifiers = tuple(
+            identifier
+            for identifier, row_indexes in duplicate_groups
+            if len(_recognized_assignments(context, row_indexes, treatment_index)) > 1
         )
-        if switching_count:
+        if switching_identifiers:
             diagnostics.append(
                 _blocking(
                     code="treatment.switching",
                     category=ValidationCategory.TREATMENT,
                     message="An observation unit has conflicting declared arm assignments.",
-                    context={"switching_unit_count": switching_count},
+                    context={"switching_unit_count": len(switching_identifiers)},
                 )
             )
 
-    randomization_conflict_count, mapping_conflict_count = _randomization_checks(
+    randomization_conflict_identifiers = _randomization_checks(
         context,
         indexes,
         observation_groups,
         column_indexes,
         treatment_index,
         diagnostics,
+    )
+    assignment_conflict_identifiers = _exact_values(
+        (*switching_identifiers, *randomization_conflict_identifiers)
     )
     cluster_count = _cluster_checks(context, indexes, column_indexes, diagnostics)
     return (
@@ -677,9 +706,7 @@ def _validate_units(
             missing_identifier_count=missing_identifier_count,
             duplicate_identifier_count=duplicate_identifier_count,
             repeated_observation_count=repeated_observation_count,
-            assignment_conflict_count=(
-                switching_count + randomization_conflict_count + mapping_conflict_count
-            ),
+            assignment_conflict_count=len(assignment_conflict_identifiers),
             cluster_count=cluster_count,
         ),
     )
@@ -692,10 +719,10 @@ def _randomization_checks(
     column_indexes: dict[str, int],
     treatment_index: int | None,
     diagnostics: list[EligibilityDiagnostic],
-) -> tuple[int, int]:
+) -> tuple[object, ...]:
     randomization_column = context.binding.randomization_unit_column
     if randomization_column is None or randomization_column not in column_indexes:
-        return 0, 0
+        return ()
     randomization_index = column_indexes[randomization_column]
     values = tuple(
         (row_index, context.table.rows[row_index][randomization_index]) for row_index in indexes
@@ -712,19 +739,20 @@ def _randomization_checks(
         )
 
     randomization_groups = _exact_groups(values)
-    conflict_count = 0
+    conflict_identifiers: tuple[object, ...] = ()
     if treatment_index is not None:
-        conflict_count = sum(
-            len(_recognized_assignments(context, row_indexes, treatment_index)) > 1
-            for _, row_indexes in randomization_groups
+        conflict_identifiers = tuple(
+            identifier
+            for identifier, row_indexes in randomization_groups
+            if len(_recognized_assignments(context, row_indexes, treatment_index)) > 1
         )
-    if conflict_count:
+    if conflict_identifiers:
         diagnostics.append(
             _blocking(
                 code="treatment.unit_multiple_assignments",
                 category=ValidationCategory.TREATMENT,
                 message="A randomization unit appears in more than one declared arm.",
-                context={"conflicting_unit_count": conflict_count},
+                context={"conflicting_unit_count": len(conflict_identifiers)},
             )
         )
 
@@ -748,7 +776,7 @@ def _randomization_checks(
                 context={"conflicting_observation_count": mapping_conflict_count},
             )
         )
-    return conflict_count, mapping_conflict_count
+    return conflict_identifiers
 
 
 def _cluster_checks(

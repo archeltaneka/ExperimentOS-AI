@@ -11,21 +11,25 @@ from packages.experiments.analysis.validation.design_rules import validate_desig
 from tests.analysis_validation_fixtures import (
     context_with_absent_segment_value,
     context_with_aware_datetime_rows,
+    context_with_bound_treatment_timestamps,
     context_with_covariate_missing_in_required_period,
     context_with_duplicate_single_row_units,
     context_with_high_cardinality_segment,
     context_with_incompatible_segment_values,
     context_with_invalid_period_rows,
+    context_with_longitudinal_covariate,
     context_with_missing_cluster,
     context_with_missing_optional_covariate_values,
     context_with_missing_segment_assignment,
     context_with_missing_segment_column,
     context_with_missing_unit,
+    context_with_overlapping_assignment_conflict,
     context_with_randomization_unit_in_both_arms,
     context_with_repeated_rows_without_cluster,
     context_with_schema_failure_and_segment,
     context_with_segment_missing_control,
     context_with_small_segment,
+    context_with_stable_unit_mapping_mismatch,
     context_with_switching_unit,
     context_with_three_clusters,
 )
@@ -165,3 +169,76 @@ def test_upstream_schema_failure_suppresses_dependent_segment_cascades() -> None
 
     assert data_result.population_row_indexes == ()
     assert result.diagnostics == ()
+
+
+def test_later_missing_covariates_do_not_invalidate_valid_pre_period_evidence() -> None:
+    context = context_with_longitudinal_covariate(missing_inside_period=False)
+
+    result = validate_design(context, validate_data(context))
+
+    codes = {item.code for item in result.diagnostics}
+    assert "covariate.missing" not in codes
+    assert "covariate.period_unavailable" not in codes
+
+
+def test_missing_covariate_at_inclusive_period_start_is_blocking() -> None:
+    context = context_with_longitudinal_covariate(missing_inside_period=True)
+
+    result = validate_design(context, validate_data(context))
+
+    diagnostic = next(item for item in result.diagnostics if item.code == "covariate.missing")
+    assert {entry.key: entry.value for entry in diagnostic.context} == {
+        "metric_id": "prior_order_count",
+        "missing_count": 1,
+    }
+
+
+@pytest.mark.parametrize(
+    ("values", "expected_missing_count"),
+    [
+        ((None, None), 2),
+        ((None, "not-a-timestamp"), 1),
+    ],
+)
+def test_bound_treatment_timestamp_missingness_is_blocking(
+    values: tuple[object, object],
+    expected_missing_count: int,
+) -> None:
+    context = context_with_bound_treatment_timestamps(values)
+
+    result = validate_design(context, validate_data(context))
+
+    diagnostic = next(
+        item for item in result.diagnostics if item.code == "time.treatment_timestamp_missing"
+    )
+    assert diagnostic.disposition is DiagnosticDisposition.BLOCKING
+    assert {entry.key: entry.value for entry in diagnostic.context} == {
+        "column": "treated_at",
+        "missing_count": expected_missing_count,
+    }
+    codes = tuple(item.code for item in result.diagnostics)
+    if "time.invalid_treatment_timestamp" in codes:
+        assert codes.index("time.treatment_timestamp_missing") < codes.index(
+            "time.invalid_treatment_timestamp"
+        )
+
+
+def test_overlapping_observation_and_randomization_conflict_counts_once() -> None:
+    context = context_with_overlapping_assignment_conflict()
+
+    result = validate_design(context, validate_data(context))
+
+    assert {item.code for item in result.diagnostics} >= {
+        "treatment.switching",
+        "treatment.unit_multiple_assignments",
+    }
+    assert result.unit_integrity_summary.assignment_conflict_count == 1
+
+
+def test_stable_unit_mapping_mismatch_is_not_an_assignment_conflict() -> None:
+    context = context_with_stable_unit_mapping_mismatch()
+
+    result = validate_design(context, validate_data(context))
+
+    assert "unit.randomization_observation_mismatch" in {item.code for item in result.diagnostics}
+    assert result.unit_integrity_summary.assignment_conflict_count == 0

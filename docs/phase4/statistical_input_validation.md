@@ -96,10 +96,21 @@ Differential missingness threshold violations are warnings when
 `maximum_differential_missingness` is configured; absent a stronger diagnostic, they produce
 `eligible_with_warnings`, not `ineligible`.
 
+Covariate missingness is summary-only by default: the role remains present in
+`missingness_summary`, but missing values do not block eligibility when
+`maximum_covariate_missing_rate` is `null`. When a caller configures that policy field,
+`covariate.missingness_exceeds_threshold` is blocking only when the observed missing rate is
+strictly greater than the explicit `maximum_covariate_missing_rate`; equality is accepted. This
+blocking evaluation is measurement-period-scoped when a bound observation timestamp supplies
+usable row-level evidence. Without usable row-level time evidence, the validator uses a
+cross-sectional fallback over selected rows and does not infer period unavailability from column
+names or from the absence of timestamps. The general role-level missingness summary remains a
+transparent report of the selected table values.
+
 Design rules check observation, randomization, and clustering identifiers; duplicate or repeated
 units; treatment switching and conflicting assignments; required cluster counts; timestamp parsing,
 declared period coverage, per-unit treatment timing, covariate data/period availability, and segment
-column/type/cardinality/arm/sample eligibility. Repeated observations require compatible clustering.
+column/type/arm/sample eligibility. Repeated observations require compatible clustering.
 
 ### Post-treatment leakage
 
@@ -132,9 +143,10 @@ Invalid or missing rows remain represented by counts and diagnostics.
 | `weak_clusters` | `20` |
 | `allocation_warning_deviation` | `0.10` |
 | `allocation_blocking_deviation` | `0.25` |
-| `maximum_segment_cardinality` | `50` |
+| `maximum_segment_cardinality` | `50` (reserved; inactive) |
 | `maximum_outcome_missingness` | `null` (disabled) |
 | `maximum_differential_missingness` | `null` (disabled) |
+| `maximum_covariate_missing_rate` | `null` (disabled) |
 
 These defaults are guardrails, not minimum-detectable-effect calculations, power guarantees,
 causal-validity claims, or substitutes for study-specific planning. Callers may inject a validated
@@ -142,6 +154,11 @@ policy and should supply a meaningful `configuration_provenance`. The service de
 literal `"explicit defaults"`; policy defaults do not read ambient environment variables. Each
 result repeats `policy_version` and `configuration_provenance` so downstream decisions retain their
 operational provenance.
+
+`maximum_segment_cardinality` is reserved and inactive. It remains in the version-1 policy for
+serialization compatibility, but predefined segment validation does not emit a cardinality warning
+or rejection. Activating that policy requires a future request contract that explicitly distinguishes
+exploratory segmentation intent; cardinality is not inferred from a predefined segment declaration.
 
 ## Diagnostic-code stability
 

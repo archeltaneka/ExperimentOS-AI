@@ -68,8 +68,16 @@ def test_validation_documentation_covers_required_semantics() -> None:
         "Table, data, and design rules determine dataset eligibility",
         "Outcome missingness threshold violations are blocking",
         "Differential missingness threshold violations are warnings",
+        "Covariate missingness is summary-only by default",
+        "strictly greater than the explicit `maximum_covariate_missing_rate`",
+        "measurement-period-scoped",
+        "cross-sectional fallback",
+        "`maximum_covariate_missing_rate` | `null` (disabled)",
+        "`maximum_segment_cardinality` is reserved and inactive",
     ):
         assert phrase in text
+
+    assert "segment column/type/cardinality/arm/sample eligibility" not in text
 
     for code_family in (
         "request.*",

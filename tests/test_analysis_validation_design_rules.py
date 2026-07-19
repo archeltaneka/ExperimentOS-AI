@@ -127,6 +127,24 @@ def test_covariate_missingness_above_explicit_threshold_is_blocking() -> None:
     }
 
 
+def test_covariate_missingness_equal_to_explicit_threshold_is_accepted() -> None:
+    context = context_with_missing_optional_covariate_values(
+        policy=ValidationPolicy(maximum_covariate_missing_rate=0.5)
+    )
+    data_result = validate_data(context)
+
+    diagnostics = validate_design(context, data_result).diagnostics
+
+    summary = next(
+        item
+        for item in data_result.missingness_summary
+        if item.role == "covariate:prior_order_count"
+    )
+    assert summary.missing_count == 1
+    assert summary.missing_rate == 0.5
+    assert "covariate.missingness_exceeds_threshold" not in {item.code for item in diagnostics}
+
+
 def test_invalid_and_missing_period_observations_are_structured() -> None:
     context = context_with_invalid_period_rows()
 

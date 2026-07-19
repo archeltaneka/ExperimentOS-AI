@@ -16,15 +16,20 @@ agents, workflows, persistence, or migrations.
 
 ## Structural validation versus dataset eligibility
 
-These are deliberately separate decisions:
+These are deliberately separate decisions. Structural validation has two layers:
 
-- Structural request validation is performed by the existing strict Pydantic `AnalysisRequest`
-  contract. `validate_payload()` converts only a Pydantic `ValidationError` into the blocking
+- Contract constructor validation enforces the strict `AnalysisRequest`, `AnalysisDataBinding`, and
+  `ValidationPolicy` contracts plus `AnalysisTable` shape invariants before orchestration.
+  `validate_payload()` converts only an `AnalysisRequest` `ValidationError` into the blocking
   `request.contract_invalid` diagnostic. Rejected values are not copied into diagnostic context.
-- Dataset eligibility evaluates a structurally valid request against the immutable table and its
-  analytical-role binding. Expected problems become deterministic diagnostics and summaries.
-- Method support is independent again: a method can be contract-supported and the data can be
-  eligible while its implementation remains unavailable.
+- Service-level cross-object request and capability consistency checks compatibility that no one
+  constructor can decide: metric/estimand, method prerequisites, covariate timing and roles,
+  unit/clustering bindings, method contract support, and configured implementation availability.
+
+Table, data, and design rules determine dataset eligibility by evaluating a structurally valid
+request against the immutable table and its analytical-role binding. Expected problems become
+deterministic diagnostics and summaries. Method support remains a separate dimension: a method can
+be contract-supported and the data can be eligible while its implementation is unavailable.
 
 Unreadable schema errors (`schema.duplicate_column`, `schema.empty_dataset`, or
 `schema.required_column_missing`) prevent data-dependent design checks. The result then includes
@@ -85,8 +90,11 @@ Data rules check duplicate/empty/missing schema, explicit population selection, 
 treatment/control values, missing or unexpected assignments, absent arms, numeric and finite
 outcomes, binary/count/bounds/ratio constraints, zero variation, configured missingness limits,
 usable total and per-arm counts, and declared allocation deviation. Missingness summaries are
-reported for each bound analytical role; outcome and differential missingness become blocking only
-when their corresponding optional policy thresholds are configured.
+reported for each bound analytical role. Outcome missingness threshold violations are blocking when
+`maximum_outcome_missingness` is configured.
+Differential missingness threshold violations are warnings when
+`maximum_differential_missingness` is configured; absent a stronger diagnostic, they produce
+`eligible_with_warnings`, not `ineligible`.
 
 Design rules check observation, randomization, and clustering identifiers; duplicate or repeated
 units; treatment switching and conflicting assignments; required cluster counts; timestamp parsing,

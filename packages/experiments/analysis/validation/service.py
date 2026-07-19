@@ -91,7 +91,22 @@ class AnalysisEligibilityService:
     ) -> EligibilityValidationResult:
         """Validate one immutable request/table/binding bundle in a fixed order."""
         started_at = perf_counter()
-        span = _start_validation_span(self.observability_provider, request, table)
+        span = _start_validation_span(
+            self.observability_provider,
+            table,
+            method=request.study_design.method.value,
+            design=request.study_design.design_type,
+        )
+        return self._validate_started(request, table, binding, started_at, span)
+
+    def _validate_started(
+        self,
+        request: AnalysisRequest,
+        table: AnalysisTable,
+        binding: AnalysisDataBinding,
+        started_at: float,
+        span: BufferedSpan | None,
+    ) -> EligibilityValidationResult:
         failure_stage = "context"
         try:
             context = ValidationContext(
@@ -186,11 +201,45 @@ class AnalysisEligibilityService:
         binding: AnalysisDataBinding,
     ) -> EligibilityValidationResult:
         """Validate a request payload, translating only Pydantic contract errors."""
+        started_at = perf_counter()
+        method, design = _payload_observability_identity(payload, self._capability_registry)
+        span = _start_validation_span(
+            self.observability_provider,
+            table,
+            method=method,
+            design=design,
+        )
         try:
             request = AnalysisRequest.model_validate(payload)
         except ValidationError as error:
-            return self._invalid_payload_result(error, payload, table)
-        return self.validate(request, table, binding)
+            try:
+                result = self._invalid_payload_result(error, payload, table)
+            except Exception as unexpected:
+                _finish_validation_failure(
+                    self.observability_provider,
+                    span,
+                    error=unexpected,
+                    failure_stage="payload_translation",
+                    duration_ms=(perf_counter() - started_at) * 1000.0,
+                )
+                raise
+            _finish_validation_success(
+                self.observability_provider,
+                span,
+                result=result,
+                duration_ms=(perf_counter() - started_at) * 1000.0,
+            )
+            return result
+        except Exception as unexpected:
+            _finish_validation_failure(
+                self.observability_provider,
+                span,
+                error=unexpected,
+                failure_stage="payload_parsing",
+                duration_ms=(perf_counter() - started_at) * 1000.0,
+            )
+            raise
+        return self._validate_started(request, table, binding, started_at, span)
 
     def _invalid_payload_result(
         self,
@@ -246,16 +295,18 @@ class AnalysisEligibilityService:
 
 def _start_validation_span(
     provider: BaseObservabilityProvider,
-    request: AnalysisRequest,
     table: AnalysisTable,
+    *,
+    method: str,
+    design: str,
 ) -> BufferedSpan | None:
     inputs: dict[str, object] = {
         "row_count": len(table.rows),
         "column_count": len(table.columns),
     }
     metadata = {
-        "method": request.study_design.method.value,
-        "design": request.study_design.design_type,
+        "method": method,
+        "design": design,
         "validation_started": True,
     }
     before_failures = _provider_failure_count(provider)
@@ -533,6 +584,17 @@ def _capability_from_payload(
         ),
         None,
     )
+
+
+def _payload_observability_identity(
+    payload: Mapping[str, object],
+    registry: MethodCapabilityRegistry,
+) -> tuple[str, str]:
+    """Return only registry-owned low-cardinality identity for an untrusted payload."""
+    capability = _capability_from_payload(payload, registry)
+    if capability is None:
+        return ("unknown", "unknown")
+    return (capability.method, capability.design_type)
 
 
 def _blocking_unavailable(

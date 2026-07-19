@@ -171,6 +171,19 @@ def _implemented_service(
     )
 
 
+def _invalid_request_payload() -> dict[str, object]:
+    payload = _eligible_request().model_dump(mode="json")
+    treatment = payload["treatment"]
+    control = payload["control"]
+    assert isinstance(treatment, dict)
+    assert isinstance(control, dict)
+    rejected_value = "sensitive-assignment-value-customer-17"
+    treatment["assignment_value"] = rejected_value
+    control["assignment_value"] = rejected_value
+    payload["private_payload_key_customer_17"] = "private-payload-value-customer-17"
+    return payload
+
+
 def test_validation_span_contains_only_logical_metadata_without_table_content() -> None:
     provider = RecordingProvider()
     table = AnalysisTable(
@@ -230,6 +243,95 @@ def test_validation_span_contains_only_logical_metadata_without_table_content() 
         assert forbidden not in serialized
 
 
+def test_invalid_payload_records_one_completed_validation_root_without_raw_input() -> None:
+    provider = RecordingProvider()
+
+    result = AnalysisEligibilityService(observability_provider=provider).validate_payload(
+        _invalid_request_payload(),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+
+    assert result.status is AnalysisStatus.INELIGIBLE
+    assert [diagnostic.code for diagnostic in result.diagnostics] == ["request.contract_invalid"]
+    assert len(provider.records) == 1
+    record = provider.records[0]
+    assert record.name == "analysis_validation"
+    assert record.inputs == {"row_count": 100, "column_count": 3}
+    assert record.metadata["method"] == "fixed_horizon_ab"
+    assert record.metadata["design"] == "randomized_experiment"
+    assert record.metadata["status"] == "ineligible"
+    assert record.metadata["blocking_diagnostic_count"] == 1
+    assert record.metadata["warning_diagnostic_count"] == 0
+    assert record.metadata["needs_more_data"] is False
+    assert record.metadata["method_unavailable"] is True
+    assert record.metadata["validator_failure"] is False
+    assert record.metadata["validation_started"] is True
+    assert record.metadata["validation_completed"] is True
+    assert record.outputs == {"status": "ineligible", "validation_completed": True}
+    assert record.status == "completed"
+    serialized = repr(record.inputs) + repr(record.metadata) + repr(record.outputs)
+    diagnostic_context = {entry.key: entry.value for entry in result.diagnostics[0].context}
+    assert str(diagnostic_context["error_locations"]) not in serialized
+    assert str(diagnostic_context["error_types"]) not in serialized
+    for forbidden in (
+        "sensitive-assignment-value-customer-17",
+        "private_payload_key_customer_17",
+        "private-payload-value-customer-17",
+        "Extra inputs are not permitted",
+        "assignment_value",
+        "model_type",
+    ):
+        assert forbidden not in serialized
+
+
+@pytest.mark.parametrize(
+    ("field", "rejected_value"),
+    [
+        ("method", "private-method-customer-17"),
+        ("design_type", "private-design-customer-17"),
+        ("method", ("private-malformed-method-customer-17",)),
+        ("design_type", {"private": "malformed-design-customer-17"}),
+    ],
+)
+def test_invalid_payload_uses_safe_low_cardinality_observability_fallbacks(
+    field: str,
+    rejected_value: object,
+) -> None:
+    provider = RecordingProvider()
+    payload = _eligible_request().model_dump(mode="json")
+    study_design = payload["study_design"]
+    assert isinstance(study_design, dict)
+    study_design[field] = rejected_value
+
+    result = AnalysisEligibilityService(observability_provider=provider).validate_payload(
+        payload,
+        _eligible_table(),
+        _eligible_binding(),
+    )
+
+    assert result.status is AnalysisStatus.INELIGIBLE
+    assert len(provider.records) == 1
+    record = provider.records[0]
+    assert record.metadata["method"] == "unknown"
+    assert record.metadata["design"] == "unknown"
+    serialized = repr(record.inputs) + repr(record.metadata) + repr(record.outputs)
+    assert "customer-17" not in serialized
+
+
+def test_valid_payload_records_exactly_one_validation_root() -> None:
+    provider = RecordingProvider()
+
+    result = _implemented_service(provider).validate_payload(
+        _eligible_request().model_dump(mode="json"),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+
+    assert result.status is AnalysisStatus.ELIGIBLE
+    assert [record.name for record in provider.records] == ["analysis_validation"]
+
+
 def test_validation_uses_one_child_span_inside_an_active_trace() -> None:
     provider = RecordingProvider()
     parent = provider.start_root_span("outer_operation")
@@ -244,6 +346,24 @@ def test_validation_uses_one_child_span_inside_an_active_trace() -> None:
 
     assert len(provider.records) == 1
     assert provider.records[0] is parent.record
+    assert [child.name for child in parent.record.children] == ["analysis_validation"]
+    assert parent.record.children[0].status == "completed"
+
+
+def test_invalid_payload_uses_one_child_span_inside_same_provider_trace() -> None:
+    provider = RecordingProvider()
+    parent = provider.start_root_span("outer_operation")
+
+    with parent.activate():
+        result = AnalysisEligibilityService(observability_provider=provider).validate_payload(
+            _invalid_request_payload(),
+            _eligible_table(),
+            _eligible_binding(),
+        )
+    parent.finish(outputs={"status": result.status.value})
+
+    assert result.status is AnalysisStatus.INELIGIBLE
+    assert provider.records == [parent.record]
     assert [child.name for child in parent.record.children] == ["analysis_validation"]
     assert parent.record.children[0].status == "completed"
 
@@ -285,9 +405,31 @@ def test_recording_provider_exports_root_inside_a_foreign_noop_span() -> None:
     assert recording_provider.records[0].parent is None
 
 
+def test_invalid_payload_exports_root_inside_a_foreign_provider_span() -> None:
+    recording_provider = RecordingProvider()
+    foreign_provider = NoOpObservabilityProvider()
+    foreign_parent = foreign_provider.start_root_span("foreign_operation")
+
+    with foreign_parent.activate():
+        result = AnalysisEligibilityService(
+            observability_provider=recording_provider
+        ).validate_payload(
+            _invalid_request_payload(),
+            _eligible_table(),
+            _eligible_binding(),
+        )
+    foreign_parent.finish(outputs={"status": result.status.value})
+
+    assert result.status is AnalysisStatus.INELIGIBLE
+    assert foreign_parent.record.children == []
+    assert len(recording_provider.records) == 1
+    assert recording_provider.records[0].name == "analysis_validation"
+    assert recording_provider.records[0].parent is None
+
+
 @pytest.mark.parametrize("provider_type", [FailingEmitProvider, FailingStartProvider])
 def test_provider_failure_does_not_change_validation_result(
-    provider_type: type[BaseObservabilityProvider],
+    provider_type: type[FailingEmitProvider] | type[FailingStartProvider],
 ) -> None:
     expected = _implemented_service().validate(
         _eligible_request(),
@@ -298,6 +440,28 @@ def test_provider_failure_does_not_change_validation_result(
 
     actual = _implemented_service(provider).validate(
         _eligible_request(),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+
+    assert actual == expected
+    assert provider.failure_count == 1
+
+
+@pytest.mark.parametrize("provider_type", [FailingEmitProvider, FailingStartProvider])
+def test_provider_start_or_export_failure_does_not_change_invalid_payload_result(
+    provider_type: type[FailingEmitProvider] | type[FailingStartProvider],
+) -> None:
+    payload = _invalid_request_payload()
+    expected = AnalysisEligibilityService().validate_payload(
+        payload,
+        _eligible_table(),
+        _eligible_binding(),
+    )
+    provider = provider_type()
+
+    actual = AnalysisEligibilityService(observability_provider=provider).validate_payload(
+        payload,
         _eligible_table(),
         _eligible_binding(),
     )
@@ -319,6 +483,29 @@ def test_successful_result_is_unchanged_when_span_completion_fails(
 
     actual = _implemented_service(provider).validate(
         _eligible_request(),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+
+    assert actual == expected
+    assert provider.failure_count == 1
+    assert failing_operation in provider.spans[0].calls
+
+
+@pytest.mark.parametrize("failing_operation", ["add_metadata", "finish"])
+def test_provider_update_or_finish_failure_does_not_change_invalid_payload_result(
+    failing_operation: str,
+) -> None:
+    payload = _invalid_request_payload()
+    expected = AnalysisEligibilityService().validate_payload(
+        payload,
+        _eligible_table(),
+        _eligible_binding(),
+    )
+    provider = ControlledLifecycleProvider(failing_operation)
+
+    actual = AnalysisEligibilityService(observability_provider=provider).validate_payload(
+        payload,
         _eligible_table(),
         _eligible_binding(),
     )

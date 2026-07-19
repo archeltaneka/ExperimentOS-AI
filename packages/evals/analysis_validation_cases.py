@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from types import MappingProxyType
 
 from packages.experiments.analysis import (
     AnalysisDataBinding,
@@ -60,22 +61,31 @@ class ValidationGoldenCase:
     """One self-contained immutable validation input and structured expectation."""
 
     case_id: str
-    request: AnalysisRequest
+    request: AnalysisRequest | None
     table: AnalysisTable
     binding: AnalysisDataBinding
     policy: ValidationPolicy
     capability_registry: MethodCapabilityRegistry
     expected_status: EligibilityStatus
     expected_diagnostic_codes: frozenset[str]
+    request_payload: Mapping[str, object] | None = None
 
     def __post_init__(self) -> None:
         if not self.case_id.strip():
             raise ValueError("validation golden case_id must not be blank")
+        if (self.request is None) == (self.request_payload is None):
+            raise ValueError("validation golden case requires exactly one request input")
         object.__setattr__(
             self,
             "expected_diagnostic_codes",
             frozenset(self.expected_diagnostic_codes),
         )
+        if self.request_payload is not None:
+            object.__setattr__(
+                self,
+                "request_payload",
+                _freeze_payload_mapping(self.request_payload),
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -297,7 +307,13 @@ def evaluate_validation_golden_cases(
             capability_registry=case.capability_registry,
             configuration_provenance=f"golden-case:{case.case_id}",
         )
-        actual = service.validate(case.request, case.table, case.binding)
+        if case.request is not None:
+            actual = service.validate(case.request, case.table, case.binding)
+        else:
+            request_payload = case.request_payload
+            if request_payload is None:
+                raise RuntimeError("validated golden case is missing its request input")
+            actual = service.validate_payload(request_payload, case.table, case.binding)
         expected_codes = tuple(sorted(case.expected_diagnostic_codes))
         actual_code_set = frozenset(diagnostic.code for diagnostic in actual.diagnostics)
         actual_codes = tuple(sorted(actual_code_set))
@@ -325,13 +341,14 @@ def evaluate_validation_golden_cases(
 def _case(
     case_id: str,
     *,
-    request: AnalysisRequest,
+    request: AnalysisRequest | None,
     table: AnalysisTable,
     policy: ValidationPolicy,
     registry: MethodCapabilityRegistry,
     status: EligibilityStatus,
     codes: set[str] | frozenset[str] = frozenset(),
     binding: AnalysisDataBinding | None = None,
+    request_payload: Mapping[str, object] | None = None,
 ) -> ValidationGoldenCase:
     return ValidationGoldenCase(
         case_id=case_id,
@@ -342,7 +359,20 @@ def _case(
         capability_registry=registry,
         expected_status=status,
         expected_diagnostic_codes=frozenset(codes),
+        request_payload=request_payload,
     )
+
+
+def _freeze_payload_mapping(payload: Mapping[str, object]) -> Mapping[str, object]:
+    return MappingProxyType({key: _freeze_payload_value(value) for key, value in payload.items()})
+
+
+def _freeze_payload_value(value: object) -> object:
+    if isinstance(value, Mapping):
+        return MappingProxyType({key: _freeze_payload_value(item) for key, item in value.items()})
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_payload_value(item) for item in value)
+    return value
 
 
 def _compact_policy(
@@ -506,7 +536,6 @@ def _outcome_table(outcomes: tuple[object, ...]) -> AnalysisTable:
 
 
 def _post_treatment_leakage_case() -> ValidationGoldenCase:
-    unit = AnalysisUnit(unit_id="unit", label="Unit")
     covariate = CovariateDefinition(
         metric=MetricDefinition(
             metric_id="prior_count",
@@ -523,33 +552,33 @@ def _post_treatment_leakage_case() -> ValidationGoldenCase:
         role=CovariateRole.ADJUSTMENT,
         treatment_relationship=TreatmentRelationship.NONE_KNOWN,
         measurement_period=TimePeriod(
-            start=datetime(2026, 5, 1, tzinfo=UTC),
-            end=datetime(2026, 6, 1, tzinfo=UTC),
+            start=datetime(2026, 7, 2, tzinfo=UTC),
+            end=datetime(2026, 7, 4, tzinfo=UTC),
         ),
     )
-    request = _randomized_request(covariates=(covariate,), clustering=Clustered(unit=unit))
+    request = _randomized_request(covariates=(covariate,))
     binding = _binding().model_copy(
         update={
-            "clustering_unit_column": "unit",
             "timestamp_column": "observed_at",
             "covariates": (MetricColumnBinding(metric_id="prior_count", column="prior_count"),),
         }
     )
-    rows: list[tuple[object, ...]] = []
-    for index in range(4):
-        arm = "control" if index % 2 == 0 else "treatment"
-        rows.extend(
-            (
-                (f"u{index}", arm, float(index % 2), index, "2026-05-15T00:00:00Z"),
-                (f"u{index}", arm, float((index + 1) % 2), None, "2026-07-05T00:00:00Z"),
-            )
+    rows = tuple(
+        (
+            f"u{index}",
+            "control" if index % 2 == 0 else "treatment",
+            float(index % 2),
+            index,
+            "2026-07-03T00:00:00Z",
         )
+        for index in range(4)
+    )
     return _case(
         "post-treatment-leakage",
         request=request,
         table=AnalysisTable(
             columns=("unit", "arm", "outcome", "prior_count", "observed_at"),
-            rows=tuple(rows),
+            rows=rows,
         ),
         binding=binding,
         policy=_compact_policy(),
@@ -570,6 +599,15 @@ def _invalid_pre_post_case() -> ValidationGoldenCase:
             "estimand": EstimandDefinition(kind=EstimandKind.AVERAGE_TREATMENT_EFFECT),
         }
     )
+    payload = request.model_dump(mode="json")
+    design = payload["study_design"]
+    if not isinstance(design, dict):
+        raise RuntimeError("quasi-experimental payload is missing its study design")
+    pre_period = design["pre_treatment_period"]
+    if not isinstance(pre_period, dict):
+        raise RuntimeError("quasi-experimental payload is missing its pre-treatment period")
+    pre_period["end"] = "2026-07-10T00:00:00Z"
+
     binding = _binding().model_copy(update={"timestamp_column": "observed_at"})
     table = AnalysisTable(
         columns=("unit", "arm", "outcome", "observed_at"),
@@ -585,15 +623,16 @@ def _invalid_pre_post_case() -> ValidationGoldenCase:
     )
     return _case(
         "invalid-pre-post",
-        request=request,
+        request=None,
+        request_payload=payload,
         table=table,
         binding=binding,
         policy=_compact_policy(),
         registry=MethodCapabilityRegistry.with_implemented_methods(
             (QuasiExperimentalMethod.DIFFERENCE_IN_DIFFERENCES,)
         ),
-        status=AnalysisStatus.NEEDS_MORE_DATA,
-        codes={"time.period_coverage_missing"},
+        status=AnalysisStatus.INELIGIBLE,
+        codes={"request.contract_invalid"},
     )
 
 

@@ -126,29 +126,6 @@ def _validate_segment(
             )
         )
 
-    for attribute in attributes:
-        cardinality = len(
-            _exact_values(
-                context.table.rows[row_index][column_indexes[attribute]]
-                for row_index in indexes
-                if context.table.rows[row_index][column_indexes[attribute]] is not None
-            )
-        )
-        if cardinality > context.policy.maximum_segment_cardinality:
-            diagnostics.append(
-                _warning(
-                    code="segment.high_cardinality",
-                    category=ValidationCategory.SEGMENT,
-                    message="A segment attribute exceeds the configured cardinality advisory.",
-                    context={
-                        "attribute": attribute,
-                        "observed": cardinality,
-                        "segment_id": segment.segment_id,
-                        "threshold": context.policy.maximum_segment_cardinality,
-                    },
-                )
-            )
-
     selected_indexes: list[int] = []
     incompatible_count = 0
     for row_index in indexes:
@@ -391,20 +368,27 @@ def _validate_covariates(
         if column not in context.table.columns:
             continue
         covariate_index = context.table.columns.index(column)
-        missing_count = _covariate_missing_count(
+        missing_count, relevant_count = _covariate_missingness(
             context,
             indexes,
             covariate_index,
             covariate.measurement_period,
             time_evidence,
         )
-        if missing_count:
+        threshold = context.policy.maximum_covariate_missing_rate
+        missing_rate = missing_count / relevant_count if relevant_count else 0.0
+        if threshold is not None and missing_rate > threshold:
             diagnostics.append(
                 _blocking(
-                    code="covariate.missing",
+                    code="covariate.missingness_exceeds_threshold",
                     category=ValidationCategory.COVARIATE,
-                    message="A declared covariate has missing values in selected rows.",
-                    context={"metric_id": metric_id, "missing_count": missing_count},
+                    message="Covariate missingness exceeds the configured operational threshold.",
+                    context={
+                        "metric_id": metric_id,
+                        "missing_count": missing_count,
+                        "missing_rate": missing_rate,
+                        "threshold": threshold,
+                    },
                 )
             )
         unavailable_count = _covariate_period_unavailable_count(
@@ -429,20 +413,29 @@ def _validate_covariates(
     return tuple(diagnostics)
 
 
-def _covariate_missing_count(
+def _covariate_missingness(
     context: ValidationContext,
     indexes: tuple[int, ...],
     covariate_index: int,
     period: TimePeriod,
     time_evidence: _TimeEvidence | None,
-) -> int:
+) -> tuple[int, int]:
     if time_evidence is None:
-        return sum(context.table.rows[row_index][covariate_index] is None for row_index in indexes)
-    return sum(
-        context.table.rows[row_index][covariate_index] is None
-        and row_index in time_evidence.by_row_index
-        and _in_period(time_evidence.by_row_index[row_index], period)
+        return (
+            sum(context.table.rows[row_index][covariate_index] is None for row_index in indexes),
+            len(indexes),
+        )
+    relevant_indexes = tuple(
+        row_index
         for row_index in indexes
+        if row_index in time_evidence.by_row_index
+        and _in_period(time_evidence.by_row_index[row_index], period)
+    )
+    return (
+        sum(
+            context.table.rows[row_index][covariate_index] is None for row_index in relevant_indexes
+        ),
+        len(relevant_indexes),
     )
 
 
@@ -463,7 +456,7 @@ def _covariate_period_unavailable_count(
         )
     )
     if time_evidence is None:
-        return len(groups)
+        return 0
     return sum(
         not any(
             context.table.rows[row_index][covariate_index] is not None
@@ -522,15 +515,9 @@ def _treatment_time_diagnostics(
     indexes: tuple[int, ...],
 ) -> tuple[EligibilityDiagnostic, ...]:
     treatment_time_column = context.binding.treatment_timestamp_column
-    observation_column = context.binding.observation_unit_column
-    if (
-        treatment_time_column is None
-        or treatment_time_column not in context.table.columns
-        or observation_column not in context.table.columns
-    ):
+    if treatment_time_column is None or treatment_time_column not in context.table.columns:
         return ()
     treatment_time_index = context.table.columns.index(treatment_time_column)
-    observation_index = context.table.columns.index(observation_column)
     invalid_count = 0
     missing_count = 0
     parsed: dict[int, datetime] = {}
@@ -566,25 +553,73 @@ def _treatment_time_diagnostics(
                 context={"invalid_count": invalid_count},
             )
         )
-    observation_groups = _exact_groups(
-        tuple(
-            (row_index, context.table.rows[row_index][observation_index]) for row_index in indexes
+
+    bounds = _treatment_time_bounds(context)
+    if bounds is not None:
+        allowed_start, allowed_end, end_inclusive = bounds
+        out_of_bounds_count = sum(
+            timestamp < allowed_start
+            or timestamp > allowed_end
+            or (timestamp == allowed_end and not end_inclusive)
+            for timestamp in parsed.values()
         )
+        if out_of_bounds_count:
+            diagnostics.append(
+                _blocking(
+                    code="time.treatment_timestamp_out_of_bounds",
+                    category=ValidationCategory.TIME,
+                    message="Treatment timestamps must fall within declared design boundaries.",
+                    context={
+                        "allowed_end": allowed_end.isoformat(),
+                        "allowed_start": allowed_start.isoformat(),
+                        "column": treatment_time_column,
+                        "end_inclusive": end_inclusive,
+                        "out_of_bounds_count": out_of_bounds_count,
+                    },
+                )
+            )
+
+    design = context.request.study_design
+    if isinstance(design, RandomizedExperimentDesign):
+        unit_column = context.binding.randomization_unit_column
+        unit_role = "randomization"
+    else:
+        unit_column = context.binding.observation_unit_column
+        unit_role = "observation"
+    if unit_column is None or unit_column not in context.table.columns:
+        return tuple(diagnostics)
+    unit_index = context.table.columns.index(unit_column)
+    unit_groups = _exact_groups(
+        tuple((row_index, context.table.rows[row_index][unit_index]) for row_index in indexes)
     )
     inconsistent_count = sum(
         len(_exact_values(parsed[index] for index in row_indexes if index in parsed)) > 1
-        for _, row_indexes in observation_groups
+        for _, row_indexes in unit_groups
     )
     if inconsistent_count:
         diagnostics.append(
             _blocking(
                 code="treatment.timing_inconsistent",
                 category=ValidationCategory.TREATMENT,
-                message="An observation unit has inconsistent supplied treatment timestamps.",
-                context={"inconsistent_unit_count": inconsistent_count},
+                message="An assignment unit has inconsistent supplied treatment timestamps.",
+                context={
+                    "inconsistent_unit_count": inconsistent_count,
+                    "unit_role": unit_role,
+                },
             )
         )
     return tuple(diagnostics)
+
+
+def _treatment_time_bounds(
+    context: ValidationContext,
+) -> tuple[datetime, datetime, bool] | None:
+    design = context.request.study_design
+    if isinstance(design, RandomizedExperimentDesign):
+        return design.experiment_period.start, design.experiment_period.end, False
+    if isinstance(design, QuasiExperimentalDesign):
+        return design.pre_treatment_period.end, design.post_treatment_period.start, True
+    return None
 
 
 def _parse_timestamp(value: object) -> datetime | None:
@@ -851,15 +886,27 @@ def _exact_groups(
     indexed_values: tuple[tuple[int, object], ...],
 ) -> tuple[tuple[object, tuple[int, ...]], ...]:
     groups: list[tuple[object, list[int]]] = []
+    hashable_group_indexes: dict[tuple[type[object], object], int] = {}
     for row_index, value in indexed_values:
         if value is None:
             continue
-        for candidate, candidate_indexes in groups:
-            if _typed_equal(value, candidate):
-                candidate_indexes.append(row_index)
-                break
-        else:
+        key = (type(value), value)
+        try:
+            hash(key)
+        except (TypeError, ValueError):
+            for candidate, candidate_indexes in groups:
+                if _typed_equal(value, candidate):
+                    candidate_indexes.append(row_index)
+                    break
+            else:
+                groups.append((value, [row_index]))
+            continue
+        group_index = hashable_group_indexes.get(key)
+        if group_index is None:
+            hashable_group_indexes[key] = len(groups)
             groups.append((value, [row_index]))
+        else:
+            groups[group_index][1].append(row_index)
     return tuple((value, tuple(row_indexes)) for value, row_indexes in groups)
 
 

@@ -13,18 +13,19 @@ class ValidationPolicy(ContractModel):
     """Explicit deterministic guardrails, not claims of statistical power or causality."""
 
     policy_version: NonEmptyStr = "analysis-validation-v1"
-    minimum_total: int = Field(default=30, ge=1)
-    minimum_per_arm: int = Field(default=10, ge=1)
-    weak_total: int = Field(default=100, ge=1)
-    weak_per_arm: int = Field(default=30, ge=1)
-    minimum_per_segment_arm: int = Field(default=5, ge=1)
-    minimum_clusters: int = Field(default=4, ge=2)
-    weak_clusters: int = Field(default=20, ge=2)
+    minimum_total: int = Field(default=30, strict=True, ge=1)
+    minimum_per_arm: int = Field(default=10, strict=True, ge=1)
+    weak_total: int = Field(default=100, strict=True, ge=1)
+    weak_per_arm: int = Field(default=30, strict=True, ge=1)
+    minimum_per_segment_arm: int = Field(default=5, strict=True, ge=1)
+    minimum_clusters: int = Field(default=4, strict=True, ge=2)
+    weak_clusters: int = Field(default=20, strict=True, ge=2)
     allocation_warning_deviation: Probability = 0.10
     allocation_blocking_deviation: Probability = 0.25
-    maximum_segment_cardinality: int = Field(default=50, ge=1)
+    maximum_segment_cardinality: int = Field(default=50, strict=True, ge=1)
     maximum_outcome_missingness: Probability | None = None
     maximum_differential_missingness: Probability | None = None
+    maximum_covariate_missing_rate: Probability | None = None
 
     @model_validator(mode="after")
     def validate_threshold_order(self) -> Self:

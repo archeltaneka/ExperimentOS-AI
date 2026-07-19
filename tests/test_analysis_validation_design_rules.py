@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 import pytest
 
-from packages.experiments.analysis.validation import DiagnosticDisposition
+from packages.experiments.analysis.validation import DiagnosticDisposition, ValidationPolicy
 from packages.experiments.analysis.validation.context import ValidationContext
 from packages.experiments.analysis.validation.data_rules import validate_data
 from packages.experiments.analysis.validation.design_rules import validate_design
@@ -13,6 +13,7 @@ from tests.analysis_validation_fixtures import (
     context_with_aware_datetime_rows,
     context_with_bound_treatment_timestamps,
     context_with_covariate_missing_in_required_period,
+    context_with_cross_sectional_covariate,
     context_with_duplicate_single_row_units,
     context_with_high_cardinality_segment,
     context_with_incompatible_segment_values,
@@ -24,7 +25,9 @@ from tests.analysis_validation_fixtures import (
     context_with_missing_segment_column,
     context_with_missing_unit,
     context_with_overlapping_assignment_conflict,
+    context_with_quasi_treatment_timestamps,
     context_with_randomization_unit_in_both_arms,
+    context_with_repeated_randomization_unit_treatment_timestamps,
     context_with_repeated_rows_without_cluster,
     context_with_schema_failure_and_segment,
     context_with_segment_missing_control,
@@ -32,6 +35,7 @@ from tests.analysis_validation_fixtures import (
     context_with_stable_unit_mapping_mismatch,
     context_with_switching_unit,
     context_with_three_clusters,
+    context_with_unhashable_observation_units,
 )
 
 
@@ -76,7 +80,6 @@ def test_unit_summary_preserves_exact_identifier_counts() -> None:
             context_with_covariate_missing_in_required_period,
             "covariate.period_unavailable",
         ),
-        (context_with_missing_optional_covariate_values, "covariate.missing"),
     ],
 )
 def test_covariate_data_availability(
@@ -87,6 +90,41 @@ def test_covariate_data_availability(
     diagnostics = validate_design(context, validate_data(context)).diagnostics
 
     assert code in {item.code for item in diagnostics}
+
+
+def test_cross_sectional_covariate_does_not_require_row_level_period_evidence() -> None:
+    context = context_with_cross_sectional_covariate()
+
+    diagnostics = validate_design(context, validate_data(context)).diagnostics
+
+    assert "covariate.period_unavailable" not in {item.code for item in diagnostics}
+
+
+def test_optional_covariate_missingness_is_non_blocking_without_threshold() -> None:
+    context = context_with_missing_optional_covariate_values()
+
+    diagnostics = validate_design(context, validate_data(context)).diagnostics
+
+    assert not any(item.code.startswith("covariate.missing") for item in diagnostics)
+
+
+def test_covariate_missingness_above_explicit_threshold_is_blocking() -> None:
+    context = context_with_missing_optional_covariate_values(
+        policy=ValidationPolicy(maximum_covariate_missing_rate=0.4)
+    )
+
+    diagnostics = validate_design(context, validate_data(context)).diagnostics
+
+    diagnostic = next(
+        item for item in diagnostics if item.code == "covariate.missingness_exceeds_threshold"
+    )
+    assert diagnostic.disposition is DiagnosticDisposition.BLOCKING
+    assert {entry.key: entry.value for entry in diagnostic.context} == {
+        "metric_id": "prior_order_count",
+        "missing_count": 1,
+        "missing_rate": 0.5,
+        "threshold": 0.4,
+    }
 
 
 def test_invalid_and_missing_period_observations_are_structured() -> None:
@@ -124,7 +162,6 @@ def test_aware_datetime_values_are_checked_without_rewriting_table_cells() -> No
         (context_with_segment_missing_control, "segment.arm_missing"),
         (context_with_small_segment, "segment.insufficient_sample"),
         (context_with_missing_segment_assignment, "segment.missing_assignment"),
-        (context_with_high_cardinality_segment, "segment.high_cardinality"),
     ],
 )
 def test_segment_diagnostics(
@@ -182,14 +219,23 @@ def test_later_missing_covariates_do_not_invalidate_valid_pre_period_evidence() 
 
 
 def test_missing_covariate_at_inclusive_period_start_is_blocking() -> None:
-    context = context_with_longitudinal_covariate(missing_inside_period=True)
+    context = context_with_longitudinal_covariate(
+        missing_inside_period=True,
+        policy=ValidationPolicy(maximum_covariate_missing_rate=0.4),
+    )
 
     result = validate_design(context, validate_data(context))
 
-    diagnostic = next(item for item in result.diagnostics if item.code == "covariate.missing")
+    diagnostic = next(
+        item
+        for item in result.diagnostics
+        if item.code == "covariate.missingness_exceeds_threshold"
+    )
     assert {entry.key: entry.value for entry in diagnostic.context} == {
         "metric_id": "prior_order_count",
         "missing_count": 1,
+        "missing_rate": 0.5,
+        "threshold": 0.4,
     }
 
 
@@ -223,6 +269,73 @@ def test_bound_treatment_timestamp_missingness_is_blocking(
         )
 
 
+def test_randomized_treatment_timestamps_outside_experiment_are_blocking() -> None:
+    context = context_with_bound_treatment_timestamps(
+        ("2026-06-30T23:59:59Z", "2026-07-15T00:00:00Z")
+    )
+
+    diagnostics = validate_design(context, validate_data(context)).diagnostics
+
+    diagnostic = next(
+        item for item in diagnostics if item.code == "time.treatment_timestamp_out_of_bounds"
+    )
+    assert diagnostic.disposition is DiagnosticDisposition.BLOCKING
+    assert {entry.key: entry.value for entry in diagnostic.context} == {
+        "allowed_end": "2026-07-15T00:00:00+00:00",
+        "allowed_start": "2026-07-01T00:00:00+00:00",
+        "column": "treated_at",
+        "end_inclusive": False,
+        "out_of_bounds_count": 2,
+    }
+
+
+def test_quasi_treatment_timestamp_must_fall_at_pre_post_boundary() -> None:
+    context = context_with_quasi_treatment_timestamps(
+        ("2026-06-30T23:59:59Z", "2026-07-01T00:00:01Z")
+    )
+
+    diagnostics = validate_design(context, validate_data(context)).diagnostics
+
+    diagnostic = next(
+        item for item in diagnostics if item.code == "time.treatment_timestamp_out_of_bounds"
+    )
+    assert {entry.key: entry.value for entry in diagnostic.context} == {
+        "allowed_end": "2026-07-01T00:00:00+00:00",
+        "allowed_start": "2026-07-01T00:00:00+00:00",
+        "column": "treated_at",
+        "end_inclusive": True,
+        "out_of_bounds_count": 2,
+    }
+
+
+def test_compatible_treatment_timestamps_pass_boundary_and_consistency_checks() -> None:
+    randomized = context_with_repeated_randomization_unit_treatment_timestamps(
+        ("2026-07-01T00:00:00Z", "2026-07-01T00:00:00Z")
+    )
+    quasi = context_with_quasi_treatment_timestamps(
+        ("2026-07-01T00:00:00Z", "2026-07-01T00:00:00Z")
+    )
+
+    for context in (randomized, quasi):
+        codes = {item.code for item in validate_design(context, validate_data(context)).diagnostics}
+        assert "time.treatment_timestamp_out_of_bounds" not in codes
+        assert "treatment.timing_inconsistent" not in codes
+
+
+def test_randomized_treatment_timing_consistency_uses_randomization_unit() -> None:
+    context = context_with_repeated_randomization_unit_treatment_timestamps(
+        ("2026-07-01T00:00:00Z", "2026-07-02T00:00:00Z")
+    )
+
+    diagnostics = validate_design(context, validate_data(context)).diagnostics
+
+    diagnostic = next(item for item in diagnostics if item.code == "treatment.timing_inconsistent")
+    assert {entry.key: entry.value for entry in diagnostic.context} == {
+        "inconsistent_unit_count": 1,
+        "unit_role": "randomization",
+    }
+
+
 def test_overlapping_observation_and_randomization_conflict_counts_once() -> None:
     context = context_with_overlapping_assignment_conflict()
 
@@ -242,3 +355,20 @@ def test_stable_unit_mapping_mismatch_is_not_an_assignment_conflict() -> None:
 
     assert "unit.randomization_observation_mismatch" in {item.code for item in result.diagnostics}
     assert result.unit_integrity_summary.assignment_conflict_count == 0
+
+
+def test_unhashable_unit_identifiers_preserve_exact_first_seen_grouping() -> None:
+    context = context_with_unhashable_observation_units()
+
+    result = validate_design(context, validate_data(context))
+
+    assert result.unit_integrity_summary.observation_unit_count == 2
+    assert result.unit_integrity_summary.duplicate_identifier_count == 1
+
+
+def test_predefined_segment_does_not_emit_exploratory_cardinality_warning() -> None:
+    context = context_with_high_cardinality_segment()
+
+    diagnostics = validate_design(context, validate_data(context)).diagnostics
+
+    assert "segment.high_cardinality" not in {item.code for item in diagnostics}

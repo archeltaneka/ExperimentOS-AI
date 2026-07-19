@@ -378,19 +378,35 @@ def context_with_covariate_missing_in_required_period() -> ValidationContext:
     )
 
 
-def context_with_missing_optional_covariate_values() -> ValidationContext:
+def context_with_cross_sectional_covariate(
+    values: tuple[object, object] = (3, 4),
+    *,
+    policy: ValidationPolicy | None = None,
+) -> ValidationContext:
     return _table_context(
         ("order_id", "account_id", "arm", "outcome", "prior_orders"),
         (
-            ("order-1", "account-1", "control", 0.0, None),
-            ("order-2", "account-2", "treatment", 1.0, 4),
+            ("order-1", "account-1", "control", 0.0, values[0]),
+            ("order-2", "account-2", "treatment", 1.0, values[1]),
         ),
         request=_request_with_covariate(),
         binding=_covariate_binding(with_timestamp=False),
+        policy=policy,
     )
 
 
-def context_with_longitudinal_covariate(*, missing_inside_period: bool) -> ValidationContext:
+def context_with_missing_optional_covariate_values(
+    *,
+    policy: ValidationPolicy | None = None,
+) -> ValidationContext:
+    return context_with_cross_sectional_covariate((None, 4), policy=policy)
+
+
+def context_with_longitudinal_covariate(
+    *,
+    missing_inside_period: bool,
+    policy: ValidationPolicy | None = None,
+) -> ValidationContext:
     request = _request_with_covariate().model_copy(
         update={"clustering": _clustered_request().clustering}
     )
@@ -410,6 +426,7 @@ def context_with_longitudinal_covariate(*, missing_inside_period: bool) -> Valid
         ),
         request=request,
         binding=binding,
+        policy=policy,
     )
 
 
@@ -424,6 +441,52 @@ def context_with_bound_treatment_timestamps(
         (
             ("order-1", "account-1", "control", 0.0, values[0]),
             ("order-2", "account-2", "treatment", 1.0, values[1]),
+        ),
+        binding=binding,
+    )
+
+
+def context_with_repeated_randomization_unit_treatment_timestamps(
+    values: tuple[object, object],
+) -> ValidationContext:
+    binding = analysis_binding_fixture().model_copy(
+        update={"treatment_timestamp_column": "treated_at"}
+    )
+    return _table_context(
+        ("order_id", "account_id", "arm", "outcome", "treated_at"),
+        (
+            ("order-1", "account-1", "treatment", 0.0, values[0]),
+            ("order-2", "account-1", "treatment", 1.0, values[1]),
+        ),
+        binding=binding,
+    )
+
+
+def context_with_quasi_treatment_timestamps(
+    values: tuple[object, object],
+) -> ValidationContext:
+    binding = analysis_binding_fixture().model_copy(
+        update={"treatment_timestamp_column": "treated_at"}
+    )
+    return _table_context(
+        ("order_id", "account_id", "arm", "outcome", "treated_at"),
+        (
+            ("order-1", "account-1", "control", 0.0, values[0]),
+            ("order-2", "account-2", "treatment", 1.0, values[1]),
+        ),
+        request=quasi_experimental_request(),
+        binding=binding,
+    )
+
+
+def context_with_unhashable_observation_units() -> ValidationContext:
+    binding = analysis_binding_fixture().model_copy(update={"observation_unit_column": "order_id"})
+    return _table_context(
+        ("order_id", "account_id", "arm", "outcome"),
+        (
+            (["order-1"], "account-1", "control", 0.0),
+            (["order-1"], "account-1", "control", 1.0),
+            (["order-2"], "account-2", "treatment", 1.0),
         ),
         binding=binding,
     )

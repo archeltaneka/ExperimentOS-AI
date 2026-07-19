@@ -56,6 +56,12 @@ class OutcomeDataBinding(ContractModel):
         return (self.numerator_column, self.denominator_column)
 
 
+class MetricDataBinding(OutcomeDataBinding):
+    """Bind a declared non-outcome metric to scalar or ratio input columns."""
+
+    metric_id: NonEmptyStr
+
+
 class AnalysisDataBinding(ContractModel):
     """Bind request roles to table columns without interpreting or rewriting values."""
 
@@ -66,6 +72,7 @@ class AnalysisDataBinding(ContractModel):
     clustering_unit_column: NonEmptyStr | None = None
     timestamp_column: NonEmptyStr | None = None
     covariates: tuple[MetricColumnBinding, ...] = ()
+    pre_treatment_metrics: tuple[MetricDataBinding, ...] = ()
     treatment_timestamp_column: NonEmptyStr | None = None
 
     @model_validator(mode="after")

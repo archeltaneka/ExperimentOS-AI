@@ -24,6 +24,11 @@ from packages.experiments.analysis import (
     TimePeriod,
     TreatmentRelationship,
 )
+from packages.experiments.analysis.validation.bindings import (
+    MetricColumnBinding,
+    MetricDataBinding,
+    OutcomeDataBinding,
+)
 from packages.experiments.analysis.validation.capabilities import (
     MethodCapability,
     MethodCapabilityRegistry,
@@ -258,6 +263,283 @@ def test_cuped_requires_a_declared_pre_treatment_input() -> None:
     diagnostics = validate_request_consistency(context_for(request))
 
     assert "method.pre_treatment_input_required" in {item.code for item in diagnostics}
+
+
+def _pre_treatment_metric(*, metric_type: MetricType = MetricType.COUNT) -> PreTreatmentMetric:
+    metric = covariate().metric.model_copy(update={"metric_type": metric_type})
+    return PreTreatmentMetric(
+        metric=metric,
+        measurement_period=TimePeriod(
+            start=utc(2026, 5, 1),
+            end=utc(2026, 6, 1),
+        ),
+    )
+
+
+def test_declared_pre_treatment_metric_requires_a_physical_binding() -> None:
+    request = randomized_request(pre_treatment_metrics=(_pre_treatment_metric(),))
+
+    diagnostics = validate_request_consistency(context_for(request))
+
+    item = next(item for item in diagnostics if item.code == "request.metric_binding_missing")
+    assert {entry.key: entry.value for entry in item.context} == {
+        "metric_id": "prior_order_count",
+        "role": "pre_treatment_metric",
+    }
+
+
+def test_cuped_pre_treatment_declaration_without_binding_is_not_ready() -> None:
+    request = _with_method(
+        randomized_request(pre_treatment_metrics=(_pre_treatment_metric(),)),
+        RandomizedAnalysisMethod.CUPED,
+    )
+
+    codes = {item.code for item in validate_request_consistency(context_for(request))}
+
+    assert "method.pre_treatment_input_required" not in codes
+    assert "request.metric_binding_missing" in codes
+
+
+@pytest.mark.parametrize(
+    ("metric_type", "outcome_binding", "expected_shape", "observed_shape"),
+    [
+        (
+            MetricType.RATIO,
+            OutcomeDataBinding(value_column="outcome"),
+            "numerator_denominator",
+            "scalar",
+        ),
+        (
+            MetricType.CONTINUOUS,
+            OutcomeDataBinding(
+                numerator_column="outcome_numerator",
+                denominator_column="outcome_denominator",
+            ),
+            "scalar",
+            "numerator_denominator",
+        ),
+    ],
+)
+def test_outcome_metric_type_must_match_physical_binding_shape(
+    metric_type: MetricType,
+    outcome_binding: OutcomeDataBinding,
+    expected_shape: str,
+    observed_shape: str,
+) -> None:
+    request = randomized_request()
+    metric = request.outcome.metric.model_copy(update={"metric_type": metric_type})
+    request = request.model_copy(
+        update={"outcome": request.outcome.model_copy(update={"metric": metric})}
+    )
+    binding = analysis_binding_fixture().model_copy(update={"outcome": outcome_binding})
+
+    diagnostics = validate_request_consistency(context_for(request, binding=binding))
+
+    item = next(
+        item for item in diagnostics if item.code == "request.metric_binding_shape_incompatible"
+    )
+    assert {entry.key: entry.value for entry in item.context} == {
+        "expected_shape": expected_shape,
+        "metric_id": "payment_success_rate",
+        "observed_shape": observed_shape,
+        "role": "outcome",
+    }
+
+
+@pytest.mark.parametrize(
+    ("metric_type", "metric_binding", "expected_shape", "observed_shape"),
+    [
+        (
+            MetricType.RATIO,
+            MetricDataBinding(metric_id="prior_order_count", value_column="prior_orders"),
+            "numerator_denominator",
+            "scalar",
+        ),
+        (
+            MetricType.COUNT,
+            MetricDataBinding(
+                metric_id="prior_order_count",
+                numerator_column="prior_orders",
+                denominator_column="prior_days",
+            ),
+            "scalar",
+            "numerator_denominator",
+        ),
+    ],
+)
+def test_pre_treatment_metric_type_must_match_physical_binding_shape(
+    metric_type: MetricType,
+    metric_binding: MetricDataBinding,
+    expected_shape: str,
+    observed_shape: str,
+) -> None:
+    request = randomized_request(
+        pre_treatment_metrics=(_pre_treatment_metric(metric_type=metric_type),)
+    )
+    binding = analysis_binding_fixture().model_copy(
+        update={"pre_treatment_metrics": (metric_binding,)}
+    )
+
+    diagnostics = validate_request_consistency(context_for(request, binding=binding))
+
+    item = next(
+        item for item in diagnostics if item.code == "request.metric_binding_shape_incompatible"
+    )
+    assert {entry.key: entry.value for entry in item.context} == {
+        "expected_shape": expected_shape,
+        "metric_id": "prior_order_count",
+        "observed_shape": observed_shape,
+        "role": "pre_treatment_metric",
+    }
+
+
+def test_bound_covariate_must_be_declared_in_request_metadata() -> None:
+    binding = analysis_binding_fixture().model_copy(
+        update={
+            "covariates": (
+                MetricColumnBinding(metric_id="undeclared_metric", column="prior_orders"),
+            )
+        }
+    )
+
+    diagnostics = validate_request_consistency(context_for(binding=binding))
+
+    assert "request.metric_binding_undeclared" in {item.code for item in diagnostics}
+
+
+def test_declared_covariate_requires_a_physical_binding() -> None:
+    request = randomized_request().model_copy(update={"covariates": (covariate(),)})
+
+    diagnostics = validate_request_consistency(context_for(request))
+
+    assert "request.metric_binding_missing" in {item.code for item in diagnostics}
+
+
+def test_segment_attribute_cannot_be_bound_as_adjustment_covariate() -> None:
+    adjustment = covariate()
+    request = randomized_request().model_copy(
+        update={
+            "covariates": (adjustment,),
+            "segment": SegmentDefinition(
+                segment_id="australia",
+                label="Australia",
+                criteria=(
+                    SelectionCriterion(
+                        attribute="country",
+                        operator=CriterionOperator.EQUAL,
+                        value="AU",
+                    ),
+                ),
+            ),
+        }
+    )
+    binding = analysis_binding_fixture().model_copy(
+        update={
+            "covariates": (
+                MetricColumnBinding(
+                    metric_id=adjustment.metric.metric_id,
+                    column="country",
+                ),
+            )
+        }
+    )
+
+    diagnostics = validate_request_consistency(context_for(request, binding=binding))
+
+    assert "request.segment_covariate_binding_conflict" in {item.code for item in diagnostics}
+
+
+def test_duplicate_pre_treatment_bindings_return_a_structured_diagnostic() -> None:
+    request = randomized_request(pre_treatment_metrics=(_pre_treatment_metric(),))
+    binding = MetricDataBinding(metric_id="prior_order_count", value_column="prior_orders")
+    analysis_binding = analysis_binding_fixture().model_copy(
+        update={"pre_treatment_metrics": (binding, binding)}
+    )
+
+    diagnostics = validate_request_consistency(context_for(request, binding=analysis_binding))
+
+    assert "request.metric_binding_duplicate" in {item.code for item in diagnostics}
+
+
+def test_cross_family_metric_binding_conflict_is_structured() -> None:
+    adjustment = covariate()
+    pre_treatment = _pre_treatment_metric()
+    request = randomized_request(pre_treatment_metrics=(pre_treatment,)).model_copy(
+        update={"covariates": (adjustment,)}
+    )
+    binding = analysis_binding_fixture().model_copy(
+        update={
+            "covariates": (
+                MetricColumnBinding(metric_id="prior_order_count", column="prior_orders"),
+            ),
+            "pre_treatment_metrics": (
+                MetricDataBinding(
+                    metric_id="prior_order_count",
+                    value_column="prior_orders_pre",
+                ),
+            ),
+        }
+    )
+
+    diagnostics = validate_request_consistency(context_for(request, binding=binding))
+
+    assert "request.metric_binding_conflict" in {item.code for item in diagnostics}
+
+
+def test_pre_treatment_bindings_cannot_share_one_physical_column() -> None:
+    first = _pre_treatment_metric()
+    second_metric = first.metric.model_copy(
+        update={"metric_id": "prior_session_count", "label": "Prior session count"}
+    )
+    second = first.model_copy(update={"metric": second_metric})
+    request = randomized_request(pre_treatment_metrics=(first, second))
+    binding = analysis_binding_fixture().model_copy(
+        update={
+            "pre_treatment_metrics": (
+                MetricDataBinding(
+                    metric_id=first.metric.metric_id,
+                    value_column="prior_activity",
+                ),
+                MetricDataBinding(
+                    metric_id=second.metric.metric_id,
+                    value_column="prior_activity",
+                ),
+            )
+        }
+    )
+
+    diagnostics = validate_request_consistency(context_for(request, binding=binding))
+
+    item = next(item for item in diagnostics if item.code == "request.metric_binding_conflict")
+    assert {entry.key: entry.value for entry in item.context} == {
+        "column": "prior_activity",
+        "first_metric_id": "prior_order_count",
+        "second_metric_id": "prior_session_count",
+    }
+
+
+def test_pre_treatment_binding_cannot_reuse_a_protected_physical_role() -> None:
+    pre_treatment = _pre_treatment_metric()
+    request = randomized_request(pre_treatment_metrics=(pre_treatment,))
+    binding = analysis_binding_fixture().model_copy(
+        update={
+            "pre_treatment_metrics": (
+                MetricDataBinding(
+                    metric_id=pre_treatment.metric.metric_id,
+                    value_column="outcome",
+                ),
+            )
+        }
+    )
+
+    diagnostics = validate_request_consistency(context_for(request, binding=binding))
+
+    item = next(item for item in diagnostics if item.code == "request.metric_binding_role_conflict")
+    assert {entry.key: entry.value for entry in item.context} == {
+        "column": "outcome",
+        "metric_id": "prior_order_count",
+        "protected_role": "outcome",
+    }
 
 
 def test_treatment_indicator_cannot_be_reused_as_adjustment_covariate() -> None:

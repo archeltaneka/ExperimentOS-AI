@@ -1,6 +1,11 @@
 """ExperimentOS-owned statistical input validation contracts."""
 
-from .bindings import AnalysisDataBinding, MetricColumnBinding, OutcomeDataBinding
+from .bindings import (
+    AnalysisDataBinding,
+    MetricColumnBinding,
+    MetricDataBinding,
+    OutcomeDataBinding,
+)
 from .capabilities import MethodCapabilityRegistry
 from .models import (
     DatasetSummary,
@@ -34,6 +39,7 @@ __all__ = [
     "EligibilityDiagnostic",
     "EligibilityValidationResult",
     "MetricColumnBinding",
+    "MetricDataBinding",
     "MethodContractStatus",
     "MethodCapabilityRegistry",
     "MethodImplementationStatus",

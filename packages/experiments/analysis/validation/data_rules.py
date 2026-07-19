@@ -480,6 +480,11 @@ def _role_columns(context: ValidationContext) -> tuple[tuple[str, str], ...]:
             ("outcome_denominator", binding.outcome.denominator_column),
         )
     )
+    segment_attributes = (
+        tuple(dict.fromkeys(criterion.attribute for criterion in context.request.segment.criteria))
+        if context.request.segment is not None
+        else ()
+    )
     candidates = (
         ("treatment", binding.treatment_column),
         *outcome_roles,
@@ -489,8 +494,14 @@ def _role_columns(context: ValidationContext) -> tuple[tuple[str, str], ...]:
         ("timestamp", binding.timestamp_column),
         *((f"covariate:{item.metric_id}", item.column) for item in binding.covariates),
         ("treatment_timestamp", binding.treatment_timestamp_column),
+        *((f"segment:{attribute}", attribute) for attribute in segment_attributes),
     )
-    return tuple((role, column) for role, column in candidates if column is not None)
+    available_columns = set(context.table.columns)
+    return tuple(
+        (role, column)
+        for role, column in candidates
+        if column is not None and column in available_columns
+    )
 
 
 def _sample_diagnostics(
@@ -632,6 +643,11 @@ def _required_columns(context: ValidationContext) -> tuple[str, ...]:
         binding.clustering_unit_column,
         binding.timestamp_column,
         *(covariate.column for covariate in binding.covariates),
+        *(
+            column
+            for metric_binding in binding.pre_treatment_metrics
+            for column in metric_binding.columns
+        ),
         binding.treatment_timestamp_column,
         *(criterion.attribute for criterion in context.request.population.criteria),
     )

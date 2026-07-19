@@ -18,6 +18,7 @@ from ..study_designs import (
     RandomizedExperimentDesign,
     TreatmentRelationship,
 )
+from .bindings import MetricDataBinding
 from .context import ValidationContext
 from .models import (
     DiagnosticDisposition,
@@ -34,11 +35,198 @@ def validate_request_consistency(
     diagnostics.extend(_metric_estimand_diagnostics(context))
     diagnostics.extend(_cate_diagnostics(context))
     diagnostics.extend(_method_prerequisite_diagnostics(context))
+    diagnostics.extend(_binding_consistency_diagnostics(context))
     diagnostics.extend(_duplicate_covariate_diagnostics(context))
     diagnostics.extend(_role_conflict_diagnostics(context))
     diagnostics.extend(_covariate_timing_diagnostics(context))
     diagnostics.extend(_unit_and_clustering_diagnostics(context))
     return tuple(diagnostics)
+
+
+def _binding_consistency_diagnostics(
+    context: ValidationContext,
+) -> Iterable[EligibilityDiagnostic]:
+    """Validate bidirectional request-to-table role mappings without reading row values."""
+    request = context.request
+    binding = context.binding
+
+    yield from _metric_shape_diagnostics(
+        metric_id=request.outcome.metric.metric_id,
+        metric_type=request.outcome.metric.metric_type,
+        role="outcome",
+        value_column=binding.outcome.value_column,
+    )
+
+    declared_covariates = {item.metric.metric_id: item for item in request.covariates}
+    bound_covariates = {item.metric_id: item for item in binding.covariates}
+    for metric_id in dict.fromkeys(item.metric.metric_id for item in request.covariates):
+        if metric_id not in bound_covariates:
+            yield _metric_binding_missing(metric_id, role="covariate")
+    for metric_id in dict.fromkeys(item.metric_id for item in binding.covariates):
+        if metric_id not in declared_covariates:
+            yield _metric_binding_undeclared(metric_id, role="covariate")
+
+    pre_binding_ids = tuple(item.metric_id for item in binding.pre_treatment_metrics)
+    duplicate_pre_binding_ids = set(_duplicates(pre_binding_ids))
+    for metric_id in _duplicates(pre_binding_ids):
+        yield _blocking(
+            code="request.metric_binding_duplicate",
+            category=ValidationCategory.REQUEST,
+            message="A physical metric binding may be declared only once per role.",
+            context={"metric_id": metric_id, "role": "pre_treatment_metric"},
+        )
+
+    declared_pre_metrics = {item.metric.metric_id: item for item in request.pre_treatment_metrics}
+    bound_pre_metrics: dict[str, MetricDataBinding] = {}
+    for item in binding.pre_treatment_metrics:
+        bound_pre_metrics.setdefault(item.metric_id, item)
+    for metric_id in dict.fromkeys(item.metric.metric_id for item in request.pre_treatment_metrics):
+        metric_binding = bound_pre_metrics.get(metric_id)
+        if metric_binding is None:
+            yield _metric_binding_missing(metric_id, role="pre_treatment_metric")
+            continue
+        if metric_id not in duplicate_pre_binding_ids:
+            yield from _metric_shape_diagnostics(
+                metric_id=metric_id,
+                metric_type=declared_pre_metrics[metric_id].metric.metric_type,
+                role="pre_treatment_metric",
+                value_column=metric_binding.value_column,
+            )
+    for metric_id in dict.fromkeys(pre_binding_ids):
+        if metric_id not in declared_pre_metrics:
+            yield _metric_binding_undeclared(metric_id, role="pre_treatment_metric")
+
+    cross_family_metric_ids = tuple(sorted(set(bound_covariates).intersection(bound_pre_metrics)))
+    for metric_id in cross_family_metric_ids:
+        yield _blocking(
+            code="request.metric_binding_conflict",
+            category=ValidationCategory.REQUEST,
+            message="One metric identifier cannot be bound to contradictory analytical roles.",
+            context={
+                "first_role": "covariate",
+                "metric_id": metric_id,
+                "second_role": "pre_treatment_metric",
+            },
+        )
+
+    protected_columns = {
+        binding.treatment_column: "treatment",
+        **{column: "outcome" for column in binding.outcome.columns},
+        binding.observation_unit_column: "observation_unit",
+    }
+    protected_columns.update(
+        {
+            column: role
+            for column, role in (
+                (binding.randomization_unit_column, "randomization_unit"),
+                (binding.clustering_unit_column, "clustering_unit"),
+                (binding.timestamp_column, "timestamp"),
+                (binding.treatment_timestamp_column, "treatment_timestamp"),
+            )
+            if column is not None
+        }
+    )
+    physical_metric_columns = {item.column: item.metric_id for item in binding.covariates}
+    for metric_id, metric_binding in bound_pre_metrics.items():
+        if metric_id in duplicate_pre_binding_ids:
+            continue
+        for column in metric_binding.columns:
+            protected_role = protected_columns.get(column)
+            if protected_role is not None:
+                yield _blocking(
+                    code="request.metric_binding_role_conflict",
+                    category=ValidationCategory.REQUEST,
+                    message="A metric binding cannot reuse a protected physical role.",
+                    context={
+                        "column": column,
+                        "metric_id": metric_id,
+                        "protected_role": protected_role,
+                    },
+                )
+                continue
+            first_metric_id = physical_metric_columns.get(column)
+            if first_metric_id is not None and first_metric_id != metric_id:
+                yield _blocking(
+                    code="request.metric_binding_conflict",
+                    category=ValidationCategory.REQUEST,
+                    message="Physical metric columns must map to one declared metric.",
+                    context={
+                        "column": column,
+                        "first_metric_id": first_metric_id,
+                        "second_metric_id": metric_id,
+                    },
+                )
+                continue
+            physical_metric_columns[column] = metric_id
+
+    segment = request.segment
+    if segment is not None:
+        segment_attributes = {criterion.attribute for criterion in segment.criteria}
+        ordinary_adjustment_roles = {
+            CovariateRole.ADJUSTMENT,
+            CovariateRole.CONFOUNDER,
+            CovariateRole.CUPED,
+            CovariateRole.PRECISION,
+        }
+        for metric_id, covariate_binding in bound_covariates.items():
+            covariate = declared_covariates.get(metric_id)
+            if (
+                covariate is not None
+                and covariate.role in ordinary_adjustment_roles
+                and covariate_binding.column in segment_attributes
+            ):
+                yield _blocking(
+                    code="request.segment_covariate_binding_conflict",
+                    category=ValidationCategory.REQUEST,
+                    message=(
+                        "A physical segment attribute cannot also be an adjustment covariate."
+                    ),
+                    context={
+                        "column": covariate_binding.column,
+                        "metric_id": metric_id,
+                    },
+                )
+
+
+def _metric_shape_diagnostics(
+    *,
+    metric_id: str,
+    metric_type: MetricType,
+    role: str,
+    value_column: str | None,
+) -> Iterable[EligibilityDiagnostic]:
+    expected_shape = "numerator_denominator" if metric_type is MetricType.RATIO else "scalar"
+    observed_shape = "scalar" if value_column is not None else "numerator_denominator"
+    if expected_shape != observed_shape:
+        yield _blocking(
+            code="request.metric_binding_shape_incompatible",
+            category=ValidationCategory.REQUEST,
+            message="The declared metric type is incompatible with its physical input shape.",
+            context={
+                "expected_shape": expected_shape,
+                "metric_id": metric_id,
+                "observed_shape": observed_shape,
+                "role": role,
+            },
+        )
+
+
+def _metric_binding_missing(metric_id: str, *, role: str) -> EligibilityDiagnostic:
+    return _blocking(
+        code="request.metric_binding_missing",
+        category=ValidationCategory.REQUEST,
+        message="A declared metric requires a physical data binding.",
+        context={"metric_id": metric_id, "role": role},
+    )
+
+
+def _metric_binding_undeclared(metric_id: str, *, role: str) -> EligibilityDiagnostic:
+    return _blocking(
+        code="request.metric_binding_undeclared",
+        category=ValidationCategory.REQUEST,
+        message="A physical metric binding must reference declared request metadata.",
+        context={"metric_id": metric_id, "role": role},
+    )
 
 
 def _metric_estimand_diagnostics(

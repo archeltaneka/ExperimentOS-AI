@@ -8,11 +8,15 @@ from typing import Annotated, Literal, Self
 
 from pydantic import Field, StrictBool, field_validator, model_validator
 
-from ..base import ContractModel, NonEmptyStr, Probability, ScalarValue
+from ..base import AnalysisStatus, ContractModel, NonEmptyStr, Probability, ScalarValue
 from ..provenance import DiagnosticOutcome, DiagnosticSeverity
 from ..results import AbstentionReason, EligibilityStatus
 
 type NonNegativeInt = Annotated[int, Field(strict=True, ge=0)]
+
+_CAPABILITY_ONLY_DIAGNOSTIC_CODES = frozenset(
+    {"method.contract_unsupported", "method.implementation_unavailable"}
+)
 
 
 class ValidationCategory(StrEnum):
@@ -206,6 +210,28 @@ class MethodSupportAssessment(ContractModel):
         return self
 
 
+def _status_for_diagnostics(
+    diagnostics: tuple[EligibilityDiagnostic, ...],
+) -> EligibilityStatus:
+    dispositions = {diagnostic.disposition for diagnostic in diagnostics}
+    if DiagnosticDisposition.BLOCKING in dispositions:
+        return AnalysisStatus.INELIGIBLE
+    if DiagnosticDisposition.NEEDS_MORE_DATA in dispositions:
+        return AnalysisStatus.NEEDS_MORE_DATA
+    if DiagnosticDisposition.WARNING in dispositions:
+        return AnalysisStatus.ELIGIBLE_WITH_WARNINGS
+    return AnalysisStatus.ELIGIBLE
+
+
+def _data_is_eligible(diagnostics: tuple[EligibilityDiagnostic, ...]) -> bool:
+    return not any(
+        diagnostic.code not in _CAPABILITY_ONLY_DIAGNOSTIC_CODES
+        and diagnostic.disposition
+        in {DiagnosticDisposition.BLOCKING, DiagnosticDisposition.NEEDS_MORE_DATA}
+        for diagnostic in diagnostics
+    )
+
+
 class EligibilityValidationResult(ContractModel):
     """Complete pre-estimator eligibility outcome containing no statistical estimate."""
 
@@ -256,6 +282,19 @@ class EligibilityValidationResult(ContractModel):
                 "abstention_reason is required only for ineligible or needs_more_data results"
             )
 
-        if self.status.value == "ineligible" and self.method_support.executable:
-            raise ValueError("ineligible results must not report executable method support")
+        expected_status = _status_for_diagnostics(self.diagnostics)
+        if self.status is not expected_status:
+            raise ValueError("status must match diagnostic disposition precedence")
+
+        if self.method_support.executable and self.status not in {
+            AnalysisStatus.ELIGIBLE,
+            AnalysisStatus.ELIGIBLE_WITH_WARNINGS,
+        }:
+            raise ValueError("executable method support is allowed only for eligible results")
+
+        expected_data_eligible = _data_is_eligible(self.diagnostics)
+        if self.method_support.data_eligible is not expected_data_eligible:
+            raise ValueError(
+                "method_support.data_eligible must match non-capability validation diagnostics"
+            )
         return self

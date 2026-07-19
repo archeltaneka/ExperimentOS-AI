@@ -180,6 +180,26 @@ def test_eligibility_validation_result_uses_its_own_public_round_trip() -> None:
         analysis_outcome_from_json(payload)
 
 
+def test_public_eligibility_decoder_rejects_contradictory_status_payload() -> None:
+    original = eligible_result_fixture()
+    payload = original.model_dump(mode="json")
+    warning = {
+        "code": "sample.total_weak",
+        "category": "sample",
+        "severity": "warning",
+        "outcome": "failed",
+        "disposition": "warning",
+        "message": "The available sample is operationally weak.",
+        "context": [],
+        "recommended_action": None,
+    }
+    payload["diagnostics"] = [warning]
+    payload["warnings"] = [warning]
+
+    with pytest.raises(ValidationError, match="status.*diagnostic disposition precedence"):
+        eligibility_validation_result_from_json(json.dumps(payload))
+
+
 def test_diagnostic_has_deterministic_canonical_serialization() -> None:
     diagnostic = Diagnostic(
         code="overlap.low",

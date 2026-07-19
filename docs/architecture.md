@@ -140,10 +140,30 @@ projection models. It preserves descriptive, associational, randomized, quasi-ex
 observational, and projected evidence as distinct structures and exposes validated serialization
 helpers without leaking third-party result types.
 
-The contract package is not yet integrated with estimators, agents, persistence, observability
-emission, evaluation policy, or the public API. It performs no statistical or business-impact
-calculations and implements no eligibility policy. In particular, `POST /ask`, `AgentState`, the
-current workflows, and existing evaluation behavior remain unchanged.
+The contract package is not yet integrated with estimators, agents, persistence, evaluation policy,
+or the public API. It performs no statistical or business-impact calculations. In particular,
+`POST /ask`, `AgentState`, the current workflows, and existing evaluation behavior remain
+unchanged.
+
+### Phase 4 Statistical Input Validation
+
+`packages.experiments.analysis.validation` adds an internal pre-estimator eligibility boundary.
+`AnalysisEligibilityService` composes focused request rules, data rules, and design rules in that
+fixed dependency order, then returns an immutable `EligibilityValidationResult`. It distinguishes
+strict request-contract validity, dataset eligibility, method contract support, and configured
+implementation availability; it never computes or returns an estimate.
+
+The dependency direction is existing analysis contracts plus immutable table/binding/policy inputs
+-> focused validators -> service aggregation -> typed result. The validation package depends only
+on ExperimentOS domain contracts and the ExperimentOS observability abstraction.
+It has no FastAPI or vendor SDK dependency.
+Its safe `analysis_validation` span excludes raw rows and bound column names, and provider failures
+cannot alter eligibility results. Future estimators may consume data only through a separately
+designed integration after checking the complete validation result.
+
+The detailed status precedence, policy defaults, diagnostic families, data-safety boundary, and
+canonical structured examples are in
+`docs/phase4/statistical_input_validation.md`.
 
 ### Retrieval Layer
 
@@ -237,6 +257,17 @@ Outputs:
    approval state, and fallback behavior.
 5. Results are rendered into `reports/agent_e2e_evaluation.md`.
 
+### Statistical Input Validation Flow
+
+1. A caller constructs or validates an `AnalysisRequest`, immutable `AnalysisTable`, and explicit
+   analytical-role binding.
+2. The service evaluates request/capability rules, dataset rules, and—when the schema is
+   readable—design-integrity rules.
+3. Fixed precedence aggregates blocking, needs-data, and warning dispositions into one eligibility
+   status.
+4. The service returns deterministic diagnostics and summaries without mutating data or invoking an
+   estimator.
+
 ## Package Overview
 
 | Package | Responsibility |
@@ -249,7 +280,7 @@ Outputs:
 | `packages/qa` | Grounded question answering service and response models |
 | `packages/evals` | Evaluation dataset loading, orchestration, metrics, reports |
 | `packages/experiments` | Experiment-domain namespace; top-level exports remain reserved and unchanged |
-| `packages.experiments.analysis` | Versioned statistical and causal domain contracts |
+| `packages.experiments.analysis` | Versioned statistical/causal contracts and internal pre-estimator validation |
 | `packages/agents` | Phase 2 LangGraph workflow, agents, shared state, and observability |
 
 ## Extension Points

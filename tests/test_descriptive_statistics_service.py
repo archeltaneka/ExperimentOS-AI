@@ -4,12 +4,18 @@ from packages.experiments.analysis.descriptive import (
     ComparisonAvailability,
     DescriptiveStatisticsInput,
     DescriptiveStatisticsService,
+    UnavailableSummary,
 )
 from packages.experiments.analysis.metrics import AnalysisUnit, MetricType
+from packages.experiments.analysis.populations import (
+    CriterionOperator,
+    SelectionCriterion,
+)
 from packages.experiments.analysis.study_designs import NoClustering
 from packages.experiments.analysis.validation import (
     AnalysisEligibilityService,
     AnalysisTable,
+    OutcomeDataBinding,
     ValidationPolicy,
 )
 from tests.analysis_validation_fixtures import context_for
@@ -19,10 +25,17 @@ def _eligible_input(
     rows: tuple[tuple[object, ...], ...],
     *,
     metric_type: MetricType = MetricType.CONTINUOUS,
+    population_criteria: tuple[SelectionCriterion, ...] = (),
+    ratio_binding: bool = False,
 ) -> DescriptiveStatisticsInput:
+    columns = (
+        ("order_id", "account_id", "arm", "numerator", "denominator")
+        if ratio_binding
+        else ("order_id", "account_id", "arm", "outcome")
+    )
     context = context_for(
         table=AnalysisTable(
-            columns=("order_id", "account_id", "arm", "outcome"),
+            columns=columns,
             rows=rows,
         )
     )
@@ -34,19 +47,31 @@ def _eligible_input(
     )
     metric = context.request.outcome.metric.model_copy(update={"metric_type": metric_type})
     outcome = context.request.outcome.model_copy(update={"metric": metric})
+    population = context.request.population.model_copy(update={"criteria": population_criteria})
     unit = AnalysisUnit(unit_id="order_id", label="Order")
     design = context.request.study_design.model_copy(update={"randomization_unit": unit})
+    binding = context.binding.model_copy(update={"randomization_unit_column": "order_id"})
+    if ratio_binding:
+        binding = binding.model_copy(
+            update={
+                "outcome": OutcomeDataBinding(
+                    numerator_column="numerator",
+                    denominator_column="denominator",
+                )
+            }
+        )
     context = context_for(
         context.request.model_copy(
             update={
                 "outcome": outcome,
+                "population": population,
                 "unit_of_analysis": unit,
                 "clustering": NoClustering(),
                 "study_design": design,
             }
         ),
         table=context.table,
-        binding=context.binding.model_copy(update={"randomization_unit_column": "order_id"}),
+        binding=binding,
         policy=policy,
     )
     eligibility = AnalysisEligibilityService(policy=context.policy).validate(
@@ -137,3 +162,51 @@ def test_service_is_deterministic_when_input_rows_are_reordered() -> None:
     second = DescriptiveStatisticsService().summarize(_eligible_input(tuple(reversed(rows))))
 
     assert first == second
+
+
+def test_service_uses_the_eligibility_population_selection_for_every_summary() -> None:
+    """Catches excluded caller rows leaking into overall or declared-arm summaries."""
+    analysis_input = _eligible_input(
+        (
+            ("o1", "a1", "control", 1.0),
+            ("o2", "a2", "control", 3.0),
+            ("o3", "a3", "treatment", 5.0),
+            ("o4", "a4", "treatment", 7.0),
+            ("o5", "a5", "treatment", 999.0),
+        ),
+        population_criteria=(
+            SelectionCriterion(
+                attribute="outcome",
+                operator=CriterionOperator.LESS_THAN,
+                value=10.0,
+            ),
+        ),
+    )
+
+    result = DescriptiveStatisticsService().summarize(analysis_input)
+
+    assert result.population.row_count == 4
+    assert result.population.summary.mean == 4.0
+    assert result.treatment is not None
+    assert result.treatment.row_count == 2
+    assert result.treatment.summary.mean == 6.0
+
+
+def test_service_returns_typed_ratio_unavailability_without_inventing_aggregation() -> None:
+    """Catches ratio bindings being rejected before their declared limitation reaches callers."""
+    analysis_input = _eligible_input(
+        (
+            ("o1", "a1", "control", 1.0, 2.0),
+            ("o2", "a2", "treatment", 3.0, 4.0),
+        ),
+        metric_type=MetricType.RATIO,
+        ratio_binding=True,
+    )
+
+    result = DescriptiveStatisticsService().summarize(analysis_input)
+
+    assert isinstance(result.population.summary, UnavailableSummary)
+    assert result.population.valid_outcome_count == 2
+    assert result.population.summary.reason == "ratio aggregation semantics are not declared"
+    assert result.raw_comparison is not None
+    assert result.raw_comparison.availability is ComparisonAvailability.UNAVAILABLE

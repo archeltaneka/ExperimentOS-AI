@@ -7,6 +7,7 @@ from collections.abc import Iterable
 
 from ..metrics import MetricType
 from ..validation.context import ValidationContext
+from ..validation.criteria import evaluate_criteria
 from .input import DescriptiveStatisticsInput, DescriptiveStatisticsInvariantError
 from .models import (
     BinarySummary,
@@ -104,10 +105,6 @@ def _assert_internal_invariants(
         )
     if summary.assignment_conflict_count:
         raise DescriptiveStatisticsInvariantError("validated input has assignment conflicts")
-    if not context.binding.outcome.value_column:
-        raise DescriptiveStatisticsInvariantError(
-            "ratio outcomes require declared aggregation semantics before descriptive computation"
-        )
 
 
 def _extract_populations(context: ValidationContext) -> _PopulationRows:
@@ -115,8 +112,8 @@ def _extract_populations(context: ValidationContext) -> _PopulationRows:
     columns = {name: index for index, name in enumerate(context.table.columns)}
     try:
         treatment_index = columns[context.binding.treatment_column]
-        outcome_index = columns[context.binding.outcome.value_column or ""]
         unit_index = columns[context.binding.observation_unit_column]
+        outcome_indexes = tuple(columns[column] for column in context.binding.outcome.columns)
     except KeyError as error:
         raise DescriptiveStatisticsInvariantError(
             "validated input is missing a bound column"
@@ -126,7 +123,17 @@ def _extract_populations(context: ValidationContext) -> _PopulationRows:
     treatment: list[tuple[object, object]] = []
     control: list[tuple[object, object]] = []
     for row in context.table.rows:
-        item = (row[unit_index], row[outcome_index])
+        if not evaluate_criteria(
+            {column: row[index] for column, index in columns.items()},
+            context.request.population.criteria,
+        ):
+            continue
+        outcome = (
+            row[outcome_indexes[0]]
+            if len(outcome_indexes) == 1
+            else tuple(row[index] for index in outcome_indexes)
+        )
+        item = (row[unit_index], outcome)
         assignment = row[treatment_index]
         if _typed_equal(assignment, context.request.treatment.assignment_value):
             treatment.append(item)
@@ -155,11 +162,14 @@ def _population_summary(
 ) -> PopulationSummary:
     values: list[float] = []
     missing_count = 0
+    valid_outcome_count = 0
     for _, value in rows:
-        if value is None:
+        if _outcome_is_missing(value):
             missing_count += 1
             continue
-        values.append(_finite_numeric_value(value))
+        valid_outcome_count += 1
+        if metric_type is not MetricType.RATIO:
+            values.append(_finite_numeric_value(value))
     try:
         summary = _summarize_metric(metric_type, sorted(values), config)
     except NumericSummaryInvariantError as error:
@@ -169,7 +179,7 @@ def _population_summary(
         label=label,
         row_count=len(rows),
         unique_unit_count=_distinct_unit_count(row[0] for row in rows),
-        valid_outcome_count=len(values),
+        valid_outcome_count=valid_outcome_count,
         missing_outcome_count=missing_count,
         summary=summary,
     )
@@ -243,6 +253,12 @@ def _finite_numeric_value(value: object) -> float:
     if not math.isfinite(normalized):
         raise DescriptiveStatisticsInvariantError("outcome values must be finite real numbers")
     return normalized
+
+
+def _outcome_is_missing(value: object) -> bool:
+    if isinstance(value, tuple):
+        return any(item is None for item in value)
+    return value is None
 
 
 def _typed_equal(actual: object, expected: object) -> bool:

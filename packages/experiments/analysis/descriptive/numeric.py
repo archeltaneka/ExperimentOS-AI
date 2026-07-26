@@ -113,8 +113,12 @@ def _finite_values(values: Iterable[float]) -> list[float]:
 def _mean(values: list[float]) -> float:
     try:
         mean = math.fsum(values) / len(values)
-    except OverflowError as error:
-        raise NumericSummaryInvariantError("summary values must be finite") from error
+    except OverflowError:
+        scale = max(abs(value) for value in values)
+        try:
+            mean = math.fsum(value / scale for value in values) / len(values) * scale
+        except OverflowError as error:
+            raise NumericSummaryInvariantError("summary values must be finite") from error
     _require_finite(mean)
     return mean
 

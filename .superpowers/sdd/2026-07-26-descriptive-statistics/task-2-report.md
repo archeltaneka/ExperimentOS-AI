@@ -120,3 +120,33 @@ $ git diff --check
 `_mean` now performs `math.fsum(values) / len(values)`. Overflow from that sum or from
 sample-variance calculation is translated to `NumericSummaryInvariantError`, preventing
 non-finite results or leaked arithmetic exceptions.
+
+## Equal-maximum follow-up
+
+### Red
+
+```text
+$ uv run pytest tests/test_descriptive_statistics_numeric.py
+1 failed, 12 passed
+```
+
+Restoring the `(max_float, max_float)` regression showed that direct `math.fsum` overflow
+was being rejected even though its mean and zero dispersion are representable.
+
+### Green
+
+```text
+$ uv run pytest tests/test_descriptive_statistics_numeric.py
+13 passed in 0.23s
+
+$ uv run ruff check .
+All checks passed!
+
+$ git diff --check
+(no output; passed)
+```
+
+The mean first evaluates `math.fsum(values) / len(values)` to preserve subnormal values.
+Only if that sum overflows, it rescales by the largest absolute observation, sums with
+`math.fsum`, averages, and rescales with finite validation. Unrepresentable mixed extremes
+continue to raise `NumericSummaryInvariantError` during variance calculation.

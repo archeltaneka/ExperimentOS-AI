@@ -122,7 +122,19 @@ class PopulationSummary(ContractModel):
 
     population_id: NonEmptyStr
     label: NonEmptyStr
+    row_count: NonNegativeInt = 0
+    unique_unit_count: NonNegativeInt = 0
+    valid_outcome_count: NonNegativeInt = 0
+    missing_outcome_count: NonNegativeInt = 0
     summary: DescriptiveSummary
+
+    @model_validator(mode="after")
+    def validate_outcome_counts(self) -> Self:
+        if self.unique_unit_count > self.row_count:
+            raise ValueError("unique_unit_count must not exceed row_count")
+        if self.valid_outcome_count + self.missing_outcome_count > self.row_count:
+            raise ValueError("outcome counts must not exceed row_count")
+        return self
 
 
 class ComparisonAvailability(StrEnum):
@@ -141,6 +153,7 @@ class RawComparison(ContractModel):
     unavailable_reason: NonEmptyStr | None = None
     absolute_difference: FiniteFloat | None = None
     relative_difference: FiniteFloat | None = None
+    relative_difference_unavailable_reason: NonEmptyStr | None = None
 
     @model_validator(mode="after")
     def validate_availability(self) -> Self:
@@ -155,9 +168,18 @@ class RawComparison(ContractModel):
         ):
             raise ValueError("unavailable raw comparisons require an unavailable_reason")
         if self.availability is ComparisonAvailability.UNAVAILABLE and (
-            self.absolute_difference is not None or self.relative_difference is not None
+            self.absolute_difference is not None
+            or self.relative_difference is not None
+            or self.relative_difference_unavailable_reason is not None
         ):
             raise ValueError("unavailable raw comparisons must not include numeric differences")
+        if (
+            self.relative_difference is not None
+            and self.relative_difference_unavailable_reason is not None
+        ):
+            raise ValueError(
+                "available relative differences must not include an unavailable reason"
+            )
         return self
 
 
@@ -202,6 +224,8 @@ class DescriptiveStatisticsResult(ContractModel):
     outcome_direction: OutcomeDirection
     config: DescriptiveStatisticsConfig = DescriptiveStatisticsConfig()
     population: PopulationSummary
+    treatment: PopulationSummary | None = None
+    control: PopulationSummary | None = None
     raw_comparison: RawComparison | None = None
     covariates: tuple[CovariateSummary, ...] = ()
     segments: tuple[SegmentSummary, ...] = ()

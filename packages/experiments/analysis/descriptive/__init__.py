@@ -1,5 +1,6 @@
 """Descriptive-statistics contract models."""
 
+from .input import DescriptiveStatisticsInput, DescriptiveStatisticsInvariantError
 from .models import (
     BinarySummary,
     ComparisonAvailability,
@@ -17,6 +18,7 @@ from .models import (
     SegmentSummary,
     UnavailableSummary,
 )
+from .service import DescriptiveStatisticsService
 
 __all__ = [
     "BinarySummary",
@@ -26,7 +28,10 @@ __all__ = [
     "CovariateSummary",
     "DescriptiveDiagnostic",
     "DescriptiveStatisticsConfig",
+    "DescriptiveStatisticsInput",
+    "DescriptiveStatisticsInvariantError",
     "DescriptiveStatisticsResult",
+    "DescriptiveStatisticsService",
     "DescriptiveSummary",
     "PeriodSummary",
     "PopulationSummary",

@@ -59,6 +59,35 @@ $ git diff --check
 
 ## Concerns
 
-The Task 1 public summary contracts do not expose variance or standard-error fields.
-The helpers calculate the required finite standard-error intermediates as invariants, but
-return only fields available in those committed contracts.
+None.
+
+## Contract follow-up
+
+The Task 1 contracts were subsequently expanded with variance, standard-error, and binary
+success/failure/rate fields. Task 2 now returns all of those fields.
+
+### Red
+
+```text
+$ uv run pytest tests/test_descriptive_statistics_numeric.py
+5 failed, 4 passed
+```
+
+The new assertions showed that the helpers had omitted the newly contracted values.
+
+### Green
+
+```text
+$ uv run pytest tests/test_descriptive_statistics_numeric.py
+11 passed in 0.26s
+
+$ uv run ruff check .
+All checks passed!
+
+$ git diff --check
+(no output; passed)
+```
+
+Continuous and count summaries now emit sample variance and standard error when `n >= 2`;
+otherwise both fields are `None`. Binary summaries emit success/failure counts, rate, sample
+variance, and observed-rate standard error under the same availability rule.

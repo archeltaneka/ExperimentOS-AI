@@ -8,7 +8,6 @@ import pytest
 from packages.experiments.analysis.descriptive.models import (
     BinarySummary,
     ContinuousSummary,
-    CountSummary,
     DescriptiveStatisticsConfig,
     UnavailableSummary,
 )
@@ -26,7 +25,9 @@ def test_continuous_summary_uses_sample_statistics_and_linear_quartiles() -> Non
     assert summary == ContinuousSummary(
         sample_size=4,
         mean=2.5,
+        variance=5 / 3,
         standard_deviation=math.sqrt(5 / 3),
+        standard_error=math.sqrt(5 / 3) / 2,
         minimum=1.0,
         maximum=4.0,
         quantiles=(
@@ -43,6 +44,8 @@ def test_continuous_summary_retains_single_observation_statistics_without_deviat
     assert summary == ContinuousSummary(
         sample_size=1,
         mean=3.5,
+        variance=None,
+        standard_error=None,
         minimum=3.5,
         maximum=3.5,
         quantiles=(
@@ -66,6 +69,8 @@ def test_continuous_summary_preserves_zero_variance() -> None:
     summary = summarize_continuous([5.0, 5.0], DescriptiveStatisticsConfig())
 
     assert summary.standard_deviation == 0.0
+    assert summary.variance == 0.0
+    assert summary.standard_error == 0.0
 
 
 def test_continuous_summary_accepts_extreme_finite_values_without_non_finite_outputs() -> None:
@@ -75,13 +80,32 @@ def test_continuous_summary_accepts_extreme_finite_values_without_non_finite_out
 
     assert summary.mean == sys.float_info.max
     assert summary.standard_deviation == 0.0
-    assert all(math.isfinite(value) for value in (summary.mean, summary.standard_deviation))
+    assert summary.variance == 0.0
+    assert summary.standard_error == 0.0
+    assert all(
+        math.isfinite(value)
+        for value in (
+            summary.mean,
+            summary.variance,
+            summary.standard_deviation,
+            summary.standard_error,
+        )
+    )
 
 
 def test_binary_summary_counts_all_valid_outcomes_and_computes_proportion() -> None:
     summary = summarize_binary([0.0, 1.0, 1.0, 0.0], DescriptiveStatisticsConfig())
 
-    assert summary == BinarySummary(sample_size=4, positive_count=2, proportion=0.5)
+    assert summary == BinarySummary(
+        sample_size=4,
+        positive_count=2,
+        proportion=0.5,
+        success_count=2,
+        failure_count=2,
+        rate=0.5,
+        variance=1 / 3,
+        standard_error=0.25,
+    )
 
 
 def test_binary_summary_rejects_values_other_than_exact_zero_or_one() -> None:
@@ -89,10 +113,30 @@ def test_binary_summary_rejects_values_other_than_exact_zero_or_one() -> None:
         summarize_binary([0.0, 2.0], DescriptiveStatisticsConfig())
 
 
+def test_binary_summary_marks_variance_and_standard_error_unavailable_for_one_observation() -> None:
+    summary = summarize_binary([1.0], DescriptiveStatisticsConfig())
+
+    assert summary.variance is None
+    assert summary.standard_error is None
+
+
 def test_count_summary_handles_zero_counts() -> None:
     summary = summarize_count([0.0, 0.0, 2.0], DescriptiveStatisticsConfig())
 
-    assert summary == CountSummary(sample_size=3, total=2, mean=2 / 3, minimum=0, maximum=2)
+    assert summary.sample_size == 3
+    assert summary.total == 2
+    assert summary.mean == 2 / 3
+    assert summary.variance == pytest.approx(4 / 3)
+    assert summary.standard_error == pytest.approx(2 / 3)
+    assert summary.minimum == 0
+    assert summary.maximum == 2
+
+
+def test_count_summary_marks_variance_and_standard_error_unavailable_for_one_observation() -> None:
+    summary = summarize_count([2.0], DescriptiveStatisticsConfig())
+
+    assert summary.variance is None
+    assert summary.standard_error is None
 
 
 def test_count_summary_rejects_negative_counts() -> None:

@@ -28,12 +28,14 @@ def summarize_continuous(
         return _unavailable()
 
     mean = _mean(observations)
-    standard_deviation = _sample_standard_deviation(observations, mean)
+    variance, standard_deviation, standard_error = _sample_statistics(observations, mean)
     ordered = sorted(observations)
     return ContinuousSummary(
         sample_size=len(observations),
         mean=mean,
+        variance=variance,
         standard_deviation=standard_deviation,
+        standard_error=standard_error,
         minimum=ordered[0],
         maximum=ordered[-1],
         quantiles=tuple(
@@ -56,11 +58,16 @@ def summarize_binary(
 
     positive_count = sum(value == 1.0 for value in observations)
     proportion = positive_count / len(observations)
-    _binary_standard_error(proportion, len(observations))
+    variance, standard_error = _binary_statistics(proportion, len(observations))
     return BinarySummary(
         sample_size=len(observations),
         positive_count=positive_count,
         proportion=proportion,
+        success_count=positive_count,
+        failure_count=len(observations) - positive_count,
+        rate=proportion,
+        variance=variance,
+        standard_error=standard_error,
     )
 
 
@@ -78,10 +85,14 @@ def summarize_count(
         raise NumericSummaryInvariantError("count values must be integers")
 
     counts = [int(value) for value in observations]
+    mean = _mean(observations)
+    variance, _, standard_error = _sample_statistics(observations, mean)
     return CountSummary(
         sample_size=len(counts),
         total=sum(counts),
-        mean=_mean(observations),
+        mean=mean,
+        variance=variance,
+        standard_error=standard_error,
         minimum=min(counts),
         maximum=max(counts),
     )
@@ -105,22 +116,28 @@ def _mean(values: list[float]) -> float:
     return mean
 
 
-def _sample_standard_deviation(values: list[float], mean: float) -> float | None:
+def _sample_statistics(
+    values: list[float], mean: float
+) -> tuple[float | None, float | None, float | None]:
     if len(values) < 2:
-        return None
+        return None, None, None
     variance = sum((value - mean) ** 2 for value in values) / (len(values) - 1)
     _require_finite(variance)
     standard_deviation = math.sqrt(variance)
     _require_finite(standard_deviation)
     standard_error = standard_deviation / math.sqrt(len(values))
     _require_finite(standard_error)
-    return standard_deviation
+    return variance, standard_deviation, standard_error
 
 
-def _binary_standard_error(proportion: float, sample_size: int) -> float:
+def _binary_statistics(proportion: float, sample_size: int) -> tuple[float | None, float | None]:
+    if sample_size < 2:
+        return None, None
+    variance = proportion * (1.0 - proportion) * sample_size / (sample_size - 1)
+    _require_finite(variance)
     standard_error = math.sqrt(proportion * (1.0 - proportion) / sample_size)
     _require_finite(standard_error)
-    return standard_error
+    return variance, standard_error
 
 
 def _linear_quantile(values: list[float], level: float) -> float:

@@ -59,9 +59,6 @@ def _binding_consistency_diagnostics(
 
     declared_covariates = {item.metric.metric_id: item for item in request.covariates}
     bound_covariates = {item.metric_id: item for item in binding.covariates}
-    for metric_id in dict.fromkeys(item.metric.metric_id for item in request.covariates):
-        if metric_id not in bound_covariates:
-            yield _metric_binding_missing(metric_id, role="covariate")
     for metric_id in dict.fromkeys(item.metric_id for item in binding.covariates):
         if metric_id not in declared_covariates:
             yield _metric_binding_undeclared(metric_id, role="covariate")

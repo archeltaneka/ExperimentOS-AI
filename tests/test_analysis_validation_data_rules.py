@@ -6,12 +6,15 @@ from packages.experiments.analysis import (
     CriterionOperator,
     MetricType,
     PreTreatmentMetric,
+    RandomizedAnalysisMethod,
+    RandomizedExperimentDesign,
     SegmentDefinition,
     SelectionCriterion,
     TimePeriod,
 )
 from packages.experiments.analysis.validation import (
     AnalysisDataBinding,
+    AnalysisEligibilityService,
     AnalysisTable,
     DiagnosticDisposition,
     MetricDataBinding,
@@ -365,6 +368,283 @@ def test_bound_pre_treatment_metric_columns_are_required_by_the_dataset_schema()
         item for item in result.diagnostics if item.code == "schema.required_column_missing"
     )
     assert {entry.key: entry.value for entry in item.context} == {"column": "prior_orders"}
+
+
+def test_declared_covariate_without_a_physical_binding_is_reported_by_data_rules() -> None:
+    request = randomized_request().model_copy(update={"covariates": (covariate(),)})
+
+    result = validate_data(context_for(request))
+
+    item = next(
+        item for item in result.diagnostics if item.code == "request.metric_binding_missing"
+    )
+    assert {entry.key: entry.value for entry in item.context} == {
+        "metric_id": "prior_order_count",
+        "role": "covariate",
+    }
+
+
+def _context_with_pre_treatment_values(
+    *,
+    metric_type: MetricType,
+    metric_binding: MetricDataBinding,
+    input_columns: tuple[str, ...],
+    input_values: tuple[tuple[object, ...], ...],
+    timestamps: tuple[object, ...] | None = None,
+    method: RandomizedAnalysisMethod = RandomizedAnalysisMethod.FIXED_HORIZON_AB,
+) -> object:
+    metric = covariate().metric.model_copy(update={"metric_type": metric_type})
+    pre_treatment_metric = PreTreatmentMetric(
+        metric=metric,
+        measurement_period=TimePeriod(
+            start=utc(2026, 5, 1),
+            end=utc(2026, 6, 1),
+        ),
+    )
+    request = randomized_request(pre_treatment_metrics=(pre_treatment_metric,))
+    design = request.study_design
+    assert isinstance(design, RandomizedExperimentDesign)
+    request = request.model_copy(
+        update={"study_design": design.model_copy(update={"method": method})}
+    )
+    if timestamps is not None and len(timestamps) != len(input_values):
+        raise ValueError("timestamp and input rows must have equal lengths")
+    columns = ("order_id", "account_id", "arm", "outcome", *input_columns)
+    if timestamps is not None:
+        columns = (*columns, "observed_at")
+    rows = tuple(
+        (
+            f"order-{index}",
+            f"account-{index}",
+            "control" if index % 2 == 0 else "treatment",
+            float(index % 2),
+            *values,
+            *((timestamps[index],) if timestamps is not None else ()),
+        )
+        for index, values in enumerate(input_values)
+    )
+    binding = analysis_binding_fixture().model_copy(
+        update={
+            "pre_treatment_metrics": (metric_binding,),
+            "timestamp_column": "observed_at" if timestamps is not None else None,
+        }
+    )
+    return context_for(
+        request,
+        table=AnalysisTable(columns=columns, rows=rows),
+        binding=binding,
+    )
+
+
+def test_all_missing_pre_treatment_metric_blocks_cuped_data_eligibility() -> None:
+    context = _context_with_pre_treatment_values(
+        metric_type=MetricType.COUNT,
+        metric_binding=MetricDataBinding(
+            metric_id="prior_order_count",
+            value_column="prior_orders",
+        ),
+        input_columns=("prior_orders",),
+        input_values=((None,), (None,), (None,), (None,)),
+        method=RandomizedAnalysisMethod.CUPED,
+    )
+
+    data_result = validate_data(context)
+
+    diagnostics = {item.code: item for item in data_result.diagnostics}
+    assert {
+        entry.key: entry.value for entry in diagnostics["pre_treatment_metric.missing"].context
+    } == {
+        "metric_id": "prior_order_count",
+        "missing_count": 4,
+        "relevant_count": 4,
+    }
+    assert "pre_treatment_metric.empty_valid_population" in diagnostics
+
+
+@pytest.mark.parametrize(
+    ("values", "expected_code", "context_key"),
+    [
+        (
+            (("not-numeric",), (1,), (2,), (3,)),
+            "pre_treatment_metric.not_numeric",
+            "invalid_type_count",
+        ),
+        (
+            ((float("inf"),), (1,), (2,), (3,)),
+            "pre_treatment_metric.non_finite",
+            "non_finite_count",
+        ),
+    ],
+)
+def test_pre_treatment_metric_rejects_unusable_numeric_inputs(
+    values: tuple[tuple[object, ...], ...],
+    expected_code: str,
+    context_key: str,
+) -> None:
+    context = _context_with_pre_treatment_values(
+        metric_type=MetricType.COUNT,
+        metric_binding=MetricDataBinding(
+            metric_id="prior_order_count",
+            value_column="prior_orders",
+        ),
+        input_columns=("prior_orders",),
+        input_values=values,
+    )
+
+    diagnostics = validate_data(context).diagnostics
+
+    item = next(item for item in diagnostics if item.code == expected_code)
+    assert {entry.key: entry.value for entry in item.context} == {
+        context_key: 1,
+        "metric_id": "prior_order_count",
+    }
+
+
+@pytest.mark.parametrize(
+    ("metric_type", "values", "metric_binding", "expected_code"),
+    [
+        (
+            MetricType.BINARY,
+            ((0,), (1,), (2,), (1,)),
+            MetricDataBinding(metric_id="prior_order_count", value_column="prior_value"),
+            "pre_treatment_metric.invalid_binary",
+        ),
+        (
+            MetricType.CONTINUOUS,
+            ((0.0,), (0.5,), (1.5,), (1.0,)),
+            MetricDataBinding(
+                metric_id="prior_order_count",
+                value_column="prior_value",
+                lower_bound=0.0,
+                upper_bound=1.0,
+            ),
+            "pre_treatment_metric.out_of_bounds",
+        ),
+    ],
+)
+def test_pre_treatment_metric_applies_declared_value_rules(
+    metric_type: MetricType,
+    values: tuple[tuple[object, ...], ...],
+    metric_binding: MetricDataBinding,
+    expected_code: str,
+) -> None:
+    context = _context_with_pre_treatment_values(
+        metric_type=metric_type,
+        metric_binding=metric_binding,
+        input_columns=("prior_value",),
+        input_values=values,
+    )
+
+    diagnostics = validate_data(context).diagnostics
+
+    assert expected_code in {item.code for item in diagnostics}
+
+
+def test_pre_treatment_ratio_reports_invalid_components_without_coercion() -> None:
+    context = _context_with_pre_treatment_values(
+        metric_type=MetricType.RATIO,
+        metric_binding=MetricDataBinding(
+            metric_id="prior_order_count",
+            numerator_column="prior_orders",
+            denominator_column="prior_days",
+        ),
+        input_columns=("prior_orders", "prior_days"),
+        input_values=(("bad", 1), (1, 0), (1, -1), (2, 2)),
+    )
+
+    diagnostics = validate_data(context).diagnostics
+
+    assert {item.code for item in diagnostics} >= {
+        "pre_treatment_metric.not_numeric",
+        "pre_treatment_metric.denominator_zero",
+        "pre_treatment_metric.denominator_invalid_sign",
+    }
+
+
+def test_pre_treatment_metric_requires_observations_in_its_declared_period() -> None:
+    context = _context_with_pre_treatment_values(
+        metric_type=MetricType.COUNT,
+        metric_binding=MetricDataBinding(
+            metric_id="prior_order_count",
+            value_column="prior_orders",
+        ),
+        input_columns=("prior_orders",),
+        input_values=((1,), (2,), (3,), (4,)),
+        timestamps=(
+            "2026-06-01T00:00:00Z",
+            "2026-06-02T00:00:00Z",
+            "2026-06-03T00:00:00Z",
+            "2026-06-04T00:00:00Z",
+        ),
+    )
+
+    diagnostics = validate_data(context).diagnostics
+
+    item = next(
+        item for item in diagnostics if item.code == "pre_treatment_metric.period_unavailable"
+    )
+    assert {entry.key: entry.value for entry in item.context} == {
+        "metric_id": "prior_order_count",
+        "relevant_count": 0,
+    }
+
+
+def test_pre_treatment_metric_validation_uses_only_declared_period_rows() -> None:
+    context = _context_with_pre_treatment_values(
+        metric_type=MetricType.COUNT,
+        metric_binding=MetricDataBinding(
+            metric_id="prior_order_count",
+            value_column="prior_orders",
+        ),
+        input_columns=("prior_orders",),
+        input_values=((1,), (2,), (None,), (None,)),
+        timestamps=(
+            "2026-05-01T00:00:00Z",
+            "2026-05-31T23:59:59Z",
+            "2026-06-01T00:00:00Z",
+            "2026-07-01T00:00:00Z",
+        ),
+    )
+
+    diagnostics = validate_data(context).diagnostics
+
+    assert not any(item.code.startswith("pre_treatment_metric.") for item in diagnostics)
+
+
+def test_valid_cuped_pre_treatment_metric_is_data_eligible() -> None:
+    context = _context_with_pre_treatment_values(
+        metric_type=MetricType.COUNT,
+        metric_binding=MetricDataBinding(
+            metric_id="prior_order_count",
+            value_column="prior_orders",
+        ),
+        input_columns=("prior_orders",),
+        input_values=((1,), (2,), (3,), (4,)),
+        method=RandomizedAnalysisMethod.CUPED,
+    )
+    request = context.request
+    design = request.study_design
+    assert isinstance(design, RandomizedExperimentDesign)
+    request = request.model_copy(
+        update={
+            "study_design": design.model_copy(
+                update={"randomization_unit": request.unit_of_analysis}
+            )
+        }
+    )
+    binding = context.binding.model_copy(update={"randomization_unit_column": "order_id"})
+    policy = ValidationPolicy(
+        minimum_total=1,
+        minimum_per_arm=1,
+        weak_total=1,
+        weak_per_arm=1,
+        allocation_warning_deviation=1.0,
+        allocation_blocking_deviation=1.0,
+    )
+
+    result = AnalysisEligibilityService(policy=policy).validate(request, context.table, binding)
+
+    assert result.method_support.data_eligible is True
 
 
 def test_outcome_missingness_limit_is_opt_in() -> None:

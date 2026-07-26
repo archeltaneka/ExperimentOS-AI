@@ -407,12 +407,12 @@ def test_bound_covariate_must_be_declared_in_request_metadata() -> None:
     assert "request.metric_binding_undeclared" in {item.code for item in diagnostics}
 
 
-def test_declared_covariate_requires_a_physical_binding() -> None:
+def test_declared_covariate_binding_missing_is_owned_by_covariate_rules() -> None:
     request = randomized_request().model_copy(update={"covariates": (covariate(),)})
 
     diagnostics = validate_request_consistency(context_for(request))
 
-    assert "request.metric_binding_missing" in {item.code for item in diagnostics}
+    assert "request.metric_binding_missing" not in {item.code for item in diagnostics}
 
 
 def test_segment_attribute_cannot_be_bound_as_adjustment_covariate() -> None:

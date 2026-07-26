@@ -5,12 +5,14 @@ from __future__ import annotations
 import math
 import sys
 from dataclasses import dataclass
+from datetime import datetime
 from fractions import Fraction
 from typing import TypeGuard
 
 from ..metrics import MetricType
 from ..provenance import DiagnosticOutcome, DiagnosticSeverity
-from ..study_designs import RandomizedExperimentDesign
+from ..study_designs import PreTreatmentMetric, RandomizedExperimentDesign
+from .bindings import MetricDataBinding
 from .context import ValidationContext
 from .criteria import evaluate_criteria
 from .models import (
@@ -78,6 +80,7 @@ def validate_data(context: ValidationContext) -> DataRuleResult:
 
     required_columns = _required_columns(context)
     missing_columns = tuple(column for column in required_columns if column not in table.columns)
+    binding_diagnostics = _missing_covariate_binding_diagnostics(context)
     if missing_columns:
         schema_diagnostics = tuple(
             _blocking(
@@ -88,7 +91,7 @@ def validate_data(context: ValidationContext) -> DataRuleResult:
             )
             for column in missing_columns
         )
-        return _empty_result(context, schema_diagnostics)
+        return _empty_result(context, binding_diagnostics + schema_diagnostics)
 
     column_indexes = {column: index for index, column in enumerate(table.columns)}
     population_row_indexes = tuple(
@@ -156,7 +159,7 @@ def validate_data(context: ValidationContext) -> DataRuleResult:
         missing_count=missing_count,
         unknown_count=unknown_count,
     )
-    diagnostics: list[EligibilityDiagnostic] = []
+    diagnostics: list[EligibilityDiagnostic] = list(binding_diagnostics)
     if missing_count:
         diagnostics.append(
             _blocking(
@@ -202,6 +205,9 @@ def validate_data(context: ValidationContext) -> DataRuleResult:
         tuple(control_row_indexes),
     )
     diagnostics.extend(outcome_diagnostics)
+    diagnostics.extend(
+        _validate_pre_treatment_metrics(context, column_indexes, population_row_indexes)
+    )
     missingness_summary, missingness_diagnostics = _summarize_missingness(
         context,
         column_indexes,
@@ -223,6 +229,246 @@ def validate_data(context: ValidationContext) -> DataRuleResult:
         population_row_indexes=population_row_indexes,
         valid_row_indexes=valid_row_indexes,
     )
+
+
+def _missing_covariate_binding_diagnostics(
+    context: ValidationContext,
+) -> tuple[EligibilityDiagnostic, ...]:
+    bound_metric_ids = {binding.metric_id for binding in context.binding.covariates}
+    return tuple(
+        _blocking(
+            code="request.metric_binding_missing",
+            category=ValidationCategory.COVARIATE,
+            message="A declared covariate requires a physical data binding.",
+            context={"metric_id": metric.metric.metric_id, "role": "covariate"},
+        )
+        for metric in context.request.covariates
+        if metric.metric.metric_id not in bound_metric_ids
+    )
+
+
+def _validate_pre_treatment_metrics(
+    context: ValidationContext,
+    column_indexes: dict[str, int],
+    population_row_indexes: tuple[int, ...],
+) -> tuple[EligibilityDiagnostic, ...]:
+    declared_metrics = {
+        metric.metric.metric_id: metric for metric in context.request.pre_treatment_metrics
+    }
+    diagnostics: list[EligibilityDiagnostic] = []
+    for binding in context.binding.pre_treatment_metrics:
+        declared_metric = declared_metrics.get(binding.metric_id)
+        if declared_metric is None:
+            continue
+        diagnostics.extend(
+            _validate_pre_treatment_metric(
+                context,
+                column_indexes,
+                population_row_indexes,
+                declared_metric,
+                binding,
+            )
+        )
+    return tuple(diagnostics)
+
+
+def _validate_pre_treatment_metric(
+    context: ValidationContext,
+    column_indexes: dict[str, int],
+    population_row_indexes: tuple[int, ...],
+    declared_metric: PreTreatmentMetric,
+    binding: MetricDataBinding,
+) -> tuple[EligibilityDiagnostic, ...]:
+    relevant_indexes = _pre_treatment_row_indexes(
+        context,
+        column_indexes,
+        population_row_indexes,
+        declared_metric,
+    )
+    metric_id = declared_metric.metric.metric_id
+    if not relevant_indexes:
+        return (
+            _blocking(
+                code="pre_treatment_metric.period_unavailable",
+                category=ValidationCategory.COVARIATE,
+                message="The pre-treatment metric has no observations in its declared period.",
+                context={"metric_id": metric_id, "relevant_count": 0},
+            ),
+        )
+
+    input_indexes = tuple(column_indexes[column] for column in binding.columns)
+    missing_count = 0
+    invalid_type_count = 0
+    non_finite_count = 0
+    invalid_binary_count = 0
+    negative_count = 0
+    bounds_invalid_count = 0
+    denominator_zero_count = 0
+    denominator_invalid_sign_count = 0
+    valid_count = 0
+    for row_index in relevant_indexes:
+        raw_values = tuple(context.table.rows[row_index][index] for index in input_indexes)
+        if any(value is None for value in raw_values):
+            missing_count += 1
+            continue
+        numeric_values: list[int | float] = []
+        if any(not _append_numeric(numeric_values, value) for value in raw_values):
+            invalid_type_count += 1
+            continue
+        if any(not _is_finite(value) for value in numeric_values):
+            non_finite_count += 1
+            continue
+
+        value: int | float | Fraction = numeric_values[0]
+        if len(numeric_values) == 2:
+            denominator = numeric_values[1]
+            if denominator == 0:
+                denominator_zero_count += 1
+                continue
+            if denominator < 0:
+                denominator_invalid_sign_count += 1
+                continue
+            value = Fraction(numeric_values[0]) / Fraction(denominator)
+            if abs(value) > sys.float_info.max:
+                non_finite_count += 1
+                continue
+
+        metric_type = declared_metric.metric.metric_type
+        if metric_type is MetricType.BINARY and value not in {0, 1}:
+            invalid_binary_count += 1
+            continue
+        if (metric_type is MetricType.COUNT or not binding.allow_negative) and value < 0:
+            negative_count += 1
+            continue
+        lower_bound, upper_bound = _metric_bounds(metric_type, binding)
+        if (lower_bound is not None and value < lower_bound) or (
+            upper_bound is not None and value > upper_bound
+        ):
+            bounds_invalid_count += 1
+            continue
+        valid_count += 1
+
+    diagnostics: list[EligibilityDiagnostic] = []
+    if missing_count:
+        diagnostics.append(
+            _blocking(
+                code="pre_treatment_metric.missing",
+                category=ValidationCategory.COVARIATE,
+                message="Pre-treatment metric inputs must be present in the declared period.",
+                context={
+                    "metric_id": metric_id,
+                    "missing_count": missing_count,
+                    "relevant_count": len(relevant_indexes),
+                },
+            )
+        )
+    diagnostics.extend(
+        _pre_treatment_value_diagnostics(
+            metric_id=metric_id,
+            invalid_type_count=invalid_type_count,
+            non_finite_count=non_finite_count,
+            invalid_binary_count=invalid_binary_count,
+            negative_count=negative_count,
+            bounds_invalid_count=bounds_invalid_count,
+            denominator_zero_count=denominator_zero_count,
+            denominator_invalid_sign_count=denominator_invalid_sign_count,
+        )
+    )
+    if valid_count == 0:
+        diagnostics.append(
+            _blocking(
+                code="pre_treatment_metric.empty_valid_population",
+                category=ValidationCategory.COVARIATE,
+                message=(
+                    "The pre-treatment metric has no valid observations in its declared period."
+                ),
+                context={"metric_id": metric_id, "relevant_count": len(relevant_indexes)},
+            )
+        )
+    return tuple(diagnostics)
+
+
+def _pre_treatment_row_indexes(
+    context: ValidationContext,
+    column_indexes: dict[str, int],
+    population_row_indexes: tuple[int, ...],
+    declared_metric: PreTreatmentMetric,
+) -> tuple[int, ...]:
+    timestamp_column = context.binding.timestamp_column
+    if timestamp_column is None:
+        return population_row_indexes
+    timestamp_index = column_indexes[timestamp_column]
+    return tuple(
+        row_index
+        for row_index in population_row_indexes
+        if (timestamp := _parse_timestamp(context.table.rows[row_index][timestamp_index]))
+        is not None
+        and declared_metric.measurement_period.start
+        <= timestamp
+        < declared_metric.measurement_period.end
+    )
+
+
+def _metric_bounds(
+    metric_type: MetricType,
+    binding: MetricDataBinding,
+) -> tuple[int | float | None, int | float | None]:
+    lower_bound = binding.lower_bound
+    upper_bound = binding.upper_bound
+    if metric_type is MetricType.PROPORTION:
+        lower_bound = 0.0 if lower_bound is None else lower_bound
+        upper_bound = 1.0 if upper_bound is None else upper_bound
+    return lower_bound, upper_bound
+
+
+def _pre_treatment_value_diagnostics(
+    *,
+    metric_id: str,
+    invalid_type_count: int,
+    non_finite_count: int,
+    invalid_binary_count: int,
+    negative_count: int,
+    bounds_invalid_count: int,
+    denominator_zero_count: int,
+    denominator_invalid_sign_count: int,
+) -> tuple[EligibilityDiagnostic, ...]:
+    specifications = (
+        ("not_numeric", invalid_type_count, "invalid_type_count", "numeric without coercion"),
+        ("non_finite", non_finite_count, "non_finite_count", "finite"),
+        ("invalid_binary", invalid_binary_count, "invalid_value_count", "binary zero or one"),
+        ("negative", negative_count, "negative_count", "non-negative"),
+        ("out_of_bounds", bounds_invalid_count, "invalid_value_count", "within valid bounds"),
+        ("denominator_zero", denominator_zero_count, "zero_count", "non-zero denominators"),
+        (
+            "denominator_invalid_sign",
+            denominator_invalid_sign_count,
+            "invalid_sign_count",
+            "positive denominators",
+        ),
+    )
+    return tuple(
+        _blocking(
+            code=f"pre_treatment_metric.{code}",
+            category=ValidationCategory.COVARIATE,
+            message=f"Pre-treatment metric inputs must be {requirement}.",
+            context={"metric_id": metric_id, context_key: count},
+        )
+        for code, count, context_key, requirement in specifications
+        if count
+    )
+
+
+def _parse_timestamp(value: object) -> datetime | None:
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except (ValueError, OverflowError):
+            return None
+    else:
+        return None
+    return parsed if parsed.utcoffset() is not None else None
 
 
 def _validate_outcome(

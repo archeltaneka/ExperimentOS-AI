@@ -13,7 +13,6 @@ from packages.observability.noop import NoOpObservabilityProvider
 from ..base import AnalysisStatus
 from ..provenance import DiagnosticOutcome, DiagnosticSeverity
 from ..requests import AnalysisRequest
-from ..results import AbstentionReason, EligibilityStatus
 from .bindings import AnalysisDataBinding
 from .capabilities import MethodCapability, MethodCapabilityRegistry
 from .context import ValidationContext
@@ -32,6 +31,11 @@ from .models import (
     TreatmentSummary,
     UnitIntegritySummary,
     ValidationCategory,
+    data_is_eligible,
+    derive_abstention_reason,
+)
+from .models import (
+    aggregate_status as aggregate_status,
 )
 from .policy import ValidationPolicy
 from .request_rules import validate_request_consistency
@@ -44,23 +48,6 @@ _UNREADABLE_SCHEMA_CODES = frozenset(
         "schema.required_column_missing",
     }
 )
-_CAPABILITY_DIAGNOSTIC_CODES = frozenset(
-    {"method.contract_unsupported", "method.implementation_unavailable"}
-)
-
-
-def aggregate_status(
-    diagnostics: tuple[EligibilityDiagnostic, ...],
-) -> EligibilityStatus:
-    """Apply the explicit blocking, needs-data, warning, eligible precedence."""
-    dispositions = {item.disposition for item in diagnostics}
-    if DiagnosticDisposition.BLOCKING in dispositions:
-        return AnalysisStatus.INELIGIBLE
-    if DiagnosticDisposition.NEEDS_MORE_DATA in dispositions:
-        return AnalysisStatus.NEEDS_MORE_DATA
-    if DiagnosticDisposition.WARNING in dispositions:
-        return AnalysisStatus.ELIGIBLE_WITH_WARNINGS
-    return AnalysisStatus.ELIGIBLE
 
 
 class AnalysisEligibilityService:
@@ -138,12 +125,7 @@ class AnalysisEligibilityService:
                 + dependency_diagnostics
                 + design_result.diagnostics
             )
-            data_eligible = not any(
-                diagnostic.code not in _CAPABILITY_DIAGNOSTIC_CODES
-                and diagnostic.disposition
-                in {DiagnosticDisposition.BLOCKING, DiagnosticDisposition.NEEDS_MORE_DATA}
-                for diagnostic in diagnostics
-            )
+            data_eligible = data_is_eligible(diagnostics)
             method_support = self._capability_registry.assess(
                 request,
                 data_eligible=data_eligible,
@@ -172,7 +154,7 @@ class AnalysisEligibilityService:
                 time_summary=design_result.time_summary,
                 segment_summary=design_result.segment_summary,
                 method_support=method_support,
-                abstention_reason=_abstention_reason(status, diagnostics),
+                abstention_reason=derive_abstention_reason(status, diagnostics),
                 policy_version=self._policy.policy_version,
                 configuration_provenance=self._configuration_provenance,
             )
@@ -283,11 +265,7 @@ class AnalysisEligibilityService:
             time_summary=None,
             segment_summary=None,
             method_support=method_support,
-            abstention_reason=AbstentionReason(
-                code=diagnostic.code,
-                message=diagnostic.message,
-                missing_or_invalid_information=(diagnostic.code,),
-            ),
+            abstention_reason=derive_abstention_reason(AnalysisStatus.INELIGIBLE, (diagnostic,)),
             policy_version=self._policy.policy_version,
             configuration_provenance=self._configuration_provenance,
         )
@@ -503,33 +481,6 @@ def _empty_design_result(context: ValidationContext) -> DesignRuleResult:
         unit_integrity_summary=_empty_unit_summary(),
         time_summary=None,
         segment_summary=segment_summary,
-    )
-
-
-def _abstention_reason(
-    status: EligibilityStatus,
-    diagnostics: tuple[EligibilityDiagnostic, ...],
-) -> AbstentionReason | None:
-    if status is AnalysisStatus.INELIGIBLE:
-        primary_disposition = DiagnosticDisposition.BLOCKING
-    elif status is AnalysisStatus.NEEDS_MORE_DATA:
-        primary_disposition = DiagnosticDisposition.NEEDS_MORE_DATA
-    else:
-        return None
-
-    primary = next(item for item in diagnostics if item.disposition is primary_disposition)
-    required_codes = tuple(
-        dict.fromkeys(
-            item.code
-            for item in diagnostics
-            if item.disposition
-            in {DiagnosticDisposition.BLOCKING, DiagnosticDisposition.NEEDS_MORE_DATA}
-        )
-    )
-    return AbstentionReason(
-        code=primary.code,
-        message=primary.message,
-        missing_or_invalid_information=required_codes,
     )
 
 

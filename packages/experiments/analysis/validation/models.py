@@ -14,9 +14,8 @@ from ..results import AbstentionReason, EligibilityStatus
 
 type NonNegativeInt = Annotated[int, Field(strict=True, ge=0)]
 
-_CAPABILITY_ONLY_DIAGNOSTIC_CODES = frozenset(
-    {"method.contract_unsupported", "method.implementation_unavailable"}
-)
+CONTRACT_UNSUPPORTED_DIAGNOSTIC_CODE = "method.contract_unsupported"
+IMPLEMENTATION_UNAVAILABLE_DIAGNOSTIC_CODE = "method.implementation_unavailable"
 
 
 class ValidationCategory(StrEnum):
@@ -210,9 +209,10 @@ class MethodSupportAssessment(ContractModel):
         return self
 
 
-def _status_for_diagnostics(
+def aggregate_status(
     diagnostics: tuple[EligibilityDiagnostic, ...],
 ) -> EligibilityStatus:
+    """Apply the stable blocking, needs-data, warning, eligible precedence."""
     dispositions = {diagnostic.disposition for diagnostic in diagnostics}
     if DiagnosticDisposition.BLOCKING in dispositions:
         return AnalysisStatus.INELIGIBLE
@@ -223,13 +223,94 @@ def _status_for_diagnostics(
     return AnalysisStatus.ELIGIBLE
 
 
-def _data_is_eligible(diagnostics: tuple[EligibilityDiagnostic, ...]) -> bool:
+def _capability_diagnostic_kind(
+    diagnostic: EligibilityDiagnostic,
+) -> MethodContractStatus | MethodImplementationStatus | None:
+    if not (
+        diagnostic.category is ValidationCategory.METHOD
+        and diagnostic.outcome is DiagnosticOutcome.UNAVAILABLE
+        and diagnostic.disposition is DiagnosticDisposition.BLOCKING
+    ):
+        return None
+    if diagnostic.code == CONTRACT_UNSUPPORTED_DIAGNOSTIC_CODE:
+        return MethodContractStatus.UNSUPPORTED
+    if diagnostic.code == IMPLEMENTATION_UNAVAILABLE_DIAGNOSTIC_CODE:
+        return MethodImplementationStatus.UNAVAILABLE
+    return None
+
+
+def data_is_eligible(diagnostics: tuple[EligibilityDiagnostic, ...]) -> bool:
+    """Return whether non-capability diagnostics establish data eligibility."""
     return not any(
-        diagnostic.code not in _CAPABILITY_ONLY_DIAGNOSTIC_CODES
+        _capability_diagnostic_kind(diagnostic) is None
         and diagnostic.disposition
         in {DiagnosticDisposition.BLOCKING, DiagnosticDisposition.NEEDS_MORE_DATA}
         for diagnostic in diagnostics
     )
+
+
+def derive_abstention_reason(
+    status: EligibilityStatus,
+    diagnostics: tuple[EligibilityDiagnostic, ...],
+) -> AbstentionReason | None:
+    """Derive the sole valid deterministic abstention from ordered diagnostics."""
+    if status is AnalysisStatus.INELIGIBLE:
+        primary_disposition = DiagnosticDisposition.BLOCKING
+    elif status is AnalysisStatus.NEEDS_MORE_DATA:
+        primary_disposition = DiagnosticDisposition.NEEDS_MORE_DATA
+    else:
+        return None
+
+    primary = next(
+        diagnostic for diagnostic in diagnostics if diagnostic.disposition is primary_disposition
+    )
+    required_codes = tuple(
+        dict.fromkeys(
+            diagnostic.code
+            for diagnostic in diagnostics
+            if diagnostic.disposition
+            in {DiagnosticDisposition.BLOCKING, DiagnosticDisposition.NEEDS_MORE_DATA}
+        )
+    )
+    return AbstentionReason(
+        code=primary.code,
+        message=primary.message,
+        missing_or_invalid_information=required_codes,
+    )
+
+
+def _validate_capability_summary(
+    method_support: MethodSupportAssessment,
+    diagnostics: tuple[EligibilityDiagnostic, ...],
+) -> None:
+    contract_unavailable = any(
+        _capability_diagnostic_kind(diagnostic) is MethodContractStatus.UNSUPPORTED
+        for diagnostic in diagnostics
+    )
+    implementation_unavailable = any(
+        _capability_diagnostic_kind(diagnostic) is MethodImplementationStatus.UNAVAILABLE
+        for diagnostic in diagnostics
+    )
+
+    if method_support.contract_status is MethodContractStatus.SUPPORTED:
+        if contract_unavailable:
+            raise ValueError("supported contract status contradicts contract capability diagnostic")
+    elif method_support.data_eligible and not contract_unavailable:
+        raise ValueError("unsupported contract status requires a contract capability diagnostic")
+
+    if method_support.implementation_status is MethodImplementationStatus.AVAILABLE:
+        if implementation_unavailable:
+            raise ValueError(
+                "available implementation status contradicts implementation capability diagnostic"
+            )
+    elif (
+        method_support.contract_status is MethodContractStatus.SUPPORTED
+        and method_support.data_eligible
+        and not implementation_unavailable
+    ):
+        raise ValueError(
+            "unavailable implementation status requires an implementation capability diagnostic"
+        )
 
 
 class EligibilityValidationResult(ContractModel):
@@ -282,9 +363,23 @@ class EligibilityValidationResult(ContractModel):
                 "abstention_reason is required only for ineligible or needs_more_data results"
             )
 
-        expected_status = _status_for_diagnostics(self.diagnostics)
+        expected_status = aggregate_status(self.diagnostics)
         if self.status is not expected_status:
             raise ValueError("status must match diagnostic disposition precedence")
+
+        expected_abstention = derive_abstention_reason(self.status, self.diagnostics)
+        if self.abstention_reason != expected_abstention:
+            raise ValueError("abstention_reason must exactly match ordered validation diagnostics")
+
+        if self.requested_method != self.method_support.requested_method:
+            raise ValueError("requested_method must match method_support.requested_method")
+
+        expected_data_eligible = data_is_eligible(self.diagnostics)
+        if self.method_support.data_eligible is not expected_data_eligible:
+            raise ValueError(
+                "method_support.data_eligible and executable must match non-capability "
+                "validation diagnostics"
+            )
 
         if self.method_support.executable and self.status not in {
             AnalysisStatus.ELIGIBLE,
@@ -292,9 +387,5 @@ class EligibilityValidationResult(ContractModel):
         }:
             raise ValueError("executable method support is allowed only for eligible results")
 
-        expected_data_eligible = _data_is_eligible(self.diagnostics)
-        if self.method_support.data_eligible is not expected_data_eligible:
-            raise ValueError(
-                "method_support.data_eligible must match non-capability validation diagnostics"
-            )
+        _validate_capability_summary(self.method_support, self.diagnostics)
         return self

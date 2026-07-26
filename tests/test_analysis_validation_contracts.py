@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from packages.experiments.analysis import AnalysisStatus
+from packages.experiments.analysis import AbstentionReason, AnalysisStatus, DiagnosticOutcome
 from packages.experiments.analysis.serialization import to_canonical_json
 from packages.experiments.analysis.validation import (
     AnalysisDataBinding,
@@ -133,6 +133,38 @@ def test_result_requires_exact_diagnostic_subsets() -> None:
         eligible_result_fixture(diagnostics=(blocking,))
 
 
+def _abstention_for(
+    diagnostics: tuple[EligibilityDiagnostic, ...],
+    primary_disposition: DiagnosticDisposition,
+) -> AbstentionReason:
+    primary = next(item for item in diagnostics if item.disposition is primary_disposition)
+    required_codes = tuple(
+        dict.fromkeys(
+            item.code
+            for item in diagnostics
+            if item.disposition
+            in {DiagnosticDisposition.BLOCKING, DiagnosticDisposition.NEEDS_MORE_DATA}
+        )
+    )
+    return AbstentionReason(
+        code=primary.code,
+        message=primary.message,
+        missing_or_invalid_information=required_codes,
+    )
+
+
+def _capability_diagnostic(code: str) -> EligibilityDiagnostic:
+    return diagnostic_fixture(
+        code=code,
+        disposition=DiagnosticDisposition.BLOCKING,
+    ).model_copy(
+        update={
+            "category": ValidationCategory.METHOD,
+            "outcome": DiagnosticOutcome.UNAVAILABLE,
+        }
+    )
+
+
 @pytest.mark.parametrize(
     ("diagnostics", "status"),
     [
@@ -236,7 +268,7 @@ def test_ineligible_result_forbids_executable_method_support() -> None:
                 "status": AnalysisStatus.INELIGIBLE,
                 "diagnostics": (blocking,),
                 "blocking_diagnostics": (blocking,),
-                "abstention_reason": abstention_reason_fixture(),
+                "abstention_reason": _abstention_for((blocking,), DiagnosticDisposition.BLOCKING),
             }
         )
 
@@ -255,7 +287,9 @@ def test_needs_more_data_result_forbids_executable_method_support() -> None:
                 "status": AnalysisStatus.NEEDS_MORE_DATA,
                 "diagnostics": (needs_data,),
                 "method_support": method_support_fixture(),
-                "abstention_reason": abstention_reason_fixture(),
+                "abstention_reason": _abstention_for(
+                    (needs_data,), DiagnosticDisposition.NEEDS_MORE_DATA
+                ),
             }
         )
 
@@ -300,17 +334,14 @@ def test_data_eligible_rejects_non_capability_blockers_and_needs_data(
                     data_eligible=True,
                     executable=False,
                 ),
-                "abstention_reason": abstention_reason_fixture(),
+                "abstention_reason": _abstention_for((diagnostic,), diagnostic.disposition),
             }
         )
 
 
 def test_capability_only_blocker_preserves_data_eligibility() -> None:
     eligible = eligible_result_fixture()
-    unavailable = diagnostic_fixture(
-        code="method.implementation_unavailable",
-        disposition=DiagnosticDisposition.BLOCKING,
-    ).model_copy(update={"category": ValidationCategory.METHOD})
+    unavailable = _capability_diagnostic("method.implementation_unavailable")
 
     result = EligibilityValidationResult.model_validate(
         {
@@ -325,11 +356,194 @@ def test_capability_only_blocker_preserves_data_eligibility() -> None:
                 data_eligible=True,
                 executable=False,
             ),
-            "abstention_reason": abstention_reason_fixture(),
+            "abstention_reason": _abstention_for((unavailable,), DiagnosticDisposition.BLOCKING),
         }
     )
 
     assert result.method_support.data_eligible is True
+
+
+def test_result_requires_matching_requested_method_identity() -> None:
+    eligible = eligible_result_fixture()
+    mismatched_support = eligible.method_support.model_copy(
+        update={"requested_method": "difference_in_differences"}
+    )
+
+    with pytest.raises(ValidationError, match="requested_method"):
+        EligibilityValidationResult.model_validate(
+            {**eligible.model_dump(), "method_support": mismatched_support}
+        )
+
+
+@pytest.mark.parametrize(
+    "method_support",
+    [
+        MethodSupportAssessment(
+            requested_method="fixed_horizon_ab",
+            contract_status=MethodContractStatus.UNSUPPORTED,
+            implementation_status=MethodImplementationStatus.UNAVAILABLE,
+            data_eligible=True,
+            executable=False,
+        ),
+        MethodSupportAssessment(
+            requested_method="fixed_horizon_ab",
+            contract_status=MethodContractStatus.SUPPORTED,
+            implementation_status=MethodImplementationStatus.UNAVAILABLE,
+            data_eligible=True,
+            executable=False,
+        ),
+    ],
+)
+def test_unavailable_method_support_requires_semantic_capability_diagnostic(
+    method_support: MethodSupportAssessment,
+) -> None:
+    eligible = eligible_result_fixture()
+
+    with pytest.raises(ValidationError, match="capability diagnostic"):
+        EligibilityValidationResult.model_validate(
+            {**eligible.model_dump(), "method_support": method_support}
+        )
+
+
+@pytest.mark.parametrize(
+    ("diagnostic_code", "method_support"),
+    [
+        (
+            "method.contract_unsupported",
+            MethodSupportAssessment(
+                requested_method="fixed_horizon_ab",
+                contract_status=MethodContractStatus.SUPPORTED,
+                implementation_status=MethodImplementationStatus.AVAILABLE,
+                data_eligible=False,
+                executable=False,
+            ),
+        ),
+        (
+            "method.implementation_unavailable",
+            MethodSupportAssessment(
+                requested_method="fixed_horizon_ab",
+                contract_status=MethodContractStatus.SUPPORTED,
+                implementation_status=MethodImplementationStatus.AVAILABLE,
+                data_eligible=False,
+                executable=False,
+            ),
+        ),
+    ],
+)
+def test_available_method_support_rejects_unavailable_capability_diagnostics(
+    diagnostic_code: str,
+    method_support: MethodSupportAssessment,
+) -> None:
+    capability = _capability_diagnostic(diagnostic_code)
+    data_blocker = diagnostic_fixture(
+        code="schema.required_column_missing",
+        disposition=DiagnosticDisposition.BLOCKING,
+    )
+    diagnostics = (capability, data_blocker)
+    eligible = eligible_result_fixture()
+
+    with pytest.raises(ValidationError, match="capability diagnostic"):
+        EligibilityValidationResult.model_validate(
+            {
+                **eligible.model_dump(),
+                "status": AnalysisStatus.INELIGIBLE,
+                "diagnostics": diagnostics,
+                "blocking_diagnostics": diagnostics,
+                "method_support": method_support,
+                "abstention_reason": _abstention_for(diagnostics, DiagnosticDisposition.BLOCKING),
+            }
+        )
+
+
+@pytest.mark.parametrize(
+    "malformed_update",
+    [
+        {"category": ValidationCategory.SCHEMA},
+        {"outcome": DiagnosticOutcome.FAILED},
+    ],
+)
+def test_capability_code_requires_capability_category_and_unavailable_outcome(
+    malformed_update: dict[str, object],
+) -> None:
+    malformed = _capability_diagnostic("method.implementation_unavailable").model_copy(
+        update=malformed_update
+    )
+    eligible = eligible_result_fixture()
+    method_support = MethodSupportAssessment(
+        requested_method="fixed_horizon_ab",
+        contract_status=MethodContractStatus.SUPPORTED,
+        implementation_status=MethodImplementationStatus.UNAVAILABLE,
+        data_eligible=True,
+        executable=False,
+    )
+
+    with pytest.raises(ValidationError, match="capability diagnostic|data_eligible"):
+        EligibilityValidationResult.model_validate(
+            {
+                **eligible.model_dump(),
+                "status": AnalysisStatus.INELIGIBLE,
+                "diagnostics": (malformed,),
+                "blocking_diagnostics": (malformed,),
+                "method_support": method_support,
+                "abstention_reason": _abstention_for((malformed,), DiagnosticDisposition.BLOCKING),
+            }
+        )
+
+
+@pytest.mark.parametrize(
+    "abstention_reason",
+    [
+        AbstentionReason(
+            code="wrong.primary",
+            message="Schema validation completed.",
+            missing_or_invalid_information=(
+                "schema.required_column_missing",
+                "sample.total_insufficient",
+            ),
+        ),
+        AbstentionReason(
+            code="schema.required_column_missing",
+            message="A different message.",
+            missing_or_invalid_information=(
+                "schema.required_column_missing",
+                "sample.total_insufficient",
+            ),
+        ),
+        AbstentionReason(
+            code="schema.required_column_missing",
+            message="Schema validation completed.",
+            missing_or_invalid_information=("schema.required_column_missing",),
+        ),
+    ],
+)
+def test_abstention_reason_exactly_matches_winning_diagnostic_and_required_codes(
+    abstention_reason: AbstentionReason,
+) -> None:
+    blocking = diagnostic_fixture(
+        code="schema.required_column_missing",
+        disposition=DiagnosticDisposition.BLOCKING,
+    )
+    needs_data = diagnostic_fixture(
+        code="sample.total_insufficient",
+        disposition=DiagnosticDisposition.NEEDS_MORE_DATA,
+    )
+    diagnostics = (blocking, needs_data)
+    eligible = eligible_result_fixture()
+
+    with pytest.raises(ValidationError, match="abstention_reason"):
+        EligibilityValidationResult.model_validate(
+            {
+                **eligible.model_dump(),
+                "status": AnalysisStatus.INELIGIBLE,
+                "diagnostics": diagnostics,
+                "blocking_diagnostics": (blocking,),
+                "method_support": method_support_fixture(
+                    data_eligible=False,
+                    executable=False,
+                ),
+                "abstention_reason": abstention_reason,
+            }
+        )
 
 
 def test_method_support_executable_requires_all_support_dimensions() -> None:

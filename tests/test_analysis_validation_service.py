@@ -273,3 +273,25 @@ def test_validation_result_round_trips_through_public_decoder() -> None:
     )
 
     assert eligibility_validation_result_from_json(to_canonical_json(result)) == result
+
+
+def test_ineligible_validation_result_round_trips_through_public_decoder() -> None:
+    result = AnalysisEligibilityService().validate(
+        _eligible_request(),
+        _eligible_table(),
+        _eligible_binding(),
+    )
+
+    assert result.status is AnalysisStatus.INELIGIBLE
+    assert eligibility_validation_result_from_json(to_canonical_json(result)) == result
+
+
+def test_needs_more_data_validation_result_round_trips_through_public_decoder() -> None:
+    result = _implemented_service().validate(
+        _eligible_request(),
+        _eligible_table(row_count=6),
+        _eligible_binding(),
+    )
+
+    assert result.status is AnalysisStatus.NEEDS_MORE_DATA
+    assert eligibility_validation_result_from_json(to_canonical_json(result)) == result

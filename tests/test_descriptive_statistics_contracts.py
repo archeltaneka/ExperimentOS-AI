@@ -5,14 +5,15 @@ import math
 import pytest
 from pydantic import ValidationError
 
-from packages.experiments.analysis import DESCRIPTIVE_STATISTICS_RESULT_ADAPTER
 from packages.experiments.analysis.descriptive.models import (
     ContinuousSummary,
     DescriptiveStatisticsConfig,
     DescriptiveStatisticsResult,
     PopulationSummary,
+    RawComparison,
 )
 from packages.experiments.analysis.serialization import (
+    DESCRIPTIVE_STATISTICS_RESULT_ADAPTER,
     descriptive_statistics_result_from_json,
     to_canonical_json,
 )
@@ -28,6 +29,16 @@ def test_config_defaults_to_sorted_quartiles_and_rejects_duplicate_levels() -> N
 def test_continuous_summary_rejects_non_finite_numeric_values() -> None:
     with pytest.raises(ValidationError):
         ContinuousSummary(sample_size=12, mean=math.nan)
+
+
+def test_unavailable_raw_comparison_rejects_numeric_results() -> None:
+    with pytest.raises(ValidationError, match="must not include numeric differences"):
+        RawComparison(
+            outcome_direction="increase",
+            availability="unavailable",
+            unavailable_reason="insufficient data",
+            absolute_difference=0.0,
+        )
 
 
 def test_descriptive_result_round_trips_through_canonical_json() -> None:

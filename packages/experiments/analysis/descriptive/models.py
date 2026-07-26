@@ -127,6 +127,10 @@ class RawComparison(ContractModel):
             and self.unavailable_reason is None
         ):
             raise ValueError("unavailable raw comparisons require an unavailable_reason")
+        if self.availability is ComparisonAvailability.UNAVAILABLE and (
+            self.absolute_difference is not None or self.relative_difference is not None
+        ):
+            raise ValueError("unavailable raw comparisons must not include numeric differences")
         return self
 
 

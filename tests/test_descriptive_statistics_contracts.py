@@ -6,7 +6,9 @@ import pytest
 from pydantic import ValidationError
 
 from packages.experiments.analysis.descriptive.models import (
+    BinarySummary,
     ContinuousSummary,
+    CountSummary,
     DescriptiveStatisticsConfig,
     DescriptiveStatisticsResult,
     PopulationSummary,
@@ -29,6 +31,51 @@ def test_config_defaults_to_sorted_quartiles_and_rejects_duplicate_levels() -> N
 def test_continuous_summary_rejects_non_finite_numeric_values() -> None:
     with pytest.raises(ValidationError):
         ContinuousSummary(sample_size=12, mean=math.nan)
+
+
+@pytest.mark.parametrize(
+    ("summary_type", "kwargs"),
+    [
+        (
+            ContinuousSummary,
+            {
+                "sample_size": 4,
+                "variance": 1.25,
+                "standard_error": 0.56,
+            },
+        ),
+        (
+            CountSummary,
+            {
+                "sample_size": 4,
+                "variance": 1.25,
+                "standard_error": 0.56,
+            },
+        ),
+        (
+            BinarySummary,
+            {
+                "sample_size": 4,
+                "success_count": 2,
+                "failure_count": 2,
+                "rate": 0.5,
+                "variance": 0.25,
+                "standard_error": 0.25,
+            },
+        ),
+    ],
+)
+def test_summary_dispersion_fields_are_finite_and_nullable(
+    summary_type: type[ContinuousSummary | CountSummary | BinarySummary],
+    kwargs: dict[str, object],
+) -> None:
+    summary = summary_type(**kwargs)
+
+    assert summary.variance is not None
+    assert summary.standard_error is not None
+
+    with pytest.raises(ValidationError):
+        summary_type(**{**kwargs, "variance": math.nan})
 
 
 def test_unavailable_raw_comparison_rejects_numeric_results() -> None:

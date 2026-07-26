@@ -45,7 +45,9 @@ class ContinuousSummary(ContractModel):
     summary_type: Literal["continuous"] = "continuous"
     sample_size: PositiveInt
     mean: FiniteFloat | None = None
+    variance: FiniteFloat | None = None
     standard_deviation: FiniteFloat | None = None
+    standard_error: FiniteFloat | None = None
     minimum: FiniteFloat | None = None
     maximum: FiniteFloat | None = None
     quantiles: tuple[Quantile, ...] = ()
@@ -58,11 +60,34 @@ class BinarySummary(ContractModel):
     sample_size: PositiveInt
     positive_count: NonNegativeInt | None = None
     proportion: Probability | None = None
+    success_count: NonNegativeInt | None = None
+    failure_count: NonNegativeInt | None = None
+    rate: Probability | None = None
+    variance: FiniteFloat | None = None
+    standard_error: FiniteFloat | None = None
 
     @model_validator(mode="after")
     def validate_positive_count(self) -> Self:
         if self.positive_count is not None and self.positive_count > self.sample_size:
             raise ValueError("positive_count must not exceed sample_size")
+        if self.success_count is not None and self.success_count > self.sample_size:
+            raise ValueError("success_count must not exceed sample_size")
+        if self.failure_count is not None and self.failure_count > self.sample_size:
+            raise ValueError("failure_count must not exceed sample_size")
+        if (
+            self.success_count is not None
+            and self.failure_count is not None
+            and self.success_count + self.failure_count != self.sample_size
+        ):
+            raise ValueError("success_count plus failure_count must equal sample_size")
+        if (
+            self.positive_count is not None
+            and self.success_count is not None
+            and self.positive_count != self.success_count
+        ):
+            raise ValueError("positive_count must match success_count")
+        if self.proportion is not None and self.rate is not None and self.proportion != self.rate:
+            raise ValueError("proportion must match rate")
         return self
 
 
@@ -73,6 +98,8 @@ class CountSummary(ContractModel):
     sample_size: PositiveInt
     total: NonNegativeInt | None = None
     mean: FiniteFloat | None = None
+    variance: FiniteFloat | None = None
+    standard_error: FiniteFloat | None = None
     minimum: NonNegativeInt | None = None
     maximum: NonNegativeInt | None = None
 

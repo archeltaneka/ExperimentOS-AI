@@ -91,3 +91,32 @@ $ git diff --check
 Continuous and count summaries now emit sample variance and standard error when `n >= 2`;
 otherwise both fields are `None`. Binary summaries emit success/failure counts, rate, sample
 variance, and observed-rate standard error under the same availability rule.
+
+## Numeric-safety follow-up
+
+### Red
+
+```text
+$ uv run pytest tests/test_descriptive_statistics_numeric.py
+2 failed, 11 passed
+```
+
+The subnormal regression returned `0.0` instead of the smallest positive subnormal,
+and an opposite-maximum-value sample raised raw `OverflowError` while computing variance.
+
+### Green
+
+```text
+$ uv run pytest tests/test_descriptive_statistics_numeric.py
+13 passed in 0.26s
+
+$ uv run ruff check .
+All checks passed!
+
+$ git diff --check
+(no output; passed)
+```
+
+`_mean` now performs `math.fsum(values) / len(values)`. Overflow from that sum or from
+sample-variance calculation is translated to `NumericSummaryInvariantError`, preventing
+non-finite results or leaked arithmetic exceptions.

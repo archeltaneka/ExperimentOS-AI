@@ -111,7 +111,10 @@ def _finite_values(values: Iterable[float]) -> list[float]:
 
 
 def _mean(values: list[float]) -> float:
-    mean = math.fsum(value / len(values) for value in values)
+    try:
+        mean = math.fsum(values) / len(values)
+    except OverflowError as error:
+        raise NumericSummaryInvariantError("summary values must be finite") from error
     _require_finite(mean)
     return mean
 
@@ -121,7 +124,10 @@ def _sample_statistics(
 ) -> tuple[float | None, float | None, float | None]:
     if len(values) < 2:
         return None, None, None
-    variance = sum((value - mean) ** 2 for value in values) / (len(values) - 1)
+    try:
+        variance = sum((value - mean) ** 2 for value in values) / (len(values) - 1)
+    except OverflowError as error:
+        raise NumericSummaryInvariantError("summary values must be finite") from error
     _require_finite(variance)
     standard_deviation = math.sqrt(variance)
     _require_finite(standard_deviation)

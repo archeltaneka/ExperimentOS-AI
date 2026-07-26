@@ -74,11 +74,12 @@ def test_continuous_summary_preserves_zero_variance() -> None:
 
 
 def test_continuous_summary_accepts_extreme_finite_values_without_non_finite_outputs() -> None:
+    extreme_value = sys.float_info.max / 2
     summary = summarize_continuous(
-        [sys.float_info.max, sys.float_info.max], DescriptiveStatisticsConfig()
+        [extreme_value, extreme_value], DescriptiveStatisticsConfig()
     )
 
-    assert summary.mean == sys.float_info.max
+    assert summary.mean == extreme_value
     assert summary.standard_deviation == 0.0
     assert summary.variance == 0.0
     assert summary.standard_error == 0.0
@@ -91,6 +92,23 @@ def test_continuous_summary_accepts_extreme_finite_values_without_non_finite_out
             summary.standard_error,
         )
     )
+
+
+def test_continuous_summary_preserves_a_subnormal_mean() -> None:
+    smallest_subnormal = math.nextafter(0.0, 1.0)
+
+    summary = summarize_continuous(
+        [smallest_subnormal, smallest_subnormal], DescriptiveStatisticsConfig()
+    )
+
+    assert summary.mean == smallest_subnormal
+
+
+def test_continuous_summary_translates_extreme_variance_overflow_to_an_invariant_error() -> None:
+    with pytest.raises(NumericSummaryInvariantError, match="summary values must be finite"):
+        summarize_continuous(
+            [sys.float_info.max, -sys.float_info.max], DescriptiveStatisticsConfig()
+        )
 
 
 def test_binary_summary_counts_all_valid_outcomes_and_computes_proportion() -> None:

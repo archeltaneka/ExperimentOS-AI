@@ -88,17 +88,17 @@ def test_service_returns_fixed_order_distribution_diagnostics() -> None:
     analysis_input = DescriptiveStatisticsInput(
         context=analysis_input.context,
         eligibility=analysis_input.eligibility.model_copy(
-            update={"method_support": analysis_input.eligibility.method_support.model_copy(
-                update={"data_eligible": True}
-            )}
+            update={
+                "method_support": analysis_input.eligibility.method_support.model_copy(
+                    update={"data_eligible": True}
+                )
+            }
         ),
     )
 
     result = DescriptiveStatisticsService().summarize(analysis_input)
 
-    assert tuple(item.code for item in result.diagnostics) == (
-        "outcome.zero_variance",
-    )
+    assert tuple(item.code for item in result.diagnostics) == ("outcome.zero_variance",)
 
 
 def test_service_reports_all_missing_and_sparse_outcomes_without_fabricated_values() -> None:
@@ -224,9 +224,7 @@ def test_service_returns_selected_segment_with_existing_small_arm_warning() -> N
         segment_id="australian_users",
         label="Australian users",
         criteria=(
-            SelectionCriterion(
-                attribute="country", operator=CriterionOperator.EQUAL, value="AU"
-            ),
+            SelectionCriterion(attribute="country", operator=CriterionOperator.EQUAL, value="AU"),
         ),
     )
     analysis_input = _input_for(

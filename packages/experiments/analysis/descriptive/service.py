@@ -591,9 +591,7 @@ def _period_summary(
             "validated quasi input is missing a timestamp column"
         ) from error
     selected_rows = tuple(
-        row
-        for row in context.table.rows
-        if _timestamp_in_period(row[timestamp_index], period)
+        row for row in context.table.rows if _timestamp_in_period(row[timestamp_index], period)
     )
     period_context = ValidationContext(
         request=context.request,

@@ -24,9 +24,7 @@ class DescriptiveStatisticsConfig(ContractModel):
             raise ValueError("quantile levels must be non-empty, unique ascending values")
         if any(
             earlier >= later
-            for earlier, later in zip(
-                self.quantile_levels, self.quantile_levels[1:], strict=False
-            )
+            for earlier, later in zip(self.quantile_levels, self.quantile_levels[1:], strict=False)
         ):
             raise ValueError("quantile levels must be non-empty, unique ascending values")
         return self

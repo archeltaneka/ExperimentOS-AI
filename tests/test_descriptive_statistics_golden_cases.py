@@ -217,9 +217,7 @@ def test_segment_period_order_and_canonical_json_are_deterministic() -> None:
         segment_id="australian_users",
         label="Australian users",
         criteria=(
-            SelectionCriterion(
-                attribute="country", operator=CriterionOperator.EQUAL, value="AU"
-            ),
+            SelectionCriterion(attribute="country", operator=CriterionOperator.EQUAL, value="AU"),
         ),
     )
     segment_result = DescriptiveStatisticsService().summarize(

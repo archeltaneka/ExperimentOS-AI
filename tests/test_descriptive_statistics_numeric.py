@@ -75,9 +75,7 @@ def test_continuous_summary_preserves_zero_variance() -> None:
 
 def test_continuous_summary_accepts_extreme_finite_values_without_non_finite_outputs() -> None:
     extreme_value = sys.float_info.max
-    summary = summarize_continuous(
-        [extreme_value, extreme_value], DescriptiveStatisticsConfig()
-    )
+    summary = summarize_continuous([extreme_value, extreme_value], DescriptiveStatisticsConfig())
 
     assert summary.mean == extreme_value
     assert summary.standard_deviation == 0.0

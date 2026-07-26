@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime
+from time import perf_counter
+
+from packages.observability.base import BaseObservabilityProvider, BufferedSpan
+from packages.observability.noop import NoOpObservabilityProvider
 
 from ..metrics import MetricType
 from ..study_designs import CovariateTiming, QuasiExperimentalDesign, TimePeriod
@@ -39,61 +43,240 @@ from .numeric import (
 class DescriptiveStatisticsService:
     """Build typed raw summaries from eligibility-approved immutable analysis inputs."""
 
-    def __init__(self, *, config: DescriptiveStatisticsConfig | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        config: DescriptiveStatisticsConfig | None = None,
+        observability_provider: BaseObservabilityProvider | None = None,
+    ) -> None:
         self._config = config or DescriptiveStatisticsConfig()
+        self.observability_provider = observability_provider or NoOpObservabilityProvider()
 
     def summarize(self, analysis_input: DescriptiveStatisticsInput) -> DescriptiveStatisticsResult:
         """Return overall and arm-level summaries without estimating a treatment effect."""
-        analysis_input.assert_data_eligible()
         context = analysis_input.context
-        _assert_internal_invariants(context, analysis_input)
-        populations = _extract_populations(context)
-        metric_type = context.request.outcome.metric.metric_type
-        overall = _population_summary(
-            population_id=context.request.population.population_id,
-            label=context.request.population.label,
-            rows=populations.overall,
-            metric_type=metric_type,
-            config=self._config,
+        started_at = perf_counter()
+        span = _start_descriptive_span(
+            self.observability_provider,
+            row_count=len(context.table.rows),
+            metric_type=context.request.outcome.metric.metric_type.value,
         )
-        control = _population_summary(
-            population_id=context.request.control.control_id,
-            label=context.request.control.label,
-            rows=populations.control,
-            metric_type=metric_type,
-            config=self._config,
-        )
-        treatment = _population_summary(
-            population_id=context.request.treatment.treatment_id,
-            label=context.request.treatment.label,
-            rows=populations.treatment,
-            metric_type=metric_type,
-            config=self._config,
-        )
-        covariates = _covariate_summaries(context, config=self._config)
-        segments = _segment_summaries(context, config=self._config)
-        periods = _period_summaries(context, config=self._config)
-        return DescriptiveStatisticsResult(
-            outcome_id=context.request.outcome.metric.metric_id,
-            outcome_label=context.request.outcome.metric.label,
-            outcome_direction=context.request.outcome.direction,
-            config=self._config,
-            population=overall,
-            treatment=treatment,
-            control=control,
-            raw_comparison=_raw_comparison(
-                treatment=treatment.summary,
-                control=control.summary,
+        try:
+            analysis_input.assert_data_eligible()
+            _assert_internal_invariants(context, analysis_input)
+            populations = _extract_populations(context)
+            metric_type = context.request.outcome.metric.metric_type
+            overall = _population_summary(
+                population_id=context.request.population.population_id,
+                label=context.request.population.label,
+                rows=populations.overall,
+                metric_type=metric_type,
+                config=self._config,
+            )
+            control = _population_summary(
+                population_id=context.request.control.control_id,
+                label=context.request.control.label,
+                rows=populations.control,
+                metric_type=metric_type,
+                config=self._config,
+            )
+            treatment = _population_summary(
+                population_id=context.request.treatment.treatment_id,
+                label=context.request.treatment.label,
+                rows=populations.treatment,
+                metric_type=metric_type,
+                config=self._config,
+            )
+            covariates = _covariate_summaries(context, config=self._config)
+            segments = _segment_summaries(context, config=self._config)
+            periods = _period_summaries(context, config=self._config)
+            result = DescriptiveStatisticsResult(
+                outcome_id=context.request.outcome.metric.metric_id,
+                outcome_label=context.request.outcome.metric.label,
                 outcome_direction=context.request.outcome.direction,
-            ),
-            covariates=covariates,
-            segments=segments,
-            periods=periods,
-            diagnostics=distribution_diagnostics(
-                overall,
-                configured_missingness_limit=context.policy.maximum_outcome_missingness,
-            ),
+                config=self._config,
+                population=overall,
+                treatment=treatment,
+                control=control,
+                raw_comparison=_raw_comparison(
+                    treatment=treatment.summary,
+                    control=control.summary,
+                    outcome_direction=context.request.outcome.direction,
+                ),
+                covariates=covariates,
+                segments=segments,
+                periods=periods,
+                diagnostics=distribution_diagnostics(
+                    overall,
+                    configured_missingness_limit=context.policy.maximum_outcome_missingness,
+                ),
+            )
+        except Exception as error:
+            _finish_descriptive_failure(
+                self.observability_provider,
+                span,
+                error=error,
+                duration_ms=(perf_counter() - started_at) * 1000.0,
+            )
+            raise
+
+        _finish_descriptive_success(
+            self.observability_provider,
+            span,
+            result=result,
+            duration_ms=(perf_counter() - started_at) * 1000.0,
         )
+        return result
+
+
+def _start_descriptive_span(
+    provider: BaseObservabilityProvider,
+    *,
+    row_count: int,
+    metric_type: str,
+) -> BufferedSpan | None:
+    """Begin a root span with aggregate, non-sensitive calculation context only."""
+    before_failures = _provider_failure_count(provider)
+    try:
+        return provider.start_root_span(
+            "descriptive_statistics",
+            inputs={"row_count": row_count},
+            metadata={
+                "metric_type": metric_type,
+                "descriptive_statistics_started": True,
+            },
+        )
+    except Exception:
+        _increment_provider_failure(provider, before_failures)
+        return None
+
+
+def _finish_descriptive_success(
+    provider: BaseObservabilityProvider,
+    span: BufferedSpan | None,
+    *,
+    result: DescriptiveStatisticsResult,
+    duration_ms: float,
+) -> None:
+    """Record low-cardinality completion metadata without affecting the result."""
+    if span is None:
+        return
+    _run_observability_operation(
+        provider,
+        lambda: span.add_metadata(
+            {
+                "status": "completed",
+                "group_count": _group_count(result),
+                "segment_count": len(result.segments),
+                "warning_count": _warning_count(result),
+                "unavailable_comparison_count": _unavailable_comparison_count(result),
+                "duration_ms": duration_ms,
+                "numeric_safety_failure": False,
+                "descriptive_statistics_completed": True,
+            }
+        ),
+    )
+    _run_observability_operation(
+        provider,
+        lambda: span.finish(
+            outputs={"status": "completed", "descriptive_statistics_completed": True}
+        ),
+    )
+
+
+def _finish_descriptive_failure(
+    provider: BaseObservabilityProvider,
+    span: BufferedSpan | None,
+    *,
+    error: Exception,
+    duration_ms: float,
+) -> None:
+    """Safely report a logical failure without serializing source data or error text."""
+    if span is None:
+        return
+    numeric_safety_failure = isinstance(error, DescriptiveStatisticsInvariantError)
+    _run_observability_operation(
+        provider,
+        lambda: span.add_metadata(
+            {
+                "status": "failed",
+                "duration_ms": duration_ms,
+                "numeric_safety_failure": numeric_safety_failure,
+                "descriptive_statistics_completed": False,
+            }
+        ),
+    )
+    _run_observability_operation(
+        provider,
+        lambda: span.record_error(
+            "Descriptive statistics failed.",
+            details={"type": error.__class__.__name__},
+        ),
+    )
+    _run_observability_operation(
+        provider,
+        lambda: span.finish(
+            outputs={"status": "failed", "descriptive_statistics_completed": False}
+        ),
+    )
+
+
+def _group_count(result: DescriptiveStatisticsResult) -> int:
+    return sum(
+        population is not None
+        for population in (result.population, result.treatment, result.control)
+    )
+
+
+def _warning_count(result: DescriptiveStatisticsResult) -> int:
+    return len(result.diagnostics) + sum(len(segment.warnings) for segment in result.segments)
+
+
+def _unavailable_comparison_count(result: DescriptiveStatisticsResult) -> int:
+    comparisons = [result.raw_comparison]
+    comparisons.extend(segment.raw_comparison for segment in result.segments)
+    comparisons.extend(period.raw_comparison for period in result.periods)
+    return sum(
+        comparison is not None and comparison.availability is ComparisonAvailability.UNAVAILABLE
+        for comparison in comparisons
+    )
+
+
+def _run_observability_operation(
+    provider: BaseObservabilityProvider,
+    operation: Callable[[], None],
+) -> None:
+    before_failures = _provider_failure_count(provider)
+    try:
+        operation()
+    except Exception:
+        _increment_provider_failure(provider, before_failures)
+
+
+def _provider_failure_count(provider: BaseObservabilityProvider) -> int | None:
+    try:
+        return provider.failure_count
+    except Exception:
+        return None
+
+
+def _increment_provider_failure(
+    provider: BaseObservabilityProvider,
+    before_failures: int | None,
+) -> None:
+    try:
+        current_failures = provider.failure_count
+    except Exception:
+        current_failures = None
+    try:
+        if (
+            before_failures is None
+            or current_failures is None
+            or current_failures == before_failures
+        ):
+            provider.increment_failure()
+    except Exception:
+        return
 
 
 class _PopulationRows:

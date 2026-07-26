@@ -4,21 +4,28 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable
+from datetime import datetime
 
 from ..metrics import MetricType
+from ..study_designs import CovariateTiming, QuasiExperimentalDesign, TimePeriod
 from ..validation.context import ValidationContext
 from ..validation.criteria import evaluate_criteria
+from ..validation.table import AnalysisTable
+from .diagnostics import distribution_diagnostics, small_arm_warning
 from .input import DescriptiveStatisticsInput, DescriptiveStatisticsInvariantError
 from .models import (
     BinarySummary,
     ComparisonAvailability,
     ContinuousSummary,
     CountSummary,
+    CovariateSummary,
     DescriptiveStatisticsConfig,
     DescriptiveStatisticsResult,
     DescriptiveSummary,
+    PeriodSummary,
     PopulationSummary,
     RawComparison,
+    SegmentSummary,
     UnavailableSummary,
 )
 from .numeric import (
@@ -63,6 +70,9 @@ class DescriptiveStatisticsService:
             metric_type=metric_type,
             config=self._config,
         )
+        covariates = _covariate_summaries(context, config=self._config)
+        segments = _segment_summaries(context, config=self._config)
+        periods = _period_summaries(context, config=self._config)
         return DescriptiveStatisticsResult(
             outcome_id=context.request.outcome.metric.metric_id,
             outcome_label=context.request.outcome.metric.label,
@@ -75,6 +85,13 @@ class DescriptiveStatisticsService:
                 treatment=treatment.summary,
                 control=control.summary,
                 outcome_direction=context.request.outcome.direction,
+            ),
+            covariates=covariates,
+            segments=segments,
+            periods=periods,
+            diagnostics=distribution_diagnostics(
+                overall,
+                configured_missingness_limit=context.policy.maximum_outcome_missingness,
             ),
         )
 
@@ -99,7 +116,7 @@ def _assert_internal_invariants(
     analysis_input: DescriptiveStatisticsInput,
 ) -> None:
     summary = analysis_input.eligibility.unit_integrity_summary
-    if summary.repeated_observation_count:
+    if summary.repeated_observation_count and context.binding.timestamp_column is None:
         raise DescriptiveStatisticsInvariantError(
             "validated input has unresolved repeated observation units"
         )
@@ -107,7 +124,12 @@ def _assert_internal_invariants(
         raise DescriptiveStatisticsInvariantError("validated input has assignment conflicts")
 
 
-def _extract_populations(context: ValidationContext) -> _PopulationRows:
+def _extract_populations(
+    context: ValidationContext,
+    *,
+    criteria: tuple[object, ...] = (),
+    require_declared_arms: bool = True,
+) -> _PopulationRows:
     """Partition immutable rows by exact declared scalar assignments without coercion."""
     columns = {name: index for index, name in enumerate(context.table.columns)}
     try:
@@ -125,7 +147,7 @@ def _extract_populations(context: ValidationContext) -> _PopulationRows:
     for row in context.table.rows:
         if not evaluate_criteria(
             {column: row[index] for column, index in columns.items()},
-            context.request.population.criteria,
+            context.request.population.criteria + tuple(criteria),
         ):
             continue
         outcome = (
@@ -145,8 +167,50 @@ def _extract_populations(context: ValidationContext) -> _PopulationRows:
             raise DescriptiveStatisticsInvariantError(
                 "data-eligible input contains an assignment outside declared arms"
             )
-    if not treatment or not control:
+    if require_declared_arms and (not treatment or not control):
         raise DescriptiveStatisticsInvariantError("data-eligible input is missing a declared arm")
+    return _PopulationRows(
+        overall=tuple(overall), treatment=tuple(treatment), control=tuple(control)
+    )
+
+
+def _extract_populations_for_column(
+    context: ValidationContext,
+    *,
+    value_column: str,
+    criteria: tuple[object, ...] = (),
+) -> _PopulationRows:
+    """Select a declared scalar role using population and optional segment criteria."""
+    columns = {name: index for index, name in enumerate(context.table.columns)}
+    try:
+        treatment_index = columns[context.binding.treatment_column]
+        unit_index = columns[context.binding.observation_unit_column]
+        value_index = columns[value_column]
+    except KeyError as error:
+        raise DescriptiveStatisticsInvariantError(
+            "validated input is missing a bound column"
+        ) from error
+
+    overall: list[tuple[object, object]] = []
+    treatment: list[tuple[object, object]] = []
+    control: list[tuple[object, object]] = []
+    declared_criteria = context.request.population.criteria + tuple(criteria)
+    for row in context.table.rows:
+        values = {column: row[index] for column, index in columns.items()}
+        if not evaluate_criteria(values, declared_criteria):
+            continue
+        item = (row[unit_index], row[value_index])
+        assignment = row[treatment_index]
+        if _typed_equal(assignment, context.request.treatment.assignment_value):
+            treatment.append(item)
+            overall.append(item)
+        elif _typed_equal(assignment, context.request.control.assignment_value):
+            control.append(item)
+            overall.append(item)
+        else:
+            raise DescriptiveStatisticsInvariantError(
+                "data-eligible input contains an assignment outside declared arms"
+            )
     return _PopulationRows(
         overall=tuple(overall), treatment=tuple(treatment), control=tuple(control)
     )
@@ -183,6 +247,218 @@ def _population_summary(
         missing_outcome_count=missing_count,
         summary=summary,
     )
+
+
+def _population_triplet(
+    context: ValidationContext,
+    populations: _PopulationRows,
+    *,
+    metric_type: MetricType,
+    config: DescriptiveStatisticsConfig,
+    prefix: str,
+    label: str,
+) -> tuple[PopulationSummary, PopulationSummary, PopulationSummary]:
+    """Create deterministic overall, treatment, and control summaries for one role."""
+    overall = _population_summary(
+        population_id=f"{prefix}:population",
+        label=label,
+        rows=populations.overall,
+        metric_type=metric_type,
+        config=config,
+    )
+    treatment = _population_summary(
+        population_id=f"{prefix}:{context.request.treatment.treatment_id}",
+        label=context.request.treatment.label,
+        rows=populations.treatment,
+        metric_type=metric_type,
+        config=config,
+    )
+    control = _population_summary(
+        population_id=f"{prefix}:{context.request.control.control_id}",
+        label=context.request.control.label,
+        rows=populations.control,
+        metric_type=metric_type,
+        config=config,
+    )
+    return overall, treatment, control
+
+
+def _covariate_summaries(
+    context: ValidationContext,
+    *,
+    config: DescriptiveStatisticsConfig,
+) -> tuple[CovariateSummary, ...]:
+    """Summarize only declared pre-treatment scalar covariates in request order."""
+    bindings = {binding.metric_id: binding.column for binding in context.binding.covariates}
+    summaries: list[CovariateSummary] = []
+    for covariate in context.request.covariates:
+        if covariate.timing is not CovariateTiming.PRE_TREATMENT:
+            continue
+        column = bindings.get(covariate.metric.metric_id)
+        if column is None:
+            raise DescriptiveStatisticsInvariantError(
+                "validated input is missing a covariate binding"
+            )
+        populations = _extract_populations_for_column(context, value_column=column)
+        overall, treatment, control = _population_triplet(
+            context,
+            populations,
+            metric_type=covariate.metric.metric_type,
+            config=config,
+            prefix=f"covariate:{covariate.metric.metric_id}",
+            label=covariate.metric.label,
+        )
+        summaries.append(
+            CovariateSummary(
+                covariate_id=covariate.metric.metric_id,
+                label=covariate.metric.label,
+                population=overall,
+                treatment=treatment,
+                control=control,
+            )
+        )
+    return tuple(summaries)
+
+
+def _segment_summaries(
+    context: ValidationContext,
+    *,
+    config: DescriptiveStatisticsConfig,
+) -> tuple[SegmentSummary, ...]:
+    """Summarize the one selected, validated segment without ranking or discovery."""
+    segment = context.request.segment
+    if segment is None:
+        return ()
+    populations = _extract_populations(
+        context,
+        criteria=segment.criteria,
+        require_declared_arms=False,
+    )
+    overall, treatment, control = _population_triplet(
+        context,
+        populations,
+        metric_type=context.request.outcome.metric.metric_type,
+        config=config,
+        prefix=f"segment:{segment.segment_id}",
+        label=segment.label,
+    )
+    return (
+        SegmentSummary(
+            segment_id=segment.segment_id,
+            label=segment.label,
+            population=overall,
+            treatment=treatment,
+            control=control,
+            raw_comparison=_raw_comparison(
+                treatment=treatment.summary,
+                control=control.summary,
+                outcome_direction=context.request.outcome.direction,
+            ),
+            warnings=small_arm_warning(
+                treatment,
+                control,
+                advisory_minimum=context.policy.weak_per_arm,
+            ),
+        ),
+    )
+
+
+def _period_summaries(
+    context: ValidationContext,
+    *,
+    config: DescriptiveStatisticsConfig,
+) -> tuple[PeriodSummary, ...]:
+    """Summarize explicitly declared quasi-experimental periods without DiD."""
+    design = context.request.study_design
+    if not isinstance(design, QuasiExperimentalDesign):
+        return ()
+    return tuple(
+        _period_summary(
+            context,
+            period_id=period_id,
+            label=label,
+            period=period,
+            config=config,
+        )
+        for period_id, label, period in (
+            ("pre", "Pre-treatment period", design.pre_treatment_period),
+            ("post", "Post-treatment period", design.post_treatment_period),
+        )
+    )
+
+
+def _period_summary(
+    context: ValidationContext,
+    *,
+    period_id: str,
+    label: str,
+    period: TimePeriod,
+    config: DescriptiveStatisticsConfig,
+) -> PeriodSummary:
+    timestamp_column = context.binding.timestamp_column
+    if timestamp_column is None:
+        raise DescriptiveStatisticsInvariantError(
+            "validated quasi input is missing a timestamp binding"
+        )
+    columns = {name: index for index, name in enumerate(context.table.columns)}
+    try:
+        timestamp_index = columns[timestamp_column]
+    except KeyError as error:
+        raise DescriptiveStatisticsInvariantError(
+            "validated quasi input is missing a timestamp column"
+        ) from error
+    selected_rows = tuple(
+        row
+        for row in context.table.rows
+        if _timestamp_in_period(row[timestamp_index], period)
+    )
+    period_context = ValidationContext(
+        request=context.request,
+        table=AnalysisTable(columns=context.table.columns, rows=selected_rows),
+        binding=context.binding,
+        policy=context.policy,
+    )
+    populations = _extract_populations(period_context, require_declared_arms=False)
+    overall, treatment, control = _population_triplet(
+        context,
+        populations,
+        metric_type=context.request.outcome.metric.metric_type,
+        config=config,
+        prefix=f"period:{period_id}",
+        label=label,
+    )
+    return PeriodSummary(
+        period_id=period_id,
+        label=label,
+        population=overall,
+        treatment=treatment,
+        control=control,
+        raw_comparison=_raw_comparison(
+            treatment=treatment.summary,
+            control=control.summary,
+            outcome_direction=context.request.outcome.direction,
+        ),
+    )
+
+
+def _timestamp_in_period(value: object, period: TimePeriod) -> bool:
+    timestamp = _parse_timestamp(value)
+    if timestamp is None:
+        raise DescriptiveStatisticsInvariantError("validated input contains an invalid timestamp")
+    return period.start <= timestamp < period.end
+
+
+def _parse_timestamp(value: object) -> datetime | None:
+    if isinstance(value, datetime):
+        timestamp = value
+    elif isinstance(value, str):
+        try:
+            timestamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except (OverflowError, ValueError):
+            return None
+    else:
+        return None
+    return timestamp if timestamp.utcoffset() is not None else None
 
 
 def _summarize_metric(

@@ -184,27 +184,36 @@ class RawComparison(ContractModel):
 
 
 class CovariateSummary(ContractModel):
-    """A named covariate and its descriptive summary."""
+    """A declared numeric pre-treatment covariate summarized by population and arm."""
 
     covariate_id: NonEmptyStr
     label: NonEmptyStr
-    summary: DescriptiveSummary
+    population: PopulationSummary
+    treatment: PopulationSummary
+    control: PopulationSummary
 
 
 class SegmentSummary(ContractModel):
-    """A named segment and its descriptive summary."""
+    """The one validated requested segment, without automatic segment discovery."""
 
     segment_id: NonEmptyStr
     label: NonEmptyStr
-    summary: DescriptiveSummary
+    population: PopulationSummary
+    treatment: PopulationSummary | None = None
+    control: PopulationSummary | None = None
+    raw_comparison: RawComparison | None = None
+    warnings: tuple[DescriptiveDiagnostic, ...] = ()
 
 
 class PeriodSummary(ContractModel):
-    """A named reporting period and its descriptive summary."""
+    """One explicit design period summarized without a time-series estimator."""
 
     period_id: NonEmptyStr
     label: NonEmptyStr
-    summary: DescriptiveSummary
+    population: PopulationSummary
+    treatment: PopulationSummary | None = None
+    control: PopulationSummary | None = None
+    raw_comparison: RawComparison | None = None
 
 
 class DescriptiveDiagnostic(ContractModel):

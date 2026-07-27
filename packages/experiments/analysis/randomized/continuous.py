@@ -186,9 +186,28 @@ def analyze_continuous_welch(
             message="Welch test statistics or confidence interval were not finite.",
         )
 
-    relative_effect, relative_availability, relative_reason, diagnostics, warnings = (
-        _relative_effect(effect, control_summary.mean)
-    )
+    (
+        relative_effect,
+        relative_availability,
+        relative_reason,
+        diagnostics,
+        warnings,
+    ) = _relative_effect(effect, control_summary.mean)
+    if relative_effect is not None and not math.isfinite(relative_effect):
+        return _abstained_result(
+            request_id=request_id,
+            metric=metric,
+            estimand=estimand,
+            provenance=provenance,
+            configuration=config,
+            code="nonfinite_relative_effect",
+            category=RandomizedDiagnosticCategory.RESULT,
+            message="Relative lift is not representable as a finite value.",
+            context={
+                "absolute_effect": effect,
+                "control_mean": control_summary.mean,
+            },
+        )
     return RandomizedAnalysisResult(
         request_id=request_id,
         metric=metric,

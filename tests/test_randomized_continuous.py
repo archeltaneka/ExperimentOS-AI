@@ -163,6 +163,30 @@ def test_analyze_continuous_welch_marks_relative_lift_unavailable_at_zero_baseli
     assert "zero_control_baseline" in {diagnostic.code for diagnostic in result.diagnostics}
 
 
+def test_analyze_continuous_welch_abstains_when_nonzero_subnormal_baseline_overflows_lift(
+    continuous_metric: MetricDefinition,
+    difference_in_means: EstimandDefinition,
+    data_provenance: tuple[ProvenanceRecord, ...],
+) -> None:
+    """A finite nonzero baseline can still produce an unrepresentable relative effect."""
+    result = analyze_continuous_welch(
+        request_id="request-001",
+        metric=continuous_metric,
+        estimand=difference_in_means,
+        treatment_arm_id="treatment",
+        treatment_values=(1.0, 2.0),
+        control_arm_id="control",
+        control_values=(5e-324, 1e-323),
+        provenance=data_provenance,
+    )
+
+    assert result.status is ComputationStatus.ABSTAINED
+    assert result.conclusion is Conclusion.INCONCLUSIVE
+    assert result.abstention_reason is not None
+    assert result.abstention_reason.code == "nonfinite_relative_effect"
+    assert {diagnostic.code for diagnostic in result.diagnostics} == {"nonfinite_relative_effect"}
+
+
 def test_analyze_continuous_welch_abstains_when_zero_standard_error_makes_t_undefined(
     continuous_metric: MetricDefinition,
     difference_in_means: EstimandDefinition,

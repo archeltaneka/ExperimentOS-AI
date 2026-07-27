@@ -68,7 +68,12 @@ def summarize_binary_arm(arm_id: str, values: Sequence[object]) -> BinaryArmSumm
 def _finite_continuous_value(value: object) -> float:
     if isinstance(value, bool) or not isinstance(value, Real):
         raise RandomizedDescriptiveError("continuous arm values must be finite real numbers")
-    converted = float(value)
+    try:
+        converted = float(value)
+    except OverflowError as error:
+        raise RandomizedDescriptiveError(
+            "continuous arm values must be finite real numbers"
+        ) from error
     if not math.isfinite(converted):
         raise RandomizedDescriptiveError("continuous arm values must be finite real numbers")
     return converted

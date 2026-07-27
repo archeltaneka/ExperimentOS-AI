@@ -59,7 +59,10 @@ def normal_critical_value(alpha: float) -> float:
 def _finite_real(value: object, *, name: str) -> float:
     if isinstance(value, bool) or not isinstance(value, Real):
         raise RandomizedNumericalError(f"{name} must be a finite real number")
-    converted = float(value)
+    try:
+        converted = float(value)
+    except OverflowError as error:
+        raise RandomizedNumericalError(f"{name} must be a finite real number") from error
     if not math.isfinite(converted):
         raise RandomizedNumericalError(f"{name} must be a finite real number")
     return converted

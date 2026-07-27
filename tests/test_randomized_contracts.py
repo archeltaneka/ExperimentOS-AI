@@ -22,6 +22,7 @@ from packages.experiments.analysis import (
     ValueScale,
 )
 from packages.experiments.analysis.randomized import (
+    AlternativeHypothesis,
     BinaryArmSummary,
     ComputationStatus,
     Conclusion,
@@ -135,6 +136,17 @@ def test_config_defaults_are_frozen_and_emit_stable_provenance() -> None:
     assert config.configuration_provenance().source_type is ProvenanceSourceType.CONFIGURATION
     with pytest.raises(ValidationError):
         config.alpha = 0.1  # type: ignore[misc]
+
+
+def test_two_sided_hypothesis_contract_is_explicit_and_finite() -> None:
+    from packages.experiments.analysis.randomized import RandomizedHypothesis
+
+    hypothesis = RandomizedHypothesis()
+
+    assert hypothesis.null_value == 0.0
+    assert hypothesis.alternative is AlternativeHypothesis.TWO_SIDED
+    with pytest.raises(ValidationError):
+        RandomizedHypothesis(null_value=math.inf)
 
 
 def test_randomized_contracts_are_exported_from_the_analysis_boundary() -> None:

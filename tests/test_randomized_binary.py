@@ -15,6 +15,7 @@ from packages.experiments.analysis.metrics import (
 from packages.experiments.analysis.provenance import ProvenanceRecord, ProvenanceSourceType
 from packages.experiments.analysis.randomized.binary import analyze_binary_two_proportion_z
 from packages.experiments.analysis.randomized.models import (
+    AlternativeHypothesis,
     ComputationStatus,
     Conclusion,
     RelativeEffectAvailability,
@@ -201,3 +202,34 @@ def test_analyze_binary_two_proportion_z_abstains_for_invalid_binary_outcomes(
     assert result.abstention_reason is not None
     assert result.abstention_reason.code == "invalid_binary_outcome"
     assert {diagnostic.code for diagnostic in result.diagnostics} == {"invalid_binary_outcome"}
+
+
+@pytest.mark.parametrize(
+    "alternative",
+    [AlternativeHypothesis.GREATER_THAN, AlternativeHypothesis.LESS_THAN],
+)
+def test_analyze_binary_two_proportion_z_rejects_one_sided_alternatives(
+    binary_metric: MetricDefinition,
+    difference_in_proportions: EstimandDefinition,
+    data_provenance: tuple[ProvenanceRecord, ...],
+    alternative: AlternativeHypothesis,
+) -> None:
+    result = analyze_binary_two_proportion_z(
+        request_id="request-001",
+        metric=binary_metric,
+        estimand=difference_in_proportions,
+        treatment_arm_id="treatment",
+        treatment_values=(1,) * 30 + (0,) * 20,
+        control_arm_id="control",
+        control_values=(1,) * 20 + (0,) * 60,
+        provenance=data_provenance,
+        alternative=alternative,
+    )
+
+    assert result.status is ComputationStatus.UNSUPPORTED
+    assert result.conclusion is Conclusion.UNSUPPORTED
+    assert result.hypothesis.alternative is alternative
+    assert result.test_result is None
+    assert result.point_effect is None
+    assert result.abstention_reason is not None
+    assert result.abstention_reason.code == "unsupported_alternative_hypothesis"

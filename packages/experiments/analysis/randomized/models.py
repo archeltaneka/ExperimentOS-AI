@@ -77,6 +77,21 @@ class RelativeEffectReason(StrEnum):
     ZERO_CONTROL_BASELINE = "zero_control_baseline"
 
 
+class AlternativeHypothesis(StrEnum):
+    """Declared alternative hypothesis; v1 estimates only two-sided alternatives."""
+
+    TWO_SIDED = "two_sided"
+    GREATER_THAN = "greater_than"
+    LESS_THAN = "less_than"
+
+
+class RandomizedHypothesis(ContractModel):
+    """Explicit null and alternative hypotheses for a randomized estimate."""
+
+    null_value: FiniteFloat = 0.0
+    alternative: AlternativeHypothesis = AlternativeHypothesis.TWO_SIDED
+
+
 class RandomizedTestType(StrEnum):
     """Frequentist test families supported by the unadjusted contract."""
 
@@ -228,6 +243,7 @@ class RandomizedAnalysisResult(ContractModel):
     request_id: NonEmptyStr
     metric: MetricDefinition
     estimand: EstimandDefinition
+    hypothesis: RandomizedHypothesis = RandomizedHypothesis()
     status: ComputationStatus
     conclusion: Conclusion
     practical_significance: PracticalSignificance

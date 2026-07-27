@@ -8,6 +8,7 @@ from .descriptive import (
     summarize_continuous_arm,
 )
 from .models import (
+    AlternativeHypothesis,
     ArmSummary,
     BinaryArmSummary,
     ComputationStatus,
@@ -22,6 +23,7 @@ from .models import (
     RandomizedDiagnosticCategory,
     RandomizedDiagnosticContext,
     RandomizedDiagnosticStatus,
+    RandomizedHypothesis,
     RandomizedTestResult,
     RandomizedTestType,
     RelativeEffectAvailability,
@@ -36,6 +38,7 @@ from .numerics import (
 )
 
 __all__ = [
+    "AlternativeHypothesis",
     "ArmSummary",
     "BinaryArmSummary",
     "ComputationStatus",
@@ -52,6 +55,7 @@ __all__ = [
     "RandomizedDiagnosticCategory",
     "RandomizedDiagnosticContext",
     "RandomizedDiagnosticStatus",
+    "RandomizedHypothesis",
     "RandomizedTestResult",
     "RandomizedTestType",
     "RandomizedNumericalError",

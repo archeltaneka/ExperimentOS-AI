@@ -18,6 +18,7 @@ from ..uncertainty import ConfidenceInterval
 from .config import RandomizedAnalysisConfig
 from .descriptive import RandomizedDescriptiveError, summarize_binary_arm
 from .models import (
+    AlternativeHypothesis,
     ComputationStatus,
     Conclusion,
     EvidenceCategory,
@@ -28,6 +29,7 @@ from .models import (
     RandomizedDiagnostic,
     RandomizedDiagnosticCategory,
     RandomizedDiagnosticStatus,
+    RandomizedHypothesis,
     RandomizedTestResult,
     RandomizedTestType,
     RelativeEffectAvailability,
@@ -51,6 +53,7 @@ def analyze_binary_two_proportion_z(
     control_values: Sequence[object],
     provenance: tuple[ProvenanceRecord, ...],
     configuration: RandomizedAnalysisConfig | None = None,
+    alternative: AlternativeHypothesis = AlternativeHypothesis.TWO_SIDED,
 ) -> RandomizedAnalysisResult:
     """Estimate treatment minus control with an unadjusted two-sided z procedure.
 
@@ -58,6 +61,16 @@ def analyze_binary_two_proportion_z(
     interval uses the unpooled sampling standard error for the observed effect.
     """
     config = configuration or RandomizedAnalysisConfig()
+
+    if alternative is not AlternativeHypothesis.TWO_SIDED:
+        return _unsupported_alternative_result(
+            request_id=request_id,
+            metric=metric,
+            estimand=estimand,
+            provenance=provenance,
+            configuration=config,
+            alternative=alternative,
+        )
 
     if treatment_arm_id == control_arm_id:
         return _abstained_result(
@@ -347,6 +360,48 @@ def _abstained_result(
                 recommended_action=(
                     "Provide valid binary outcomes with adequate expected cell counts per arm."
                 ),
+            ),
+        ),
+        warnings=(),
+        provenance=provenance,
+        configuration=configuration,
+        abstention_reason=RandomizedAbstentionReason(
+            code=code,
+            message=message,
+            missing_or_invalid_information=(code,),
+        ),
+    )
+
+
+def _unsupported_alternative_result(
+    *,
+    request_id: str,
+    metric: MetricDefinition,
+    estimand: EstimandDefinition,
+    provenance: tuple[ProvenanceRecord, ...],
+    configuration: RandomizedAnalysisConfig,
+    alternative: AlternativeHypothesis,
+) -> RandomizedAnalysisResult:
+    code = "unsupported_alternative_hypothesis"
+    message = "Only a declared two-sided alternative hypothesis is supported."
+    return RandomizedAnalysisResult(
+        request_id=request_id,
+        metric=metric,
+        estimand=estimand,
+        hypothesis=RandomizedHypothesis(alternative=alternative),
+        status=ComputationStatus.UNSUPPORTED,
+        conclusion=Conclusion.UNSUPPORTED,
+        practical_significance=PracticalSignificance.NOT_ASSESSED,
+        evidence_category=EvidenceCategory.NO_RANDOMIZED_EVIDENCE,
+        assumptions=_assumptions(),
+        diagnostics=(
+            RandomizedDiagnostic(
+                code=code,
+                category=RandomizedDiagnosticCategory.CONFIGURATION,
+                severity=DiagnosticSeverity.ERROR,
+                status=RandomizedDiagnosticStatus.FAILED,
+                message=message,
+                recommended_action="Declare a two-sided alternative hypothesis for v1 analysis.",
             ),
         ),
         warnings=(),

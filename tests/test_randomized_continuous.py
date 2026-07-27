@@ -17,6 +17,7 @@ from packages.experiments.analysis.metrics import (
 from packages.experiments.analysis.provenance import ProvenanceRecord, ProvenanceSourceType
 from packages.experiments.analysis.randomized.continuous import analyze_continuous_welch
 from packages.experiments.analysis.randomized.models import (
+    AlternativeHypothesis,
     ComputationStatus,
     Conclusion,
     PracticalSignificance,
@@ -208,3 +209,34 @@ def test_analyze_continuous_welch_abstains_when_zero_standard_error_makes_t_unde
     assert result.abstention_reason is not None
     assert result.abstention_reason.code == "zero_standard_error"
     assert {diagnostic.code for diagnostic in result.diagnostics} == {"zero_standard_error"}
+
+
+@pytest.mark.parametrize(
+    "alternative",
+    [AlternativeHypothesis.GREATER_THAN, AlternativeHypothesis.LESS_THAN],
+)
+def test_analyze_continuous_welch_rejects_one_sided_alternatives(
+    continuous_metric: MetricDefinition,
+    difference_in_means: EstimandDefinition,
+    data_provenance: tuple[ProvenanceRecord, ...],
+    alternative: AlternativeHypothesis,
+) -> None:
+    result = analyze_continuous_welch(
+        request_id="request-001",
+        metric=continuous_metric,
+        estimand=difference_in_means,
+        treatment_arm_id="treatment",
+        treatment_values=(5.0, 7.0, 9.0),
+        control_arm_id="control",
+        control_values=(2.0, 4.0, 6.0),
+        provenance=data_provenance,
+        alternative=alternative,
+    )
+
+    assert result.status is ComputationStatus.UNSUPPORTED
+    assert result.conclusion is Conclusion.UNSUPPORTED
+    assert result.hypothesis.alternative is alternative
+    assert result.test_result is None
+    assert result.point_effect is None
+    assert result.abstention_reason is not None
+    assert result.abstention_reason.code == "unsupported_alternative_hypothesis"

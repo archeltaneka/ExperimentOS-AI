@@ -1,6 +1,11 @@
 """ExperimentOS-owned contracts for unadjusted randomized analysis."""
 
 from .config import RandomizedAnalysisConfig, ZeroRelativeBaselinePolicy
+from .descriptive import (
+    RandomizedDescriptiveError,
+    summarize_binary_arm,
+    summarize_continuous_arm,
+)
 from .models import (
     ArmSummary,
     BinaryArmSummary,
@@ -21,6 +26,13 @@ from .models import (
     RelativeEffectAvailability,
     RelativeEffectReason,
 )
+from .numerics import (
+    RandomizedNumericalError,
+    normal_critical_value,
+    t_critical_value,
+    two_sided_normal_p_value,
+    two_sided_t_p_value,
+)
 
 __all__ = [
     "ArmSummary",
@@ -34,13 +46,21 @@ __all__ = [
     "RandomizedAbstentionReason",
     "RandomizedAnalysisConfig",
     "RandomizedAnalysisResult",
+    "RandomizedDescriptiveError",
     "RandomizedDiagnostic",
     "RandomizedDiagnosticCategory",
     "RandomizedDiagnosticContext",
     "RandomizedDiagnosticStatus",
     "RandomizedTestResult",
     "RandomizedTestType",
+    "RandomizedNumericalError",
     "RelativeEffectAvailability",
     "RelativeEffectReason",
     "ZeroRelativeBaselinePolicy",
+    "normal_critical_value",
+    "summarize_binary_arm",
+    "summarize_continuous_arm",
+    "t_critical_value",
+    "two_sided_normal_p_value",
+    "two_sided_t_p_value",
 ]

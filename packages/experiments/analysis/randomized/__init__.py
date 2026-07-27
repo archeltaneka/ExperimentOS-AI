@@ -1,5 +1,6 @@
 """ExperimentOS-owned contracts for unadjusted randomized analysis."""
 
+from .binary import analyze_binary_two_proportion_z
 from .config import RandomizedAnalysisConfig, ZeroRelativeBaselinePolicy
 from .descriptive import (
     RandomizedDescriptiveError,
@@ -57,6 +58,7 @@ __all__ = [
     "RelativeEffectAvailability",
     "RelativeEffectReason",
     "ZeroRelativeBaselinePolicy",
+    "analyze_binary_two_proportion_z",
     "normal_critical_value",
     "summarize_binary_arm",
     "summarize_continuous_arm",

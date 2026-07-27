@@ -221,6 +221,8 @@ def test_non_completed_results_cannot_include_fabricated_estimates_or_tests(
     payload.update(
         status=status,
         conclusion=conclusion,
+        treatment_summary=None,
+        control_summary=None,
         point_effect=None,
         test_result=None,
         abstention_reason=RandomizedAbstentionReason(
@@ -234,3 +236,92 @@ def test_non_completed_results_cannot_include_fabricated_estimates_or_tests(
     payload["point_effect"] = _completed_result().point_effect
     with pytest.raises(ValidationError, match="must not include point_effect or test_result"):
         RandomizedAnalysisResult.model_validate(payload)
+
+
+def test_result_requires_its_interval_level_to_match_the_configuration() -> None:
+    payload = _completed_result().model_dump()
+    payload["configuration"] = RandomizedAnalysisConfig(alpha=0.1, confidence_level=0.9)
+
+    with pytest.raises(ValidationError, match="confidence_interval confidence_level"):
+        RandomizedAnalysisResult.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    ("status", "conclusion"),
+    [
+        (ComputationStatus.ABSTAINED, Conclusion.INCONCLUSIVE),
+        (ComputationStatus.UNSUPPORTED, Conclusion.UNSUPPORTED),
+        (ComputationStatus.INVALID, Conclusion.INVALID),
+    ],
+)
+def test_non_numerical_results_omit_arm_summaries(
+    status: ComputationStatus,
+    conclusion: Conclusion,
+) -> None:
+    payload = _completed_result().model_dump()
+    payload.update(
+        status=status,
+        conclusion=conclusion,
+        treatment_summary=None,
+        control_summary=None,
+        point_effect=None,
+        test_result=None,
+        abstention_reason=RandomizedAbstentionReason(
+            code="insufficient_data",
+            message="Not enough observations.",
+        ),
+    )
+
+    result = RandomizedAnalysisResult.model_validate(payload)
+
+    assert result.treatment_summary is None
+    assert result.control_summary is None
+
+
+@pytest.mark.parametrize(
+    ("status", "conclusion"),
+    [
+        (ComputationStatus.COMPLETED, Conclusion.STATISTICALLY_SIGNIFICANT),
+        (ComputationStatus.INCONCLUSIVE, Conclusion.INCONCLUSIVE),
+    ],
+)
+def test_numerical_results_require_arm_summaries(
+    status: ComputationStatus,
+    conclusion: Conclusion,
+) -> None:
+    payload = _completed_result().model_dump()
+    payload.update(
+        status=status,
+        conclusion=conclusion,
+        treatment_summary=None,
+        control_summary=None,
+    )
+
+    with pytest.raises(ValidationError, match="require arm summaries"):
+        RandomizedAnalysisResult.model_validate(payload)
+
+
+def test_result_canonicalizes_diagnostic_order() -> None:
+    earlier = RandomizedDiagnostic(
+        code="a_diagnostic",
+        category=RandomizedDiagnosticCategory.INPUT,
+        severity="warning",
+        status="failed",
+        message="The first diagnostic.",
+    )
+    later = RandomizedDiagnostic(
+        code="z_diagnostic",
+        category=RandomizedDiagnosticCategory.INPUT,
+        severity="warning",
+        status="failed",
+        message="The second diagnostic.",
+    )
+    payload = _completed_result().model_dump()
+    payload["diagnostics"] = (later, earlier)
+
+    result = RandomizedAnalysisResult.model_validate(payload)
+
+    assert [diagnostic.code for diagnostic in result.diagnostics] == [
+        "a_diagnostic",
+        "z_diagnostic",
+    ]

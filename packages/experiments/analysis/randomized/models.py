@@ -231,8 +231,8 @@ class RandomizedAnalysisResult(ContractModel):
     conclusion: Conclusion
     practical_significance: PracticalSignificance
     evidence_category: EvidenceCategory
-    treatment_summary: ContinuousArmSummary | BinaryArmSummary
-    control_summary: ContinuousArmSummary | BinaryArmSummary
+    treatment_summary: ContinuousArmSummary | BinaryArmSummary | None = None
+    control_summary: ContinuousArmSummary | BinaryArmSummary | None = None
     point_effect: PointEffect | None = None
     test_result: RandomizedTestResult | None = None
     assumptions: tuple[AssumptionAssessment, ...]
@@ -243,13 +243,25 @@ class RandomizedAnalysisResult(ContractModel):
     configuration_provenance: ProvenanceRecord | None = None
     abstention_reason: RandomizedAbstentionReason | None = None
 
+    @field_validator("diagnostics")
+    @classmethod
+    def canonicalize_diagnostics(
+        cls,
+        value: tuple[RandomizedDiagnostic, ...],
+    ) -> tuple[RandomizedDiagnostic, ...]:
+        return tuple(
+            sorted(
+                value,
+                key=lambda diagnostic: (
+                    diagnostic.code,
+                    diagnostic.category.value,
+                    diagnostic.status.value,
+                ),
+            )
+        )
+
     @model_validator(mode="after")
     def validate_result_shape(self) -> Self:
-        if self.treatment_summary.arm_id == self.control_summary.arm_id:
-            raise ValueError("treatment and control arm identifiers must differ")
-        if type(self.treatment_summary) is not type(self.control_summary):
-            raise ValueError("treatment and control summaries must have the same arm type")
-
         expected_configuration_provenance = self.configuration.configuration_provenance()
         if self.configuration_provenance is None:
             object.__setattr__(self, "configuration_provenance", expected_configuration_provenance)
@@ -262,6 +274,10 @@ class RandomizedAnalysisResult(ContractModel):
             ComputationStatus.INVALID,
         }
         if self.status in non_numerical_statuses:
+            if self.treatment_summary is not None or self.control_summary is not None:
+                raise ValueError(
+                    "abstained, unsupported, and invalid results must not include arm summaries"
+                )
             if self.point_effect is not None or self.test_result is not None:
                 raise ValueError(
                     "abstained, unsupported, and invalid results must not include point_effect "
@@ -270,9 +286,22 @@ class RandomizedAnalysisResult(ContractModel):
             if self.abstention_reason is None:
                 raise ValueError("non-numerical results require an abstention_reason")
         else:
+            if self.treatment_summary is None or self.control_summary is None:
+                raise ValueError("completed and inconclusive results require arm summaries")
+            if self.treatment_summary.arm_id == self.control_summary.arm_id:
+                raise ValueError("treatment and control arm identifiers must differ")
+            if type(self.treatment_summary) is not type(self.control_summary):
+                raise ValueError("treatment and control summaries must have the same arm type")
             if self.point_effect is None or self.test_result is None:
                 raise ValueError(
                     "completed and inconclusive results require point_effect and test_result"
+                )
+            if (
+                self.test_result.confidence_interval.confidence_level
+                != self.configuration.confidence_level
+            ):
+                raise ValueError(
+                    "test_result confidence_interval confidence_level must match configuration"
                 )
             if self.abstention_reason is not None:
                 raise ValueError("numerical results must not include an abstention_reason")

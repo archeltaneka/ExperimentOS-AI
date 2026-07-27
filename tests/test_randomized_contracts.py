@@ -325,3 +325,33 @@ def test_result_canonicalizes_diagnostic_order() -> None:
         "a_diagnostic",
         "z_diagnostic",
     ]
+
+
+def test_result_canonicalizes_diagnostics_that_share_the_former_sort_key() -> None:
+    earlier = RandomizedDiagnostic(
+        code="same_code",
+        category=RandomizedDiagnosticCategory.INPUT,
+        severity="info",
+        status="failed",
+        message="Earlier message.",
+        context={"a": 1},
+        recommended_action="First action.",
+    )
+    later = RandomizedDiagnostic(
+        code="same_code",
+        category=RandomizedDiagnosticCategory.INPUT,
+        severity="warning",
+        status="failed",
+        message="Later message.",
+        context={"a": 2},
+        recommended_action="Second action.",
+    )
+    payload = _completed_result().model_dump()
+    payload["diagnostics"] = (later, earlier)
+
+    result = RandomizedAnalysisResult.model_validate(payload)
+
+    assert [diagnostic.message for diagnostic in result.diagnostics] == [
+        "Earlier message.",
+        "Later message.",
+    ]

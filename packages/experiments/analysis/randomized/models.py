@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import math
 from collections.abc import Mapping
 from enum import StrEnum
@@ -252,10 +253,11 @@ class RandomizedAnalysisResult(ContractModel):
         return tuple(
             sorted(
                 value,
-                key=lambda diagnostic: (
-                    diagnostic.code,
-                    diagnostic.category.value,
-                    diagnostic.status.value,
+                key=lambda diagnostic: json.dumps(
+                    diagnostic.model_dump(mode="json"),
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                    sort_keys=True,
                 ),
             )
         )

@@ -305,9 +305,8 @@ def _welch_uncertainty(
     control_component = control_variance / control_n
     variance_of_effect = treatment_component + control_component
     standard_error = math.sqrt(variance_of_effect)
-    denominator = (
-        (treatment_component**2) / (treatment_n - 1)
-        + (control_component**2) / (control_n - 1)
+    denominator = (treatment_component**2) / (treatment_n - 1) + (control_component**2) / (
+        control_n - 1
     )
     degrees_of_freedom = (variance_of_effect**2) / denominator if denominator else 0.0
     if not math.isfinite(standard_error) or not math.isfinite(degrees_of_freedom):

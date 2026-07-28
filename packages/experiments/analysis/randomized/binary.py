@@ -253,9 +253,7 @@ def _pooled_null_uncertainty(
     control_n: int,
 ) -> tuple[float, float]:
     pooled_rate = (treatment_successes + control_successes) / (treatment_n + control_n)
-    variance = pooled_rate * (1.0 - pooled_rate) * (
-        (1.0 / treatment_n) + (1.0 / control_n)
-    )
+    variance = pooled_rate * (1.0 - pooled_rate) * ((1.0 / treatment_n) + (1.0 / control_n))
     standard_error = math.sqrt(variance)
     if not math.isfinite(pooled_rate) or not math.isfinite(standard_error):
         raise ValueError("pooled null uncertainty must be finite")
@@ -269,9 +267,8 @@ def _unpooled_interval_standard_error(
     control_rate: float,
     control_n: int,
 ) -> float:
-    variance = (
-        (treatment_rate * (1.0 - treatment_rate) / treatment_n)
-        + (control_rate * (1.0 - control_rate) / control_n)
+    variance = (treatment_rate * (1.0 - treatment_rate) / treatment_n) + (
+        control_rate * (1.0 - control_rate) / control_n
     )
     standard_error = math.sqrt(variance)
     if not math.isfinite(standard_error):

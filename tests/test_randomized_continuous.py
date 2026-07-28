@@ -157,8 +157,7 @@ def test_analyze_continuous_welch_marks_relative_lift_unavailable_at_zero_baseli
     assert result.point_effect is not None
     assert result.point_effect.relative_effect is None
     assert (
-        result.point_effect.relative_effect_availability
-        is RelativeEffectAvailability.UNAVAILABLE
+        result.point_effect.relative_effect_availability is RelativeEffectAvailability.UNAVAILABLE
     )
     assert result.point_effect.relative_effect_reason is RelativeEffectReason.ZERO_CONTROL_BASELINE
     assert "zero_control_baseline" in {diagnostic.code for diagnostic in result.diagnostics}

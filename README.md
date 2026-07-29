@@ -90,6 +90,7 @@ E2E evaluation coverage.
 ```text
 apps/
   api/                      FastAPI application entry point and dependency wiring
+  web/                      Next.js frontend foundation (see docs/frontend.md)
 data/
   eval/                     Offline QA evaluation dataset
   synthetic/experiments/    Generated synthetic experiment corpus
@@ -355,6 +356,7 @@ uv run pytest tests/test_db_models.py tests/test_ingestion_load_experiment.py te
 Focused guides:
 
 - [Development](docs/development.md)
+- [Frontend development](docs/frontend.md)
 - [Architecture](docs/architecture.md)
 - [API Reference](docs/api.md)
 - [Dataset Guide](docs/dataset.md)

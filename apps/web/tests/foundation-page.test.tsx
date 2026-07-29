@@ -4,8 +4,13 @@ import { describe, expect, it } from "vitest";
 import Home from "@/app/page";
 import { Providers } from "@/app/providers";
 import { capabilityStatuses } from "@/lib/capability-status";
+import { cn } from "@/lib/utils";
 
 describe("foundation page", () => {
+  it("composes class names through the shared utility", () => {
+    expect(cn("base", false && "hidden", "active")).toBe("base active");
+  });
+
   it("renders the temporary foundation screen and every capability status", () => {
     render(<Home />);
 

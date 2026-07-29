@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-ring: var(--ring);
+  --color-status-completed: var(--status-completed);
+  --color-status-progress: var(--status-progress);
+  --color-status-planned: var(--status-planned);
+  --color-status-research: var(--status-research);
+  --color-status-unavailable: var(--status-unavailable);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.145 0.008 265);
+  --foreground: oklch(0.965 0.004 265);
+  --card: oklch(0.185 0.009 265);
+  --card-foreground: oklch(0.965 0.004 265);
+  --muted: oklch(0.23 0.01 265);
+  --muted-foreground: oklch(0.7 0.012 265);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --primary: oklch(0.83 0.06 245);
+  --primary-foreground: oklch(0.18 0.012 265);
+  --secondary: oklch(0.27 0.012 265);
+  --secondary-foreground: oklch(0.94 0.005 265);
+  --accent: oklch(0.28 0.018 245);
+  --accent-foreground: oklch(0.95 0.006 265);
+  --destructive: oklch(0.7 0.16 25);
+  --destructive-foreground: oklch(0.98 0.005 25);
+  --ring: oklch(0.75 0.07 245);
+  --status-completed: oklch(0.73 0.13 155);
+  --status-progress: oklch(0.78 0.12 85);
+  --status-planned: oklch(0.73 0.08 245);
+  --status-research: oklch(0.72 0.1 305);
+  --status-unavailable: oklch(0.64 0.015 265);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  min-width: 320px;
+}

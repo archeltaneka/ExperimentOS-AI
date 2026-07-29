@@ -35,9 +35,10 @@ independently runnable from the repository root with `uv run uvicorn apps.api.ma
   their respective responsibilities without creating premature abstractions.
 - `lib/capability-status.ts` centralizes honest capability labels and styling.
 
-The root route is a temporary foundation preview only. It verifies typography, semantic tokens,
-dark-first styling, primitive components, responsive spacing, and capability statuses. It is not a
-landing page, application shell, navigation, dashboard, explorer, roadmap, or API surface.
+Issue #115 provides the shared shell: a sticky desktop sidebar at the `lg` breakpoint and a labelled
+mobile navigation drawer below it. The drawer closes on backdrop interaction, route selection, or
+Escape and returns focus to its trigger. Route definitions are centralized in `lib/navigation.ts`.
+All five MVP routes are intentionally limited to placeholders until their dedicated issues.
 
 ## Environment variables
 
@@ -51,5 +52,5 @@ No backend integration, API adapter, product workflow, experiment fixture, evalu
 mock response exists yet. Recharts, Lucide, and Framer Motion are installed as approved foundation
 dependencies; only Lucide and restrained Framer Motion are exercised by the temporary preview.
 
-Issue #1 establishes the frontend foundation and design system only. A later issue will replace the
-preview with the real product UI.
+Issue #1 establishes the frontend foundation and design system. Issue #115 composes that foundation
+into a navigation shell without adding product workflows or backend integration.

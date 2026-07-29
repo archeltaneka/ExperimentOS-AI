@@ -11,16 +11,11 @@ describe("foundation page", () => {
     expect(cn("base", false && "hidden", "active")).toBe("base active");
   });
 
-  it("renders the temporary foundation screen and every capability status", () => {
+  it("renders the overview placeholder", () => {
     render(<Home />);
 
-    expect(screen.getByRole("heading", { name: "ExperimentOS AI" })).toBeInTheDocument();
-    expect(screen.getByText("Foundation preview")).toBeInTheDocument();
-    expect(screen.getByText("Completed")).toBeInTheDocument();
-    expect(screen.getByText("In progress")).toBeInTheDocument();
-    expect(screen.getByText("Planned")).toBeInTheDocument();
-    expect(screen.getByText("Future research")).toBeInTheDocument();
-    expect(screen.getByText("Unavailable")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
+    expect(screen.getByText("Coming in Issue #2")).toBeInTheDocument();
   });
 
   it("exposes every honest capability status through the central mapping", () => {

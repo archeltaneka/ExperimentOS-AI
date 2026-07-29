@@ -30,6 +30,23 @@ def test_health_endpoint_returns_ok() -> None:
     assert response.json() == {"status": "ok", "service": "experimentos-api"}
 
 
+def test_api_allows_local_frontend_cors_preflight() -> None:
+    client = TestClient(app)
+
+    response = client.options(
+        "/ask",
+        headers={
+            "Origin": "http://127.0.0.1:3000",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:3000"
+    assert "POST" in response.headers["access-control-allow-methods"]
+
+
 def test_embedding_provider_name_uses_dotenv(monkeypatch, tmp_path: Path) -> None:
     dotenv_path = tmp_path / ".env"
     dotenv_path.write_text("EMBEDDING_PROVIDER=huggingface\n", encoding="utf-8")

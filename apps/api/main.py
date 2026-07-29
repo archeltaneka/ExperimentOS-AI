@@ -10,6 +10,7 @@ from functools import lru_cache
 from typing import Annotated, Protocol
 
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -60,6 +61,13 @@ async def app_lifespan(app: FastAPI):
 
 
 app = FastAPI(title="ExperimentOS AI API", version="0.1.0", lifespan=app_lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=("http://localhost:3000", "http://127.0.0.1:3000"),
+    allow_credentials=False,
+    allow_methods=("GET", "POST", "OPTIONS"),
+    allow_headers=("Content-Type",),
+)
 
 
 @lru_cache(maxsize=1)

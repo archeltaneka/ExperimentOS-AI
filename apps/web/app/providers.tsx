@@ -8,8 +8,8 @@ function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60_000,
-        retry: 1,
+        staleTime: 5 * 60_000,
+        retry: false,
         refetchOnWindowFocus: false,
       },
     },

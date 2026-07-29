@@ -94,7 +94,7 @@ describe("typed data layer", () => {
     const phases = await createServices({ dataMode: "mock" }).roadmap.list();
 
     expect(phases.map((phase) => phase.status)).toEqual(
-      expect.arrayContaining(["completed", "in_progress", "planned"]),
+      expect.arrayContaining(["completed", "in_progress", "future"]),
     );
   });
 

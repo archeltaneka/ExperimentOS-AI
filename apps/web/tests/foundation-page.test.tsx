@@ -11,11 +11,10 @@ describe("foundation page", () => {
     expect(cn("base", false && "hidden", "active")).toBe("base active");
   });
 
-  it("renders the overview placeholder", () => {
-    render(<Home />);
+  it("renders the landing page", async () => {
+    render(await Home());
 
-    expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
-    expect(screen.getByText("Coming in Issue #2")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Evidence-backed answers for product experiments." })).toBeInTheDocument();
   });
 
   it("exposes every honest capability status through the central mapping", () => {

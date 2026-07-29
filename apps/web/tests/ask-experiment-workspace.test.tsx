@@ -8,6 +8,16 @@ const reset = vi.fn();
 
 vi.mock("@/hooks/use-services", () => ({
   useAskMutation: () => ({ mutate, reset, isPending: false, isError: false, error: null }),
+  useExperimentsQuery: () => ({
+    data: [
+      {
+        id: "8bb4bf4d-a372-4b6e-93a5-0dd9ad7c8750",
+        name: "Adaptive payment recommendation",
+      },
+      { id: "508d252d-0772-4a56-aa75-2e8f933a2ca1", name: "Hotel image quality" },
+    ],
+    isPending: false,
+  }),
   useAskDataSource: () => ({
     kind: "deterministic_fixture",
     label: "Development fixture",
@@ -55,6 +65,16 @@ describe("AskExperimentWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ask question" }));
     expect(screen.getByText("Enter a question before asking.")).toBeInTheDocument();
     expect(mutate).not.toHaveBeenCalled();
+  });
+
+  it("selects an experiment context by name instead of exposing a UUID text field", () => {
+    render(<AskExperimentWorkspace />);
+
+    expect(screen.getByRole("combobox", { name: "Experiment context" })).toHaveValue(
+      "8bb4bf4d-a372-4b6e-93a5-0dd9ad7c8750",
+    );
+    expect(screen.getByRole("option", { name: "Adaptive payment recommendation" })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Experiment UUID")).not.toBeInTheDocument();
   });
 
   it("populates editable text from an example and submits only with Ctrl+Enter", () => {

@@ -1,3 +1,7 @@
+import type { CapabilityStatus as DomainCapabilityStatus } from "@/types/domain";
+
+export type CapabilityStatus = DomainCapabilityStatus;
+
 export const capabilityStatuses = {
   completed: {
     label: "Completed",
@@ -19,6 +23,4 @@ export const capabilityStatuses = {
     label: "Unavailable",
     className: "border-status-unavailable/30 bg-status-unavailable/10 text-status-unavailable",
   },
-} as const;
-
-export type CapabilityStatus = keyof typeof capabilityStatuses;
+} as const satisfies Record<DomainCapabilityStatus, { label: string; className: string }>;

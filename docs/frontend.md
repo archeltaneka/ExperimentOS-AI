@@ -42,9 +42,13 @@ All five MVP routes are intentionally limited to placeholders until their dedica
 
 ## Environment variables
 
-No frontend environment variables are needed today. When one is introduced, use `apps/web/.env.local`
-for local values and expose only intentional browser-safe values with the `NEXT_PUBLIC_` prefix.
+Use `apps/web/.env.local` for local frontend values and expose only intentional browser-safe values
+with the `NEXT_PUBLIC_` prefix.
 Do not place frontend secrets in the root backend `.env` file or commit `.env.local`.
+
+Issue #116 introduces `NEXT_PUBLIC_DATA_MODE` and `NEXT_PUBLIC_API_BASE_URL` for the typed frontend
+data boundary. See [`docs/frontend-data-layer.md`](frontend-data-layer.md) for adapter selection,
+verified `/ask` contract details, deterministic-fixture rules, and current backend gaps.
 
 ## Current data status and Issue #1 boundary
 

@@ -30,12 +30,14 @@ export interface ExperimentDetail extends Experiment {
 export interface SimilarityScore { value: number; }
 export interface RetrievedChunk {
   experimentId: string; documentId: string; documentName: string; text: string;
-  similarity: number; section?: string;
+  similarity?: number; section?: string; experimentName?: string; chunkType?: string;
 }
 export interface Citation { experimentId: string; documentId?: string; documentName: string; quote?: string; section?: string; score?: number; }
 export interface RequestMetadata {
   intent?: string; requiredAgents: readonly string[]; approvalStatus?: string;
-  prompt?: { id: string; version: string }; workflow?: { trace: readonly WorkflowEvent[]; metrics: Readonly<Record<string, unknown>> };
+  prompt?: { id: string; version: string }; model?: string; latencyMs?: number;
+  retrievedChunkCount?: number; averageSimilarity?: number;
+  workflow?: { trace: readonly WorkflowEvent[]; metrics: Readonly<Record<string, unknown>> };
 }
 export interface WorkflowEvent { node: string; event: string; at?: string; }
 export interface RagAnswer { answer: string; citations: readonly Citation[]; retrievedChunks: readonly RetrievedChunk[]; requestMetadata: RequestMetadata; }

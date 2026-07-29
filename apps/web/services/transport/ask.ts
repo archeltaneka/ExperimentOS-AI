@@ -22,7 +22,7 @@ export function mapAskResponse(response: AskResponseTransport): RagAnswer {
 
 function mapChunk(value: unknown): RetrievedChunk {
   const item = record(value); const metadata = record(item.metadata);
-  return { experimentId: string(item.experiment_id) ?? "", documentId: string(item.document_id) ?? "", documentName: string(item.document_name) ?? string(metadata.document_name) ?? "Untitled document", text: string(item.chunk_text) ?? string(item.content) ?? "", similarity: number(item.similarity) ?? number(item.score) ?? 0, section: string(metadata.section) };
+  return { experimentId: string(item.experiment_id) ?? "", documentId: string(item.document_id) ?? "", documentName: string(item.document_name) ?? string(metadata.document_name) ?? "Untitled document", text: string(item.chunk_text) ?? string(item.content) ?? "", similarity: number(item.similarity) ?? number(item.score), section: string(metadata.section), experimentName: string(item.experiment_name), chunkType: string(metadata.chunk_type) };
 }
 function mapCitation(value: unknown, chunks: readonly RetrievedChunk[]): Citation {
   const item = record(value); const metadata = record(item.metadata); const documentId = string(item.document_id);
@@ -30,5 +30,7 @@ function mapCitation(value: unknown, chunks: readonly RetrievedChunk[]): Citatio
   return { experimentId: string(item.experiment_id) ?? matching?.experimentId ?? "", documentId, documentName: string(item.document) ?? string(metadata.document_name) ?? matching?.documentName ?? "Untitled document", quote: string(item.quote), section: string(item.section) ?? string(metadata.section), score: number(item.similarity) ?? matching?.similarity };
 }
 function mapMetadata(response: AskResponseTransport): RequestMetadata {
-  return { intent: response.intent ?? undefined, requiredAgents: response.required_agents ?? [], approvalStatus: response.approval_status ?? undefined, prompt: response.prompt_metadata ? { id: response.prompt_metadata.prompt_id, version: response.prompt_metadata.prompt_version } : undefined, workflow: response.agent_trace || response.agent_metrics ? { trace: response.agent_trace?.map((item) => { const event = record(item); return { node: string(event.node) ?? "unknown", event: string(event.event) ?? "unknown", at: string(event.at) }; }) ?? [], metrics: response.agent_metrics ?? {} } : undefined };
+  const retrieval = response.retrieval_metrics;
+  const llm = response.llm_metrics;
+  return { intent: response.intent ?? undefined, requiredAgents: response.required_agents ?? [], approvalStatus: response.approval_status ?? undefined, prompt: response.prompt_metadata ? { id: response.prompt_metadata.prompt_id, version: response.prompt_metadata.prompt_version } : undefined, model: string(llm.model), latencyMs: number(llm.latency_ms), retrievedChunkCount: number(retrieval.retrieved_chunks), averageSimilarity: number(retrieval.average_similarity), workflow: response.agent_trace || response.agent_metrics ? { trace: response.agent_trace?.map((item) => { const event = record(item); return { node: string(event.node) ?? "unknown", event: string(event.event) ?? "unknown", at: string(event.at) }; }) ?? [], metrics: response.agent_metrics ?? {} } : undefined };
 }

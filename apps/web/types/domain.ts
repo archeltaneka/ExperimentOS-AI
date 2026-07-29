@@ -2,7 +2,7 @@ export type ExperimentStatus = "completed" | "running" | "inconclusive" | "stopp
 export type DecisionStatus = "approved" | "rejected" | "pending" | "not_required";
 export type AnalysisStatus = "completed" | "in-progress" | "planned" | "future-research" | "unavailable";
 export type CapabilityStatus = AnalysisStatus;
-export type RoadmapPhaseStatus = "completed" | "in_progress" | "planned";
+export type RoadmapPhaseStatus = "completed" | "in_progress" | "planned" | "future";
 export type BusinessImpactState = "available" | "not_estimated" | "unavailable";
 export type DataSourceKind = "live_backend" | "deterministic_fixture" | "local_configuration" | "unavailable";
 

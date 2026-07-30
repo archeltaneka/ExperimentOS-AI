@@ -25,6 +25,7 @@ export interface ExperimentDetail extends Experiment {
   summary: string;
   metrics: readonly ExperimentMetric[];
   capabilities: readonly Capability[];
+  report?: string;
 }
 
 export interface SimilarityScore { value: number; }

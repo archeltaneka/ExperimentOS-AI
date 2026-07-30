@@ -1,6 +1,6 @@
 import { ApplicationShell } from "@/components/application-shell";
-import { AskExperimentWorkspace } from "@/features/ask-experiment/ask-experiment-workspace";
+import { ExperimentBrowser } from "@/features/ask-experiment/experiment-browser";
 
 export default function AskExperiment() {
-  return <ApplicationShell><AskExperimentWorkspace /></ApplicationShell>;
+  return <ApplicationShell><ExperimentBrowser /></ApplicationShell>;
 }

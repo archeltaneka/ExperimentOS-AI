@@ -6,10 +6,10 @@ import Roadmap from "@/app/roadmap/page";
 import { Providers } from "@/app/providers";
 
 describe("placeholder routes", () => {
-  it("renders the Ask Experiment workspace inside the application route", () => {
+  it("renders the experiment browser inside the application route", () => {
     render(<Providers><AskExperiment /></Providers>);
-    expect(screen.getByRole("heading", { name: "Ask Experiment" })).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "Question" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Experiments" })).toBeInTheDocument();
+    expect(screen.getByText("Loading experiments…")).toBeInTheDocument();
   });
 
   it("renders the roadmap as a placeholder", () => {

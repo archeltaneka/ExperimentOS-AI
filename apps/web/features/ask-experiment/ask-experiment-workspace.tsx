@@ -21,7 +21,7 @@ const examples = [
 ];
 const maxQuestionLength = 1_000;
 
-export function AskExperimentWorkspace({ initialAnswer }: { initialAnswer?: RagAnswer }) {
+export function AskExperimentWorkspace({ initialAnswer, experimentId }: { initialAnswer?: RagAnswer; experimentId?: string }) {
   const mutation = useAskMutation();
   const source = useAskDataSource();
   const { data: experiments, isPending: isExperimentsPending } = useExperimentsQuery();
@@ -30,7 +30,7 @@ export function AskExperimentWorkspace({ initialAnswer }: { initialAnswer?: RagA
   const [answer, setAnswer] = useState<RagAnswer | undefined>(initialAnswer);
   const [validation, setValidation] = useState<string | undefined>();
   const [selectedExperimentId, setSelectedExperimentId] = useState("");
-  const activeExperimentId = selectedExperimentId || experiments?.[0]?.id || "";
+  const activeExperimentId = experimentId || selectedExperimentId || experiments?.[0]?.id || "";
 
   const submit = (event?: FormEvent) => {
     event?.preventDefault();
@@ -54,7 +54,7 @@ export function AskExperimentWorkspace({ initialAnswer }: { initialAnswer?: RagA
       <ContentCard className="h-fit space-y-6 p-5 sm:p-6">
         <div><h2 className="text-lg font-semibold">Question workspace</h2><p className="mt-1 text-sm text-muted-foreground">Questions are scoped to one experiment because the current live API requires its UUID.</p></div>
         <form className="space-y-4" onSubmit={submit}>
-          <div className="space-y-2"><label className="text-sm font-medium" htmlFor="experiment-id">Experiment context</label><select id="experiment-id" value={activeExperimentId} onChange={(event) => setSelectedExperimentId(event.target.value)} disabled={isExperimentsPending || !experiments?.length} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-describedby="experiment-help">{isExperimentsPending ? <option>Loading experiment contexts…</option> : experiments?.map((experiment) => <option key={experiment.id} value={experiment.id}>{experiment.name}</option>)}</select><p id="experiment-help" className="text-xs text-muted-foreground">{source.kind === "live_backend" ? "Context labels are local fixtures; the selected UUID must also exist in the live backend." : "Choose the experiment context used to retrieve evidence."}</p></div>
+          {!experimentId && <div className="space-y-2"><label className="text-sm font-medium" htmlFor="experiment-id">Experiment context</label><select id="experiment-id" value={activeExperimentId} onChange={(event) => setSelectedExperimentId(event.target.value)} disabled={isExperimentsPending || !experiments?.length} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-describedby="experiment-help">{isExperimentsPending ? <option>Loading experiment contexts…</option> : experiments?.map((experiment) => <option key={experiment.id} value={experiment.id}>{experiment.name}</option>)}</select><p id="experiment-help" className="text-xs text-muted-foreground">Choose the experiment context used to retrieve evidence.</p></div>}
           <div className="space-y-2"><label className="text-sm font-medium" htmlFor="ask-question">Question</label><textarea id="ask-question" name="question" value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={onKeyDown} maxLength={maxQuestionLength} rows={7} className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="For example: What evidence supported the recommendation?" aria-describedby={validation || error ? "ask-feedback" : undefined} /><p className="text-xs text-muted-foreground">Use Ctrl+Enter or Cmd+Enter to submit. Enter adds a new line.</p></div>
           {(validation || error) && <p id="ask-feedback" role="alert" className="text-sm text-destructive">{validation ?? error?.userMessage}</p>}
           <div className="flex flex-wrap gap-3"><Button type="submit" disabled={mutation.isPending}><Send aria-hidden="true" className="mr-2 size-4" />{mutation.isPending ? "Asking…" : "Ask question"}</Button>{(answer || mutation.isError) && <Button type="button" variant="outline" onClick={resetResult}><RotateCcw aria-hidden="true" className="mr-2 size-4" />Reset result</Button>}</div>

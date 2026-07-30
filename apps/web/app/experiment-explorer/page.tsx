@@ -1,3 +1,9 @@
-import { PagePlaceholder } from "@/components/page-placeholder";
 import { ApplicationShell } from "@/components/application-shell";
-export default function ExperimentExplorer() { return <ApplicationShell><PagePlaceholder title="Experiment Explorer" description="Browse experiment records and evidence." issue={4} /></ApplicationShell>; }
+import { PageContainer } from "@/components/layout/page-container";
+import { PageHeader } from "@/components/layout/page-header";
+import { Section } from "@/components/layout/section";
+import { ExperimentExplorer } from "@/features/experiment-explorer/experiment-explorer";
+
+export default function ExperimentExplorerPage() {
+  return <ApplicationShell><PageContainer><Section><PageHeader description="Search experiment records, review decisions, and inspect analysis readiness." title="Experiment Explorer" /><div className="mt-8"><ExperimentExplorer /></div></Section></PageContainer></ApplicationShell>;
+}

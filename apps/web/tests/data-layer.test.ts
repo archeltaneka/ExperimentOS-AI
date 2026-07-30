@@ -123,6 +123,36 @@ describe("typed data layer", () => {
     expect(new ApiError({ code: "server", message: "safe", diagnostic: "detail" }).userMessage).toBe("The service could not complete the request.");
   });
 
+  it("calls the browser fetch function with the global receiver", async () => {
+    vi.stubGlobal(
+      "fetch",
+      function (this: unknown) {
+        if (this !== globalThis) throw new TypeError("Illegal invocation");
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              answer: "Grounded answer.",
+              citations: [],
+              retrieved_chunks: [],
+              retrieval_metrics: {},
+              llm_metrics: {},
+            }),
+          ),
+        );
+      },
+    );
+
+    try {
+      const service = new HttpAskService({ baseUrl: "http://api.test" });
+
+      await expect(service.ask({ question: "Q", experimentId: knownExperimentId })).resolves.toMatchObject({
+        answer: "Grounded answer.",
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("keeps query keys stable and parameterized", () => {
     expect(askQueryKeys.experimentDetail(knownExperimentId)).toEqual([
       "experiments",

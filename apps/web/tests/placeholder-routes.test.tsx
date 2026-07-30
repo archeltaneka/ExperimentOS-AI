@@ -3,12 +3,13 @@ import { describe, expect, it } from "vitest";
 
 import AskExperiment from "@/app/ask-experiment/page";
 import Roadmap from "@/app/roadmap/page";
+import { Providers } from "@/app/providers";
 
 describe("placeholder routes", () => {
-  it("keeps future product pages limited to a title, description, and issue notice", () => {
-    render(<AskExperiment />);
-    expect(screen.getByRole("heading", { name: "Ask Experiment" })).toBeInTheDocument();
-    expect(screen.getByText("Coming in Issue #3")).toBeInTheDocument();
+  it("renders the experiment browser inside the application route", () => {
+    render(<Providers><AskExperiment /></Providers>);
+    expect(screen.getByRole("heading", { name: "Experiments" })).toBeInTheDocument();
+    expect(screen.getByText("Loading experiments…")).toBeInTheDocument();
   });
 
   it("renders the roadmap as a placeholder", () => {

@@ -8,7 +8,7 @@ const liveSource: DataSource = { kind: "live_backend", label: "Live backend", de
 
 export class HttpAskService implements AskService {
   readonly source = liveSource; private readonly requestFetch: typeof globalThis.fetch; private readonly timeoutMs: number;
-  constructor(private readonly options: HttpAskServiceOptions) { this.requestFetch = options.fetch ?? globalThis.fetch; this.timeoutMs = options.timeoutMs ?? 15_000; }
+  constructor(private readonly options: HttpAskServiceOptions) { this.requestFetch = options.fetch ?? globalThis.fetch.bind(globalThis); this.timeoutMs = options.timeoutMs ?? 60_000; }
   async ask(request: AskRequest): Promise<RagAnswer> {
     const controller = new AbortController(); const timeout = setTimeout(() => controller.abort("timeout"), this.timeoutMs);
     const abort = () => controller.abort("aborted"); request.signal?.addEventListener("abort", abort, { once: true });

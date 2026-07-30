@@ -10,6 +10,8 @@ from functools import lru_cache
 from typing import Annotated, Protocol
 
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -25,7 +27,7 @@ from apps.api.ask_service import (
 )
 from packages.agents.service import AgentWorkflowService
 from packages.config.env import load_environment
-from packages.db.models import Experiment
+from packages.db.models import Document, Experiment
 from packages.db.session import create_async_session_factory, create_database_engine
 from packages.ingestion.embeddings import build_embedding_provider
 from packages.llm.client import (
@@ -60,6 +62,24 @@ async def app_lifespan(app: FastAPI):
 
 
 app = FastAPI(title="ExperimentOS AI API", version="0.1.0", lifespan=app_lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=("http://localhost:3000", "http://127.0.0.1:3000"),
+    allow_credentials=False,
+    allow_methods=("GET", "POST", "OPTIONS"),
+    allow_headers=("Content-Type",),
+)
+
+
+class ExperimentSummaryResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: str
+    status: str
+
+
+class ExperimentDetailResponse(ExperimentSummaryResponse):
+    report: str
 
 
 @lru_cache(maxsize=1)
@@ -209,6 +229,57 @@ def get_ask_service(
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok", "service": "experimentos-api"}
+
+
+@app.get("/experiments", response_model=list[ExperimentSummaryResponse])
+async def list_experiments() -> list[ExperimentSummaryResponse]:
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        experiments = (await session.scalars(select(Experiment).order_by(Experiment.name))).all()
+    return [
+        ExperimentSummaryResponse(
+            id=experiment.id,
+            name=experiment.name,
+            description=experiment.description or "",
+            status=experiment.status,
+        )
+        for experiment in experiments
+    ]
+
+
+@app.get("/experiments/{experiment_id}", response_model=ExperimentDetailResponse)
+async def get_experiment(experiment_id: uuid.UUID) -> ExperimentDetailResponse:
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        experiment = await session.get(Experiment, experiment_id)
+        if experiment is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="experiment was not found",
+            )
+        documents = (
+            await session.scalars(select(Document).where(Document.experiment_id == experiment_id))
+        ).all()
+    report = next(
+        (
+            document.content
+            for document in documents
+            if document.document_metadata.get("filename") == "report.md"
+        ),
+        None,
+    )
+    if report is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="experiment report was not found",
+        )
+    return ExperimentDetailResponse(
+        id=experiment.id,
+        name=experiment.name,
+        description=experiment.description or "",
+        status=experiment.status,
+        report=report,
+    )
 
 
 @app.post("/ask", response_model=AskResponse)

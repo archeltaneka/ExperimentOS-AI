@@ -13,8 +13,24 @@ export interface DataSource {
 }
 
 export interface ExperimentOwner { id: string; name: string; team: string; }
-export interface ExperimentMetric { name: string; value: number; unit: string; direction: "increase" | "decrease" | "neutral"; }
-export interface ExperimentDecision { status: DecisionStatus; recommendation: string; rationale: string; }
+export interface ExperimentMetric {
+  name: string;
+  value: number;
+  unit: string;
+  direction: "increase" | "decrease" | "neutral";
+  baseline?: number;
+  treatment?: number;
+  absoluteChange?: number;
+  relativeChange?: number;
+}
+export interface ExperimentDecision {
+  status: DecisionStatus;
+  recommendation: string;
+  rationale: string;
+  decidedAt?: string;
+  decidedBy?: string;
+  nextAction?: string;
+}
 export interface Experiment {
   id: string; name: string; status: ExperimentStatus; owner: ExperimentOwner; startedAt: string;
   primaryMetric: ExperimentMetric; decision: ExperimentDecision; analysisStatus: AnalysisStatus;
@@ -25,8 +41,63 @@ export interface ExperimentDetail extends Experiment {
   summary: string;
   metrics: readonly ExperimentMetric[];
   capabilities: readonly Capability[];
-  report?: string;
+  overview?: ExperimentOverview;
+  report?: ExperimentReport;
+  analysisReadiness?: AnalysisReadiness;
+  retrievedChunks?: readonly ExperimentRetrievedChunk[];
+  citations?: readonly ExperimentCitation[];
+  recordMetadata?: readonly RecordMetadataItem[];
 }
+
+export interface ExperimentOverview {
+  hypothesis?: string;
+  problemStatement?: string;
+  description?: string;
+  targetAudience?: string;
+  platform?: string;
+  experimentType?: string;
+  endedAt?: string;
+  tags?: readonly string[];
+}
+
+export interface ExperimentReport {
+  id?: string;
+  source: string;
+  executiveSummary?: string;
+  methodology?: string;
+  results?: string;
+  interpretation?: string;
+  recommendation?: string;
+  limitations?: string;
+  followUpActions?: readonly string[];
+}
+
+export type ReadinessStatus = "eligible" | "ineligible" | "needs_more_data" | "unavailable";
+export type ReadinessCheckStatus = "pass" | "fail" | "unavailable";
+export interface AnalysisReadinessCheck {
+  label: string;
+  status: ReadinessCheckStatus;
+  detail: string;
+}
+export interface AnalysisReadiness {
+  status: ReadinessStatus;
+  stage: string;
+  checks: readonly AnalysisReadinessCheck[];
+  blockedBy?: string;
+}
+
+export interface ExperimentRetrievedChunk extends RetrievedChunk {
+  id: string;
+  citationId?: string;
+}
+export interface ExperimentCitation {
+  id: string;
+  documentId?: string;
+  documentName: string;
+  chunkId?: string;
+  section?: string;
+}
+export interface RecordMetadataItem { label: string; value: string; }
 
 export interface SimilarityScore { value: number; }
 export interface RetrievedChunk {

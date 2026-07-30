@@ -25,5 +25,8 @@ export class HttpExperimentService implements ExperimentService {
 }
 function mapExperiment(value: unknown): ExperimentDetail {
   const item = value as Record<string, unknown>;
-  return { ...fallback, id: String(item.id ?? ""), name: String(item.name ?? ""), status: String(item.status ?? "draft") as Experiment["status"], summary: String(item.description ?? ""), metrics: [], capabilities: [], report: typeof item.report === "string" ? item.report : undefined };
+  const report = typeof item.report === "string"
+    ? { source: "Live backend experiment report", executiveSummary: item.report }
+    : undefined;
+  return { ...fallback, id: String(item.id ?? ""), name: String(item.name ?? ""), status: String(item.status ?? "draft") as Experiment["status"], summary: String(item.description ?? ""), metrics: [], capabilities: [], report };
 }

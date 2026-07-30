@@ -78,6 +78,26 @@ future roadmap phases. Descriptive statistics may be shown as available. CUPED, 
 Bayesian A/B testing, Difference-in-Differences, propensity-score methods, Double Machine Learning,
 EconML, DoWhy, and business-impact estimation are statuses only, never operational outputs.
 
+## Experiment detail route
+
+Issue #120 implements the deep-linkable detail route at
+`/experiment-explorer/[experimentId]`. The detail client component receives a single experiment ID
+through `useExperimentDetailQuery`; it does not import fixture modules or issue direct browser
+requests. Explorer query state is preserved in the detail URL and its explicit back link when the
+state was already represented in the Explorer URL.
+
+The standard MVP record is a deterministic fixture. It can include structured overview, recorded
+decision, descriptive metric values, report sections, readiness checks, capability statuses,
+retrieved chunks, citations, and technical record metadata. Missing values stay absent or are
+labelled unavailable. Observed metric differences are not causal estimates, and the UI does not
+calculate business impact or render fabricated inferential statistics.
+
+The backend now exposes basic `GET /experiments` and `GET /experiments/{experiment_id}` routes,
+but the detail response only contains identity, description, lifecycle status, and report text. It
+does not provide the complete decision, metric, readiness, capability, or evidence record required
+for this portfolio view. The complete experience remains explicitly fixture-backed until a
+documented read contract supplies those fields.
+
 ## Adding a future endpoint
 
 Add transport types and mapping functions first, then extend the corresponding service interface and

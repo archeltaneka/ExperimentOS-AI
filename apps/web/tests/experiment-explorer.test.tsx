@@ -97,6 +97,18 @@ describe("Experiment Explorer", () => {
     expect(screen.queryByText(/\$|AUD|USD/)).not.toBeInTheDocument();
   });
 
+  it("renders a missing live start date as unavailable instead of throwing", () => {
+    queryState.data = [
+      ...experiments,
+      { ...experiments[0], id: "exp-live", name: "Sparse live experiment", startedAt: "" },
+    ];
+
+    render(<ExperimentExplorer />);
+
+    expect(screen.getByRole("link", { name: /Sparse live experiment/i })).toBeInTheDocument();
+    expect(screen.getAllByText("Unavailable").length).toBeGreaterThan(1);
+  });
+
   it("shows distinct loading, error, no-data, and no-match states", () => {
     queryState.isPending = true;
     const { rerender } = render(<ExperimentExplorer />);

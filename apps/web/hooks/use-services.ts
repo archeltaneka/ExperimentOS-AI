@@ -10,6 +10,7 @@ const services = createServices();
 const staleTime = 5 * 60_000;
 export function useAskMutation(): UseMutationResult<RagAnswer, ApiError, AskRequest> { return useMutation({ mutationFn: (request) => services.ask.ask(request) }); }
 export function useAskDataSource(): DataSource { return services.ask.source; }
+export function useExperimentDataSource(): DataSource { return services.experiments.source; }
 export function useExperimentsQuery() { return useQuery<readonly Experiment[], ApiError>({ queryKey: askQueryKeys.experimentList(), queryFn: ({ signal }) => services.experiments.list(signal), staleTime }); }
 export function useExperimentDetailQuery(id: string) { return useQuery<ExperimentDetail, ApiError>({ queryKey: askQueryKeys.experimentDetail(id), queryFn: ({ signal }) => services.experiments.getById(id, signal), enabled: Boolean(id), staleTime }); }
 export function useEvaluationSummaryQuery() { return useQuery<EvaluationSummary, ApiError>({ queryKey: askQueryKeys.evaluationSummary(), queryFn: ({ signal }) => services.evaluations.getSummary(signal), staleTime }); }

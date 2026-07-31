@@ -1,4 +1,4 @@
-import type { CapabilityStatus as DomainCapabilityStatus } from "@/types/domain";
+import type { CapabilityStatus as DomainCapabilityStatus, RoadmapPhaseStatus } from "@/types/domain";
 
 export type CapabilityStatus = DomainCapabilityStatus;
 
@@ -24,3 +24,11 @@ export const capabilityStatuses = {
     className: "border-status-unavailable/30 bg-status-unavailable/10 text-status-unavailable",
   },
 } as const satisfies Record<DomainCapabilityStatus, { label: string; className: string }>;
+
+export const roadmapPhaseStatuses = {
+  completed: capabilityStatuses.completed,
+  in_progress: capabilityStatuses["in-progress"],
+  planned: capabilityStatuses.planned,
+  future: capabilityStatuses["future-research"],
+  research: capabilityStatuses["future-research"],
+} as const satisfies Record<RoadmapPhaseStatus, { label: string; className: string }>;

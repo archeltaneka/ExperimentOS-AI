@@ -58,7 +58,7 @@ function ArchitectureFlow() {
 }
 
 function RoadmapSummary({ phases }: { phases: readonly RoadmapPhase[] }) {
-  return <ol className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{roadmapSummary(phases).map((phase) => <li className="rounded-lg border bg-card/40 p-4" key={phase.id}><div className="flex items-center justify-between gap-3"><h3 className="font-medium">{phase.title}</h3><StatusBadge status={phase.status === "in_progress" ? "in-progress" : phase.status === "future" ? "future-research" : phase.status} /></div><p className="mt-2 text-sm leading-5 text-muted-foreground">{phase.description}</p></li>)}</ol>;
+  return <ol className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{roadmapSummary(phases).map((phase) => <li className="rounded-lg border bg-card/40 p-4" key={phase.id}><div className="flex items-center justify-between gap-3"><h3 className="font-medium">{phase.title}</h3><StatusBadge status={phase.status === "in_progress" ? "in-progress" : phase.status === "future" || phase.status === "research" ? "future-research" : phase.status} /></div><p className="mt-2 text-sm leading-5 text-muted-foreground">{phase.description}</p></li>)}</ol>;
 }
 
 export function LandingPage({ roadmap }: { roadmap: readonly RoadmapPhase[] }) {

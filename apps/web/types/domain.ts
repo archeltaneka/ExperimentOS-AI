@@ -2,13 +2,13 @@ export type ExperimentStatus = "completed" | "running" | "inconclusive" | "stopp
 export type DecisionStatus = "approved" | "rejected" | "pending" | "not_required";
 export type AnalysisStatus = "completed" | "in-progress" | "planned" | "future-research" | "unavailable";
 export type CapabilityStatus = AnalysisStatus;
-export type RoadmapPhaseStatus = "completed" | "in_progress" | "planned" | "future";
+export type RoadmapPhaseStatus = "completed" | "in_progress" | "planned" | "future" | "research";
 export type BusinessImpactState = "available" | "not_estimated" | "unavailable";
 export type DataSourceKind = "live_backend" | "deterministic_fixture" | "local_configuration" | "unavailable";
 
 export interface DataSource {
   kind: DataSourceKind;
-  label: "Live backend" | "Demo data" | "Development fixture" | "Local product configuration" | "Not yet connected";
+  label: "Live backend" | "Demo data" | "Development fixture" | "Local product configuration" | "Repository-backed roadmap" | "Not yet connected";
   detail: string;
 }
 
@@ -128,4 +128,20 @@ export interface EvaluationSummary {
 }
 export interface EvaluationCase { id: string; name: string; type: "Retrieval" | "Generation" | "Prompt regression"; status: EvaluationStatus; current?: number; baseline?: number; expected: string; reason?: string; framework: string; blocking: boolean; answerExcerpt?: string; evidence?: string; }
 export interface EvaluationDashboard { run: { id: string; name: string; status: "pass" | "fail" | "warning" | "not_evaluated"; prompt?: string; dataset: string; model?: string; createdAt: string; }; metrics: readonly EvaluationMetric[]; cases: readonly EvaluationCase[]; gate: { status: "pass" | "fail" | "warning" | "not_evaluated"; message: string; passed: number; failed: number; warnings: number; regressions: number; blockers: readonly string[]; }; promptRegression: { prompt: string; baseline: string; goldenCases: number; passed: number; failed: number; regressed: number; improved: number; unchanged: number; }; integrations: readonly { name: string; state: "available" | "not_connected"; detail: string }[]; }
-export interface RoadmapPhase { id: string; title: string; status: RoadmapPhaseStatus; description: string; capabilities: readonly Capability[]; }
+export interface RoadmapCapabilityGroup {
+  title: string;
+  description?: string;
+  capabilities: readonly Capability[];
+}
+export interface RoadmapPhase {
+  id: string;
+  number: number;
+  title: string;
+  status: RoadmapPhaseStatus;
+  description: string;
+  objective: string;
+  technicalSignificance: string;
+  limitations: string;
+  capabilityGroups: readonly RoadmapCapabilityGroup[];
+  relatedRoutes?: readonly { href: string; label: string }[];
+}

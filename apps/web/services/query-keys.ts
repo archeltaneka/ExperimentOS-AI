@@ -4,5 +4,6 @@ export const askQueryKeys = {
   experimentDetail: (id: string) => [...askQueryKeys.experiments, "detail", id] as const,
   evaluationSummary: () => ["evaluations", "summary"] as const,
   evaluationHistory: () => ["evaluations", "history"] as const,
+  evaluationDashboard: () => ["evaluations", "dashboard"] as const,
   roadmap: () => ["roadmap"] as const,
 };

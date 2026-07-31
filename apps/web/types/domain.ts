@@ -114,7 +114,10 @@ export interface RequestMetadata {
 export interface WorkflowEvent { node: string; event: string; at?: string; }
 export interface RagAnswer { answer: string; citations: readonly Citation[]; retrievedChunks: readonly RetrievedChunk[]; requestMetadata: RequestMetadata; }
 
-export interface EvaluationMetric { id: string; label: string; value: number; target: number; status: "pass" | "fail"; }
+export type ComparisonOperator = ">=" | "<=";
+export type EvaluationStatus = "pass" | "fail" | "warning" | "not_evaluated" | "regressed" | "improved" | "unchanged" | "not_gated";
+export interface EvaluationMetric { id: string; label: string; value?: number; baseline?: number; threshold?: number; target?: number; operator?: ComparisonOperator; status: EvaluationStatus; group?: "retrieval" | "generation" | "prompt"; framework?: string; sampleCount?: number; blocking?: boolean; detail?: string; }
+export function evaluateMetric(metric: Pick<EvaluationMetric, "value" | "threshold" | "operator">): "pass" | "fail" | "not_gated" { if (metric.value === undefined || metric.threshold === undefined || metric.operator === undefined) return "not_gated"; return metric.operator === ">=" ? (metric.value >= metric.threshold ? "pass" : "fail") : (metric.value <= metric.threshold ? "pass" : "fail"); }
 export interface EvaluationHistoryPoint { date: string; score: number; }
 export interface PromptRegressionResult { name: string; baseline: number; candidate: number; status: "pass" | "regression"; }
 export interface QualityGateResult { status: "pass" | "quality_fail" | "infrastructure_fail"; message: string; }
@@ -123,4 +126,6 @@ export interface EvaluationSummary {
   metrics: readonly EvaluationMetric[]; promptRegressions: readonly PromptRegressionResult[];
   qualityGate: QualityGateResult; capabilities: readonly Capability[];
 }
+export interface EvaluationCase { id: string; name: string; type: "Retrieval" | "Generation" | "Prompt regression"; status: EvaluationStatus; current?: number; baseline?: number; expected: string; reason?: string; framework: string; blocking: boolean; answerExcerpt?: string; evidence?: string; }
+export interface EvaluationDashboard { run: { id: string; name: string; status: "pass" | "fail" | "warning" | "not_evaluated"; prompt?: string; dataset: string; model?: string; createdAt: string; }; metrics: readonly EvaluationMetric[]; cases: readonly EvaluationCase[]; gate: { status: "pass" | "fail" | "warning" | "not_evaluated"; message: string; passed: number; failed: number; warnings: number; regressions: number; blockers: readonly string[]; }; promptRegression: { prompt: string; baseline: string; goldenCases: number; passed: number; failed: number; regressed: number; improved: number; unchanged: number; }; integrations: readonly { name: string; state: "available" | "not_connected"; detail: string }[]; }
 export interface RoadmapPhase { id: string; title: string; status: RoadmapPhaseStatus; description: string; capabilities: readonly Capability[]; }

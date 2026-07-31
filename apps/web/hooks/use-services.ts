@@ -18,3 +18,4 @@ export function useEvaluationHistoryQuery() { return useQuery<readonly Evaluatio
 export function useEvaluationDataSource(): DataSource { return services.evaluations.source; }
 export function useEvaluationDashboardQuery() { return useQuery<EvaluationDashboard, ApiError>({ queryKey: askQueryKeys.evaluationDashboard(), queryFn: ({ signal }) => services.evaluations.getDashboard(signal), staleTime }); }
 export function useRoadmapQuery() { return useQuery<readonly RoadmapPhase[], ApiError>({ queryKey: askQueryKeys.roadmap(), queryFn: ({ signal }) => services.roadmap.list(signal), staleTime: Infinity }); }
+export function useRoadmapDataSource(): DataSource { return services.roadmap.source; }

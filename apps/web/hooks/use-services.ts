@@ -5,7 +5,7 @@ import type { ApiError } from "@/services/errors";
 import type { AskRequest } from "@/services/contracts";
 import type { DataSource } from "@/types/domain";
 import { askQueryKeys } from "@/services/query-keys";
-import type { EvaluationHistoryPoint, EvaluationSummary, Experiment, ExperimentDetail, RagAnswer, RoadmapPhase } from "@/types/domain";
+import type { EvaluationDashboard, EvaluationHistoryPoint, EvaluationSummary, Experiment, ExperimentDetail, RagAnswer, RoadmapPhase } from "@/types/domain";
 const services = createServices();
 const staleTime = 5 * 60_000;
 export function useAskMutation(): UseMutationResult<RagAnswer, ApiError, AskRequest> { return useMutation({ mutationFn: (request) => services.ask.ask(request) }); }
@@ -15,4 +15,6 @@ export function useExperimentsQuery() { return useQuery<readonly Experiment[], A
 export function useExperimentDetailQuery(id: string) { return useQuery<ExperimentDetail, ApiError>({ queryKey: askQueryKeys.experimentDetail(id), queryFn: ({ signal }) => services.experiments.getById(id, signal), enabled: Boolean(id), staleTime }); }
 export function useEvaluationSummaryQuery() { return useQuery<EvaluationSummary, ApiError>({ queryKey: askQueryKeys.evaluationSummary(), queryFn: ({ signal }) => services.evaluations.getSummary(signal), staleTime }); }
 export function useEvaluationHistoryQuery() { return useQuery<readonly EvaluationHistoryPoint[], ApiError>({ queryKey: askQueryKeys.evaluationHistory(), queryFn: ({ signal }) => services.evaluations.getHistory(signal), staleTime }); }
+export function useEvaluationDataSource(): DataSource { return services.evaluations.source; }
+export function useEvaluationDashboardQuery() { return useQuery<EvaluationDashboard, ApiError>({ queryKey: askQueryKeys.evaluationDashboard(), queryFn: ({ signal }) => services.evaluations.getDashboard(signal), staleTime }); }
 export function useRoadmapQuery() { return useQuery<readonly RoadmapPhase[], ApiError>({ queryKey: askQueryKeys.roadmap(), queryFn: ({ signal }) => services.roadmap.list(signal), staleTime: Infinity }); }

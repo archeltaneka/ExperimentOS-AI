@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SourceDisclosure } from "@/components/source-disclosure";
 import { useEvaluationDashboardQuery, useEvaluationDataSource } from "@/hooks/use-services";
 import type { EvaluationStatus } from "@/types/domain";
 
@@ -19,12 +20,12 @@ const labels: Record<EvaluationStatus, string> = {
 };
 
 const statusClasses: Record<EvaluationStatus, string> = {
-  pass: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  fail: "border-red-200 bg-red-50 text-red-800",
-  warning: "border-amber-200 bg-amber-50 text-amber-800",
+  pass: "border-status-completed/30 bg-status-completed/10 text-status-completed",
+  fail: "border-destructive/30 bg-destructive/10 text-destructive",
+  warning: "border-status-progress/30 bg-status-progress/10 text-status-progress",
   not_evaluated: "border-border bg-muted text-muted-foreground",
-  regressed: "border-red-200 bg-red-50 text-red-800",
-  improved: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  regressed: "border-destructive/30 bg-destructive/10 text-destructive",
+  improved: "border-status-completed/30 bg-status-completed/10 text-status-completed",
   unchanged: "border-border bg-muted text-muted-foreground",
   not_gated: "border-border bg-muted text-muted-foreground",
 };
@@ -65,13 +66,24 @@ export function EvaluationDashboardView() {
   const criteria = dashboard.gate.blockers.join(", ") || "No blocking criteria";
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <SourceDisclosure source={source} />
+      <section aria-label="Evaluation quality gate" className="rounded-lg border border-status-progress/40 bg-status-progress/10 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">Release quality gate</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{dashboard.gate.message}</p>
+          </div>
+          <Status status={dashboard.gate.status} />
+        </div>
+        <p className="mt-3 text-sm text-muted-foreground">{dashboard.gate.failed} failed, {dashboard.gate.warnings} warning, and {dashboard.gate.passed} passed checks. {dashboard.gate.blockers.length ? `Blockers: ${dashboard.gate.blockers.join(", ")}.` : "No blocking criteria were reported."}</p>
+      </section>
       <Card className="overflow-hidden rounded-xl bg-card shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b px-6 py-5">
           <h1 className="text-2xl font-semibold tracking-tight">Evaluations</h1>
           <div>
             <Button
-              className="bg-emerald-600 text-white hover:bg-emerald-600"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               disabled
               title="Evaluation runs are not connected yet."
             >
@@ -108,9 +120,6 @@ export function EvaluationDashboardView() {
           </table>
         </div>
       </Card>
-      <p className="px-1 text-xs text-muted-foreground">
-        {source.label}: {source.detail} Evaluation runs are not connected yet.
-      </p>
     </div>
   );
 }

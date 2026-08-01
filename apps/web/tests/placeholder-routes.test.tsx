@@ -12,8 +12,8 @@ describe("placeholder routes", () => {
     expect(screen.getByText("Loading experiments…")).toBeInTheDocument();
   });
 
-  it("renders the roadmap as a placeholder", () => {
-    render(<Roadmap />);
+  it("renders the roadmap inside the application route", () => {
+    render(<Providers><Roadmap /></Providers>);
     expect(screen.getByRole("heading", { name: "Roadmap" })).toBeInTheDocument();
   });
 });

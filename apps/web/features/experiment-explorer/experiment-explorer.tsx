@@ -68,7 +68,8 @@ function DecisionBadge({ decision }: { decision: Experiment["decision"]["status"
 
 function SortButton({ field, label, state, onSort }: { field: ExplorerSort; label: string; state: ExplorerState; onSort: (field: ExplorerSort) => void }) {
   const active = state.sort === field;
-  return <button aria-label={`Sort by ${label}`} className="inline-flex items-center gap-1 text-left font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => onSort(field)} type="button">{label}{active ? state.direction === "asc" ? <ArrowUp aria-hidden="true" className="size-3.5" /> : <ArrowDown aria-hidden="true" className="size-3.5" /> : null}</button>;
+  const direction = active ? (state.direction === "asc" ? "ascending" : "descending") : "not sorted";
+  return <button aria-label={`Sort by ${label}, currently ${direction}`} className="inline-flex items-center gap-1 text-left font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => onSort(field)} type="button">{label}{active ? state.direction === "asc" ? <ArrowUp aria-hidden="true" className="size-3.5" /> : <ArrowDown aria-hidden="true" className="size-3.5" /> : null}</button>;
 }
 
 function ExperimentTable({ experiments, state, onSort }: { experiments: readonly Experiment[]; state: ExplorerState; onSort: (field: ExplorerSort) => void }) {

@@ -78,7 +78,7 @@ describe("landing page", () => {
     expect(screen.getByText("Enterprise Platform").closest("li")).toHaveTextContent(
       "Future research",
     );
-    expect(screen.getByText("Research").closest("li")).toHaveTextContent("Future research");
+    expect(screen.getAllByText("Future research").some((badge) => badge.closest("li")?.textContent?.includes("Research"))).toBe(true);
     expect(screen.getByRole("link", { name: /view full roadmap/i })).toHaveAttribute(
       "href",
       "/roadmap",

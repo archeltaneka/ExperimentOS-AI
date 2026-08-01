@@ -5,7 +5,7 @@ will consume backend APIs in later issues; it does not change how the FastAPI se
 
 ## Prerequisites
 
-- Node.js 20.9 or later
+- Node.js 22.13 or later
 - npm (included with Node.js)
 - Python 3.12, `uv`, and Docker only when working on the backend
 

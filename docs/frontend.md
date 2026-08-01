@@ -1,7 +1,8 @@
 # Frontend development
 
-The ExperimentOS AI frontend lives in `apps/web/`. It is an independent Next.js application that
-will consume backend APIs in later issues; it does not change how the FastAPI service runs.
+The ExperimentOS AI frontend lives in `apps/web/`. It is an independent Next.js application with a
+typed data boundary: deterministic fixture mode is the default portfolio experience, while local
+live mode can call the existing FastAPI contracts. It does not change how the FastAPI service runs.
 
 ## Prerequisites
 
@@ -50,11 +51,15 @@ Issue #116 introduces `NEXT_PUBLIC_DATA_MODE` and `NEXT_PUBLIC_API_BASE_URL` for
 data boundary. See [`docs/frontend-data-layer.md`](frontend-data-layer.md) for adapter selection,
 verified `/ask` contract details, deterministic-fixture rules, and current backend gaps.
 
-## Current data status and Issue #1 boundary
+## Current data status
 
-No backend integration, API adapter, product workflow, experiment fixture, evaluation fixture, or
-mock response exists yet. Recharts, Lucide, and Framer Motion are installed as approved foundation
-dependencies; only Lucide and restrained Framer Motion are exercised by the temporary preview.
+The five public UI routes are implemented: Landing Page, Ask Experiment, Experiment Explorer/detail,
+Evaluation Dashboard, and Roadmap. `NEXT_PUBLIC_DATA_MODE=mock` selects deterministic fixtures for a
+stable portfolio demo. In `live` mode, Ask calls the existing `POST /ask` API and Explorer can use the
+partial experiment-read adapter. The complete Explorer record and all Evaluation views remain
+fixture-backed because the backend does not expose the fields or results APIs required by those pages.
 
-Issue #1 establishes the frontend foundation and design system. Issue #115 composes that foundation
-into a navigation shell without adding product workflows or backend integration.
+Every data-backed page renders a source disclosure. A fixture is never labelled as live telemetry;
+the roadmap is local versioned product configuration. Planned Phase 4 capabilities are statuses, not
+operational features. See [frontend data layer](frontend-data-layer.md) and
+[portfolio deployment](deployment.md) for the canonical capability and hosting boundary.

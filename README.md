@@ -109,6 +109,10 @@ docs/                     Architecture, development, deployment, and reliability
 
 The UI keeps presentation, service contracts, transport mapping, and fixtures separate so a future API can replace an adapter without leaking raw HTTP payloads into components.
 
+## Repository output policy
+
+Use `artifacts/local/...` for routine local verification output. Use `reports/` only when intentionally refreshing curated baseline/reference artifacts that belong in git.
+
 ## Quick start: frontend-only deterministic demo
 
 This is the lowest-friction path for a reviewer. It needs no database, API key, or backend process.
@@ -183,6 +187,12 @@ docker compose up -d postgres
 $env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
 uv run alembic upgrade head
 uv run pytest tests/test_db_models.py tests/test_ingestion_load_experiment.py
+```
+
+To intentionally refresh the curated Phase 3 baseline report:
+
+```powershell
+uv run python -m packages.evals.run_baseline --embedding-provider fake --llm-provider mock --output reports/phase3/baseline_report.md
 ```
 
 See [frontend quality](docs/frontend-quality.md) and [GitHub Actions CI](docs/phase3/github_actions.md) for the authoritative workflow breakdown. The repository does not claim coverage percentages or browser-suite coverage that it does not measure.

@@ -237,5 +237,8 @@ reports/agent_e2e_evaluation.json
 docs/superpowers/plans/
 docs/superpowers/specs/
 
+# External visual references are local research material, not ExperimentOS documentation assets.
+docs/ui-references/
+
 # Agents markdown
 *AGENTS.md

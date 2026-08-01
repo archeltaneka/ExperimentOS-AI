@@ -1,8 +1,18 @@
 # ExperimentOS AI frontend
 
-This is the independent Next.js frontend for ExperimentOS AI. Its setup, commands, architecture,
-environment-variable strategy, and Issue #1 boundaries are documented in
-[`docs/frontend.md`](../../docs/frontend.md).
+This independent UI defaults to deterministic fixture mode, so reviewers can view every page without
+a database, API key, or backend process.
 
-The frontend testing strategy, deterministic mock-mode workflow, and CI quality gate are in
-[`docs/frontend-quality.md`](../../docs/frontend-quality.md).
+```powershell
+npm ci
+Copy-Item .env.example .env.local
+npm run dev
+```
+
+`NEXT_PUBLIC_DATA_MODE=mock` is the portfolio default. Set `NEXT_PUBLIC_DATA_MODE=live` and
+`NEXT_PUBLIC_API_BASE_URL=http://localhost:8000` only with a local backend and ingested experiment.
+`/ask` is the primary backend-capable UI workflow; full Explorer and Evaluation experiences remain
+fixture-backed. Run `npm run verify` for linting, type checking, tests, and production build.
+
+See [frontend development](../../docs/frontend.md), [data boundaries](../../docs/frontend-data-layer.md),
+[frontend quality](../../docs/frontend-quality.md), and [deployment](../../docs/deployment.md).

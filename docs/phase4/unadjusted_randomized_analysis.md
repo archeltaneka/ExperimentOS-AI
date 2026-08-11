@@ -193,8 +193,10 @@ as two-sided tests, and no one-sided p-value or confidence bound is computed.
 
 ## Known limitations and exclusions
 
-This capability does **not** implement CUPED, sequential analysis, Bayesian analysis, observational
-causal inference, clustered inference, paired/crossover analysis, heterogeneous effects,
+This unadjusted capability composes with the separate ExperimentOS CUPED service documented in
+`docs/phase4/cuped_covariate_adjustment.md`. It does **not** implement sequential analysis,
+Bayesian analysis, observational causal inference, clustered inference, paired/crossover analysis,
+heterogeneous effects,
 business-impact estimation, database persistence, API exposure, LangGraph/workflow integration,
 live LLM calls, or network services. Statistical significance is never converted into a rollout,
 revenue, ROI, success, or no-effect recommendation.

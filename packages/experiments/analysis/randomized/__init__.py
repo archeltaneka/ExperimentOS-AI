@@ -2,6 +2,20 @@
 
 from .binary import analyze_binary_two_proportion_z
 from .config import RandomizedAnalysisConfig, ZeroRelativeBaselinePolicy
+from .cuped import (
+    CovariateBalanceStatus,
+    CupedAbstentionReason,
+    CupedAnalysisExecutionRequest,
+    CupedAnalysisResult,
+    CupedAnalysisService,
+    CupedCoefficient,
+    CupedCovariateBalance,
+    CupedSampleRetention,
+    CupedStatus,
+    RetainedArmSummary,
+    VarianceReduction,
+    VarianceReductionStatus,
+)
 from .descriptive import (
     RandomizedDescriptiveError,
     summarize_binary_arm,
@@ -45,6 +59,15 @@ __all__ = [
     "ComputationStatus",
     "Conclusion",
     "ContinuousArmSummary",
+    "CovariateBalanceStatus",
+    "CupedAbstentionReason",
+    "CupedAnalysisExecutionRequest",
+    "CupedAnalysisResult",
+    "CupedAnalysisService",
+    "CupedCoefficient",
+    "CupedCovariateBalance",
+    "CupedSampleRetention",
+    "CupedStatus",
     "EvidenceCategory",
     "PointEffect",
     "PracticalSignificance",
@@ -64,6 +87,9 @@ __all__ = [
     "RandomizedNumericalError",
     "RelativeEffectAvailability",
     "RelativeEffectReason",
+    "RetainedArmSummary",
+    "VarianceReduction",
+    "VarianceReductionStatus",
     "ZeroRelativeBaselinePolicy",
     "analyze_binary_two_proportion_z",
     "normal_critical_value",

@@ -187,16 +187,13 @@ def test_analyze_continuous_welch_omits_misleading_relative_lift_for_negative_ba
     assert result.point_effect.absolute_effect.value == pytest.approx(5.0)
     assert result.point_effect.relative_effect is None
     assert (
-        result.point_effect.relative_effect_availability
-        is RelativeEffectAvailability.UNAVAILABLE
+        result.point_effect.relative_effect_availability is RelativeEffectAvailability.UNAVAILABLE
     )
     assert (
         result.point_effect.relative_effect_reason
         is RelativeEffectReason.NON_POSITIVE_CONTROL_BASELINE
     )
-    assert "nonpositive_control_baseline" in {
-        diagnostic.code for diagnostic in result.diagnostics
-    }
+    assert "nonpositive_control_baseline" in {diagnostic.code for diagnostic in result.diagnostics}
 
 
 def test_analyze_continuous_welch_abstains_when_nonzero_subnormal_baseline_overflows_lift(

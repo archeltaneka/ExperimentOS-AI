@@ -341,16 +341,14 @@ def _relative_effect(
         severity=DiagnosticSeverity.WARNING,
         status=RandomizedDiagnosticStatus.UNAVAILABLE,
         message=(
-            "Relative lift is unavailable because the control mean is "
-            f"{baseline_description}."
+            f"Relative lift is unavailable because the control mean is {baseline_description}."
         ),
         context={"control_mean": control_mean},  # type: ignore[arg-type]
     )
     warning = AnalysisWarning(
         code=code,
         message=(
-            "Relative lift was not reported because the control mean is "
-            f"{baseline_description}."
+            f"Relative lift was not reported because the control mean is {baseline_description}."
         ),
         scope="point_effect",
     )

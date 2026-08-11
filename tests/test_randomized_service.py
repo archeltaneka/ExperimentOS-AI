@@ -56,12 +56,8 @@ def _request(metric_type: MetricType, *, confidence_level: float = 0.95) -> Anal
 
 def _table(treatment: Sequence[object], control: Sequence[object]) -> AnalysisTable:
     rows = tuple(
-        (f"treatment-{index}", "treatment", value)
-        for index, value in enumerate(treatment)
-    ) + tuple(
-        (f"control-{index}", "control", value)
-        for index, value in enumerate(control)
-    )
+        (f"treatment-{index}", "treatment", value) for index, value in enumerate(treatment)
+    ) + tuple((f"control-{index}", "control", value) for index, value in enumerate(control))
     return AnalysisTable(columns=("unit_id", "arm", "outcome"), rows=rows)
 
 
@@ -166,8 +162,7 @@ def test_service_translates_eligibility_failure_without_estimating() -> None:
     request = _request(MetricType.CONTINUOUS)
     repeated_table = AnalysisTable(
         columns=("unit_id", "arm", "outcome"),
-        rows=(("same-unit", "treatment", 1.0),) * 20
-        + (("same-unit", "control", 0.0),) * 20,
+        rows=(("same-unit", "treatment", 1.0),) * 20 + (("same-unit", "control", 0.0),) * 20,
     )
 
     result = RandomizedAnalysisService().analyze(
@@ -212,9 +207,7 @@ def test_service_is_deterministic_row_order_invariant_and_does_not_mutate_inputs
     before = table.rows
     service = RandomizedAnalysisService()
 
-    first = service.analyze(
-        _execution_request(request), table, _binding(), provenance=(source(),)
-    )
+    first = service.analyze(_execution_request(request), table, _binding(), provenance=(source(),))
     repeated = service.analyze(
         _execution_request(request), table, _binding(), provenance=(source(),)
     )

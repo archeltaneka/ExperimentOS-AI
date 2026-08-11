@@ -105,9 +105,7 @@ class RandomizedAnalysisService:
             AnalysisStatus.ELIGIBLE,
             AnalysisStatus.ELIGIBLE_WITH_WARNINGS,
         }:
-            return _eligibility_abstention(
-                execution, eligibility, config, result_provenance
-            )
+            return _eligibility_abstention(execution, eligibility, config, result_provenance)
 
         unsupported = _unsupported_request_reason(request, binding)
         if unsupported is not None:

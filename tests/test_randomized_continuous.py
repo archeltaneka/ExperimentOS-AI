@@ -89,6 +89,9 @@ def test_analyze_continuous_welch_matches_hand_calculated_fixture(
     assert result.point_effect.relative_effect == pytest.approx(0.75)
     assert result.point_effect.relative_effect_availability is RelativeEffectAvailability.AVAILABLE
     assert result.test_result.standard_error == pytest.approx(math.sqrt(8.0 / 3.0))
+    assert result.test_result.confidence_interval_standard_error == pytest.approx(
+        math.sqrt(8.0 / 3.0)
+    )
     assert result.test_result.degrees_of_freedom == pytest.approx(4.0)
     assert result.test_result.statistic == pytest.approx(1.8371173070873836)
     assert result.test_result.p_value == pytest.approx(0.140065984912)
@@ -161,6 +164,39 @@ def test_analyze_continuous_welch_marks_relative_lift_unavailable_at_zero_baseli
     )
     assert result.point_effect.relative_effect_reason is RelativeEffectReason.ZERO_CONTROL_BASELINE
     assert "zero_control_baseline" in {diagnostic.code for diagnostic in result.diagnostics}
+
+
+def test_analyze_continuous_welch_omits_misleading_relative_lift_for_negative_baseline(
+    continuous_metric: MetricDefinition,
+    difference_in_means: EstimandDefinition,
+    data_provenance: tuple[ProvenanceRecord, ...],
+) -> None:
+    result = analyze_continuous_welch(
+        request_id="request-001",
+        metric=continuous_metric,
+        estimand=difference_in_means,
+        treatment_arm_id="treatment",
+        treatment_values=(-7.0, -5.0, -3.0),
+        control_arm_id="control",
+        control_values=(-12.0, -10.0, -8.0),
+        provenance=data_provenance,
+    )
+
+    assert result.status is ComputationStatus.COMPLETED
+    assert result.point_effect is not None
+    assert result.point_effect.absolute_effect.value == pytest.approx(5.0)
+    assert result.point_effect.relative_effect is None
+    assert (
+        result.point_effect.relative_effect_availability
+        is RelativeEffectAvailability.UNAVAILABLE
+    )
+    assert (
+        result.point_effect.relative_effect_reason
+        is RelativeEffectReason.NON_POSITIVE_CONTROL_BASELINE
+    )
+    assert "nonpositive_control_baseline" in {
+        diagnostic.code for diagnostic in result.diagnostics
+    }
 
 
 def test_analyze_continuous_welch_abstains_when_nonzero_subnormal_baseline_overflows_lift(
@@ -239,3 +275,64 @@ def test_analyze_continuous_welch_rejects_one_sided_alternatives(
     assert result.point_effect is None
     assert result.abstention_reason is not None
     assert result.abstention_reason.code == "unsupported_alternative_hypothesis"
+
+
+@pytest.mark.parametrize(
+    ("treatment_values", "control_values", "expected_effect", "expected_p_value"),
+    [
+        ((1.0, 2.0, 3.0), (4.0, 5.0, 6.0), -3.0, 0.021311641128756727),
+        ((1.0, 2.0, 3.0), (1.0, 2.0, 3.0), 0.0, 1.0),
+    ],
+)
+def test_analyze_continuous_welch_covers_negative_and_null_effects(
+    continuous_metric: MetricDefinition,
+    difference_in_means: EstimandDefinition,
+    data_provenance: tuple[ProvenanceRecord, ...],
+    treatment_values: tuple[float, ...],
+    control_values: tuple[float, ...],
+    expected_effect: float,
+    expected_p_value: float,
+) -> None:
+    result = analyze_continuous_welch(
+        request_id="request-001",
+        metric=continuous_metric,
+        estimand=difference_in_means,
+        treatment_arm_id="treatment",
+        treatment_values=treatment_values,
+        control_arm_id="control",
+        control_values=control_values,
+        provenance=data_provenance,
+    )
+
+    assert result.point_effect is not None
+    assert result.test_result is not None
+    assert result.point_effect.absolute_effect.value == pytest.approx(expected_effect)
+    assert result.test_result.p_value == pytest.approx(expected_p_value)
+
+
+def test_analyze_continuous_welch_supports_unequal_sizes_variances_and_one_constant_arm(
+    continuous_metric: MetricDefinition,
+    difference_in_means: EstimandDefinition,
+    data_provenance: tuple[ProvenanceRecord, ...],
+) -> None:
+    result = analyze_continuous_welch(
+        request_id="request-001",
+        metric=continuous_metric,
+        estimand=difference_in_means,
+        treatment_arm_id="treatment",
+        treatment_values=(10.0, 10.0, 10.0),
+        control_arm_id="control",
+        control_values=(1.0, 2.0, 4.0, 8.0),
+        provenance=data_provenance,
+    )
+
+    assert result.status is ComputationStatus.COMPLETED
+    assert result.treatment_summary is not None
+    assert result.control_summary is not None
+    assert result.test_result is not None
+    assert result.treatment_summary.n == 3
+    assert result.control_summary.n == 4
+    assert result.treatment_summary.sample_variance == 0.0
+    assert result.control_summary.sample_variance == pytest.approx(9.583333333333334)
+    assert result.test_result.standard_error == pytest.approx(1.547847968417226)
+    assert result.test_result.degrees_of_freedom == pytest.approx(3.0)

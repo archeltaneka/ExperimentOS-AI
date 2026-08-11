@@ -36,6 +36,7 @@ from .numerics import (
     two_sided_normal_p_value,
     two_sided_t_p_value,
 )
+from .service import RandomizedAnalysisExecutionRequest, RandomizedAnalysisService
 
 __all__ = [
     "AlternativeHypothesis",
@@ -49,7 +50,9 @@ __all__ = [
     "PracticalSignificance",
     "RandomizedAbstentionReason",
     "RandomizedAnalysisConfig",
+    "RandomizedAnalysisExecutionRequest",
     "RandomizedAnalysisResult",
+    "RandomizedAnalysisService",
     "RandomizedDescriptiveError",
     "RandomizedDiagnostic",
     "RandomizedDiagnosticCategory",

@@ -82,6 +82,9 @@ def test_analyze_binary_two_proportion_z_matches_hand_calculated_fixture(
     assert result.point_effect.relative_effect == pytest.approx(1.4)
     assert result.point_effect.relative_effect_availability is RelativeEffectAvailability.AVAILABLE
     assert result.test_result.standard_error == pytest.approx(0.08770580193070292)
+    assert result.test_result.confidence_interval_standard_error == pytest.approx(
+        0.08452070752188483
+    )
     assert result.test_result.statistic == pytest.approx(3.990613987846983)
     assert result.test_result.p_value == pytest.approx(0.000065902466)
     assert result.test_result.degrees_of_freedom is None
@@ -232,3 +235,60 @@ def test_analyze_binary_two_proportion_z_rejects_one_sided_alternatives(
     assert result.point_effect is None
     assert result.abstention_reason is not None
     assert result.abstention_reason.code == "unsupported_alternative_hypothesis"
+
+
+@pytest.mark.parametrize(
+    ("treatment_values", "control_values", "expected_effect", "expected_p_value"),
+    [
+        ((1,) * 8 + (0,) * 12, (1,) * 14 + (0,) * 6, -0.3, 0.05653027716740425),
+        ((1,) * 10 + (0,) * 10, (1,) * 10 + (0,) * 10, 0.0, 1.0),
+    ],
+)
+def test_binary_estimator_covers_negative_and_equal_rates(
+    binary_metric: MetricDefinition,
+    difference_in_proportions: EstimandDefinition,
+    data_provenance: tuple[ProvenanceRecord, ...],
+    treatment_values: tuple[int, ...],
+    control_values: tuple[int, ...],
+    expected_effect: float,
+    expected_p_value: float,
+) -> None:
+    result = analyze_binary_two_proportion_z(
+        request_id="request-001",
+        metric=binary_metric,
+        estimand=difference_in_proportions,
+        treatment_arm_id="treatment",
+        treatment_values=treatment_values,
+        control_arm_id="control",
+        control_values=control_values,
+        provenance=data_provenance,
+    )
+
+    assert result.point_effect is not None
+    assert result.test_result is not None
+    assert result.point_effect.absolute_effect.value == pytest.approx(expected_effect)
+    assert result.test_result.p_value == pytest.approx(expected_p_value)
+
+
+def test_binary_estimator_supports_unequal_arm_sizes_and_one_all_event_arm(
+    binary_metric: MetricDefinition,
+    difference_in_proportions: EstimandDefinition,
+    data_provenance: tuple[ProvenanceRecord, ...],
+) -> None:
+    result = analyze_binary_two_proportion_z(
+        request_id="request-001",
+        metric=binary_metric,
+        estimand=difference_in_proportions,
+        treatment_arm_id="treatment",
+        treatment_values=(1,) * 20,
+        control_arm_id="control",
+        control_values=(1,) * 10 + (0,) * 10,
+        provenance=data_provenance,
+    )
+
+    assert result.status is ComputationStatus.COMPLETED
+    assert result.treatment_summary is not None
+    assert result.control_summary is not None
+    assert result.treatment_summary.n == 20
+    assert result.control_summary.n == 20
+    assert result.treatment_summary.failures == 0

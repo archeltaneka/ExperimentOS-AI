@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from numbers import Real
 
-import scipy.stats as _stats
+import scipy.stats as _stats  # type: ignore[import-untyped]
 
 
 class RandomizedNumericalError(ValueError):
@@ -33,7 +33,7 @@ def t_critical_value(alpha: float, degrees_of_freedom: float) -> float:
         name="degrees_of_freedom",
     )
     return _positive_finite_result(
-        _stats.t.ppf(1.0 - (checked_alpha / 2.0), checked_degrees_of_freedom),
+        _stats.t.isf(checked_alpha / 2.0, checked_degrees_of_freedom),
         name="t critical value",
     )
 
@@ -51,7 +51,7 @@ def normal_critical_value(alpha: float) -> float:
     """Return the positive two-sided standard-normal critical value for ``alpha``."""
     checked_alpha = _open_probability(alpha, name="alpha")
     return _positive_finite_result(
-        _stats.norm.ppf(1.0 - (checked_alpha / 2.0)),
+        _stats.norm.isf(checked_alpha / 2.0),
         name="normal critical value",
     )
 
@@ -86,7 +86,7 @@ def _finite_probability(value: object, *, name: str) -> float:
     converted = _finite_real(value, name=name)
     if not 0.0 <= converted <= 1.0:
         raise RandomizedNumericalError(f"{name} must be between zero and one")
-    return converted
+    return math.nextafter(0.0, 1.0) if converted == 0.0 else converted
 
 
 def _positive_finite_result(value: object, *, name: str) -> float:

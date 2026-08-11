@@ -9,12 +9,11 @@ from ..estimands import EstimandDefinition
 from ..metrics import MeasuredValue, MetricDefinition
 from ..provenance import (
     AnalysisWarning,
-    AssumptionAssessment,
-    AssumptionStatus,
     DiagnosticSeverity,
     ProvenanceRecord,
 )
 from ..uncertainty import ConfidenceInterval
+from .assumptions import randomized_assumptions
 from .config import RandomizedAnalysisConfig
 from .descriptive import RandomizedDescriptiveError, summarize_binary_arm
 from .models import (
@@ -233,11 +232,12 @@ def analyze_binary_two_proportion_z(
         test_result=RandomizedTestResult(
             test_type=RandomizedTestType.TWO_PROPORTION_Z,
             standard_error=pooled_standard_error,
+            confidence_interval_standard_error=interval_standard_error,
             statistic=statistic,
             p_value=p_value,
             confidence_interval=interval,
         ),
-        assumptions=_assumptions(),
+        assumptions=randomized_assumptions(),
         diagnostics=diagnostics,
         warnings=warnings,
         provenance=provenance,
@@ -309,7 +309,7 @@ def _relative_effect(
         severity=DiagnosticSeverity.WARNING,
         status=RandomizedDiagnosticStatus.UNAVAILABLE,
         message="Relative lift is unavailable because the control rate is zero.",
-        context={"control_rate": control_rate},
+        context={"control_rate": control_rate},  # type: ignore[arg-type]
     )
     warning = AnalysisWarning(
         code="zero_control_baseline",
@@ -345,7 +345,7 @@ def _abstained_result(
         conclusion=Conclusion.INCONCLUSIVE,
         practical_significance=PracticalSignificance.NOT_ASSESSED,
         evidence_category=EvidenceCategory.RANDOMIZED_DESIGN_WITH_LIMITED_ASSUMPTIONS,
-        assumptions=_assumptions(),
+        assumptions=randomized_assumptions(),
         diagnostics=(
             RandomizedDiagnostic(
                 code=code,
@@ -353,7 +353,7 @@ def _abstained_result(
                 severity=DiagnosticSeverity.ERROR,
                 status=RandomizedDiagnosticStatus.FAILED,
                 message=message,
-                context=context or (),
+                context=context or (),  # type: ignore[arg-type]
                 recommended_action=(
                     "Provide valid binary outcomes with adequate expected cell counts per arm."
                 ),
@@ -390,7 +390,7 @@ def _unsupported_alternative_result(
         conclusion=Conclusion.UNSUPPORTED,
         practical_significance=PracticalSignificance.NOT_ASSESSED,
         evidence_category=EvidenceCategory.NO_RANDOMIZED_EVIDENCE,
-        assumptions=_assumptions(),
+        assumptions=randomized_assumptions(),
         diagnostics=(
             RandomizedDiagnostic(
                 code=code,
@@ -408,21 +408,6 @@ def _unsupported_alternative_result(
             code=code,
             message=message,
             missing_or_invalid_information=(code,),
-        ),
-    )
-
-
-def _assumptions() -> tuple[AssumptionAssessment, ...]:
-    return (
-        AssumptionAssessment(
-            code="random_assignment",
-            statement="Treatment assignment is randomized for the analyzed population.",
-            status=AssumptionStatus.UNASSESSED,
-        ),
-        AssumptionAssessment(
-            code="independent_observations",
-            statement="Observed outcomes are independent within and between analysis arms.",
-            status=AssumptionStatus.UNASSESSED,
         ),
     )
 

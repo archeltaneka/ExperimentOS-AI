@@ -20,6 +20,7 @@ from ..provenance import (
     ProvenanceRecord,
     ProvenanceRecords,
 )
+from ..requests import AnalysisRequest
 from ..uncertainty import ConfidenceInterval
 from .config import RandomizedAnalysisConfig
 
@@ -75,6 +76,7 @@ class RelativeEffectReason(StrEnum):
     """Declared reason a relative effect cannot be represented."""
 
     ZERO_CONTROL_BASELINE = "zero_control_baseline"
+    NON_POSITIVE_CONTROL_BASELINE = "non_positive_control_baseline"
 
 
 class AlternativeHypothesis(StrEnum):
@@ -188,6 +190,7 @@ class RandomizedTestResult(ContractModel):
 
     test_type: RandomizedTestType
     standard_error: NonNegativeFiniteFloat
+    confidence_interval_standard_error: NonNegativeFiniteFloat | None = None
     statistic: FiniteFloat
     degrees_of_freedom: NonNegativeFiniteFloat | None = None
     p_value: Probability
@@ -241,6 +244,7 @@ class RandomizedAnalysisResult(ContractModel):
     outcome_type: Literal["randomized_analysis"] = "randomized_analysis"
     schema_version: Literal["1"] = "1"
     request_id: NonEmptyStr
+    analysis_request: AnalysisRequest | None = None
     metric: MetricDefinition
     estimand: EstimandDefinition
     hypothesis: RandomizedHypothesis = RandomizedHypothesis()
@@ -280,6 +284,12 @@ class RandomizedAnalysisResult(ContractModel):
 
     @model_validator(mode="after")
     def validate_result_shape(self) -> Self:
+        if self.analysis_request is not None:
+            if self.metric != self.analysis_request.outcome.metric:
+                raise ValueError("metric must match analysis_request outcome metric")
+            if self.estimand != self.analysis_request.estimand:
+                raise ValueError("estimand must match analysis_request estimand")
+
         expected_configuration_provenance = self.configuration.configuration_provenance()
         if self.configuration_provenance is None:
             object.__setattr__(self, "configuration_provenance", expected_configuration_provenance)

@@ -228,8 +228,13 @@ def _correlation(
     if outcome_variance == 0.0:
         return None
     try:
-        denominator = math.sqrt(covariate_variance * outcome_variance)
-        result = covariance / denominator
+        covariate_standard_deviation = math.sqrt(covariate_variance)
+        outcome_standard_deviation = math.sqrt(outcome_variance)
+        larger_scale, smaller_scale = sorted(
+            (covariate_standard_deviation, outcome_standard_deviation),
+            reverse=True,
+        )
+        result = (covariance / larger_scale) / smaller_scale
     except (OverflowError, ValueError, ZeroDivisionError) as error:
         raise CupedNumericalError("correlation must be finite when defined") from error
     _require_finite(result, name="correlation")

@@ -8,6 +8,7 @@ from collections.abc import Sequence
 import pytest
 from pydantic import ValidationError
 
+from packages.experiments.analysis.estimands import EstimandKind
 from packages.experiments.analysis.metrics import AnalysisUnit, MetricType, SampleCounts
 from packages.experiments.analysis.randomized.cuped import (
     CupedAnalysisExecutionRequest,
@@ -32,7 +33,12 @@ from packages.experiments.analysis.validation import (
     OutcomeDataBinding,
     ValidationPolicy,
 )
-from tests.analysis_contract_fixtures import covariate, randomized_request, source
+from tests.analysis_contract_fixtures import (
+    covariate,
+    observational_request,
+    randomized_request,
+    source,
+)
 
 CONTROL_OUTCOMES = (0.0, 3.0, 3.0, 6.0)
 TREATMENT_OUTCOMES = (4.0, 4.0, 7.0, 10.0)
@@ -114,13 +120,14 @@ def _binding(*, covariate_column: str = "prior_orders") -> AnalysisDataBinding:
 
 
 def _policy(**updates: object) -> ValidationPolicy:
-    return ValidationPolicy(
-        minimum_total=4,
-        minimum_per_arm=2,
-        weak_total=4,
-        weak_per_arm=2,
-        **updates,
-    )
+    values: dict[str, object] = {
+        "minimum_total": 4,
+        "minimum_per_arm": 2,
+        "weak_total": 4,
+        "weak_per_arm": 2,
+    }
+    values.update(updates)
+    return ValidationPolicy(**values)  # type: ignore[arg-type]
 
 
 def _analyze(
@@ -182,6 +189,45 @@ def test_service_matches_hand_calculated_pooled_cuped_and_welch_inference() -> N
     assert result.comparable_unadjusted_result.estimand == result.analysis_request.estimand
     assert result.variance_reduction.status is VarianceReductionStatus.POSITIVE_REDUCTION
     assert result.variance_reduction.fraction == pytest.approx(0.8894736842105263)
+
+
+def test_nonrandomized_request_returns_typed_unsupported_result() -> None:
+    request = _request().model_copy(
+        update={"study_design": observational_request().study_design}
+    )
+
+    result = _analyze(request=request)
+
+    assert result.status is CupedStatus.UNSUPPORTED
+    assert result.baseline_status is ComputationStatus.ABSTAINED
+    assert {item.code for item in result.diagnostics} == {"unsupported_study_design"}
+
+
+def test_incompatible_estimand_preserves_unsupported_status() -> None:
+    request = _request()
+    request = request.model_copy(
+        update={
+            "estimand": request.estimand.model_copy(
+                update={"kind": EstimandKind.RELATIVE_LIFT}
+            )
+        }
+    )
+
+    result = _analyze(request=request)
+
+    assert result.status is CupedStatus.UNSUPPORTED
+    assert result.baseline_status is ComputationStatus.UNSUPPORTED
+    assert {item.code for item in result.diagnostics} == {"incompatible_estimand"}
+
+
+def test_completed_result_preserves_centralized_eligibility_warnings() -> None:
+    result = _analyze(policy=_policy(weak_total=9, weak_per_arm=5))
+
+    assert result.status is CupedStatus.COMPLETED
+    assert {warning.code for warning in result.warnings} >= {
+        "eligibility.sample.arm_weak",
+        "eligibility.sample.total_weak",
+    }
 
 
 def test_complete_case_missingness_reports_retention_and_same_sample_comparator() -> None:

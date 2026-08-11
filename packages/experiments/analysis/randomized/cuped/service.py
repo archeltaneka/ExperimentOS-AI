@@ -152,6 +152,18 @@ class CupedAnalysisService:
         baseline = self._full_sample_baseline(execution, table, binding, provenance=provenance)
         covariate = request.covariates[0] if len(request.covariates) == 1 else None
 
+        if not isinstance(request.study_design, RandomizedExperimentDesign):
+            return _non_numerical_result(
+                execution=execution,
+                baseline=baseline,
+                covariate=covariate,
+                provenance=result_provenance,
+                status=CupedStatus.UNSUPPORTED,
+                code="unsupported_study_design",
+                message="CUPED requires a randomized experiment design.",
+                category=RandomizedDiagnosticCategory.CONFIGURATION,
+            )
+
         if execution.alternative is not AlternativeHypothesis.TWO_SIDED:
             return _non_numerical_result(
                 execution=execution,
@@ -208,6 +220,26 @@ class CupedAnalysisService:
                 category=RandomizedDiagnosticCategory.CONFIGURATION,
             )
 
+        if baseline.status is ComputationStatus.UNSUPPORTED:
+            baseline_reason = baseline.abstention_reason
+            return _non_numerical_result(
+                execution=execution,
+                baseline=baseline,
+                covariate=covariate,
+                provenance=result_provenance,
+                status=CupedStatus.UNSUPPORTED,
+                code=(
+                    baseline_reason.code
+                    if baseline_reason is not None
+                    else "randomized_baseline_unsupported"
+                ),
+                message=(
+                    baseline_reason.message
+                    if baseline_reason is not None
+                    else "The randomized baseline does not support this request."
+                ),
+                category=RandomizedDiagnosticCategory.CONFIGURATION,
+            )
         if baseline.status is not ComputationStatus.COMPLETED:
             return _non_numerical_result(
                 execution=execution,
@@ -551,7 +583,10 @@ class CupedAnalysisService:
             variance_reduction=variance_reduction,
             assumptions=cuped_assumptions(),
             diagnostics=tuple(diagnostics),
-            warnings=_cuped_warnings(balance, variance_reduction),
+            warnings=(
+                _translate_eligibility_warnings(eligibility)
+                + _cuped_warnings(balance, variance_reduction)
+            ),
             provenance=result_provenance,
         )
 
@@ -565,13 +600,14 @@ class CupedAnalysisService:
     ) -> RandomizedAnalysisResult:
         request = execution.analysis_request
         design = request.study_design
-        if not isinstance(design, RandomizedExperimentDesign):
-            raise TypeError("CUPED requires a randomized experiment design")
+        baseline_design = (
+            design.model_copy(update={"method": RandomizedAnalysisMethod.FIXED_HORIZON_AB})
+            if isinstance(design, RandomizedExperimentDesign)
+            else design
+        )
         baseline_request = request.model_copy(
             update={
-                "study_design": design.model_copy(
-                    update={"method": RandomizedAnalysisMethod.FIXED_HORIZON_AB}
-                ),
+                "study_design": baseline_design,
                 "covariates": (),
             }
         )

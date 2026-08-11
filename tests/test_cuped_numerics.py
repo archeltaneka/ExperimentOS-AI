@@ -91,6 +91,21 @@ def test_zero_outcome_variance_leaves_correlation_unavailable() -> None:
     assert coefficient.correlation is None
 
 
+@pytest.mark.parametrize("scale", [1e100, 1e-100])
+def test_correlation_avoids_finite_scale_product_overflow_or_underflow(
+    scale: float,
+) -> None:
+    values = (-scale, scale)
+
+    coefficient = estimate_pooled_coefficient(
+        values,
+        values,
+        minimum_variance=0.0,
+    )
+
+    assert coefficient.correlation == pytest.approx(1.0)
+
+
 @pytest.mark.parametrize(
     ("covariates", "minimum_variance"),
     [

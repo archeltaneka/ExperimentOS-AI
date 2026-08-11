@@ -129,9 +129,9 @@ abstentions, invalid cases, and advisories whenever the structured artifact is p
 
 ## Limitations
 
-This baseline does not yet benchmark or implement:
+This baseline does not yet provide the broad reliability gates planned for:
 
-- CUPED;
+- CUPED adjustment performance and production policy hardening;
 - sequential testing;
 - Bayesian analysis;
 - Difference-in-Differences;

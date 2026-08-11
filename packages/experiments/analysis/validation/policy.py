@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Self
+from typing import Annotated, Self
 
 from pydantic import Field, model_validator
 
-from ..base import ContractModel, NonEmptyStr, Probability
+from ..base import ContractModel, FiniteFloat, NonEmptyStr, Probability
 
 
 class ValidationPolicy(ContractModel):
@@ -26,6 +26,7 @@ class ValidationPolicy(ContractModel):
     maximum_outcome_missingness: Probability | None = None
     maximum_differential_missingness: Probability | None = None
     maximum_covariate_missing_rate: Probability | None = None
+    minimum_covariate_variance: Annotated[FiniteFloat, Field(ge=0)] = 0.0
 
     @model_validator(mode="after")
     def validate_threshold_order(self) -> Self:

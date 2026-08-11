@@ -286,6 +286,18 @@ identifies malformed input or evaluation infrastructure failure. See
 `docs/phase4/statistical_reliability_baseline.md` for the case schema, tolerance rationale,
 abstention and uncertainty checks, telemetry privacy boundary, CI behavior, and limitations.
 
+## Phase 4 CUPED Estimator
+
+Run the deterministic CUPED estimator tests without a database or external service:
+
+```powershell
+uv run pytest tests/test_cuped_*.py
+```
+
+The estimator supports one explicitly declared pre-treatment covariate for a continuous,
+fixed-horizon randomized experiment. See `docs/phase4/cuped_covariate_adjustment.md` for coefficient,
+complete-case, same-sample comparison, variance-reduction, balance, status, and limitation details.
+
 ## Provider Choices
 
 For deterministic local work, prefer:

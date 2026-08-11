@@ -37,6 +37,11 @@ def test_two_sided_normal_helpers_match_hand_checked_five_percent_boundary() -> 
     assert normal_critical_value(alpha=0.05) == pytest.approx(statistic)
 
 
+def test_two_sided_p_values_remain_positive_when_distribution_tail_underflows() -> None:
+    assert two_sided_normal_p_value(40.0) > 0.0
+    assert two_sided_t_p_value(1e300, degrees_of_freedom=10.0) > 0.0
+
+
 @pytest.mark.parametrize(
     ("function", "arguments"),
     [

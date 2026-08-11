@@ -9,12 +9,11 @@ from ..estimands import EstimandDefinition
 from ..metrics import MeasuredValue, MetricDefinition
 from ..provenance import (
     AnalysisWarning,
-    AssumptionAssessment,
-    AssumptionStatus,
     DiagnosticSeverity,
     ProvenanceRecord,
 )
 from ..uncertainty import ConfidenceInterval
+from .assumptions import randomized_assumptions
 from .config import RandomizedAnalysisConfig
 from .descriptive import RandomizedDescriptiveError, summarize_continuous_arm
 from .models import (
@@ -244,12 +243,13 @@ def analyze_continuous_welch(
         test_result=RandomizedTestResult(
             test_type=RandomizedTestType.WELCH_T,
             standard_error=standard_error,
+            confidence_interval_standard_error=standard_error,
             statistic=statistic,
             degrees_of_freedom=degrees_of_freedom,
             p_value=p_value,
             confidence_interval=interval,
         ),
-        assumptions=_assumptions(),
+        assumptions=randomized_assumptions(),
         diagnostics=diagnostics,
         warnings=warnings,
         provenance=provenance,
@@ -289,7 +289,7 @@ def _is_finite_real(value: object) -> bool:
     if isinstance(value, bool):
         return False
     try:
-        return math.isfinite(float(value))
+        return math.isfinite(float(value))  # type: ignore[arg-type]
     except (TypeError, ValueError, OverflowError):
         return False
 
@@ -324,26 +324,38 @@ def _relative_effect(
     tuple[RandomizedDiagnostic, ...],
     tuple[AnalysisWarning, ...],
 ]:
-    if control_mean != 0.0:
+    if control_mean > 0.0:
         return effect / control_mean, RelativeEffectAvailability.AVAILABLE, None, (), ()
 
+    is_zero = control_mean == 0.0
+    code = "zero_control_baseline" if is_zero else "nonpositive_control_baseline"
+    reason = (
+        RelativeEffectReason.ZERO_CONTROL_BASELINE
+        if is_zero
+        else RelativeEffectReason.NON_POSITIVE_CONTROL_BASELINE
+    )
+    baseline_description = "zero" if is_zero else "negative"
     diagnostic = RandomizedDiagnostic(
-        code="zero_control_baseline",
+        code=code,
         category=RandomizedDiagnosticCategory.RESULT,
         severity=DiagnosticSeverity.WARNING,
         status=RandomizedDiagnosticStatus.UNAVAILABLE,
-        message="Relative lift is unavailable because the control mean is zero.",
-        context={"control_mean": control_mean},
+        message=(
+            f"Relative lift is unavailable because the control mean is {baseline_description}."
+        ),
+        context={"control_mean": control_mean},  # type: ignore[arg-type]
     )
     warning = AnalysisWarning(
-        code="zero_control_baseline",
-        message="Relative lift was not reported because the control mean is zero.",
+        code=code,
+        message=(
+            f"Relative lift was not reported because the control mean is {baseline_description}."
+        ),
         scope="point_effect",
     )
     return (
         None,
         RelativeEffectAvailability.UNAVAILABLE,
-        RelativeEffectReason.ZERO_CONTROL_BASELINE,
+        reason,
         (diagnostic,),
         (warning,),
     )
@@ -369,7 +381,7 @@ def _abstained_result(
         conclusion=Conclusion.INCONCLUSIVE,
         practical_significance=PracticalSignificance.NOT_ASSESSED,
         evidence_category=EvidenceCategory.RANDOMIZED_DESIGN_WITH_LIMITED_ASSUMPTIONS,
-        assumptions=_assumptions(),
+        assumptions=randomized_assumptions(),
         diagnostics=(
             RandomizedDiagnostic(
                 code=code,
@@ -377,7 +389,7 @@ def _abstained_result(
                 severity=DiagnosticSeverity.ERROR,
                 status=RandomizedDiagnosticStatus.FAILED,
                 message=message,
-                context=context or (),
+                context=context or (),  # type: ignore[arg-type]
                 recommended_action=(
                     "Provide finite continuous outcomes with adequate variation per arm."
                 ),
@@ -414,7 +426,7 @@ def _unsupported_alternative_result(
         conclusion=Conclusion.UNSUPPORTED,
         practical_significance=PracticalSignificance.NOT_ASSESSED,
         evidence_category=EvidenceCategory.NO_RANDOMIZED_EVIDENCE,
-        assumptions=_assumptions(),
+        assumptions=randomized_assumptions(),
         diagnostics=(
             RandomizedDiagnostic(
                 code=code,
@@ -432,21 +444,6 @@ def _unsupported_alternative_result(
             code=code,
             message=message,
             missing_or_invalid_information=(code,),
-        ),
-    )
-
-
-def _assumptions() -> tuple[AssumptionAssessment, ...]:
-    return (
-        AssumptionAssessment(
-            code="random_assignment",
-            statement="Treatment assignment is randomized for the analyzed population.",
-            status=AssumptionStatus.UNASSESSED,
-        ),
-        AssumptionAssessment(
-            code="independent_observations",
-            statement="Observed outcomes are independent within and between analysis arms.",
-            status=AssumptionStatus.UNASSESSED,
         ),
     )
 

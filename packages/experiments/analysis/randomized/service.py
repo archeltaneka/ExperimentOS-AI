@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from contextlib import nullcontext
+from time import perf_counter
+
+from packages.observability.base import BaseObservabilityProvider, BufferedSpan
+from packages.observability.noop import NoOpObservabilityProvider
 
 from ..base import AnalysisStatus, ContractModel, NonEmptyStr
 from ..estimands import EstimandKind
@@ -57,15 +62,17 @@ class RandomizedAnalysisExecutionRequest(ContractModel):
 class RandomizedAnalysisService:
     """Validate, extract, and dispatch one supported randomized analysis."""
 
-    def __init__(self, *, validation_policy: ValidationPolicy | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        validation_policy: ValidationPolicy | None = None,
+        observability_provider: BaseObservabilityProvider | None = None,
+    ) -> None:
         self._policy = validation_policy or ValidationPolicy()
-        self._eligibility = AnalysisEligibilityService(
-            policy=self._policy,
-            capability_registry=MethodCapabilityRegistry.with_implemented_methods(
-                (RandomizedAnalysisMethod.FIXED_HORIZON_AB,)
-            ),
-            configuration_provenance="randomized-analysis-service-v1",
+        self._capability_registry = MethodCapabilityRegistry.with_implemented_methods(
+            (RandomizedAnalysisMethod.FIXED_HORIZON_AB,)
         )
+        self.observability_provider = observability_provider or NoOpObservabilityProvider()
 
     def analyze(
         self,
@@ -76,10 +83,62 @@ class RandomizedAnalysisService:
         provenance: tuple[ProvenanceRecord, ...],
     ) -> RandomizedAnalysisResult:
         """Return an estimate only after the existing eligibility service approves it."""
+        started_at = perf_counter()
+        span = _start_analysis_span(
+            self.observability_provider,
+            execution=execution,
+            table=table,
+        )
+        eligibility_provider = (
+            self.observability_provider if span is not None else NoOpObservabilityProvider()
+        )
+        activation = span.activate() if span is not None else nullcontext()
+        try:
+            with activation:
+                result = self._analyze(
+                    execution,
+                    table,
+                    binding,
+                    provenance=provenance,
+                    eligibility_provider=eligibility_provider,
+                )
+        except Exception as error:
+            _finish_analysis_failure(
+                self.observability_provider,
+                span,
+                error=error,
+                duration_ms=(perf_counter() - started_at) * 1000.0,
+            )
+            raise
+        _finish_analysis_success(
+            self.observability_provider,
+            span,
+            result=result,
+            table=table,
+            binding=binding,
+            policy=self._policy,
+            duration_ms=(perf_counter() - started_at) * 1000.0,
+        )
+        return result
+
+    def _analyze(
+        self,
+        execution: RandomizedAnalysisExecutionRequest,
+        table: AnalysisTable,
+        binding: AnalysisDataBinding,
+        *,
+        provenance: tuple[ProvenanceRecord, ...],
+        eligibility_provider: BaseObservabilityProvider,
+    ) -> RandomizedAnalysisResult:
         request = execution.analysis_request
         config = _configuration(request)
         result_provenance = _analysis_provenance(execution, provenance)
-        eligibility = self._eligibility.validate(request, table, binding)
+        eligibility = AnalysisEligibilityService(
+            policy=self._policy,
+            capability_registry=self._capability_registry,
+            configuration_provenance="randomized-analysis-service-v1",
+            observability_provider=eligibility_provider,
+        ).validate(request, table, binding)
 
         if not isinstance(request.uncertainty, RequestedConfidenceLevel):
             return _unsupported_result(
@@ -157,6 +216,181 @@ class RandomizedAnalysisService:
         else:
             result = analyze_binary_two_proportion_z(**common)  # type: ignore[arg-type]
         return _attach_request(result, request, eligibility)
+
+
+def _start_analysis_span(
+    provider: BaseObservabilityProvider,
+    *,
+    execution: RandomizedAnalysisExecutionRequest,
+    table: AnalysisTable,
+) -> BufferedSpan | None:
+    request = execution.analysis_request
+    before_failures = _provider_failure_count(provider)
+    inputs: dict[str, object] = {"total_row_count": len(table.rows)}
+    metadata: dict[str, object] = {
+        "capability": "randomized_analysis",
+        "analysis_method": request.study_design.method.value,
+        "estimand": request.estimand.kind.value,
+        "metric_type": request.outcome.metric.metric_type.value,
+        "analysis_started": True,
+    }
+    try:
+        parent = provider.current_span()
+        if parent is not None and parent.provider is provider:
+            return provider.start_span(
+                "randomized_analysis",
+                inputs=inputs,
+                metadata=metadata,
+                tags=("analysis", "randomized"),
+                parent=parent,
+            )
+        return provider.start_root_span(
+            "randomized_analysis",
+            inputs=inputs,
+            metadata=metadata,
+            tags=("analysis", "randomized"),
+        )
+    except Exception:
+        _increment_provider_failure(provider, before_failures)
+        return None
+
+
+def _finish_analysis_success(
+    provider: BaseObservabilityProvider,
+    span: BufferedSpan | None,
+    *,
+    result: RandomizedAnalysisResult,
+    table: AnalysisTable,
+    binding: AnalysisDataBinding,
+    policy: ValidationPolicy,
+    duration_ms: float,
+) -> None:
+    if span is None:
+        return
+    treatment_count, control_count = _arm_counts(result, table, binding, policy)
+    diagnostic_codes = tuple(diagnostic.code for diagnostic in result.diagnostics)
+    metadata: dict[str, object] = {
+        "analysis_status": result.status.value,
+        "treatment_count": treatment_count,
+        "control_count": control_count,
+        "total_eligible_count": treatment_count + control_count,
+        "diagnostic_codes": diagnostic_codes,
+        "diagnostic_count": len(diagnostic_codes),
+        "warning_count": len(result.warnings),
+        "abstention_state": result.status is ComputationStatus.ABSTAINED,
+        "duration_ms": duration_ms,
+        "evaluation_status": result.status.value,
+        "analysis_completed": True,
+    }
+    _run_observability_operation(provider, lambda: span.add_metadata(metadata))
+    _run_observability_operation(
+        provider,
+        lambda: span.finish(outputs={"status": result.status.value, "analysis_completed": True}),
+    )
+
+
+def _finish_analysis_failure(
+    provider: BaseObservabilityProvider,
+    span: BufferedSpan | None,
+    *,
+    error: Exception,
+    duration_ms: float,
+) -> None:
+    if span is None:
+        return
+    _run_observability_operation(
+        provider,
+        lambda: span.add_metadata(
+            {
+                "analysis_status": "failed",
+                "duration_ms": duration_ms,
+                "evaluation_status": "failed",
+                "analysis_completed": False,
+            }
+        ),
+    )
+    _run_observability_operation(
+        provider,
+        lambda: span.record_error(
+            "Randomized analysis failed.",
+            details={"type": error.__class__.__name__},
+        ),
+    )
+    _run_observability_operation(
+        provider,
+        lambda: span.finish(outputs={"status": "failed", "analysis_completed": False}),
+    )
+
+
+def _arm_counts(
+    result: RandomizedAnalysisResult,
+    table: AnalysisTable,
+    binding: AnalysisDataBinding,
+    policy: ValidationPolicy,
+) -> tuple[int, int]:
+    request = result.analysis_request
+    if request is None:
+        return (0, 0)
+    if result.treatment_summary is not None and result.control_summary is not None:
+        return (result.treatment_summary.n, result.control_summary.n)
+    try:
+        treatment_index = table.columns.index(binding.treatment_column)
+        valid_rows = validate_data(
+            ValidationContext(request=request, table=table, binding=binding, policy=policy)
+        ).valid_row_indexes
+    except (KeyError, TypeError, ValueError):
+        return (0, 0)
+    treatment_count = 0
+    control_count = 0
+    for row_index in valid_rows:
+        row = table.rows[row_index]
+        assignment = row[treatment_index]
+        if type(assignment) is type(request.treatment.assignment_value) and (
+            assignment == request.treatment.assignment_value
+        ):
+            treatment_count += 1
+        elif type(assignment) is type(request.control.assignment_value) and (
+            assignment == request.control.assignment_value
+        ):
+            control_count += 1
+    return (treatment_count, control_count)
+
+
+def _run_observability_operation(
+    provider: BaseObservabilityProvider,
+    operation: Callable[[], object],
+) -> None:
+    before_failures = _provider_failure_count(provider)
+    try:
+        operation()
+    except Exception:
+        _increment_provider_failure(provider, before_failures)
+
+
+def _provider_failure_count(provider: BaseObservabilityProvider) -> int | None:
+    try:
+        return provider.failure_count
+    except Exception:
+        return None
+
+
+def _increment_provider_failure(
+    provider: BaseObservabilityProvider,
+    before_failures: int | None,
+) -> None:
+    try:
+        current_failures = provider.failure_count
+    except Exception:
+        current_failures = None
+    try:
+        if (
+            before_failures is None
+            or current_failures is None
+            or current_failures == before_failures
+        ):
+            provider.increment_failure()
+    except Exception:
+        return
 
 
 def _configuration(request: AnalysisRequest) -> RandomizedAnalysisConfig:

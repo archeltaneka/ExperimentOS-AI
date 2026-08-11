@@ -12,6 +12,7 @@ SourceFormat = Literal[
     "deepeval_json",
     "prompt_regression_json",
     "factuality_json",
+    "statistical_baseline_json",
 ]
 ComparisonOperator = Literal["gte", "lte", "eq"]
 SeverityLevel = Literal["warning", "fail", "critical"]

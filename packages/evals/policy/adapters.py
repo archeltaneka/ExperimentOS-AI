@@ -45,6 +45,8 @@ def load_source(source: PolicySource, report_dir: Path) -> LoadedSource | None:
             metrics = _load_prompt_regression_json(path)
         elif source.format == "factuality_json":
             metrics = _load_factuality_json(path)
+        elif source.format == "statistical_baseline_json":
+            metrics = _load_statistical_baseline_json(path)
         else:
             raise ValueError(f"unsupported source format: {source.format}")
     except ValueError as exc:
@@ -55,6 +57,74 @@ def load_source(source: PolicySource, report_dir: Path) -> LoadedSource | None:
         format=source.format,
         metrics=metrics,
     )
+
+
+def _load_statistical_baseline_json(path: Path) -> dict[str, SourceMetric]:
+    payload = _load_json(path)
+    required_counts = (
+        "dataset_size",
+        "cases_passed",
+        "cases_failed",
+        "cases_advisory",
+        "cases_invalid",
+        "cases_abstained",
+        "cases_skipped",
+    )
+    metrics = {
+        "statistics.overall_status": _value_metric(
+            "statistics.overall_status",
+            _expect_nonempty_string(payload.get("overall_status"), "statistics overall_status"),
+        )
+    }
+    for name in required_counts:
+        value = _expect_nonnegative_int(payload.get(name), f"statistics {name}")
+        metrics[f"statistics.{name}"] = _value_metric(f"statistics.{name}", value)
+
+    case_results = payload.get("case_results")
+    if not isinstance(case_results, list):
+        raise ValueError("statistics case_results must be a list")
+    failures: dict[str, int] = {
+        dimension: 0
+        for dimension in (
+            "reference_accuracy",
+            "abstention",
+            "diagnostics",
+            "uncertainty",
+            "determinism",
+            "status",
+        )
+    }
+    nonfinite_failures = 0
+    capability_counts: dict[str, int] = {}
+    for case in case_results:
+        if not isinstance(case, dict):
+            raise ValueError("statistics case result entries must be mappings")
+        capability = _expect_nonempty_string(case.get("capability"), "statistics case capability")
+        capability_counts[capability] = capability_counts.get(capability, 0) + 1
+        checks = case.get("checks")
+        if not isinstance(checks, list):
+            raise ValueError("statistics case checks must be a list")
+        for check in checks:
+            if not isinstance(check, dict):
+                raise ValueError("statistics check entries must be mappings")
+            if check.get("status") != "fail":
+                continue
+            dimension = str(check.get("dimension", ""))
+            if dimension in failures:
+                failures[dimension] += 1
+            if check.get("rule_id") == "statistics.reference.nonfinite":
+                nonfinite_failures += 1
+    for dimension, count in failures.items():
+        metric_id = f"statistics.failures.{dimension}"
+        metrics[metric_id] = _value_metric(metric_id, count)
+    metrics["statistics.failures.nonfinite"] = _value_metric(
+        "statistics.failures.nonfinite", nonfinite_failures
+    )
+    minimum_cases = min(capability_counts.values()) if capability_counts else 0
+    metrics["statistics.minimum_cases_per_capability"] = _value_metric(
+        "statistics.minimum_cases_per_capability", minimum_cases
+    )
+    return metrics
 
 
 def _load_rag_markdown(path: Path) -> dict[str, SourceMetric]:
@@ -429,3 +499,15 @@ def _expect_number(value: object, label: str) -> float:
     if not isinstance(value, (int, float)):
         raise ValueError(f"{label} must be numeric")
     return float(value)
+
+
+def _expect_nonnegative_int(value: object, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"{label} must be a non-negative integer")
+    return value
+
+
+def _expect_nonempty_string(value: object, label: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{label} must be a non-empty string")
+    return value.strip()

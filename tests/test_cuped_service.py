@@ -170,12 +170,8 @@ def test_service_matches_hand_calculated_pooled_cuped_and_welch_inference() -> N
     assert result.adjusted_result.point_effect is not None
     assert result.adjusted_result.test_result is not None
     assert result.adjusted_result.point_effect.absolute_effect.value == pytest.approx(3.25)
-    assert result.adjusted_result.test_result.standard_error == pytest.approx(
-        0.6274950199005567
-    )
-    assert result.adjusted_result.test_result.degrees_of_freedom == pytest.approx(
-        5.789934354485776
-    )
+    assert result.adjusted_result.test_result.standard_error == pytest.approx(0.6274950199005567)
+    assert result.adjusted_result.test_result.degrees_of_freedom == pytest.approx(5.789934354485776)
     assert result.adjusted_result.test_result.statistic == pytest.approx(5.179323973782372)
     assert result.adjusted_result.test_result.p_value == pytest.approx(0.0022884169730441714)
     assert result.adjusted_result.test_result.confidence_interval.lower == pytest.approx(
@@ -192,9 +188,7 @@ def test_service_matches_hand_calculated_pooled_cuped_and_welch_inference() -> N
 
 
 def test_nonrandomized_request_returns_typed_unsupported_result() -> None:
-    request = _request().model_copy(
-        update={"study_design": observational_request().study_design}
-    )
+    request = _request().model_copy(update={"study_design": observational_request().study_design})
 
     result = _analyze(request=request)
 
@@ -207,9 +201,7 @@ def test_incompatible_estimand_preserves_unsupported_status() -> None:
     request = _request()
     request = request.model_copy(
         update={
-            "estimand": request.estimand.model_copy(
-                update={"kind": EstimandKind.RELATIVE_LIFT}
-            )
+            "estimand": request.estimand.model_copy(update={"kind": EstimandKind.RELATIVE_LIFT})
         }
     )
 
@@ -300,9 +292,7 @@ def test_non_pre_treatment_covariate_blocks_cuped_but_not_baseline(
 
 
 def test_treatment_derived_covariate_blocks_cuped() -> None:
-    result = _analyze(
-        request=_request(relationship=TreatmentRelationship.ASSIGNMENT_DERIVED)
-    )
+    result = _analyze(request=_request(relationship=TreatmentRelationship.ASSIGNMENT_DERIVED))
 
     assert result.status is CupedStatus.ABSTAINED
     assert "eligibility.covariate.treatment_relationship_conflict" in {
@@ -364,9 +354,7 @@ def test_configured_excessive_missingness_abstains_with_retention() -> None:
 
 @pytest.mark.parametrize("invalid", [math.nan, math.inf, "3", True])
 def test_present_invalid_covariate_blocks_without_silent_exclusion(invalid: object) -> None:
-    result = _analyze(
-        table=_table(control_covariates=(invalid, 1.0, 2.0, 3.0))
-    )
+    result = _analyze(table=_table(control_covariates=(invalid, 1.0, 2.0, 3.0)))
 
     assert result.status is CupedStatus.INVALID
     assert result.retention is not None

@@ -82,8 +82,7 @@ def estimate_pooled_coefficient(
             (value - outcome_mean) ** 2 for value in ordered_outcomes
         )
         cross_products = tuple(
-            (covariate - covariate_mean) * (outcome - outcome_mean)
-            for covariate, outcome in pairs
+            (covariate - covariate_mean) * (outcome - outcome_mean) for covariate, outcome in pairs
         )
         covariate_variance = math.fsum(covariate_squared_deviations) / degrees_of_freedom
         outcome_variance = math.fsum(outcome_squared_deviations) / degrees_of_freedom
@@ -156,8 +155,7 @@ def summarize_covariate_balance(
     pooled_degrees_of_freedom = len(treatment) + len(control) - 2
     try:
         pooled_variance = (
-            (len(treatment) - 1) * treatment_variance
-            + (len(control) - 1) * control_variance
+            (len(treatment) - 1) * treatment_variance + (len(control) - 1) * control_variance
         ) / pooled_degrees_of_freedom
         pooled_standard_deviation = math.sqrt(pooled_variance)
     except (OverflowError, ValueError) as error:
@@ -166,9 +164,7 @@ def summarize_covariate_balance(
 
     standardized_mean_difference = None
     if pooled_standard_deviation > 0.0:
-        standardized_mean_difference = (
-            treatment_mean - control_mean
-        ) / pooled_standard_deviation
+        standardized_mean_difference = (treatment_mean - control_mean) / pooled_standard_deviation
         _require_finite(
             standardized_mean_difference,
             name="standardized mean difference",

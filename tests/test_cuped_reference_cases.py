@@ -66,9 +66,7 @@ def test_negative_reduction_is_preserved_as_degraded_precision() -> None:
     assert result.coefficient.theta == pytest.approx(13.0 / 24.0, abs=1e-12)
     assert result.variance_reduction.status is VarianceReductionStatus.NEGATIVE_REDUCTION
     assert result.variance_reduction.unadjusted_estimator_variance == pytest.approx(7.0 / 3.0)
-    assert result.variance_reduction.adjusted_estimator_variance == pytest.approx(
-        3.261501736111111
-    )
+    assert result.variance_reduction.adjusted_estimator_variance == pytest.approx(3.261501736111111)
     assert result.variance_reduction.fraction == pytest.approx(-0.3977864583333335)
     assert "cuped.degraded_precision" in {warning.code for warning in result.warnings}
     variance_diagnostic = next(
@@ -124,9 +122,7 @@ def test_configured_near_zero_variance_abstains() -> None:
 
 
 def test_insufficient_complete_cases_abstain_without_imputation() -> None:
-    result = _analyze(
-        table=_table(control_covariates=(None, None, None, 3.0))
-    )
+    result = _analyze(table=_table(control_covariates=(None, None, None, 3.0)))
 
     assert result.status is CupedStatus.ABSTAINED
     assert result.abstention_reason is not None

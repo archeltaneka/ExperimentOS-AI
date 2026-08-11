@@ -420,9 +420,7 @@ class CupedAnalysisService:
                 )
             )
 
-        combined_outcomes = (
-            complete_cases.control_outcomes + complete_cases.treatment_outcomes
-        )
+        combined_outcomes = complete_cases.control_outcomes + complete_cases.treatment_outcomes
         combined_covariates = (
             complete_cases.control_covariates + complete_cases.treatment_covariates
         )
@@ -444,13 +442,9 @@ class CupedAnalysisService:
                     category=RandomizedDiagnosticCategory.COMPUTATION,
                     severity=DiagnosticSeverity.ERROR,
                     status=RandomizedDiagnosticStatus.FAILED,
-                    message=(
-                        "Covariate variance must exceed the configured finite minimum."
-                    ),
+                    message=("Covariate variance must exceed the configured finite minimum."),
                     context={
-                        "minimum_covariate_variance": (
-                            self._policy.minimum_covariate_variance
-                        )
+                        "minimum_covariate_variance": (self._policy.minimum_covariate_variance)
                     },
                 )
             )
@@ -784,9 +778,7 @@ def _finish_cuped_success(
     _run_observability_operation(provider, lambda: span.add_metadata(metadata))
     _run_observability_operation(
         provider,
-        lambda: span.finish(
-            outputs={"status": result.status.value, "analysis_completed": True}
-        ),
+        lambda: span.finish(outputs={"status": result.status.value, "analysis_completed": True}),
     )
 
 

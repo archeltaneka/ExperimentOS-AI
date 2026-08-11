@@ -171,9 +171,7 @@ class CupedCovariateBalance(ContractModel):
 class VarianceReduction(ContractModel):
     """Same-retained-sample comparison using squared Welch standard errors."""
 
-    estimator_variance_convention: Literal["squared_standard_error"] = (
-        "squared_standard_error"
-    )
+    estimator_variance_convention: Literal["squared_standard_error"] = "squared_standard_error"
     status: VarianceReductionStatus
     unadjusted_estimator_variance: NonNegativeFiniteFloat | None
     adjusted_estimator_variance: NonNegativeFiniteFloat | None
@@ -316,11 +314,15 @@ class CupedAnalysisResult(ContractModel):
             if self.abstention_reason is not None:
                 raise ValueError("numerical CUPED results must not include an abstention reason")
         else:
-            if self.status in {
-                CupedStatus.ABSTAINED,
-                CupedStatus.UNSUPPORTED,
-                CupedStatus.INVALID,
-            } and self.abstention_reason is None:
+            if (
+                self.status
+                in {
+                    CupedStatus.ABSTAINED,
+                    CupedStatus.UNSUPPORTED,
+                    CupedStatus.INVALID,
+                }
+                and self.abstention_reason is None
+            ):
                 raise ValueError("non-numerical CUPED results require an abstention reason")
             if self.adjusted_result is not None:
                 raise ValueError("non-numerical CUPED results must not include adjusted inference")

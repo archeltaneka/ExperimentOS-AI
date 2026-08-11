@@ -266,6 +266,26 @@ Generated outputs:
 See `docs/phase3/reliability_baseline.md` for the current capabilities, gaps, and why external
 LLMOps integrations remain optional at this stage.
 
+## Phase 4 Statistical Baseline
+
+Run the deterministic statistical reliability baseline without a database or provider credentials:
+
+```powershell
+uv run python -m packages.evals.cli statistical-baseline
+```
+
+The command evaluates repository-local validation, descriptive-statistics, and unadjusted
+randomized-analysis references, applies statistical rules from the centralized quality policy, and
+writes:
+
+- `reports/phase4/statistical_baseline.json`;
+- `reports/phase4/statistical_baseline.md`.
+
+JSON is authoritative. Exit code `1` identifies a blocking quality regression, while exit code `2`
+identifies malformed input or evaluation infrastructure failure. See
+`docs/phase4/statistical_reliability_baseline.md` for the case schema, tolerance rationale,
+abstention and uncertainty checks, telemetry privacy boundary, CI behavior, and limitations.
+
 ## Provider Choices
 
 For deterministic local work, prefer:

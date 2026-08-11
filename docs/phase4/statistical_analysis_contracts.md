@@ -489,9 +489,15 @@ exchangeability, consistency, interference, parallel trends, CUPED suitability, 
 Bayesian priors, model fit, treatment leakage, design/metric/estimand compatibility, estimator
 eligibility, or business plausibility. Those checks require later policy and analysis layers.
 
+## Descriptive Statistics Boundary
+
+`DescriptiveStatisticsResult` is the typed canonical internal result for deterministic Phase 4 summaries. It is produced from an eligibility-owned, data-eligible validation context and contains typed continuous, binary, count, or explicitly unavailable metric summaries; population and arm counts; raw unadjusted comparisons; declared numeric covariates; selected segments; validated pre/post periods; and descriptive diagnostics. Numeric fields reject `NaN` and infinity, while unavailable values use `null` and an explicit reason instead of fabricated zeros.
+
+This boundary is non-causal: raw treatment-minus-control values are not treatment effects, and no p-value, significance, treatment-effect confidence interval, rollout recommendation, or business-impact output exists. Ratio aggregation and categorical covariate semantics remain unavailable until represented in the contracts. See [Deterministic Descriptive Statistics](descriptive_statistics.md) for formulas, missing-data and unit behavior, diagnostics, provenance, and observability.
+
 ## Deferred Phase 4 Work
 
-Later Phase 4 work owns eligibility assessment from real data, statistical calculations,
+Later Phase 4 work owns estimator calculations beyond deterministic descriptive statistics,
 randomized and observational estimators, quasi-experimental methods, third-party adapters,
-business-impact calculations, agent and workflow integration, persistence, observability events,
-evaluation and quality policy, and any separately designed public API expansion.
+business-impact calculations, agent and workflow integration, persistence, quality policy, and any
+separately designed public API expansion.

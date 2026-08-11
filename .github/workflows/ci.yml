@@ -154,6 +154,18 @@ jobs:
           tests/test_prompt_regression.py
           tests/test_factuality.py
           tests/test_quality_policy.py
+          tests/test_descriptive_statistics_contracts.py
+          tests/test_descriptive_statistics_diagnostics.py
+          tests/test_descriptive_statistics_golden_cases.py
+          tests/test_descriptive_statistics_numeric.py
+          tests/test_descriptive_statistics_observability.py
+          tests/test_descriptive_statistics_service.py
+          tests/test_statistical_baseline_dataset.py
+          tests/test_statistical_baseline_evaluator.py
+          tests/test_statistical_baseline_reporting.py
+          tests/test_statistical_baseline_policy.py
+          tests/test_statistical_baseline_cli.py
+          tests/test_randomized_observability.py
           tests/test_ci_quality_gate.py
           tests/test_evaluation_harness.py
           tests/test_ragas_evaluation.py
@@ -185,7 +197,7 @@ jobs:
         run: uv sync --group dev --group eval --frozen
 
       - name: Prepare offline artifact directory
-        run: mkdir -p artifacts/ci/offline/phase3
+        run: mkdir -p artifacts/ci/offline/phase3 artifacts/ci/offline/phase4
 
       - name: Run prompt regression smoke
         run: >-
@@ -211,6 +223,21 @@ jobs:
           --llm-provider mock
           --output artifacts/ci/offline/phase3/factuality_report.md
           --json-output artifacts/ci/offline/phase3/factuality_report.json
+
+      - name: Run Phase 4 statistical reliability baseline
+        run: >-
+          uv run python -m packages.evals.cli statistical-baseline
+          --json-output artifacts/ci/offline/phase4/statistical_baseline.json
+          --output artifacts/ci/offline/phase4/statistical_baseline.md
+
+      - name: Publish Phase 4 statistical summary
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          summary_path="artifacts/ci/offline/phase4/statistical_baseline.md"
+          if [[ -f "$summary_path" ]]; then
+            cat "$summary_path" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Run quality policy command validation
         run: >-

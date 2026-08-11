@@ -52,8 +52,18 @@ def build_ci_quality_report(
         )
 
     execution = _execution(gate, environment, metadata)
+    suites = _suites(report_dir, manifest, policy)
+    overall_status = _status(policy, gate)
+    phase4 = next(
+        (suite for suite in suites if suite.suite_name == "Phase 4 statistics"),
+        None,
+    )
+    if phase4 is not None and phase4.status == "fail":
+        overall_status = "fail"
+    elif phase4 is not None and phase4.status == "warning" and overall_status == "pass":
+        overall_status = "warning"
     return CiQualityReport(
-        overall_status=_status(policy, gate),
+        overall_status=overall_status,
         policy_version=_string(policy.get("policy_version")) or None,
         metadata=metadata,
         categories=_categories(policy),
@@ -61,7 +71,7 @@ def build_ci_quality_report(
         warnings=_findings(policy.get("warnings"), critical_only=False),
         skipped_metrics=_findings(policy.get("skipped_metrics"), critical_only=False),
         metric_deltas=_metric_deltas(policy, report_dir, baseline_report),
-        suites=_suites(report_dir, manifest, policy),
+        suites=suites,
         execution=execution,
         failure_type=_failure_type(gate),
         artifact_name=execution.artifact_name,
@@ -215,7 +225,40 @@ def _suites(
                     report_path=path,
                 )
             )
+    statistical_path = report_dir / "phase4" / "statistical_baseline.json"
+    if statistical_path.is_file():
+        suites.append(_statistical_suite(statistical_path))
     return tuple(suites)
+
+
+def _statistical_suite(path: Path) -> SuiteResult:
+    try:
+        payload = _read_object(path, required=True)
+    except _ReportReadError as error:
+        return SuiteResult(
+            suite_name="Phase 4 statistics",
+            status="fail",
+            report_path="phase4/statistical_baseline.json",
+            error=str(error),
+        )
+    status = _string(payload.get("overall_status"))
+    normalized_status = "warning" if status == "advisory" else status
+    if normalized_status not in {"pass", "warning", "fail"}:
+        normalized_status = "fail"
+    return SuiteResult(
+        suite_name="Phase 4 statistics",
+        status=normalized_status,
+        cases_run=_integer(payload.get("dataset_size")),
+        passed=_integer(payload.get("cases_passed")),
+        failed=_integer(payload.get("cases_failed")),
+        skipped=_integer(payload.get("cases_skipped")),
+        key_metrics=(
+            ("Invalid", str(_integer(payload.get("cases_invalid")) or 0)),
+            ("Abstained", str(_integer(payload.get("cases_abstained")) or 0)),
+            ("Advisory", str(_integer(payload.get("cases_advisory")) or 0)),
+        ),
+        report_path="phase4/statistical_baseline.json",
+    )
 
 
 def _suite_status(policy: dict[str, Any], name: str, present: bool) -> str:
@@ -339,3 +382,7 @@ class _ReportReadError(ValueError):
 
 def _string(value: object) -> str:
     return value.strip() if isinstance(value, str) else ""
+
+
+def _integer(value: object) -> int | None:
+    return value if isinstance(value, int) and not isinstance(value, bool) else None

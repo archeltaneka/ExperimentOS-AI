@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import argparse
+import sys
 
 from packages.evals.run_ci_report import main as ci_report_main
 from packages.evals.run_factuality import main as factuality_main
 from packages.evals.run_prompt_experiment import main as prompt_experiment_main
 from packages.evals.run_quality_policy import main as quality_policy_main
+from packages.evals.run_statistical_baseline import main as statistical_baseline_main
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -31,12 +33,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Build and render CI evaluation reports from existing structured artifacts.",
     )
     ci_report.add_argument("args", nargs=argparse.REMAINDER)
+    statistical_baseline = subparsers.add_parser(
+        "statistical-baseline",
+        help="Run the deterministic offline Phase 4 statistical reliability baseline.",
+    )
+    statistical_baseline.add_argument("args", nargs=argparse.REMAINDER)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
+    effective_argv = sys.argv[1:] if argv is None else argv
+    if effective_argv and effective_argv[0] == "statistical-baseline":
+        return statistical_baseline_main(effective_argv[1:])
     parser = build_parser()
-    parsed = parser.parse_args(argv)
+    parsed = parser.parse_args(effective_argv)
     if parsed.command == "factuality":
         return factuality_main(parsed.args)
     if parsed.command == "prompt-experiment":
@@ -45,6 +55,8 @@ def main(argv: list[str] | None = None) -> int:
         return quality_policy_main(parsed.args)
     if parsed.command == "ci-report":
         return ci_report_main(parsed.args)
+    if parsed.command == "statistical-baseline":
+        return statistical_baseline_main(parsed.args)
     parser.error(f"unknown command: {parsed.command}")
     return 2
 

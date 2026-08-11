@@ -22,6 +22,7 @@ _ALLOWED_FORMATS = {
     "deepeval_json",
     "prompt_regression_json",
     "factuality_json",
+    "statistical_baseline_json",
 }
 _ALLOWED_OPERATORS = {"gte", "lte", "eq"}
 _ALLOWED_SEVERITIES = {"warning", "fail", "critical"}

@@ -8,6 +8,7 @@ from pydantic import TypeAdapter
 
 from .base import ContractModel
 from .business_impact import BusinessImpactProjection, ProjectedValue
+from .descriptive.models import DescriptiveStatisticsResult
 from .estimands import EstimandDefinition
 from .estimates import AnalysisFinding, EffectEstimate
 from .requests import AnalysisRequest
@@ -27,6 +28,9 @@ BUSINESS_IMPACT_PROJECTION_ADAPTER: TypeAdapter[BusinessImpactProjection] = Type
 PROJECTED_VALUE_ADAPTER: TypeAdapter[ProjectedValue] = TypeAdapter(ProjectedValue)
 ELIGIBILITY_VALIDATION_RESULT_ADAPTER: TypeAdapter[EligibilityValidationResult] = TypeAdapter(
     EligibilityValidationResult
+)
+DESCRIPTIVE_STATISTICS_RESULT_ADAPTER: TypeAdapter[DescriptiveStatisticsResult] = TypeAdapter(
+    DescriptiveStatisticsResult
 )
 
 
@@ -85,3 +89,8 @@ def eligibility_validation_result_from_json(
 ) -> EligibilityValidationResult:
     """Validate JSON as a pre-estimator eligibility validation result."""
     return ELIGIBILITY_VALIDATION_RESULT_ADAPTER.validate_json(payload)
+
+
+def descriptive_statistics_result_from_json(payload: str | bytes) -> DescriptiveStatisticsResult:
+    """Validate JSON as a canonical descriptive-statistics result."""
+    return DESCRIPTIVE_STATISTICS_RESULT_ADAPTER.validate_json(payload)

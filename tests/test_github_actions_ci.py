@@ -101,3 +101,33 @@ def test_pr_reporting_documentation_covers_local_preview_and_fork_safety() -> No
     assert "fork" in document.lower()
     assert "pull_request_target" in document
     assert "<!-- experimentos-ai-quality-report -->" in document
+
+
+def test_offline_evaluation_job_runs_and_publishes_phase4_statistical_baseline() -> None:
+    workflow_text = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    job = _workflow_jobs()["offline-eval-smoke"]
+    steps = job["steps"]
+    runs = "\n".join(str(step.get("run", "")) for step in steps)
+
+    assert "packages.evals.cli statistical-baseline" in runs
+    assert "artifacts/ci/offline/phase4/statistical_baseline.json" in runs
+    assert "artifacts/ci/offline/phase4/statistical_baseline.md" in runs
+    assert "GITHUB_STEP_SUMMARY" in runs
+    assert "DATABASE_URL" not in str(job.get("env", {}))
+    assert "statistics.failures.reference_accuracy" not in workflow_text
+    assert "statistics.failures.uncertainty" not in workflow_text
+    for test_path in (
+        "tests/test_descriptive_statistics_contracts.py",
+        "tests/test_descriptive_statistics_diagnostics.py",
+        "tests/test_descriptive_statistics_golden_cases.py",
+        "tests/test_descriptive_statistics_numeric.py",
+        "tests/test_descriptive_statistics_observability.py",
+        "tests/test_descriptive_statistics_service.py",
+        "tests/test_statistical_baseline_dataset.py",
+        "tests/test_statistical_baseline_evaluator.py",
+        "tests/test_statistical_baseline_reporting.py",
+        "tests/test_statistical_baseline_policy.py",
+        "tests/test_statistical_baseline_cli.py",
+        "tests/test_randomized_observability.py",
+    ):
+        assert test_path in workflow_text

@@ -272,3 +272,40 @@ def test_aggregator_suppresses_delta_for_dataset_version_mismatch(tmp_path: Path
     )
 
     assert report.metric_deltas[0].status == "unavailable"
+
+
+def test_aggregator_surfaces_phase4_statistical_baseline_when_present(tmp_path: Path) -> None:
+    from packages.evals.ci_reporting.aggregator import build_ci_quality_report
+    from packages.evals.ci_reporting.models import ReportMetadata
+
+    _write_report_inputs(tmp_path)
+    _write_json(
+        tmp_path / "phase4" / "statistical_baseline.json",
+        {
+            "overall_status": "pass",
+            "dataset_size": 13,
+            "cases_passed": 13,
+            "cases_failed": 0,
+            "cases_advisory": 0,
+            "cases_invalid": 4,
+            "cases_abstained": 3,
+            "cases_skipped": 0,
+            "quality_policy": {
+                "blocking_rule_ids": [],
+                "advisory_rule_ids": [],
+            },
+        },
+    )
+
+    report = build_ci_quality_report(
+        tmp_path,
+        metadata=ReportMetadata(commit_sha="abc123", execution_mode="agent_workflow"),
+    )
+
+    suite = next(item for item in report.suites if item.suite_name == "Phase 4 statistics")
+    assert suite.status == "pass"
+    assert suite.cases_run == 13
+    assert suite.passed == 13
+    assert suite.failed == 0
+    assert ("Abstained", "3") in suite.key_metrics
+    assert suite.report_path == "phase4/statistical_baseline.json"

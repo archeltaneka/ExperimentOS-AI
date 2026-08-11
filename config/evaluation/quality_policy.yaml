@@ -1,4 +1,4 @@
-version: "2026-07-13"
+version: "2026-08-11"
 sources:
   rag:
     path: evaluation.md
@@ -21,6 +21,9 @@ sources:
   factuality:
     path: phase3/factuality_report.json
     format: factuality_json
+  statistics:
+    path: phase4/statistical_baseline.json
+    format: statistical_baseline_json
 metrics:
   - metric_id: rag.retrieval_success_rate
     source: rag
@@ -463,3 +466,102 @@ metrics:
     required: true
     weight: 1.0
     description: Deterministic E2E evaluation cannot have failed cases.
+  - metric_id: statistics.overall_status
+    source: statistics
+    category: Statistical Reliability
+    operator: eq
+    value: pass
+    severity: fail
+    required: false
+    weight: 1.0
+    description: The authoritative Phase 4 statistical baseline must pass when present.
+  - metric_id: statistics.cases_failed
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: fail
+    required: false
+    weight: 1.0
+    description: No deterministic statistical reference case may fail.
+  - metric_id: statistics.failures.reference_accuracy
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Core statistical reference values must remain within declared tolerances.
+  - metric_id: statistics.failures.abstention
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Expected abstentions must not fabricate estimates, intervals, or p-values.
+  - metric_id: statistics.failures.diagnostics
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: fail
+    required: false
+    weight: 1.0
+    description: Required structured diagnostics must remain complete and deterministic.
+  - metric_id: statistics.failures.uncertainty
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Successful randomized analyses must retain complete finite uncertainty.
+  - metric_id: statistics.failures.determinism
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: fail
+    required: false
+    weight: 1.0
+    description: Repeated and row-order-invariant statistical results must remain stable.
+  - metric_id: statistics.failures.status
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: fail
+    required: false
+    weight: 1.0
+    description: Invalid, unsupported, abstained, and completed statuses must match references.
+  - metric_id: statistics.failures.nonfinite
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Non-finite numerical outputs must never enter the statistical report.
+  - metric_id: statistics.cases_advisory
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: warning
+    required: false
+    weight: 0.5
+    description: Advisory statistical findings should be reviewed without blocking CI.
+  - metric_id: statistics.minimum_cases_per_capability
+    source: statistics
+    category: Statistical Reliability
+    operator: gte
+    value: 2
+    severity: warning
+    required: false
+    weight: 0.5
+    description: Each implemented statistical capability should have at least two references.

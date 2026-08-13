@@ -11,6 +11,7 @@ from .business_impact import BusinessImpactProjection, ProjectedValue
 from .descriptive.models import DescriptiveStatisticsResult
 from .estimands import EstimandDefinition
 from .estimates import AnalysisFinding, EffectEstimate
+from .randomized.sequential.models import SequentialAnalysisHistory
 from .requests import AnalysisRequest
 from .results import AnalysisOutcome
 from .study_designs import StudyDesign
@@ -31,6 +32,9 @@ ELIGIBILITY_VALIDATION_RESULT_ADAPTER: TypeAdapter[EligibilityValidationResult] 
 )
 DESCRIPTIVE_STATISTICS_RESULT_ADAPTER: TypeAdapter[DescriptiveStatisticsResult] = TypeAdapter(
     DescriptiveStatisticsResult
+)
+SEQUENTIAL_ANALYSIS_HISTORY_ADAPTER: TypeAdapter[SequentialAnalysisHistory] = TypeAdapter(
+    SequentialAnalysisHistory
 )
 
 
@@ -94,3 +98,8 @@ def eligibility_validation_result_from_json(
 def descriptive_statistics_result_from_json(payload: str | bytes) -> DescriptiveStatisticsResult:
     """Validate JSON as a canonical descriptive-statistics result."""
     return DESCRIPTIVE_STATISTICS_RESULT_ADAPTER.validate_json(payload)
+
+
+def sequential_analysis_history_from_json(payload: str | bytes) -> SequentialAnalysisHistory:
+    """Validate JSON as one immutable sequential-analysis audit history."""
+    return SEQUENTIAL_ANALYSIS_HISTORY_ADAPTER.validate_json(payload)

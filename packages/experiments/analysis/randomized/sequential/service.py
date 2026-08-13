@@ -96,9 +96,7 @@ class SequentialAnalysisService:
         deviations: list[SequentialDiagnostic] = []
         seen_indexes: set[int] = set()
         previous_counts: tuple[int, int, int] | None = None
-        previous_units: dict[
-            tuple[str, str], tuple[tuple[str, str], tuple[str, str]]
-        ] | None = None
+        previous_units: dict[tuple[str, str], tuple[tuple[str, str], tuple[str, str]]] | None = None
         previous_binding: AnalysisDataBinding | None = None
         previous_executed_at: datetime | None = None
         status = SequentialStoppingStatus.CONTINUE
@@ -229,9 +227,7 @@ class SequentialAnalysisService:
             previous_executed_at = execution.executed_at
             status = look_status
 
-        integrity = (
-            PlanIntegrityStatus.INVALID if deviations else PlanIntegrityStatus.VALID
-        )
+        integrity = PlanIntegrityStatus.INVALID if deviations else PlanIntegrityStatus.VALID
         if deviations:
             status = SequentialStoppingStatus.INVALID
         latest_boundary = boundaries[len(retained) - 1] if retained else None
@@ -554,10 +550,7 @@ def _validate_cumulative_history(
     units: dict[tuple[str, str], tuple[tuple[str, str], tuple[str, str]]],
     *,
     previous_counts: tuple[int, int, int] | None,
-    previous_units: dict[
-        tuple[str, str], tuple[tuple[str, str], tuple[str, str]]
-    ]
-    | None,
+    previous_units: dict[tuple[str, str], tuple[tuple[str, str], tuple[str, str]]] | None,
 ) -> SequentialDiagnostic | None:
     if previous_counts is None or previous_units is None:
         return None

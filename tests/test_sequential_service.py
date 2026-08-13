@@ -45,12 +45,9 @@ def _table(treatment: Sequence[object], control: Sequence[object]) -> AnalysisTa
     return AnalysisTable(
         columns=("unit_id", "arm", "outcome"),
         rows=tuple(
-            (f"treatment-{index}", "treatment", value)
-            for index, value in enumerate(treatment)
+            (f"treatment-{index}", "treatment", value) for index, value in enumerate(treatment)
         )
-        + tuple(
-            (f"control-{index}", "control", value) for index, value in enumerate(control)
-        ),
+        + tuple((f"control-{index}", "control", value) for index, value in enumerate(control)),
     )
 
 
@@ -202,15 +199,11 @@ def test_underlying_randomized_abstention_produces_sequential_abstention() -> No
             "SEQUENTIAL_UNPLANNED_LOOK",
         ),
         (
-            lambda plan, look: look.__class__(
-                **{**look.__dict__, "information_time": 0.75}
-            ),
+            lambda plan, look: look.__class__(**{**look.__dict__, "information_time": 0.75}),
             "SEQUENTIAL_INFORMATION_TIME_MISMATCH",
         ),
         (
-            lambda plan, look: look.__class__(
-                **{**look.__dict__, "plan_fingerprint": "0" * 64}
-            ),
+            lambda plan, look: look.__class__(**{**look.__dict__, "plan_fingerprint": "0" * 64}),
             "SEQUENTIAL_PLAN_FINGERPRINT_CHANGED",
         ),
         (
@@ -432,13 +425,9 @@ def test_analysis_binding_cannot_change_between_cumulative_looks() -> None:
     changed_table = AnalysisTable(
         columns=("account_id", "arm", "outcome"),
         rows=tuple(
-            (f"treatment-{index}", "treatment", value)
-            for index, value in enumerate(final_values)
+            (f"treatment-{index}", "treatment", value) for index, value in enumerate(final_values)
         )
-        + tuple(
-            (f"control-{index}", "control", value)
-            for index, value in enumerate(final_values)
-        ),
+        + tuple((f"control-{index}", "control", value) for index, value in enumerate(final_values)),
     )
 
     history = _service().analyze(
@@ -619,9 +608,7 @@ def _tamper_with_boundary_schedule(payload: dict[str, object]) -> None:
     [
         lambda payload: payload["looks"][0].__setitem__("plan_id", "different-plan"),
         lambda payload: payload["alpha_summary"].__setitem__("evaluated_look_count", 0),
-        lambda payload: payload["alpha_summary"].__setitem__(
-            "cumulative_alpha_spent", 0.0
-        ),
+        lambda payload: payload["alpha_summary"].__setitem__("cumulative_alpha_spent", 0.0),
         lambda payload: payload.__setitem__("current_status", "efficacy"),
         _tamper_with_boundary_schedule,
     ],

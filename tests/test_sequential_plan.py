@@ -69,8 +69,7 @@ def test_valid_plan_is_frozen_canonical_and_fingerprinted() -> None:
 )
 def test_plan_rejects_invalid_information_time_schedules(times: tuple[float, ...]) -> None:
     looks = tuple(
-        {"look_index": index, "information_time": time}
-        for index, time in enumerate(times, start=1)
+        {"look_index": index, "information_time": time} for index, time in enumerate(times, start=1)
     )
 
     with pytest.raises(ValidationError):

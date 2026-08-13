@@ -367,9 +367,7 @@ class SequentialAnalysisHistory(ContractModel):
                 self.plan.model_dump(mode="python")
             )
             if self.boundaries != generate_sequential_boundaries(registered_plan):
-                raise ValueError(
-                    "boundary schedule must match deterministic registered values"
-                )
+                raise ValueError("boundary schedule must match deterministic registered values")
             if len(self.boundaries) != len(self.plan.planned_looks):
                 raise ValueError("boundary schedule must cover every registered look")
             for boundary, planned in zip(
@@ -402,9 +400,9 @@ class SequentialAnalysisHistory(ContractModel):
                 or look.nominal_alpha != boundary.nominal_alpha
             ):
                 raise ValueError("retained look must match its registered boundary")
-        expected_alpha = self.boundaries[len(self.looks) - 1].cumulative_alpha_spent if (
-            self.looks
-        ) else 0.0
+        expected_alpha = (
+            self.boundaries[len(self.looks) - 1].cumulative_alpha_spent if (self.looks) else 0.0
+        )
         if (
             self.alpha_summary.method is not self.plan.boundary_method
             or self.alpha_summary.total_alpha != self.plan.total_alpha
@@ -422,9 +420,7 @@ class SequentialAnalysisHistory(ContractModel):
         elif self.current_status is SequentialStoppingStatus.INVALID:
             raise ValueError("valid plan integrity cannot have invalid status")
         elif self.current_status is not (
-            self.looks[-1].stopping_status
-            if self.looks
-            else SequentialStoppingStatus.CONTINUE
+            self.looks[-1].stopping_status if self.looks else SequentialStoppingStatus.CONTINUE
         ):
             raise ValueError("current status must match the latest retained look")
         return self

@@ -89,13 +89,9 @@ class BernoulliBinomialLikelihood(ContractModel):
 class NormalUnknownMeanVarianceLikelihood(ContractModel):
     """Normal likelihood with an unknown arm-specific mean and variance."""
 
-    likelihood_family: Literal["normal_unknown_mean_variance"] = (
-        "normal_unknown_mean_variance"
-    )
+    likelihood_family: Literal["normal_unknown_mean_variance"] = "normal_unknown_mean_variance"
     likelihood_family_version: Literal["1"] = "1"
-    variance_convention: Literal["arm_specific_unknown_variance"] = (
-        "arm_specific_unknown_variance"
-    )
+    variance_convention: Literal["arm_specific_unknown_variance"] = "arm_specific_unknown_variance"
 
 
 type BayesianLikelihood = Annotated[
@@ -445,9 +441,7 @@ class BayesianAnalysisResult(ContractModel):
                 self.control_posterior.credible_interval,
                 self.effect.credible_interval,
             )
-            if any(
-                interval.credible_level != credible_level.level for interval in intervals
-            ):
+            if any(interval.credible_level != credible_level.level for interval in intervals):
                 raise ValueError("all credible intervals must match the requested credible level")
         else:
             if any(

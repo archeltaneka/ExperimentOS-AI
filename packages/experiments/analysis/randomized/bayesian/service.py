@@ -412,9 +412,7 @@ def _start_invalid_payload_span(
 ) -> BufferedSpan | None:
     before_failures = _provider_failure_count(provider)
     likelihood_family = (
-        "unsupported"
-        if result.status is BayesianComputationStatus.UNSUPPORTED
-        else "invalid"
+        "unsupported" if result.status is BayesianComputationStatus.UNSUPPORTED else "invalid"
     )
     metadata: dict[str, object] = {
         "inference_family": "bayesian",
@@ -664,8 +662,7 @@ def _invalid_payload_result(
     locations = tuple(tuple(item["loc"]) for item in error.errors(include_input=False))
     is_likelihood = any(location and location[0] == "likelihood" for location in locations)
     is_prior = any(
-        location and location[0] in {"treatment_prior", "control_prior"}
-        for location in locations
+        location and location[0] in {"treatment_prior", "control_prior"} for location in locations
     )
     is_rope = any(location and location[0] == "rope" for location in locations)
     if is_likelihood:
@@ -776,9 +773,7 @@ def _prior_information_context(
                 code=f"prior.{arm}_information_context",
                 category=BayesianDiagnosticCategory.RESULT,
                 status=BayesianDiagnosticStatus.PASSED,
-                severity=(
-                    DiagnosticSeverity.WARNING if dominated else DiagnosticSeverity.INFO
-                ),
+                severity=(DiagnosticSeverity.WARNING if dominated else DiagnosticSeverity.INFO),
                 message=(
                     "A documented model-specific prior/data information heuristic was evaluated; "
                     "it is not a universal measure of prior strength."

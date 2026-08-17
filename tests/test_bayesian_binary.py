@@ -42,9 +42,7 @@ def test_exact_beta_updates_and_arm_moments_match_reference() -> None:
     treatment, control, _ = _calculate()
     reference = BETA_POLYNOMIAL_REFERENCE
 
-    assert (treatment.posterior_alpha, treatment.posterior_beta) == (
-        reference.treatment_posterior
-    )
+    assert (treatment.posterior_alpha, treatment.posterior_beta) == (reference.treatment_posterior)
     assert (control.posterior_alpha, control.posterior_beta) == reference.control_posterior
     assert treatment.posterior_mean == reference.treatment_mean
     assert treatment.posterior_variance == reference.treatment_variance

@@ -61,8 +61,7 @@ def _request(metric_type: MetricType, *, treatment: int = 20, control: int = 20)
 
 def _table(treatment: Sequence[object], control: Sequence[object]) -> AnalysisTable:
     rows = tuple(
-        (f"treatment-{index}", "treatment", value)
-        for index, value in enumerate(treatment)
+        (f"treatment-{index}", "treatment", value) for index, value in enumerate(treatment)
     ) + tuple((f"control-{index}", "control", value) for index, value in enumerate(control))
     return AnalysisTable(columns=("unit_id", "arm", "outcome"), rows=rows)
 

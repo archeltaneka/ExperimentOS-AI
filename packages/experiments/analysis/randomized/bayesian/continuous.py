@@ -89,12 +89,8 @@ def _arm_posterior(
             + (prior.kappa_0 * n * mean_shift * mean_shift) / (2.0 * posterior_kappa)
         )
         degrees_of_freedom = 2.0 * posterior_alpha
-        marginal_scale = math.sqrt(
-            posterior_beta / (posterior_alpha * posterior_kappa)
-        )
-        marginal_mean_variance = posterior_beta / (
-            posterior_kappa * (posterior_alpha - 1.0)
-        )
+        marginal_scale = math.sqrt(posterior_beta / (posterior_alpha * posterior_kappa))
+        marginal_mean_variance = posterior_beta / (posterior_kappa * (posterior_alpha - 1.0))
     except (OverflowError, ValueError, ZeroDivisionError) as exc:
         raise BayesianNumericalError("continuous posterior calculation was not finite") from exc
     calculated = (

@@ -117,10 +117,10 @@ Use `artifacts/local/...` for routine local verification output. Use `reports/` 
 
 This is the lowest-friction path for a reviewer. It needs no database, API key, or backend process.
 
-```powershell
+```sh
 cd apps/web
 npm ci
-Copy-Item .env.example .env.local
+cp .env.example .env.local
 npm run dev
 ```
 
@@ -128,7 +128,7 @@ Open `http://localhost:3000`. `.env.example` selects `NEXT_PUBLIC_DATA_MODE=mock
 
 For a production-like local run:
 
-```powershell
+```sh
 cd apps/web
 npm run build
 npm run start
@@ -149,11 +149,11 @@ The intended public deployment is a **Vercel fixture-mode frontend** with `apps/
 
 The backend is intentionally separate from the public portfolio demo. It requires PostgreSQL 16 with pgvector and an ingested experiment before the live Ask adapter can answer a question.
 
-```powershell
+```sh
 uv sync
-Copy-Item .env.example .env
+cp .env.example .env
 docker compose up -d postgres
-$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+export DATABASE_URL="postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
 uv run alembic upgrade head
 uv run python scripts/generate_synthetic_experiments.py
 uv run python -m packages.ingestion.load_experiment --experiment-dir data/synthetic/experiments/exp-001-payment-recommendation --embedding-provider fake
@@ -173,25 +173,25 @@ Then run `npm run dev` in `apps/web`. The current live API contract is `POST /as
 
 Frontend CI runs a clean `npm ci`, linting, TypeScript checking, deterministic component/fixture tests, and a Next.js production build in mock mode:
 
-```powershell
+```sh
 cd apps/web
 npm run verify
 ```
 
 Backend quality checks include Ruff formatting/linting, unit and database-backed tests, offline evaluation smoke checks, and an AI quality gate. Start Postgres for the database path:
 
-```powershell
+```sh
 uv run ruff check .
 uv run pytest
 docker compose up -d postgres
-$env:DATABASE_URL = "postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
+export DATABASE_URL="postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
 uv run alembic upgrade head
 uv run pytest tests/test_db_models.py tests/test_ingestion_load_experiment.py
 ```
 
 To intentionally refresh the curated Phase 3 baseline report:
 
-```powershell
+```sh
 uv run python -m packages.evals.run_baseline --embedding-provider fake --llm-provider mock --output reports/phase3/baseline_report.md
 ```
 

@@ -54,7 +54,7 @@ def test_repository_dataset_loads_in_stable_case_id_order() -> None:
     assert case_ids == tuple(sorted(case_ids))
     assert len(case_ids) == len(set(case_ids))
     assert dataset.baseline_id == "phase4-statistical-reliability"
-    assert dataset.version == "1.0.0"
+    assert dataset.version == "2.0.0"
 
 
 def test_loader_rejects_duplicate_case_ids(tmp_path: Path) -> None:

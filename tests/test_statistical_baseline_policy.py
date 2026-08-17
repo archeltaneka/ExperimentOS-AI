@@ -77,9 +77,9 @@ def test_statistical_adapter_exposes_structured_aggregate_metrics(tmp_path: Path
 
     assert loaded is not None
     assert loaded.metrics["statistics.overall_status"].value == "pass"
-    assert loaded.metrics["statistics.dataset_size"].value == 13
-    assert loaded.metrics["statistics.cases_invalid"].value == 4
-    assert loaded.metrics["statistics.cases_abstained"].value == 3
+    assert loaded.metrics["statistics.dataset_size"].value == 48
+    assert loaded.metrics["statistics.cases_invalid"].value == 13
+    assert loaded.metrics["statistics.cases_abstained"].value == 8
     assert loaded.metrics["statistics.failures.uncertainty"].value == 0
     assert loaded.metrics["statistics.failures.determinism"].value == 0
 
@@ -100,8 +100,8 @@ def test_statistical_policy_passes_expected_invalid_and_abstained_cases(tmp_path
     _write_report(tmp_path)
     policy = _policy(
         _metric("statistics.overall_status", value="pass"),
-        _metric("statistics.cases_invalid", value=4),
-        _metric("statistics.cases_abstained", value=3),
+        _metric("statistics.cases_invalid", value=13),
+        _metric("statistics.cases_abstained", value=8),
         _metric("statistics.cases_failed"),
     )
 

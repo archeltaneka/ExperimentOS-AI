@@ -728,6 +728,9 @@ def _start_cuped_span(
                 metadata={
                     "capability": "cuped_analysis",
                     "analysis_method": "cuped",
+                    "inference_family": "frequentist",
+                    "method": "cuped",
+                    "estimand": request.estimand.kind.value,
                     "metric_type": request.outcome.metric.metric_type.value,
                 },
                 parent=parent,
@@ -738,6 +741,9 @@ def _start_cuped_span(
             metadata={
                 "capability": "cuped_analysis",
                 "analysis_method": "cuped",
+                "inference_family": "frequentist",
+                "method": "cuped",
+                "estimand": request.estimand.kind.value,
                 "metric_type": request.outcome.metric.metric_type.value,
             },
         )
@@ -756,12 +762,18 @@ def _finish_cuped_success(
     if span is None:
         return
     metadata: dict[str, object] = {
+        "status": result.status.value,
         "cuped_status": result.status.value,
+        "abstention_state": result.abstention_reason is not None,
+        "adjustment_used": result.adjusted_result is not None,
         "baseline_status": result.baseline_status.value,
         "covariate_timing": (
             result.covariate.timing.value if result.covariate is not None else "unavailable"
         ),
         "variance_reduction_status": result.variance_reduction.status.value,
+        "covariate_eligibility_status": (
+            "eligible" if result.coefficient is not None else "ineligible"
+        ),
         "diagnostic_codes": tuple(diagnostic.code for diagnostic in result.diagnostics),
         "warning_count": len(result.warnings),
         "duration_ms": duration_ms,
@@ -770,6 +782,7 @@ def _finish_cuped_success(
         metadata.update(
             {
                 "retained_count": result.retention.retained_total,
+                "retained_sample_count": result.retention.retained_total,
                 "retained_proportion": result.retention.retained_proportion,
                 "retained_treatment_count": result.retention.treatment.retained_count,
                 "retained_control_count": result.retention.control.retained_count,

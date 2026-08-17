@@ -290,6 +290,38 @@ def test_aggregator_surfaces_phase4_statistical_baseline_when_present(tmp_path: 
             "cases_invalid": 4,
             "cases_abstained": 3,
             "cases_skipped": 0,
+            "capability_results": [
+                {
+                    "capability": "randomized_binary",
+                    "cases": 2,
+                    "passed": 2,
+                    "failed": 0,
+                    "advisory": 0,
+                },
+                {
+                    "capability": "randomized_continuous",
+                    "cases": 3,
+                    "passed": 3,
+                    "failed": 0,
+                    "advisory": 0,
+                },
+                {"capability": "cuped", "cases": 8, "passed": 6, "failed": 0, "advisory": 2},
+                {"capability": "sequential", "cases": 10, "passed": 10, "failed": 0, "advisory": 0},
+                {
+                    "capability": "bayesian_binary",
+                    "cases": 10,
+                    "passed": 9,
+                    "failed": 0,
+                    "advisory": 1,
+                },
+                {
+                    "capability": "bayesian_continuous",
+                    "cases": 2,
+                    "passed": 2,
+                    "failed": 0,
+                    "advisory": 0,
+                },
+            ],
             "quality_policy": {
                 "blocking_rule_ids": [],
                 "advisory_rule_ids": [],
@@ -308,4 +340,8 @@ def test_aggregator_surfaces_phase4_statistical_baseline_when_present(tmp_path: 
     assert suite.passed == 13
     assert suite.failed == 0
     assert ("Abstained", "3") in suite.key_metrics
+    assert ("Fixed horizon", "pass") in suite.key_metrics
+    assert ("CUPED", "advisory") in suite.key_metrics
+    assert ("Sequential", "pass") in suite.key_metrics
+    assert ("Bayesian", "advisory") in suite.key_metrics
     assert suite.report_path == "phase4/statistical_baseline.json"

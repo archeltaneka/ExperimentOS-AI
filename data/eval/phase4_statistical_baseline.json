@@ -1,266 +1,2093 @@
 {
-  "baseline_id": "phase4-statistical-reliability",
-  "version": "1.0.0",
-  "fixture_provenance": "phase4-statistical-fixtures-v1",
-  "cases": [
-    {
-      "case_id": "descriptive-binary-reference",
-      "capability": "descriptive_statistics",
-      "category": "successful_inference",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "binary",
-      "fixture_id": "descriptive_binary_balanced",
-      "expected_status": "completed",
-      "expected_method": null,
-      "expected_diagnostic_codes": [],
-      "expected_advisory_codes": [],
-      "expected_abstention": false,
-      "expected_abstention_reason": null,
-      "expected_values": [
-        {"path": "population.valid_outcome_count", "value": 20},
-        {"path": "population.summary.success_count", "value": 10},
-        {"path": "population.summary.rate", "value": 0.5, "tolerance": {"absolute": 1e-15, "rationale": "Exact proportion from integer counts.", "provenance": "10 / 20"}},
-        {"path": "treatment.summary.rate", "value": 0.6, "tolerance": {"absolute": 1e-15, "rationale": "Exact proportion from integer counts.", "provenance": "6 / 10"}},
-        {"path": "control.summary.rate", "value": 0.4, "tolerance": {"absolute": 1e-15, "rationale": "Exact proportion from integer counts.", "provenance": "4 / 10"}},
-        {"path": "raw_comparison.absolute_difference", "value": 0.2, "tolerance": {"absolute": 1e-15, "rationale": "Direct subtraction of arm proportions.", "provenance": "0.6 - 0.4"}},
-        {"path": "raw_comparison.relative_difference", "value": 0.5, "tolerance": {"absolute": 1e-15, "rationale": "Direct relative difference.", "provenance": "(0.6 - 0.4) / 0.4"}}
-      ],
-      "notes": "Balanced binary summaries use integer counts and sample dispersion conventions.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "descriptive-continuous-reference",
-      "capability": "descriptive_statistics",
-      "category": "successful_inference",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "continuous",
-      "fixture_id": "descriptive_continuous_balanced",
-      "expected_status": "completed",
-      "expected_method": null,
-      "expected_diagnostic_codes": [],
-      "expected_advisory_codes": [],
-      "expected_abstention": false,
-      "expected_abstention_reason": null,
-      "expected_values": [
-        {"path": "population.valid_outcome_count", "value": 8},
-        {"path": "population.summary.mean", "value": 3.75, "tolerance": {"absolute": 1e-12, "rationale": "Direct arithmetic mean of small finite integers.", "provenance": "sum([1,2,3,4,2,4,6,8]) / 8"}},
-        {"path": "population.summary.variance", "value": 5.357142857142857, "tolerance": {"absolute": 1e-12, "rationale": "Bessel-corrected sample variance from exact integer observations.", "provenance": "37.5 / 7"}},
-        {"path": "population.summary.quantiles.0.value", "value": 2.0, "tolerance": {"absolute": 1e-12, "rationale": "Linear type-7 quantile on sorted values.", "provenance": "sorted position (8 - 1) * 0.25"}},
-        {"path": "population.summary.quantiles.1.value", "value": 3.5, "tolerance": {"absolute": 1e-12, "rationale": "Linear median on eight sorted observations.", "provenance": "average of the fourth and fifth ordered values"}},
-        {"path": "population.summary.quantiles.2.value", "value": 4.5, "tolerance": {"absolute": 1e-12, "rationale": "Linear type-7 quantile on sorted values.", "provenance": "sorted position (8 - 1) * 0.75"}},
-        {"path": "raw_comparison.absolute_difference", "value": 2.5, "tolerance": {"absolute": 1e-12, "rationale": "Direct treatment-minus-control mean difference.", "provenance": "5.0 - 2.5"}},
-        {"path": "raw_comparison.relative_difference", "value": 1.0, "tolerance": {"absolute": 1e-12, "rationale": "Direct relative mean difference.", "provenance": "(5.0 - 2.5) / 2.5"}}
-      ],
-      "notes": "Continuous summaries use sample variance and linear type-7 quantiles.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "eligibility-invalid-malformed",
-      "capability": "eligibility_validation",
-      "category": "invalid_input",
-      "analysis_design": "unknown",
-      "metric_type": "unknown",
-      "fixture_id": "malformed_request_validation",
-      "expected_status": "ineligible",
-      "expected_method": null,
-      "expected_diagnostic_codes": ["request.contract_invalid"],
-      "expected_advisory_codes": [],
-      "expected_abstention": false,
-      "expected_abstention_reason": null,
-      "expected_values": [{"path": "dataset_summary.input_row_count", "value": 6}],
-      "notes": "Malformed request payloads are invalid and never treated as abstentions.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "eligibility-invalid-missing-arm",
-      "capability": "eligibility_validation",
-      "category": "invalid_input",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "continuous",
-      "fixture_id": "missing_treatment_arm_validation",
-      "expected_status": "ineligible",
-      "expected_method": "fixed_horizon_ab",
-      "expected_diagnostic_codes": ["sample.arm_insufficient", "treatment.arm_missing"],
-      "expected_advisory_codes": [],
-      "expected_abstention": false,
-      "expected_abstention_reason": null,
-      "expected_values": [{"path": "treatment_summary.treatment_count", "value": 0}],
-      "notes": "A missing required treatment arm is a blocking invalid input.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "eligibility-invalid-nonfinite",
-      "capability": "eligibility_validation",
-      "category": "invalid_input",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "continuous",
-      "fixture_id": "nonfinite_outcome_validation",
-      "expected_status": "ineligible",
-      "expected_method": "fixed_horizon_ab",
-      "expected_diagnostic_codes": ["outcome.non_finite"],
-      "expected_advisory_codes": [],
-      "expected_abstention": false,
-      "expected_abstention_reason": null,
-      "expected_values": [{"path": "outcome_summary.non_finite_count", "value": 1}],
-      "notes": "Non-finite outcomes are rejected before estimation.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "eligibility-valid-continuous",
-      "capability": "eligibility_validation",
-      "category": "successful_inference",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "continuous",
-      "fixture_id": "valid_continuous_validation",
-      "expected_status": "eligible",
-      "expected_method": "fixed_horizon_ab",
-      "expected_diagnostic_codes": [],
-      "expected_advisory_codes": [],
-      "expected_abstention": false,
-      "expected_abstention_reason": null,
-      "expected_values": [{"path": "dataset_summary.input_row_count", "value": 100}, {"path": "outcome_summary.has_variation", "value": true}],
-      "notes": "A balanced finite continuous randomized input is eligible.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "randomized-binary-reference",
-      "capability": "randomized_binary",
-      "category": "successful_inference",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "binary",
-      "fixture_id": "randomized_binary_balanced",
-      "expected_status": "completed",
-      "expected_method": "two_proportion_z",
-      "expected_diagnostic_codes": [],
-      "expected_advisory_codes": [],
-      "expected_abstention": false,
-      "expected_abstention_reason": null,
-      "expected_values": [
-        {"path": "treatment_summary.n", "value": 20},
-        {"path": "control_summary.n", "value": 20},
-        {"path": "point_effect.absolute_effect.value", "value": 0.2, "tolerance": {"absolute": 1e-12, "rationale": "Difference between exact 12/20 and 8/20 proportions.", "provenance": "12/20 - 8/20"}},
-        {"path": "point_effect.relative_effect", "value": 0.5, "tolerance": {"absolute": 1e-12, "rationale": "Relative effect against a 0.4 control rate.", "provenance": "0.2 / 0.4"}},
-        {"path": "test_result.standard_error", "value": 0.15811388300841897, "tolerance": {"absolute": 1e-12, "rationale": "Pooled-null two-proportion standard error.", "provenance": "sqrt(0.5 * 0.5 * (1/20 + 1/20))"}},
-        {"path": "test_result.statistic", "value": 1.2649110640673518, "tolerance": {"absolute": 1e-12, "rationale": "Absolute effect divided by pooled-null standard error.", "provenance": "0.2 / sqrt(0.025)"}},
-        {"path": "test_result.p_value", "value": 0.2059032107320684, "tolerance": {"absolute": 1e-10, "rationale": "Two-sided standard-normal tail calculation.", "provenance": "NIST standard normal CDF reference for z=1.2649110640673518"}}
-      ],
-      "notes": "Two-proportion reference separates pooled test uncertainty from unpooled interval uncertainty.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "randomized-continuous-reference",
-      "capability": "randomized_continuous",
-      "category": "successful_inference",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "continuous",
-      "fixture_id": "randomized_continuous_balanced",
-      "expected_status": "completed",
-      "expected_method": "welch_t",
-      "expected_diagnostic_codes": [],
-      "expected_advisory_codes": [],
-      "expected_abstention": false,
-      "expected_abstention_reason": null,
-      "expected_values": [
-        {"path": "treatment_summary.mean", "value": 7.0, "tolerance": {"absolute": 1e-12, "rationale": "Direct arithmetic mean.", "provenance": "mean([3,5,7,9,11])"}},
-        {"path": "control_summary.mean", "value": 6.0, "tolerance": {"absolute": 1e-12, "rationale": "Direct arithmetic mean.", "provenance": "mean([2,4,6,8,10])"}},
-        {"path": "treatment_summary.sample_variance", "value": 10.0, "tolerance": {"absolute": 1e-12, "rationale": "Bessel-corrected sample variance.", "provenance": "40 / (5 - 1)"}},
-        {"path": "point_effect.absolute_effect.value", "value": 1.0, "tolerance": {"absolute": 1e-12, "rationale": "Treatment-minus-control mean difference.", "provenance": "7 - 6"}},
-        {"path": "test_result.standard_error", "value": 2.0, "tolerance": {"absolute": 1e-12, "rationale": "Welch standard error with equal sample variances.", "provenance": "sqrt(10/5 + 10/5)"}},
-        {"path": "test_result.statistic", "value": 0.5, "tolerance": {"absolute": 1e-12, "rationale": "Effect divided by standard error.", "provenance": "1 / 2"}},
-        {"path": "test_result.degrees_of_freedom", "value": 8.0, "tolerance": {"absolute": 1e-12, "rationale": "Welch-Satterthwaite degrees of freedom for equal groups.", "provenance": "(2+2)^2 / (2^2/4 + 2^2/4)"}},
-        {"path": "test_result.p_value", "value": 0.6305360755569764, "tolerance": {"absolute": 1e-10, "rationale": "Two-sided Student t tail calculation.", "provenance": "NIST Student t reference for t=0.5, df=8"}}
-      ],
-      "notes": "Welch reference uses independently calculated means, sample variances, and uncertainty.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "randomized-continuous-zero-baseline",
-      "capability": "randomized_continuous",
-      "category": "successful_inference",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "continuous",
-      "fixture_id": "randomized_continuous_zero_baseline",
-      "expected_status": "completed",
-      "expected_method": "welch_t",
-      "expected_diagnostic_codes": ["zero_control_baseline"],
-      "expected_advisory_codes": ["zero_control_baseline"],
-      "expected_abstention": false,
-      "expected_abstention_reason": null,
-      "expected_values": [
-        {"path": "point_effect.absolute_effect.value", "value": 2.0, "tolerance": {"absolute": 1e-12, "rationale": "Treatment-minus-control mean remains defined.", "provenance": "mean([1,2,3]) - mean([-1,0,1])"}},
-        {"path": "point_effect.relative_effect", "value": null},
-        {"path": "point_effect.relative_effect_availability", "value": "unavailable"}
-      ],
-      "notes": "A zero control mean omits relative lift while preserving valid absolute inference.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "randomized-continuous-zero-variance",
-      "capability": "randomized_continuous",
-      "category": "abstention",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "continuous",
-      "fixture_id": "randomized_continuous_zero_variance",
-      "expected_status": "abstained",
-      "expected_method": null,
-      "expected_diagnostic_codes": ["zero_standard_error"],
-      "expected_advisory_codes": [],
-      "expected_abstention": true,
-      "expected_abstention_reason": "zero_standard_error",
-      "expected_values": [],
-      "notes": "Undefined Welch uncertainty is a correct abstention with no fabricated inference.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "randomized-sparse-binary-abstention",
-      "capability": "randomized_binary",
-      "category": "abstention",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "binary",
-      "fixture_id": "randomized_binary_sparse",
-      "expected_status": "abstained",
-      "expected_method": null,
-      "expected_diagnostic_codes": ["sparse_cell"],
-      "expected_advisory_codes": [],
-      "expected_abstention": true,
-      "expected_abstention_reason": "sparse_cell",
-      "expected_values": [],
-      "notes": "Sparse expected cells trigger a correct abstention from the z approximation.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "randomized-tiny-sample-abstention",
-      "capability": "randomized_continuous",
-      "category": "abstention",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "continuous",
-      "fixture_id": "randomized_continuous_tiny",
-      "expected_status": "abstained",
-      "expected_method": null,
-      "expected_diagnostic_codes": ["one_observation_arm"],
-      "expected_advisory_codes": [],
-      "expected_abstention": true,
-      "expected_abstention_reason": "one_observation_arm",
-      "expected_values": [],
-      "notes": "One observation per arm is insufficient for Welch inference.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    },
-    {
-      "case_id": "randomized-unsupported-alternative",
-      "capability": "randomized_continuous",
-      "category": "invalid_input",
-      "analysis_design": "randomized_experiment",
-      "metric_type": "continuous",
-      "fixture_id": "randomized_continuous_one_sided",
-      "expected_status": "unsupported",
-      "expected_method": null,
-      "expected_diagnostic_codes": ["unsupported_alternative_hypothesis"],
-      "expected_advisory_codes": [],
-      "expected_abstention": false,
-      "expected_abstention_reason": null,
-      "expected_values": [],
-      "notes": "Unsupported one-sided alternatives remain distinct from abstention.",
-      "fixture_provenance": "phase4-statistical-fixtures-v1"
-    }
-  ]
+    "baseline_id": "phase4-statistical-reliability",
+    "version": "2.0.0",
+    "fixture_provenance": "phase4-statistical-fixtures-v1",
+    "cases": [
+        {
+            "case_id": "bayesian-binary-conjugate",
+            "capability": "bayesian_binary",
+            "category": "successful_inference",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_binary_base",
+            "expected_status": "completed",
+            "expected_method": "deterministic_quadrature",
+            "expected_diagnostic_codes": [
+                "prior.control_information_context",
+                "prior.treatment_information_context"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "treatment_posterior.prior.alpha",
+                    "value": 1.0,
+                    "tolerance": {"absolute": 0.0, "rationale": "Declared prior parameter.", "provenance": "Beta(1,1) fixture"}
+                },
+                {
+                    "path": "treatment_posterior.prior.beta",
+                    "value": 1.0,
+                    "tolerance": {"absolute": 0.0, "rationale": "Declared prior parameter.", "provenance": "Beta(1,1) fixture"}
+                },
+                {
+                    "path": "treatment_posterior.posterior_alpha",
+                    "value": 3.0,
+                    "tolerance": {"absolute": 0.0, "rationale": "Conjugate success update.", "provenance": "1 + 2 successes"}
+                },
+                {
+                    "path": "treatment_posterior.posterior_beta",
+                    "value": 1.0,
+                    "tolerance": {"absolute": 0.0, "rationale": "Conjugate failure update.", "provenance": "1 + 0 failures"}
+                },
+                {
+                    "path": "treatment_posterior.posterior_mean",
+                    "value": 0.75,
+                    "tolerance": {"absolute": 1e-12, "rationale": "Beta posterior mean.", "provenance": "3/(3+1)"}
+                },
+                {
+                    "path": "treatment_posterior.posterior_variance",
+                    "value": 0.0375,
+                    "tolerance": {"absolute": 1e-12, "rationale": "Beta posterior variance.", "provenance": "3*1/(4^2*5)"}
+                },
+                {
+                    "path": "control_posterior.posterior_alpha",
+                    "value": 2.0,
+                    "tolerance": {"absolute": 0.0, "rationale": "Conjugate success update.", "provenance": "1 + 1 success"}
+                },
+                {
+                    "path": "control_posterior.posterior_beta",
+                    "value": 2.0,
+                    "tolerance": {"absolute": 0.0, "rationale": "Conjugate failure update.", "provenance": "1 + 1 failure"}
+                },
+                {
+                    "path": "effect.posterior_mean",
+                    "value": 0.25,
+                    "tolerance": {"absolute": 1e-12, "rationale": "Difference of posterior means.", "provenance": "0.75 - 0.5"}
+                },
+                {
+                    "path": "effect.posterior_standard_deviation",
+                    "value": 0.2958039891549808,
+                    "tolerance": {"absolute": 1e-12, "rationale": "Independent posterior variance sum.", "provenance": "sqrt(0.0375 + 0.05)"}
+                },
+                {
+                    "path": "effect.credible_interval.lower",
+                    "value": -0.361827063495994,
+                    "tolerance": {"absolute": 1e-10, "rationale": "Independent equal-tailed beta-difference quadrature.", "provenance": "documented beta polynomial CDF reference"}
+                },
+                {
+                    "path": "effect.credible_interval.upper",
+                    "value": 0.7811646899622923,
+                    "tolerance": {"absolute": 1e-10, "rationale": "Independent equal-tailed beta-difference quadrature.", "provenance": "documented beta polynomial CDF reference"}
+                },
+                {
+                    "path": "effect.probability_of_superiority.probability",
+                    "value": 0.8,
+                    "tolerance": {"absolute": 1e-12, "rationale": "Closed-form Beta comparison.", "provenance": "P(Beta(3,1) > Beta(2,2))"}
+                }
+            ],
+            "expected_assumption_codes": [
+                "binary_bernoulli_likelihood",
+                "compatible_analysis_randomization_units",
+                "independent_supported_units",
+                "no_interference",
+                "proper_beta_priors",
+                "random_assignment",
+                "treatment_control_consistency",
+                "valid_outcome_measurement"
+            ],
+            "expected_uncertainty_fields": [
+                "effect.credible_interval",
+                "effect.posterior_mean",
+                "effect.posterior_standard_deviation",
+                "effect.probability_of_superiority",
+                "treatment_posterior",
+                "control_posterior"
+            ],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "independent beta-binomial conjugate calculations",
+            "notes": "Supported binary conjugate model.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-continuous-conjugate",
+            "capability": "bayesian_continuous",
+            "category": "successful_inference",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "bayesian_continuous_base",
+            "expected_status": "completed",
+            "expected_method": "deterministic_quadrature",
+            "expected_diagnostic_codes": [
+                "prior.control_information_context",
+                "prior.treatment_information_context"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "treatment_posterior.prior.mu_0",
+                    "value": 1.0,
+                    "tolerance": {"absolute": 0.0, "rationale": "Declared prior location.", "provenance": "shifted NIG fixture"}
+                },
+                {
+                    "path": "treatment_posterior.posterior_mu",
+                    "value": 2.5,
+                    "tolerance": {"absolute": 1e-12, "rationale": "NIG posterior mean update.", "provenance": "(1*1 + 3*3)/4"}
+                },
+                {
+                    "path": "treatment_posterior.posterior_kappa",
+                    "value": 4.0,
+                    "tolerance": {"absolute": 0.0, "rationale": "NIG posterior precision count.", "provenance": "1 + 3"}
+                },
+                {
+                    "path": "treatment_posterior.posterior_alpha",
+                    "value": 3.5,
+                    "tolerance": {"absolute": 0.0, "rationale": "NIG posterior shape.", "provenance": "2 + 3/2"}
+                },
+                {
+                    "path": "treatment_posterior.posterior_beta",
+                    "value": 4.5,
+                    "tolerance": {"absolute": 1e-12, "rationale": "NIG posterior scale update.", "provenance": "2 + 2/2 + (1*3*(3-1)^2)/(2*4)"}
+                },
+                {
+                    "path": "treatment_posterior.marginal_mean_variance",
+                    "value": 0.45,
+                    "tolerance": {"absolute": 1e-12, "rationale": "Posterior marginal mean variance.", "provenance": "4.5/(4*(3.5-1))"}
+                },
+                {
+                    "path": "control_posterior.posterior_mu",
+                    "value": 1.5,
+                    "tolerance": {"absolute": 1e-12, "rationale": "NIG posterior mean update.", "provenance": "(1*0 + 3*2)/4"}
+                },
+                {
+                    "path": "effect.posterior_mean",
+                    "value": 1.0,
+                    "tolerance": {"absolute": 1e-12, "rationale": "Difference of posterior means.", "provenance": "2.5 - 1.5"}
+                },
+                {
+                    "path": "effect.posterior_standard_deviation",
+                    "value": 0.9486832980505138,
+                    "tolerance": {"absolute": 1e-12, "rationale": "Independent posterior variance sum.", "provenance": "sqrt(0.45 + 0.45)"}
+                },
+                {
+                    "path": "effect.credible_interval.lower",
+                    "value": -0.8854815205863712,
+                    "tolerance": {"absolute": 1e-10, "rationale": "Independent equal-tailed Student-t convolution.", "provenance": "documented NIG convolution reference"}
+                },
+                {
+                    "path": "effect.credible_interval.upper",
+                    "value": 2.8854815205863718,
+                    "tolerance": {"absolute": 1e-10, "rationale": "Independent equal-tailed Student-t convolution.", "provenance": "documented NIG convolution reference"}
+                },
+                {
+                    "path": "effect.probability_of_superiority.probability",
+                    "value": 0.8662116898198173,
+                    "tolerance": {"absolute": 1e-10, "rationale": "Independent Student-t convolution probability.", "provenance": "documented NIG convolution reference"}
+                }
+            ],
+            "expected_assumption_codes": [
+                "compatible_analysis_randomization_units",
+                "independent_supported_units",
+                "no_interference",
+                "normal_arm_likelihood",
+                "proper_normal_inverse_gamma_priors",
+                "random_assignment",
+                "treatment_control_consistency",
+                "valid_outcome_measurement"
+            ],
+            "expected_uncertainty_fields": [
+                "effect.credible_interval",
+                "effect.posterior_mean",
+                "effect.posterior_standard_deviation",
+                "effect.probability_of_superiority",
+                "treatment_posterior",
+                "control_posterior"
+            ],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "independent normal-inverse-gamma conjugate calculations",
+            "notes": "Supported continuous conjugate model.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-inadequate-data-abstention",
+            "capability": "bayesian_continuous",
+            "category": "abstention",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "bayesian_continuous_inadequate",
+            "expected_status": "abstained",
+            "expected_method": null,
+            "expected_diagnostic_codes": [
+                "inadequate_continuous_evidence"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": true,
+            "expected_abstention_reason": "inadequate_continuous_evidence",
+            "expected_values": [],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "one observation per arm is inadequate for unknown variance",
+            "notes": "Inadequate continuous data abstains.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-informative-prior-advisory",
+            "capability": "bayesian_binary",
+            "category": "successful_inference",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_binary_informative",
+            "expected_status": "completed",
+            "expected_method": "deterministic_quadrature",
+            "expected_diagnostic_codes": [
+                "prior.control_information_context",
+                "prior.treatment_information_context"
+            ],
+            "expected_advisory_codes": [
+                "prior.control_dominance",
+                "prior.treatment_dominance"
+            ],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [],
+            "expected_assumption_codes": [
+                "binary_bernoulli_likelihood",
+                "proper_beta_priors",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "effect.credible_interval",
+                "effect.posterior_mean"
+            ],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "explicit Beta(50,50) prior reference",
+            "notes": "Prior dominance is advisory.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-invalid-prior",
+            "capability": "bayesian_binary",
+            "category": "invalid_input",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_invalid_prior",
+            "expected_status": "invalid",
+            "expected_method": null,
+            "expected_diagnostic_codes": [
+                "declaration.invalid_prior"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": true,
+            "expected_abstention_reason": "invalid_prior",
+            "expected_values": [],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "invalid negative Beta shape declaration",
+            "notes": "Invalid prior is rejected without repair.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-negative-effect",
+            "capability": "bayesian_binary",
+            "category": "successful_inference",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_binary_negative",
+            "expected_status": "completed",
+            "expected_method": "deterministic_quadrature",
+            "expected_diagnostic_codes": [
+                "prior.control_information_context",
+                "prior.treatment_information_context"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [],
+            "expected_assumption_codes": [
+                "binary_bernoulli_likelihood",
+                "proper_beta_priors",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "effect.credible_interval",
+                "effect.posterior_mean"
+            ],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "explicit reversed binary counts",
+            "notes": "Negative effect remains valid inference.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-null-effect",
+            "capability": "bayesian_binary",
+            "category": "successful_inference",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_binary_null",
+            "expected_status": "completed",
+            "expected_method": "deterministic_quadrature",
+            "expected_diagnostic_codes": [
+                "prior.control_information_context",
+                "prior.treatment_information_context"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [],
+            "expected_assumption_codes": [
+                "binary_bernoulli_likelihood",
+                "proper_beta_priors",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "effect.credible_interval",
+                "effect.posterior_mean"
+            ],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "equal binary arm counts",
+            "notes": "Null effect remains valid inference.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-positive-effect",
+            "capability": "bayesian_binary",
+            "category": "successful_inference",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_binary_base",
+            "expected_status": "completed",
+            "expected_method": "deterministic_quadrature",
+            "expected_diagnostic_codes": [
+                "prior.control_information_context",
+                "prior.treatment_information_context"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [],
+            "expected_assumption_codes": [
+                "binary_bernoulli_likelihood",
+                "proper_beta_priors",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "effect.credible_interval",
+                "effect.posterior_mean"
+            ],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "explicit treatment and control event counts",
+            "notes": "Positive effect remains valid inference.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-rope-absent",
+            "capability": "bayesian_binary",
+            "category": "successful_inference",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_binary_base",
+            "expected_status": "completed",
+            "expected_method": "deterministic_quadrature",
+            "expected_diagnostic_codes": [
+                "prior.control_information_context",
+                "prior.treatment_information_context"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "effect.rope_probability",
+                    "value": null
+                }
+            ],
+            "expected_assumption_codes": [
+                "binary_bernoulli_likelihood",
+                "proper_beta_priors",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "effect.credible_interval",
+                "effect.posterior_mean"
+            ],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature",
+                "rope_requested": false
+            },
+            "reference_provenance": "ROPE omitted by declaration",
+            "notes": "No ROPE probability is emitted without a ROPE.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-rope-supplied",
+            "capability": "bayesian_binary",
+            "category": "successful_inference",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_binary_rope",
+            "expected_status": "completed",
+            "expected_method": "deterministic_quadrature",
+            "expected_diagnostic_codes": [
+                "prior.control_information_context",
+                "prior.treatment_information_context"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [],
+            "expected_assumption_codes": [
+                "binary_bernoulli_likelihood",
+                "proper_beta_priors",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "effect.credible_interval",
+                "effect.posterior_mean",
+                "effect.rope_probability"
+            ],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature",
+                "rope_requested": true
+            },
+            "reference_provenance": "explicit raw-effect ROPE declaration",
+            "notes": "ROPE probability is present only when requested.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-seeded-approximation-skipped",
+            "capability": "bayesian_binary",
+            "category": "skipped",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_seeded_skipped",
+            "expected_status": "skipped",
+            "expected_method": null,
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "reason": "no_seeded_sampling_path"
+            },
+            "reference_provenance": "Bayesian v1 exposes deterministic quadrature only",
+            "notes": "Seeded sampling is honestly skipped because no sampling path exists.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-sparse-events",
+            "capability": "bayesian_binary",
+            "category": "successful_inference",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_binary_sparse",
+            "expected_status": "completed",
+            "expected_method": "deterministic_quadrature",
+            "expected_diagnostic_codes": [
+                "prior.control_information_context",
+                "prior.treatment_information_context"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [],
+            "expected_assumption_codes": [
+                "binary_bernoulli_likelihood",
+                "proper_beta_priors",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "effect.credible_interval",
+                "effect.posterior_mean"
+            ],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "one treatment event and zero control events",
+            "notes": "Sparse events remain supported by conjugacy.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-unsupported-likelihood",
+            "capability": "bayesian_binary",
+            "category": "invalid_input",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_unsupported_likelihood",
+            "expected_status": "unsupported",
+            "expected_method": null,
+            "expected_diagnostic_codes": [
+                "declaration.unsupported_likelihood"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": true,
+            "expected_abstention_reason": "unsupported_likelihood",
+            "expected_values": [],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "unknown likelihood family declaration",
+            "notes": "Unsupported likelihood is rejected.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-weak-prior",
+            "capability": "bayesian_binary",
+            "category": "successful_inference",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_binary_base",
+            "expected_status": "completed",
+            "expected_method": "deterministic_quadrature",
+            "expected_diagnostic_codes": [
+                "prior.control_information_context",
+                "prior.treatment_information_context"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [],
+            "expected_assumption_codes": [
+                "binary_bernoulli_likelihood",
+                "proper_beta_priors",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "effect.credible_interval",
+                "effect.posterior_mean"
+            ],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "explicit Beta(1,1) priors",
+            "notes": "Weak explicit priors are recorded.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "bayesian-zero-events",
+            "capability": "bayesian_binary",
+            "category": "successful_inference",
+            "method": "bayesian_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "bayesian_binary_zero",
+            "expected_status": "completed",
+            "expected_method": "deterministic_quadrature",
+            "expected_diagnostic_codes": [
+                "prior.control_information_context",
+                "prior.treatment_information_context"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [],
+            "expected_assumption_codes": [
+                "binary_bernoulli_likelihood",
+                "proper_beta_priors",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "effect.credible_interval",
+                "effect.posterior_mean"
+            ],
+            "deterministic_configuration": {
+                "computation": "deterministic_quadrature"
+            },
+            "reference_provenance": "zero successes in both arms",
+            "notes": "Proper priors keep zero-event posteriors defined.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "cuped-arm-imbalance-advisory",
+            "capability": "cuped",
+            "category": "successful_inference",
+            "method": "cuped",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "cuped_arm_imbalance",
+            "expected_status": "completed",
+            "expected_method": "cuped",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [
+                "eligibility.sample.arm_imbalance"
+            ],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [],
+            "expected_assumption_codes": [
+                "compatible_analysis_randomization_units",
+                "covariate_pre_treatment",
+                "covariate_unaffected_by_treatment",
+                "estimand_preserved",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "adjusted_result.point_effect",
+                "adjusted_result.test_result",
+                "comparable_unadjusted_result",
+                "variance_reduction"
+            ],
+            "deterministic_configuration": {
+                "retention_policy": "complete_case"
+            },
+            "reference_provenance": "explicit imbalanced arm fixture",
+            "notes": "Arm imbalance remains advisory.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "cuped-constant-covariate-abstention",
+            "capability": "cuped",
+            "category": "abstention",
+            "method": "cuped",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "cuped_constant_covariate",
+            "expected_status": "abstained",
+            "expected_method": null,
+            "expected_diagnostic_codes": [
+                "constant_or_near_zero_covariate"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": true,
+            "expected_abstention_reason": "constant_or_near_zero_covariate",
+            "expected_values": [],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "retention_policy": "complete_case"
+            },
+            "reference_provenance": "constant covariate fixture",
+            "notes": "Invalid covariate variance triggers abstention.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "cuped-excessive-missingness-abstention",
+            "capability": "cuped",
+            "category": "abstention",
+            "method": "cuped",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "cuped_excessive_missingness",
+            "expected_status": "abstained",
+            "expected_method": null,
+            "expected_diagnostic_codes": [
+                "excessive_covariate_missingness"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": true,
+            "expected_abstention_reason": "excessive_covariate_missingness",
+            "expected_values": [],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "maximum_covariate_missing_rate": 0.25
+            },
+            "reference_provenance": "three missing values of eight",
+            "notes": "Excessive covariate missingness abstains.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "cuped-missing-covariate-retention",
+            "capability": "cuped",
+            "category": "successful_inference",
+            "method": "cuped",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "cuped_missing_covariate",
+            "expected_status": "completed",
+            "expected_method": "cuped",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [
+                "cuped.sample_rows_removed"
+            ],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "retention.original_total",
+                    "value": 8
+                },
+                {
+                    "path": "retention.retained_total",
+                    "value": 6
+                }
+            ],
+            "expected_assumption_codes": [
+                "complete_case_covariate_policy",
+                "covariate_pre_treatment",
+                "covariate_unaffected_by_treatment",
+                "estimand_preserved",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "adjusted_result.point_effect",
+                "adjusted_result.test_result",
+                "comparable_unadjusted_result",
+                "variance_reduction"
+            ],
+            "deterministic_configuration": {
+                "retention_policy": "complete_case"
+            },
+            "reference_provenance": "one missing covariate per arm",
+            "notes": "Complete-case retention is explicit.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "cuped-negative-variance-reduction",
+            "capability": "cuped",
+            "category": "successful_inference",
+            "method": "cuped",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "cuped_negative_reduction",
+            "expected_status": "degraded_precision",
+            "expected_method": "cuped",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [
+                "cuped.negative_variance_reduction"
+            ],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "variance_reduction.status",
+                    "value": "negative_reduction"
+                }
+            ],
+            "expected_assumption_codes": [
+                "covariate_pre_treatment",
+                "covariate_unaffected_by_treatment",
+                "estimand_preserved",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "adjusted_result.point_effect",
+                "adjusted_result.test_result",
+                "comparable_unadjusted_result",
+                "variance_reduction"
+            ],
+            "deterministic_configuration": {
+                "retention_policy": "complete_case"
+            },
+            "reference_provenance": "hand-checked negative same-sample variance fixture",
+            "notes": "Negative variance reduction is advisory, not failure.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "cuped-positive-variance-reduction",
+            "capability": "cuped",
+            "category": "successful_inference",
+            "method": "cuped",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "cuped_positive_reduction",
+            "expected_status": "completed",
+            "expected_method": "cuped",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "coefficient.theta",
+                    "value": 1.95,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Pooled sample covariance divided by covariate variance.",
+                        "provenance": "(19.5/7)/(10/7)"
+                    }
+                },
+                {
+                    "path": "coefficient.covariance",
+                    "value": 2.7857142857142856,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Bessel-corrected pooled covariance.",
+                        "provenance": "19.5/7"
+                    }
+                },
+                {
+                    "path": "coefficient.covariate_variance",
+                    "value": 1.4285714285714286,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Bessel-corrected pooled covariate variance.",
+                        "provenance": "10/7"
+                    }
+                },
+                {
+                    "path": "coefficient.correlation",
+                    "value": 0.7715590235427073,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Independent covariance normalization.",
+                        "provenance": "(19.5/7)/sqrt((63.875/7)*(10/7))"
+                    }
+                },
+                {
+                    "path": "retention.retained_total",
+                    "value": 8
+                },
+                {
+                    "path": "retention.treatment.retained_count",
+                    "value": 4
+                },
+                {
+                    "path": "retention.control.retained_count",
+                    "value": 4
+                },
+                {
+                    "path": "adjusted_result.point_effect.absolute_effect.value",
+                    "value": 3.25,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Difference in hand-adjusted arm means.",
+                        "provenance": "6.125 - 2.875"
+                    }
+                },
+                {
+                    "path": "adjusted_result.test_result.standard_error",
+                    "value": 0.6274950199005568,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Welch standard error of adjusted outcomes.",
+                        "provenance": "sqrt(1.5433333333333334/4 + 0.03333333333333336/4)"
+                    }
+                },
+                {
+                    "path": "adjusted_result.test_result.confidence_interval.lower",
+                    "value": 1.7009698326859795,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Welch 95 percent interval lower bound.",
+                        "provenance": "independent t critical value with Welch df"
+                    }
+                },
+                {
+                    "path": "adjusted_result.test_result.confidence_interval.upper",
+                    "value": 4.7990301673140205,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Welch 95 percent interval upper bound.",
+                        "provenance": "independent t critical value with Welch df"
+                    }
+                },
+                {
+                    "path": "variance_reduction.fraction",
+                    "value": 0.8894736842105263,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Relative reduction in squared standard error.",
+                        "provenance": "1 - 0.39375000000000016/3.5625"
+                    }
+                },
+                {
+                    "path": "variance_reduction.status",
+                    "value": "positive_reduction"
+                },
+                {
+                    "path": "status",
+                    "value": "completed"
+                }
+            ],
+            "expected_assumption_codes": [
+                "compatible_analysis_randomization_units",
+                "covariate_pre_treatment",
+                "covariate_unaffected_by_treatment",
+                "estimand_preserved",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "adjusted_result.point_effect",
+                "adjusted_result.test_result",
+                "comparable_unadjusted_result",
+                "variance_reduction"
+            ],
+            "deterministic_configuration": {
+                "retention_policy": "complete_case"
+            },
+            "reference_provenance": "hand-calculated pooled CUPED fixture",
+            "notes": "Positive variance reduction reference.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "cuped-post-treatment-covariate-abstention",
+            "capability": "cuped",
+            "category": "abstention",
+            "method": "cuped",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "cuped_post_treatment",
+            "expected_status": "abstained",
+            "expected_method": null,
+            "expected_diagnostic_codes": [
+                "post_treatment_covariate"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": true,
+            "expected_abstention_reason": "post_treatment_covariate",
+            "expected_values": [],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "retention_policy": "complete_case"
+            },
+            "reference_provenance": "post-treatment covariate declaration",
+            "notes": "Post-treatment adjustment is blocked.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "cuped-zero-variance-reduction",
+            "capability": "cuped",
+            "category": "successful_inference",
+            "method": "cuped",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "cuped_zero_reduction",
+            "expected_status": "no_improvement",
+            "expected_method": "cuped",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [
+                "cuped.weak_outcome_covariate_correlation"
+            ],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "variance_reduction.status",
+                    "value": "no_reduction"
+                }
+            ],
+            "expected_assumption_codes": [
+                "covariate_pre_treatment",
+                "covariate_unaffected_by_treatment",
+                "estimand_preserved",
+                "random_assignment"
+            ],
+            "expected_uncertainty_fields": [
+                "adjusted_result.point_effect",
+                "adjusted_result.test_result",
+                "comparable_unadjusted_result",
+                "variance_reduction"
+            ],
+            "deterministic_configuration": {
+                "retention_policy": "complete_case"
+            },
+            "reference_provenance": "hand-checked zero same-sample variance fixture",
+            "notes": "No benefit is advisory statistical performance.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "descriptive-binary-reference",
+            "capability": "descriptive_statistics",
+            "category": "successful_inference",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "descriptive_binary_balanced",
+            "expected_status": "completed",
+            "expected_method": null,
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "population.valid_outcome_count",
+                    "value": 20
+                },
+                {
+                    "path": "population.summary.success_count",
+                    "value": 10
+                },
+                {
+                    "path": "population.summary.rate",
+                    "value": 0.5,
+                    "tolerance": {
+                        "absolute": 1e-15,
+                        "rationale": "Exact proportion from integer counts.",
+                        "provenance": "10 / 20"
+                    }
+                },
+                {
+                    "path": "treatment.summary.rate",
+                    "value": 0.6,
+                    "tolerance": {
+                        "absolute": 1e-15,
+                        "rationale": "Exact proportion from integer counts.",
+                        "provenance": "6 / 10"
+                    }
+                },
+                {
+                    "path": "control.summary.rate",
+                    "value": 0.4,
+                    "tolerance": {
+                        "absolute": 1e-15,
+                        "rationale": "Exact proportion from integer counts.",
+                        "provenance": "4 / 10"
+                    }
+                },
+                {
+                    "path": "raw_comparison.absolute_difference",
+                    "value": 0.2,
+                    "tolerance": {
+                        "absolute": 1e-15,
+                        "rationale": "Direct subtraction of arm proportions.",
+                        "provenance": "0.6 - 0.4"
+                    }
+                },
+                {
+                    "path": "raw_comparison.relative_difference",
+                    "value": 0.5,
+                    "tolerance": {
+                        "absolute": 1e-15,
+                        "rationale": "Direct relative difference.",
+                        "provenance": "(0.6 - 0.4) / 0.4"
+                    }
+                }
+            ],
+            "notes": "Balanced binary summaries use integer counts and sample dispersion conventions.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "descriptive-continuous-reference",
+            "capability": "descriptive_statistics",
+            "category": "successful_inference",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "descriptive_continuous_balanced",
+            "expected_status": "completed",
+            "expected_method": null,
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "population.valid_outcome_count",
+                    "value": 8
+                },
+                {
+                    "path": "population.summary.mean",
+                    "value": 3.75,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Direct arithmetic mean of small finite integers.",
+                        "provenance": "sum([1,2,3,4,2,4,6,8]) / 8"
+                    }
+                },
+                {
+                    "path": "population.summary.variance",
+                    "value": 5.357142857142857,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Bessel-corrected sample variance from exact integer observations.",
+                        "provenance": "37.5 / 7"
+                    }
+                },
+                {
+                    "path": "population.summary.quantiles.0.value",
+                    "value": 2.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Linear type-7 quantile on sorted values.",
+                        "provenance": "sorted position (8 - 1) * 0.25"
+                    }
+                },
+                {
+                    "path": "population.summary.quantiles.1.value",
+                    "value": 3.5,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Linear median on eight sorted observations.",
+                        "provenance": "average of the fourth and fifth ordered values"
+                    }
+                },
+                {
+                    "path": "population.summary.quantiles.2.value",
+                    "value": 4.5,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Linear type-7 quantile on sorted values.",
+                        "provenance": "sorted position (8 - 1) * 0.75"
+                    }
+                },
+                {
+                    "path": "raw_comparison.absolute_difference",
+                    "value": 2.5,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Direct treatment-minus-control mean difference.",
+                        "provenance": "5.0 - 2.5"
+                    }
+                },
+                {
+                    "path": "raw_comparison.relative_difference",
+                    "value": 1.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Direct relative mean difference.",
+                        "provenance": "(5.0 - 2.5) / 2.5"
+                    }
+                }
+            ],
+            "notes": "Continuous summaries use sample variance and linear type-7 quantiles.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "eligibility-invalid-malformed",
+            "capability": "eligibility_validation",
+            "category": "invalid_input",
+            "analysis_design": "unknown",
+            "metric_type": "unknown",
+            "fixture_id": "malformed_request_validation",
+            "expected_status": "ineligible",
+            "expected_method": null,
+            "expected_diagnostic_codes": [
+                "request.contract_invalid"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "dataset_summary.input_row_count",
+                    "value": 6
+                }
+            ],
+            "notes": "Malformed request payloads are invalid and never treated as abstentions.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "eligibility-invalid-missing-arm",
+            "capability": "eligibility_validation",
+            "category": "invalid_input",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "missing_treatment_arm_validation",
+            "expected_status": "ineligible",
+            "expected_method": "fixed_horizon_ab",
+            "expected_diagnostic_codes": [
+                "sample.arm_insufficient",
+                "treatment.arm_missing"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "treatment_summary.treatment_count",
+                    "value": 0
+                }
+            ],
+            "notes": "A missing required treatment arm is a blocking invalid input.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "eligibility-invalid-nonfinite",
+            "capability": "eligibility_validation",
+            "category": "invalid_input",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "nonfinite_outcome_validation",
+            "expected_status": "ineligible",
+            "expected_method": "fixed_horizon_ab",
+            "expected_diagnostic_codes": [
+                "outcome.non_finite"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "outcome_summary.non_finite_count",
+                    "value": 1
+                }
+            ],
+            "notes": "Non-finite outcomes are rejected before estimation.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "eligibility-valid-continuous",
+            "capability": "eligibility_validation",
+            "category": "successful_inference",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "valid_continuous_validation",
+            "expected_status": "eligible",
+            "expected_method": "fixed_horizon_ab",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "dataset_summary.input_row_count",
+                    "value": 100
+                },
+                {
+                    "path": "outcome_summary.has_variation",
+                    "value": true
+                }
+            ],
+            "notes": "A balanced finite continuous randomized input is eligible.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "randomized-binary-reference",
+            "capability": "randomized_binary",
+            "category": "successful_inference",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "randomized_binary_balanced",
+            "expected_status": "completed",
+            "expected_method": "two_proportion_z",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "treatment_summary.n",
+                    "value": 20
+                },
+                {
+                    "path": "control_summary.n",
+                    "value": 20
+                },
+                {
+                    "path": "point_effect.absolute_effect.value",
+                    "value": 0.2,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Difference between exact 12/20 and 8/20 proportions.",
+                        "provenance": "12/20 - 8/20"
+                    }
+                },
+                {
+                    "path": "point_effect.relative_effect",
+                    "value": 0.5,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Relative effect against a 0.4 control rate.",
+                        "provenance": "0.2 / 0.4"
+                    }
+                },
+                {
+                    "path": "test_result.standard_error",
+                    "value": 0.15811388300841897,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Pooled-null two-proportion standard error.",
+                        "provenance": "sqrt(0.5 * 0.5 * (1/20 + 1/20))"
+                    }
+                },
+                {
+                    "path": "test_result.statistic",
+                    "value": 1.2649110640673518,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Absolute effect divided by pooled-null standard error.",
+                        "provenance": "0.2 / sqrt(0.025)"
+                    }
+                },
+                {
+                    "path": "test_result.p_value",
+                    "value": 0.2059032107320684,
+                    "tolerance": {
+                        "absolute": 1e-10,
+                        "rationale": "Two-sided standard-normal tail calculation.",
+                        "provenance": "NIST standard normal CDF reference for z=1.2649110640673518"
+                    }
+                }
+            ],
+            "notes": "Two-proportion reference separates pooled test uncertainty from unpooled interval uncertainty.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "randomized-continuous-reference",
+            "capability": "randomized_continuous",
+            "category": "successful_inference",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "randomized_continuous_balanced",
+            "expected_status": "completed",
+            "expected_method": "welch_t",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "treatment_summary.mean",
+                    "value": 7.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Direct arithmetic mean.",
+                        "provenance": "mean([3,5,7,9,11])"
+                    }
+                },
+                {
+                    "path": "control_summary.mean",
+                    "value": 6.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Direct arithmetic mean.",
+                        "provenance": "mean([2,4,6,8,10])"
+                    }
+                },
+                {
+                    "path": "treatment_summary.sample_variance",
+                    "value": 10.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Bessel-corrected sample variance.",
+                        "provenance": "40 / (5 - 1)"
+                    }
+                },
+                {
+                    "path": "point_effect.absolute_effect.value",
+                    "value": 1.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Treatment-minus-control mean difference.",
+                        "provenance": "7 - 6"
+                    }
+                },
+                {
+                    "path": "test_result.standard_error",
+                    "value": 2.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Welch standard error with equal sample variances.",
+                        "provenance": "sqrt(10/5 + 10/5)"
+                    }
+                },
+                {
+                    "path": "test_result.statistic",
+                    "value": 0.5,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Effect divided by standard error.",
+                        "provenance": "1 / 2"
+                    }
+                },
+                {
+                    "path": "test_result.degrees_of_freedom",
+                    "value": 8.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Welch-Satterthwaite degrees of freedom for equal groups.",
+                        "provenance": "(2+2)^2 / (2^2/4 + 2^2/4)"
+                    }
+                },
+                {
+                    "path": "test_result.p_value",
+                    "value": 0.6305360755569764,
+                    "tolerance": {
+                        "absolute": 1e-10,
+                        "rationale": "Two-sided Student t tail calculation.",
+                        "provenance": "NIST Student t reference for t=0.5, df=8"
+                    }
+                }
+            ],
+            "notes": "Welch reference uses independently calculated means, sample variances, and uncertainty.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "randomized-continuous-zero-baseline",
+            "capability": "randomized_continuous",
+            "category": "successful_inference",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "randomized_continuous_zero_baseline",
+            "expected_status": "completed",
+            "expected_method": "welch_t",
+            "expected_diagnostic_codes": [
+                "zero_control_baseline"
+            ],
+            "expected_advisory_codes": [
+                "zero_control_baseline"
+            ],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "point_effect.absolute_effect.value",
+                    "value": 2.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Treatment-minus-control mean remains defined.",
+                        "provenance": "mean([1,2,3]) - mean([-1,0,1])"
+                    }
+                },
+                {
+                    "path": "point_effect.relative_effect",
+                    "value": null
+                },
+                {
+                    "path": "point_effect.relative_effect_availability",
+                    "value": "unavailable"
+                }
+            ],
+            "notes": "A zero control mean omits relative lift while preserving valid absolute inference.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "randomized-continuous-zero-variance",
+            "capability": "randomized_continuous",
+            "category": "abstention",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "randomized_continuous_zero_variance",
+            "expected_status": "abstained",
+            "expected_method": null,
+            "expected_diagnostic_codes": [
+                "zero_standard_error"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": true,
+            "expected_abstention_reason": "zero_standard_error",
+            "expected_values": [],
+            "notes": "Undefined Welch uncertainty is a correct abstention with no fabricated inference.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "randomized-sparse-binary-abstention",
+            "capability": "randomized_binary",
+            "category": "abstention",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "binary",
+            "fixture_id": "randomized_binary_sparse",
+            "expected_status": "abstained",
+            "expected_method": null,
+            "expected_diagnostic_codes": [
+                "sparse_cell"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": true,
+            "expected_abstention_reason": "sparse_cell",
+            "expected_values": [],
+            "notes": "Sparse expected cells trigger a correct abstention from the z approximation.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "randomized-tiny-sample-abstention",
+            "capability": "randomized_continuous",
+            "category": "abstention",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "randomized_continuous_tiny",
+            "expected_status": "abstained",
+            "expected_method": null,
+            "expected_diagnostic_codes": [
+                "one_observation_arm"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": true,
+            "expected_abstention_reason": "one_observation_arm",
+            "expected_values": [],
+            "notes": "One observation per arm is insufficient for Welch inference.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "randomized-unsupported-alternative",
+            "capability": "randomized_continuous",
+            "category": "invalid_input",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "randomized_continuous_one_sided",
+            "expected_status": "unsupported",
+            "expected_method": null,
+            "expected_diagnostic_codes": [
+                "unsupported_alternative_hypothesis"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [],
+            "notes": "Unsupported one-sided alternatives remain distinct from abstention.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-changed-outcome-invalid",
+            "capability": "sequential",
+            "category": "invalid_input",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_changed_outcome",
+            "expected_status": "invalid",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [
+                "SEQUENTIAL_OUTCOME_CHANGED"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "plan_integrity",
+                    "value": "invalid"
+                }
+            ],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "information_times": "0.5,1.0"
+            },
+            "reference_provenance": "registered plan mutation fixture",
+            "notes": "Changed primary outcome blocks alpha-valid inference.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-changed-treatment-invalid",
+            "capability": "sequential",
+            "category": "invalid_input",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_changed_treatment",
+            "expected_status": "invalid",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [
+                "SEQUENTIAL_TREATMENT_CHANGED"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "plan_integrity",
+                    "value": "invalid"
+                }
+            ],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "information_times": "0.5,1.0"
+            },
+            "reference_provenance": "registered treatment mutation fixture",
+            "notes": "Changed treatment definition blocks alpha-valid inference.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-decreasing-sample-invalid",
+            "capability": "sequential",
+            "category": "invalid_input",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_decreasing_sample",
+            "expected_status": "invalid",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [
+                "SEQUENTIAL_SAMPLE_COUNT_DECREASED"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "plan_integrity",
+                    "value": "invalid"
+                }
+            ],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "information_times": "0.5,1.0"
+            },
+            "reference_provenance": "decreasing cumulative sample fixture",
+            "notes": "Non-monotonic cumulative sample blocks inference.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-duplicate-look-invalid",
+            "capability": "sequential",
+            "category": "invalid_input",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_duplicate_look",
+            "expected_status": "invalid",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [
+                "SEQUENTIAL_DUPLICATE_LOOK"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "plan_integrity",
+                    "value": "invalid"
+                },
+                {
+                    "path": "alpha_summary.evaluated_look_count",
+                    "value": 1
+                }
+            ],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "information_times": "0.5,1.0"
+            },
+            "reference_provenance": "duplicate planned look fixture",
+            "notes": "Duplicate alpha consumption is blocked.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-early-efficacy-crossing",
+            "capability": "sequential",
+            "category": "successful_inference",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_early_efficacy",
+            "expected_status": "efficacy",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "current_look.look_index",
+                    "value": 1
+                },
+                {
+                    "path": "current_look.boundary_crossed",
+                    "value": true
+                },
+                {
+                    "path": "plan_integrity",
+                    "value": "valid"
+                }
+            ],
+            "expected_assumption_codes": [
+                "sequential.alpha_spending_controlled",
+                "sequential.cumulative_eligible_data",
+                "sequential.fixed_primary_outcome",
+                "sequential.fixed_treatment_control",
+                "sequential.information_time_prespecified",
+                "sequential.plan_immutable",
+                "sequential.plan_preregistered"
+            ],
+            "expected_uncertainty_fields": [
+                "current_look.cumulative_alpha_spent",
+                "current_look.look_level_analysis.point_effect",
+                "current_look.look_level_analysis.test_result",
+                "current_look.sequential_boundary"
+            ],
+            "deterministic_configuration": {
+                "information_times": "0.5,1.0"
+            },
+            "reference_provenance": "independent early boundary crossing fixture",
+            "notes": "Strong early effect crosses registered boundary.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-insufficient-sample-abstention",
+            "capability": "sequential",
+            "category": "abstention",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_insufficient_sample",
+            "expected_status": "abstained",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": true,
+            "expected_abstention_reason": "insufficient_estimator_support",
+            "expected_values": [],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "information_times": "1.0"
+            },
+            "reference_provenance": "one observation per arm fixture",
+            "notes": "Unsupported look-level uncertainty abstains.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-invalid-fingerprint-invalid",
+            "capability": "sequential",
+            "category": "invalid_input",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_invalid_fingerprint",
+            "expected_status": "invalid",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [
+                "SEQUENTIAL_PLAN_FINGERPRINT_CHANGED"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "plan_integrity",
+                    "value": "invalid"
+                }
+            ],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "information_times": "1.0"
+            },
+            "reference_provenance": "invalid execution fingerprint fixture",
+            "notes": "Invalid fingerprint blocks evaluation.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-late-efficacy-crossing",
+            "capability": "sequential",
+            "category": "successful_inference",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_late_efficacy",
+            "expected_status": "efficacy",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "current_look.look_index",
+                    "value": 3
+                },
+                {
+                    "path": "current_look.boundary_crossed",
+                    "value": true
+                },
+                {
+                    "path": "plan_integrity",
+                    "value": "valid"
+                }
+            ],
+            "expected_assumption_codes": [
+                "sequential.alpha_spending_controlled",
+                "sequential.cumulative_eligible_data",
+                "sequential.fixed_primary_outcome",
+                "sequential.fixed_treatment_control",
+                "sequential.information_time_prespecified",
+                "sequential.plan_immutable",
+                "sequential.plan_preregistered"
+            ],
+            "expected_uncertainty_fields": [
+                "current_look.cumulative_alpha_spent",
+                "current_look.look_level_analysis.point_effect",
+                "current_look.look_level_analysis.test_result",
+                "current_look.sequential_boundary"
+            ],
+            "deterministic_configuration": {
+                "information_times": "0.5,1.0"
+            },
+            "reference_provenance": "independent late boundary crossing fixture",
+            "notes": "Moderate effect crosses only the final boundary.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-no-stop-sequence",
+            "capability": "sequential",
+            "category": "successful_inference",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_no_stop",
+            "expected_status": "continue",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "current_look.look_index",
+                    "value": 1
+                },
+                {
+                    "path": "current_look.boundary_crossed",
+                    "value": false
+                },
+                {
+                    "path": "plan_integrity",
+                    "value": "valid"
+                }
+            ],
+            "expected_assumption_codes": [
+                "sequential.alpha_spending_controlled",
+                "sequential.cumulative_eligible_data",
+                "sequential.fixed_primary_outcome",
+                "sequential.fixed_treatment_control",
+                "sequential.information_time_prespecified",
+                "sequential.plan_immutable",
+                "sequential.plan_preregistered"
+            ],
+            "expected_uncertainty_fields": [
+                "current_look.cumulative_alpha_spent",
+                "current_look.look_level_analysis.point_effect",
+                "current_look.look_level_analysis.test_result",
+                "current_look.sequential_boundary"
+            ],
+            "deterministic_configuration": {
+                "information_times": "0.5,1.0"
+            },
+            "reference_provenance": "interim null-effect fixture",
+            "notes": "Valid interim look continues.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-null-sequence",
+            "capability": "sequential",
+            "category": "successful_inference",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_null_sequence",
+            "expected_status": "continue",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "plan.plan_fingerprint",
+                    "value": "1e8641889122274ba305106fd605ad032bd6ae02115d4d2f2b1116a053b23139"
+                },
+                {
+                    "path": "plan.planned_looks.0.information_time",
+                    "value": 0.5,
+                    "tolerance": {
+                        "absolute": 0.0,
+                        "rationale": "Registered information time.",
+                        "provenance": "two-look registered plan"
+                    }
+                },
+                {
+                    "path": "plan.planned_looks.1.information_time",
+                    "value": 1.0,
+                    "tolerance": {
+                        "absolute": 0.0,
+                        "rationale": "Registered information time.",
+                        "provenance": "two-look registered plan"
+                    }
+                },
+                {
+                    "path": "boundaries.0.critical_boundary",
+                    "value": 2.771807648699357,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "O'Brien-Fleming weighted-Bonferroni boundary.",
+                        "provenance": "independent normal quantile at first-look nominal alpha"
+                    }
+                },
+                {
+                    "path": "boundaries.0.cumulative_alpha_spent",
+                    "value": 0.005574596680784402,
+                    "tolerance": {
+                        "absolute": 1e-15,
+                        "rationale": "First-look cumulative alpha spend.",
+                        "provenance": "two-sided O'Brien-Fleming spending formula"
+                    }
+                },
+                {
+                    "path": "boundaries.0.nominal_alpha",
+                    "value": 0.005574596680784402,
+                    "tolerance": {
+                        "absolute": 1e-15,
+                        "rationale": "First-look incremental alpha.",
+                        "provenance": "first cumulative spend minus zero"
+                    }
+                },
+                {
+                    "path": "boundaries.1.critical_boundary",
+                    "value": 2.010054666874066,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Final weighted-Bonferroni boundary.",
+                        "provenance": "independent normal quantile at final nominal alpha"
+                    }
+                },
+                {
+                    "path": "boundaries.1.cumulative_alpha_spent",
+                    "value": 0.05,
+                    "tolerance": {
+                        "absolute": 1e-15,
+                        "rationale": "Final cumulative alpha equals registered alpha.",
+                        "provenance": "registered total alpha"
+                    }
+                },
+                {
+                    "path": "boundaries.1.nominal_alpha",
+                    "value": 0.0444254033192156,
+                    "tolerance": {
+                        "absolute": 1e-15,
+                        "rationale": "Final incremental alpha.",
+                        "provenance": "0.05 - 0.005574596680784402"
+                    }
+                },
+                {
+                    "path": "current_look.look_index",
+                    "value": 2
+                },
+                {
+                    "path": "current_look.standardized_statistic",
+                    "value": 0.0,
+                    "tolerance": {
+                        "absolute": 0.0,
+                        "rationale": "Identical cumulative arm means yield zero statistic.",
+                        "provenance": "null cumulative outcome sequence"
+                    }
+                },
+                {
+                    "path": "current_look.boundary_crossed",
+                    "value": false
+                },
+                {
+                    "path": "alpha_summary.cumulative_alpha_spent",
+                    "value": 0.05,
+                    "tolerance": {
+                        "absolute": 1e-15,
+                        "rationale": "Final cumulative alpha equals registered total alpha.",
+                        "provenance": "two-look O'Brien-Fleming spending reference"
+                    }
+                },
+                {
+                    "path": "plan_integrity",
+                    "value": "valid"
+                },
+                {
+                    "path": "current_status",
+                    "value": "continue"
+                }
+            ],
+            "expected_assumption_codes": [
+                "sequential.alpha_spending_controlled",
+                "sequential.cumulative_eligible_data",
+                "sequential.fixed_primary_outcome",
+                "sequential.fixed_treatment_control",
+                "sequential.information_time_prespecified",
+                "sequential.plan_immutable",
+                "sequential.plan_preregistered"
+            ],
+            "expected_uncertainty_fields": [
+                "current_look.cumulative_alpha_spent",
+                "current_look.look_level_analysis.point_effect",
+                "current_look.look_level_analysis.test_result",
+                "current_look.sequential_boundary"
+            ],
+            "deterministic_configuration": {
+                "information_times": "0.5,1.0"
+            },
+            "reference_provenance": "independent null cumulative sequence",
+            "notes": "Null sequence completes without efficacy.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-plan-mutation-invalid",
+            "capability": "sequential",
+            "category": "invalid_input",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_plan_mutation",
+            "expected_status": "invalid",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [
+                "SEQUENTIAL_PLAN_FINGERPRINT_CHANGED"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "plan_integrity",
+                    "value": "invalid"
+                }
+            ],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "information_times": "0.5,1.0"
+            },
+            "reference_provenance": "in-memory immutable-plan mutation fixture",
+            "notes": "Plan mutation is blocking.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
+            "case_id": "sequential-skipped-look-invalid",
+            "capability": "sequential",
+            "category": "invalid_input",
+            "method": "sequential_ab",
+            "analysis_design": "randomized_experiment",
+            "metric_type": "continuous",
+            "fixture_id": "sequential_skipped_look",
+            "expected_status": "invalid",
+            "expected_method": "obrien_fleming_weighted_bonferroni",
+            "expected_diagnostic_codes": [
+                "SEQUENTIAL_SKIPPED_LOOK"
+            ],
+            "expected_advisory_codes": [],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "plan_integrity",
+                    "value": "invalid"
+                }
+            ],
+            "expected_assumption_codes": [],
+            "expected_uncertainty_fields": [],
+            "deterministic_configuration": {
+                "information_times": "0.5,1.0"
+            },
+            "reference_provenance": "skipped first look fixture",
+            "notes": "Skipped registered look is blocking.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        }
+    ]
 }

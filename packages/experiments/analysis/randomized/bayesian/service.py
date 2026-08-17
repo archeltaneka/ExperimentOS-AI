@@ -378,6 +378,7 @@ def _start_span(
     before_failures = _provider_failure_count(provider)
     metadata: dict[str, object] = {
         "inference_family": "bayesian",
+        "method": "bayesian",
         "likelihood_family": execution.likelihood.likelihood_family,
         "outcome_type": execution.analysis_request.outcome.metric.metric_type.value,
         "computation_mode": "deterministic_quadrature",
@@ -416,6 +417,7 @@ def _start_invalid_payload_span(
     )
     metadata: dict[str, object] = {
         "inference_family": "bayesian",
+        "method": "bayesian",
         "likelihood_family": likelihood_family,
         "outcome_type": result.metric.metric_type.value if result.metric is not None else "unknown",
         "computation_mode": "deterministic_quadrature",
@@ -448,6 +450,9 @@ def _finish_success(
     diagnostic_codes = tuple(item.code for item in result.diagnostics)
     metadata: dict[str, object] = {
         "status": result.status.value,
+        "method": "bayesian",
+        "estimand": result.estimand.kind.value if result.estimand is not None else "unknown",
+        "abstention_state": result.status is not BayesianComputationStatus.COMPLETED,
         "prior_validity": prior_validity,
         "rope_requested": bool(
             result.analysis_request is not None
@@ -456,6 +461,12 @@ def _finish_success(
         ),
         "probability_of_superiority_available": bool(
             result.effect is not None and result.effect.probability_of_superiority is not None
+        ),
+        "posterior_summary_available": result.effect is not None,
+        "prior_family": (
+            result.treatment_prior.prior_family
+            if result.treatment_prior is not None
+            else "unavailable"
         ),
         "diagnostic_codes": diagnostic_codes,
         "diagnostic_count": len(diagnostic_codes),

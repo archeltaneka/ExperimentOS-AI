@@ -166,6 +166,21 @@ jobs:
           tests/test_statistical_baseline_policy.py
           tests/test_statistical_baseline_cli.py
           tests/test_randomized_observability.py
+          tests/test_cuped_reference_cases.py
+          tests/test_cuped_observability.py
+          tests/test_cuped_service.py
+          tests/test_sequential_reference_cases.py
+          tests/test_sequential_observability.py
+          tests/test_sequential_service.py
+          tests/test_bayesian_binary.py
+          tests/test_bayesian_continuous.py
+          tests/test_bayesian_observability.py
+          tests/test_bayesian_service.py
+          tests/test_randomized_inference_reliability_fixtures.py
+          tests/test_randomized_inference_reliability_evaluator.py
+          tests/test_randomized_inference_reliability_policy.py
+          tests/test_randomized_inference_reliability_telemetry.py
+          tests/test_randomized_inference_reliability_artifacts.py
           tests/test_ci_quality_gate.py
           tests/test_evaluation_harness.py
           tests/test_ragas_evaluation.py

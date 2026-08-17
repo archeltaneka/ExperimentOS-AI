@@ -29,6 +29,7 @@ from packages.experiments.analysis.validation.context import ValidationContext
 from packages.observability.base import BaseObservabilityProvider
 
 from .models import StatisticalReferenceCase
+from .randomized_fixtures import run_randomized_inference_fixture
 
 
 def run_statistical_fixture(
@@ -44,6 +45,12 @@ def run_statistical_fixture(
         return _run_descriptive(case.fixture_id, reverse_rows, observability_provider)
     if case.fixture_id.startswith("randomized_"):
         return _run_randomized(case.fixture_id, reverse_rows, observability_provider)
+    if case.fixture_id.startswith(("cuped_", "sequential_", "bayesian_")):
+        return run_randomized_inference_fixture(
+            case.fixture_id,
+            reverse_rows=reverse_rows,
+            observability_provider=observability_provider,
+        )
     raise ValueError(f"unknown statistical fixture_id: {case.fixture_id}")
 
 

@@ -31,9 +31,14 @@ def test_cli_success_writes_json_and_markdown_artifacts(tmp_path: Path) -> None:
     assert markdown_output.is_file()
     payload = json.loads(json_output.read_text(encoding="utf-8"))
     assert payload["overall_status"] == "pass"
-    assert payload["quality_policy"]["overall_status"] == "pass"
+    assert payload["quality_policy"]["overall_status"] == "warning"
     assert payload["quality_policy"]["rules"]
-    assert payload["dataset_size"] == 13
+    assert all(rule["method"] for rule in payload["quality_policy"]["rules"])
+    assert all(rule["case_id"] for rule in payload["quality_policy"]["rules"])
+    assert all("expected_value" in rule for rule in payload["quality_policy"]["rules"])
+    assert all("actual_value" in rule for rule in payload["quality_policy"]["rules"])
+    assert all(rule["diagnostic_evidence"] for rule in payload["quality_policy"]["rules"])
+    assert payload["dataset_size"] == 48
     assert "# Phase 4 Statistical Reliability Baseline" in markdown_output.read_text(
         encoding="utf-8"
     )

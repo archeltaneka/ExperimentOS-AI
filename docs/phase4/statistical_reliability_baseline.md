@@ -12,7 +12,10 @@ This baseline currently covers:
 - statistical contracts;
 - eligibility validation;
 - descriptive statistics;
-- unadjusted randomized experiment analysis.
+- fixed-horizon randomized experiment analysis;
+- CUPED covariate adjustment;
+- sequential testing with pre-registered looks;
+- Bayesian A/B testing with explicit conjugate priors.
 
 It does not replace the Phase 3 evaluation or quality gates.
 
@@ -45,9 +48,10 @@ hosted observability provider is required.
 ## Reference Dataset
 
 `data/eval/phase4_statistical_baseline.json` is a versioned repository-local inventory. Each case
-declares a stable case ID, capability, category, analysis design, metric type, fixture ID, expected
-status and method, structured diagnostic codes, advisory codes, abstention state and reason,
-independently specified expected values, notes, and fixture provenance.
+declares a stable case ID, capability, category, method, analysis design, metric type, fixture ID,
+expected status and estimator method, structured diagnostic codes, advisory codes, required
+assumptions, required uncertainty fields, abstention state and reason, independently specified
+expected values, deterministic configuration, reference provenance, notes, and fixture provenance.
 
 The loader rejects malformed cases, duplicate IDs, unstable ordering, mismatched provenance, and
 floating-point expectations without documented tolerances. The inventory includes successful,
@@ -78,14 +82,27 @@ abstention.
 Diagnostic completeness uses structured codes and warning records. It checks required codes,
 advisory codes, repeated ordering, and contradictory states without parsing prose.
 
-Uncertainty completeness applies only to successful randomized inference. It requires a point
-effect, standard error, finite ordered confidence interval, matching confidence level, p-value,
-method, estimand, and both arm counts. Descriptive and abstained cases do not receive inappropriate
-inferential requirements.
+Uncertainty completeness applies only to successful randomized inference. Fixed-horizon and CUPED
+results require frequentist standard errors and confidence intervals. Sequential looks additionally
+require the registered boundary, cumulative alpha, and look metadata. Bayesian results require
+posterior effect summaries, credible intervals and levels, explicit prior/posterior parameters, and
+posterior computation metadata. Bayesian checks never require p-values or confidence intervals.
 
-Determinism checks repeated execution, canonical structured serialization, diagnostic ordering, and
-row-order invariance for fixtures where row order is mathematically irrelevant. Fixtures contain no
-randomness.
+Assumption completeness is method-specific and blocking for successful inference. CUPED discloses
+randomization, pre-treatment and treatment-unaffected covariate semantics, supported analysis units,
+and estimand preservation. Sequential results disclose preregistration, immutability, fixed arm and
+outcome definitions, cumulative data, valid looks, and controlled alpha spending. Bayesian results
+disclose prior family and parameters, likelihood, outcome model, computation method, and credible
+interval method.
+
+Sequential plan-integrity checks block fingerprint, arm, outcome, alpha, boundary, look-schedule,
+duplicate-consumption, and cumulative-sample violations. An invalid plan cannot produce a valid
+efficacy conclusion.
+
+Determinism checks independent repeated execution, canonical structured serialization, diagnostic
+ordering, row-order invariance, sequential fingerprints and histories, and analytic Bayesian
+quadrature. Bayesian v1 has no sampling path, so seeded-sampling reproducibility is explicitly
+reported as skipped rather than fabricated.
 
 ## Quality Policy
 
@@ -93,12 +110,13 @@ randomness.
 existing policy engine reads the authoritative baseline JSON through the additive
 `statistical_baseline_json` adapter.
 
-Blocking rules cover overall case failures, reference accuracy, abstention integrity, diagnostic
-completeness, uncertainty completeness, determinism, status correctness, and non-finite output.
-Advisory rules cover advisory case findings and minimum reference coverage per implemented
-capability. Missing Phase 4 artifacts remain skipped for Phase 3-only policy runs, preserving Phase
-3 behavior. When the statistical artifact is present, all statistical rules are evaluated and their
-exact IDs, severities, statuses, observed values, and thresholds are embedded in the baseline JSON.
+Blocking rules cover reference accuracy, abstention integrity, diagnostic and assumption
+completeness, method-appropriate uncertainty, sequential plan integrity, Bayesian semantics,
+telemetry privacy, determinism, status correctness, and non-finite output. Advisory rules cover
+negative or negligible CUPED variance reduction, weak correlation, sample loss, imbalance, stable
+Bayesian prior-dominance diagnostics, wide uncertainty, approximation proximity, latency, and
+minimum reference coverage. Favorable statistical outcomes are never confused with software
+correctness. Missing Phase 4 artifacts remain skipped for Phase 3-only policy runs.
 
 The output keeps pass, fail, advisory, skipped, invalid, abstained, and unsupported meanings
 separate. Advisory findings do not fail the CLI. Missing required data or malformed reports are
@@ -110,13 +128,16 @@ Validation, descriptive statistics, and randomized analysis use the shared
 `packages.observability` abstraction. Internal ExperimentOS buffered traces remain authoritative,
 and provider failures cannot change statistical results.
 
-Randomized spans contain only controlled method, estimand, metric type, status, aggregate arm and
-eligible counts, structured diagnostic codes, warning counts, abstention state, duration, and
-evaluation status. Tests recursively inspect every emitted key and value for successful and
-abstained runs.
+Randomized spans contain only controlled inference family, method, estimand, status, aggregate
+counts, structured diagnostic codes, abstention state, and duration. CUPED adds adjustment,
+retention, variance-reduction, and covariate-eligibility states. Sequential adds look index,
+boundary family, plan integrity, boundary crossing, and stopping state. Bayesian adds likelihood
+and prior families, analytic computation mode, ROPE request state, and posterior-summary
+availability. Tests recursively inspect successful and abstained/invalid in-memory traces.
 
-Telemetry does not contain raw treatment or control outcomes, outcome arrays, covariate arrays,
-raw covariate values, full rows, credentials, arbitrary analysis IDs, prompts, or private payloads.
+Telemetry does not contain raw treatment or control outcomes, treatment assignments, adjusted
+outcomes, covariate arrays, raw covariate values, posterior draws, sequential rows, full priors,
+full experiment records, credentials, arbitrary analysis IDs, prompts, or private payloads.
 Structured low-cardinality codes are used instead of arbitrary diagnostic messages.
 
 ## CI Behavior
@@ -129,14 +150,12 @@ abstentions, invalid cases, and advisories whenever the structured artifact is p
 
 ## Limitations
 
-This baseline does not yet provide the broad reliability gates planned for:
+This suite covers fixed-horizon randomized analysis, CUPED, sequential testing, and Bayesian A/B
+testing. It does not yet cover:
 
-- CUPED adjustment performance and production policy hardening;
-- sequential testing;
-- Bayesian analysis;
 - Difference-in-Differences;
-- propensity scores;
-- observational causal inference or treatment-effect estimation;
+- propensity scores or inverse-probability weighting;
+- observational ATE or ATT;
 - DML;
 - heterogeneous treatment effects;
 - EconML;

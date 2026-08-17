@@ -256,9 +256,37 @@ def _statistical_suite(path: Path) -> SuiteResult:
             ("Invalid", str(_integer(payload.get("cases_invalid")) or 0)),
             ("Abstained", str(_integer(payload.get("cases_abstained")) or 0)),
             ("Advisory", str(_integer(payload.get("cases_advisory")) or 0)),
+            (
+                "Fixed horizon",
+                _statistical_method_status(payload, {"randomized_binary", "randomized_continuous"}),
+            ),
+            ("CUPED", _statistical_method_status(payload, {"cuped"})),
+            ("Sequential", _statistical_method_status(payload, {"sequential"})),
+            (
+                "Bayesian",
+                _statistical_method_status(payload, {"bayesian_binary", "bayesian_continuous"}),
+            ),
         ),
         report_path="phase4/statistical_baseline.json",
     )
+
+
+def _statistical_method_status(payload: dict[str, Any], capabilities: set[str]) -> str:
+    results = payload.get("capability_results")
+    if not isinstance(results, list):
+        return "unavailable"
+    selected = [
+        item
+        for item in results
+        if isinstance(item, dict) and _string(item.get("capability")) in capabilities
+    ]
+    if not selected:
+        return "skipped"
+    if any((_integer(item.get("failed")) or 0) > 0 for item in selected):
+        return "fail"
+    if any((_integer(item.get("advisory")) or 0) > 0 for item in selected):
+        return "advisory"
+    return "pass"
 
 
 def _suite_status(policy: dict[str, Any], name: str, present: bool) -> str:

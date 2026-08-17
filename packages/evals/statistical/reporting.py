@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .models import CheckStatus, StatisticalBaselineReport
+from .models import CheckStatus, StatisticalBaselineReport, StatisticalCapability
 
 
 def statistical_baseline_to_json(report: StatisticalBaselineReport) -> str:
@@ -20,11 +20,34 @@ def render_statistical_baseline_markdown(report: StatisticalBaselineReport) -> s
         f"- Policy version: `{report.policy_version}`",
         "- Machine-readable JSON is authoritative.",
         "",
-        "## Evaluated Capabilities",
+        "## Overall Randomized-Inference Status",
         "",
-        "| Capability | Cases | Passed | Failed | Advisory |",
-        "| --- | ---: | ---: | ---: | ---: |",
+        f"- Status: {report.overall_status}",
+        "- Covered methods: fixed-horizon, CUPED, sequential, and Bayesian A/B.",
     ]
+    _method_section(
+        lines,
+        report,
+        "Fixed-Horizon Status",
+        {StatisticalCapability.RANDOMIZED_BINARY, StatisticalCapability.RANDOMIZED_CONTINUOUS},
+    )
+    _method_section(lines, report, "CUPED Status", {StatisticalCapability.CUPED})
+    _method_section(lines, report, "Sequential Status", {StatisticalCapability.SEQUENTIAL})
+    _method_section(
+        lines,
+        report,
+        "Bayesian Status",
+        {StatisticalCapability.BAYESIAN_BINARY, StatisticalCapability.BAYESIAN_CONTINUOUS},
+    )
+    lines.extend(
+        [
+            "",
+            "## Evaluated Capabilities",
+            "",
+            "| Capability | Cases | Passed | Failed | Advisory |",
+            "| --- | ---: | ---: | ---: | ---: |",
+        ]
+    )
     for capability in report.capability_results:
         lines.append(
             f"| {capability.capability.value} | {capability.cases} | {capability.passed} | "
@@ -50,6 +73,9 @@ def render_statistical_baseline_markdown(report: StatisticalBaselineReport) -> s
     _dimension_section(lines, report, "Numerical Reference Failures", "reference_accuracy")
     _dimension_section(lines, report, "Abstention Correctness", "abstention")
     _dimension_section(lines, report, "Determinism", "determinism")
+    _dimension_section(lines, report, "Telemetry Privacy", "telemetry_privacy")
+    _dimension_section(lines, report, "Assumption Completeness", "assumptions")
+    _dimension_section(lines, report, "Sequential Plan Integrity", "plan_integrity")
     _dimension_section(lines, report, "Diagnostic Completeness", "diagnostics")
     _dimension_section(lines, report, "Uncertainty Completeness", "uncertainty")
     lines.extend(["", "## Centralized Quality Policy", ""])
@@ -132,6 +158,38 @@ def _dimension_section(
     lines.append(f"- Checks: {len(checks)}")
     lines.append(f"- Failures: {failures}")
     lines.append(f"- Skipped: {skipped}")
+
+
+def _method_section(
+    lines: list[str],
+    report: StatisticalBaselineReport,
+    heading: str,
+    capabilities: set[StatisticalCapability],
+) -> None:
+    cases = tuple(case for case in report.case_results if case.capability in capabilities)
+    statuses = {case.evaluation_status for case in cases}
+    status = (
+        "fail"
+        if CheckStatus.FAIL in statuses
+        else "advisory"
+        if CheckStatus.ADVISORY in statuses
+        else "skipped"
+        if cases and statuses == {CheckStatus.SKIPPED}
+        else "pass"
+    )
+    lines.extend(
+        [
+            "",
+            f"## {heading}",
+            "",
+            f"- Status: {status}",
+            f"- Cases: {len(cases)}",
+            f"- Blocking failures: {sum(c.evaluation_status is CheckStatus.FAIL for c in cases)}",
+            "- Advisory findings: "
+            f"{sum(c.evaluation_status is CheckStatus.ADVISORY for c in cases)}",
+            f"- Skipped cases: {sum(c.evaluation_status is CheckStatus.SKIPPED for c in cases)}",
+        ]
+    )
 
 
 __all__ = ["render_statistical_baseline_markdown", "statistical_baseline_to_json"]

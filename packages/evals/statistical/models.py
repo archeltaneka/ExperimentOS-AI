@@ -19,6 +19,10 @@ type NonEmptyStr = Annotated[str, Field(strict=True, min_length=1)]
 type ExpectedScalar = StrictBool | StrictInt | FiniteFloat | NonEmptyStr | None
 
 
+def _default_deterministic_configuration() -> dict[NonEmptyStr, ExpectedScalar]:
+    return {"execution_mode": "offline_deterministic"}
+
+
 class StatisticalCaseModel(BaseModel):
     """Frozen strict model used by repository-owned evaluation data."""
 
@@ -30,12 +34,17 @@ class StatisticalCapability(StrEnum):
     DESCRIPTIVE_STATISTICS = "descriptive_statistics"
     RANDOMIZED_CONTINUOUS = "randomized_continuous"
     RANDOMIZED_BINARY = "randomized_binary"
+    CUPED = "cuped"
+    SEQUENTIAL = "sequential"
+    BAYESIAN_BINARY = "bayesian_binary"
+    BAYESIAN_CONTINUOUS = "bayesian_continuous"
 
 
 class StatisticalCaseCategory(StrEnum):
     SUCCESSFUL_INFERENCE = "successful_inference"
     INVALID_INPUT = "invalid_input"
     ABSTENTION = "abstention"
+    SKIPPED = "skipped"
 
 
 class CheckStatus(StrEnum):
@@ -100,6 +109,11 @@ class StatisticalPolicyRuleResult(StatisticalCaseModel):
     threshold_value: Any
     required: StrictBool
     message: NonEmptyStr
+    method: NonEmptyStr
+    case_id: NonEmptyStr
+    expected_value: Any = None
+    actual_value: Any = None
+    diagnostic_evidence: tuple[NonEmptyStr, ...] = ()
 
 
 class StatisticalPolicySummary(StatisticalCaseModel):
@@ -162,6 +176,7 @@ class StatisticalReferenceCase(StatisticalCaseModel):
     case_id: NonEmptyStr
     capability: StatisticalCapability
     category: StatisticalCaseCategory
+    method: NonEmptyStr = "fixed_horizon_ab"
     analysis_design: NonEmptyStr
     metric_type: NonEmptyStr
     fixture_id: NonEmptyStr
@@ -172,6 +187,12 @@ class StatisticalReferenceCase(StatisticalCaseModel):
     expected_abstention: StrictBool
     expected_abstention_reason: NonEmptyStr | None
     expected_values: tuple[StatisticalExpectedValue, ...]
+    expected_assumption_codes: tuple[NonEmptyStr, ...] = ()
+    expected_uncertainty_fields: tuple[NonEmptyStr, ...] = ()
+    deterministic_configuration: dict[NonEmptyStr, ExpectedScalar] = Field(
+        default_factory=_default_deterministic_configuration
+    )
+    reference_provenance: NonEmptyStr | None = None
     notes: NonEmptyStr
     fixture_provenance: NonEmptyStr
 
@@ -188,6 +209,16 @@ class StatisticalReferenceCase(StatisticalCaseModel):
             raise ValueError("expected diagnostic codes must use deterministic sorted order")
         if tuple(sorted(self.expected_advisory_codes)) != self.expected_advisory_codes:
             raise ValueError("expected advisory codes must use deterministic sorted order")
+        object.__setattr__(
+            self, "expected_assumption_codes", tuple(sorted(self.expected_assumption_codes))
+        )
+        object.__setattr__(
+            self, "expected_uncertainty_fields", tuple(sorted(self.expected_uncertainty_fields))
+        )
+        if not self.deterministic_configuration:
+            raise ValueError("deterministic configuration must not be empty")
+        if self.reference_provenance is None:
+            object.__setattr__(self, "reference_provenance", self.fixture_provenance)
         return self
 
 

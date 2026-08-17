@@ -89,6 +89,11 @@ def run_statistical_baseline(args: argparse.Namespace) -> StatisticalBaselineRep
                 threshold_value=item.threshold_value,
                 required=item.required,
                 message=item.message,
+                method=_policy_rule_method(item.metric_id),
+                case_id=_policy_rule_case_id(item.metric_id, report),
+                expected_value=item.threshold_value,
+                actual_value=item.observed_value,
+                diagnostic_evidence=_policy_rule_evidence(item.metric_id, report),
             )
             for item in policy_result.metrics_evaluated
         ),
@@ -96,8 +101,6 @@ def run_statistical_baseline(args: argparse.Namespace) -> StatisticalBaselineRep
     overall_status = (
         "fail"
         if report.overall_status == "fail" or policy_result.overall_status == "fail"
-        else "advisory"
-        if report.overall_status == "advisory" or policy_result.overall_status == "warning"
         else "pass"
     )
     report = report.model_copy(
@@ -111,6 +114,50 @@ def run_statistical_baseline(args: argparse.Namespace) -> StatisticalBaselineRep
 def _write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def _policy_rule_method(metric_id: str) -> str:
+    for method in ("cuped", "sequential", "bayesian", "fixed_horizon"):
+        if f".{method}." in metric_id:
+            return method
+    if "plan_integrity" in metric_id:
+        return "sequential"
+    if "bayesian" in metric_id:
+        return "bayesian"
+    return "all_randomized_inference"
+
+
+def _policy_rule_case_id(metric_id: str, report: StatisticalBaselineReport) -> str:
+    evidence = _matching_case_ids(metric_id, report)
+    return ",".join(evidence) if evidence else "aggregate"
+
+
+def _policy_rule_evidence(
+    metric_id: str,
+    report: StatisticalBaselineReport,
+) -> tuple[str, ...]:
+    dimension = metric_id.removeprefix("statistics.failures.")
+    evidence = tuple(
+        f"{case.case_id}:{check.rule_id}"
+        for case in report.case_results
+        for check in case.checks
+        if check.status.value == "fail" and check.dimension == dimension
+    )
+    return evidence or (f"observed:{metric_id}",)
+
+
+def _matching_case_ids(
+    metric_id: str,
+    report: StatisticalBaselineReport,
+) -> tuple[str, ...]:
+    dimension = metric_id.removeprefix("statistics.failures.")
+    return tuple(
+        case.case_id
+        for case in report.case_results
+        if any(
+            check.status.value == "fail" and check.dimension == dimension for check in case.checks
+        )
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

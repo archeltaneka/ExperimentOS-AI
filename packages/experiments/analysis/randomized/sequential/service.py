@@ -318,7 +318,11 @@ def _start_span(
     try:
         parent = provider.current_span()
         inputs: dict[str, object] = {"look_count": look_count}
-        metadata: dict[str, object] = {"method": "sequential", "analysis_started": True}
+        metadata: dict[str, object] = {
+            "inference_family": "frequentist",
+            "method": "sequential",
+            "analysis_started": True,
+        }
         tags = ("analysis", "sequential")
         if parent is not None and parent.provider is provider:
             return provider.start_span(
@@ -351,14 +355,21 @@ def _finish_span(
     current = result.current_look
     diagnostic_codes = tuple(item.code for item in result.deviations)
     metadata: dict[str, object] = {
+        "inference_family": "frequentist",
+        "method": "sequential",
+        "estimand": result.plan.analysis_request.estimand.kind.value,
         "boundary_family": result.plan.boundary_method.value,
         "look_index": current.look_index if current is not None else 0,
         "information_time_bucket": (
             "final" if current is not None and current.information_time == 1.0 else "interim"
         ),
         "status": result.current_status.value,
+        "abstention_state": result.current_status
+        in {SequentialStoppingStatus.ABSTAIN, SequentialStoppingStatus.INVALID},
         "boundary_crossed": current.boundary_crossed if current is not None else False,
         "plan_integrity": result.plan_integrity.value,
+        "plan_integrity_status": result.plan_integrity.value,
+        "stopping_state": result.current_status.value,
         "diagnostic_codes": diagnostic_codes,
         "diagnostic_count": len(diagnostic_codes),
         "duration_ms": duration_ms,

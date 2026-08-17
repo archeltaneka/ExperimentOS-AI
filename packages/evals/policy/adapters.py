@@ -88,19 +88,47 @@ def _load_statistical_baseline_json(path: Path) -> dict[str, SourceMetric]:
         for dimension in (
             "reference_accuracy",
             "abstention",
+            "assumptions",
+            "bayesian_semantics",
             "diagnostics",
             "uncertainty",
             "determinism",
+            "plan_integrity",
             "status",
+            "telemetry_privacy",
         )
     }
     nonfinite_failures = 0
     capability_counts: dict[str, int] = {}
+    method_counts: dict[str, dict[str, int]] = {}
     for case in case_results:
         if not isinstance(case, dict):
             raise ValueError("statistics case result entries must be mappings")
         capability = _expect_nonempty_string(case.get("capability"), "statistics case capability")
         capability_counts[capability] = capability_counts.get(capability, 0) + 1
+        method = {
+            "cuped": "cuped",
+            "sequential": "sequential",
+            "bayesian_binary": "bayesian",
+            "bayesian_continuous": "bayesian",
+        }.get(capability, "fixed_horizon")
+        counts = method_counts.setdefault(
+            method,
+            {"failed": 0, "advisory": 0, "invalid": 0, "abstained": 0, "skipped": 0},
+        )
+        evaluation_status = str(case.get("evaluation_status", ""))
+        category = str(case.get("category", ""))
+        actual_status = str(case.get("actual_status", ""))
+        if evaluation_status == "fail":
+            counts["failed"] += 1
+        elif evaluation_status == "advisory":
+            counts["advisory"] += 1
+        elif evaluation_status == "skipped":
+            counts["skipped"] += 1
+        if category == "invalid_input":
+            counts["invalid"] += 1
+        if actual_status == "abstained":
+            counts["abstained"] += 1
         checks = case.get("checks")
         if not isinstance(checks, list):
             raise ValueError("statistics case checks must be a list")
@@ -123,6 +151,14 @@ def _load_statistical_baseline_json(path: Path) -> dict[str, SourceMetric]:
     minimum_cases = min(capability_counts.values()) if capability_counts else 0
     metrics["statistics.minimum_cases_per_capability"] = _value_metric(
         "statistics.minimum_cases_per_capability", minimum_cases
+    )
+    for method, counts in sorted(method_counts.items()):
+        for status, count in sorted(counts.items()):
+            metric_id = f"statistics.method.{method}.{status}"
+            metrics[metric_id] = _value_metric(metric_id, count)
+    advisory_findings = sum(counts["advisory"] for counts in method_counts.values())
+    metrics["statistics.performance.advisory_findings"] = _value_metric(
+        "statistics.performance.advisory_findings", advisory_findings
     )
     return metrics
 

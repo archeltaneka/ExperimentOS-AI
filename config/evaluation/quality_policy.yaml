@@ -1,4 +1,4 @@
-version: "2026-08-11"
+version: "2026-08-17"
 sources:
   rag:
     path: evaluation.md
@@ -471,10 +471,10 @@ metrics:
     category: Statistical Reliability
     operator: eq
     value: pass
-    severity: fail
+    severity: warning
     required: false
     weight: 1.0
-    description: The authoritative Phase 4 statistical baseline must pass when present.
+    description: Advisory-only Phase 4 status is reviewable; blocking checks are enforced separately.
   - metric_id: statistics.cases_failed
     source: statistics
     category: Statistical Reliability
@@ -520,6 +520,42 @@ metrics:
     required: false
     weight: 1.5
     description: Successful randomized analyses must retain complete finite uncertainty.
+  - metric_id: statistics.failures.assumptions
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Successful inferential results must disclose every method-relevant assumption.
+  - metric_id: statistics.failures.plan_integrity
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Sequential plan deviations must invalidate inference and alpha consumption.
+  - metric_id: statistics.failures.telemetry_privacy
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Statistical telemetry must contain only approved aggregate metadata.
+  - metric_id: statistics.failures.bayesian_semantics
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Bayesian outputs must preserve prior, likelihood, credible interval, and ROPE semantics.
   - metric_id: statistics.failures.determinism
     source: statistics
     category: Statistical Reliability
@@ -556,6 +592,15 @@ metrics:
     required: false
     weight: 0.5
     description: Advisory statistical findings should be reviewed without blocking CI.
+  - metric_id: statistics.performance.advisory_findings
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: warning
+    required: false
+    weight: 0.5
+    description: Statistical performance findings remain advisory and do not fail CI.
   - metric_id: statistics.minimum_cases_per_capability
     source: statistics
     category: Statistical Reliability

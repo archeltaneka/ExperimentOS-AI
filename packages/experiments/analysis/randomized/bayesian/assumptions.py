@@ -46,7 +46,39 @@ def bayesian_assumptions(
                 status=AssumptionStatus.SUPPORTED,
             ),
         )
-    return randomized_assumptions() + model_specific
+    declarations = (
+        AssumptionAssessment(
+            code="bayesian.prior_family",
+            statement="The prior family is explicitly declared for each arm.",
+            status=AssumptionStatus.SUPPORTED,
+        ),
+        AssumptionAssessment(
+            code="bayesian.prior_parameters",
+            statement="All prior parameters and their provenance are explicitly recorded.",
+            status=AssumptionStatus.SUPPORTED,
+        ),
+        AssumptionAssessment(
+            code="bayesian.likelihood_family",
+            statement="The likelihood family is explicitly declared.",
+            status=AssumptionStatus.SUPPORTED,
+        ),
+        AssumptionAssessment(
+            code="bayesian.outcome_model",
+            statement="Outcome-model assumptions follow the declared conjugate likelihood.",
+            status=AssumptionStatus.UNASSESSED,
+        ),
+        AssumptionAssessment(
+            code="bayesian.computation_method",
+            statement="Posterior effects use deterministic quadrature with recorded tolerances.",
+            status=AssumptionStatus.SUPPORTED,
+        ),
+        AssumptionAssessment(
+            code="bayesian.credible_interval_method",
+            statement="Posterior intervals use the recorded equal-tailed credible method.",
+            status=AssumptionStatus.SUPPORTED,
+        ),
+    )
+    return randomized_assumptions() + declarations + model_specific
 
 
 __all__ = ["bayesian_assumptions"]

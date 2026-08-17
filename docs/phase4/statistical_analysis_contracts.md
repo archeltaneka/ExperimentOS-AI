@@ -497,7 +497,13 @@ This boundary is non-causal: raw treatment-minus-control values are not treatmen
 
 ## Deferred Phase 4 Work
 
-Later Phase 4 work owns estimator calculations beyond deterministic descriptive statistics,
-randomized and observational estimators, quasi-experimental methods, third-party adapters,
+Bayesian fixed-horizon A/B inference now has a separate typed boundary for explicit Beta-Binomial
+and Normal–Inverse-Gamma conjugate models. It uses credible intervals and posterior probabilities,
+never frequentist confidence or p-value fields. See
+[Bayesian A/B testing with explicit priors](bayesian_ab_testing.md).
+
+Later Phase 4 work owns estimator calculations beyond the implemented descriptive, frequentist,
+CUPED, sequential, and Bayesian randomized surfaces: observational estimators,
+quasi-experimental methods, third-party adapters,
 business-impact calculations, agent and workflow integration, persistence, quality policy, and any
 separately designed public API expansion.

@@ -11,6 +11,7 @@ from .business_impact import BusinessImpactProjection, ProjectedValue
 from .descriptive.models import DescriptiveStatisticsResult
 from .estimands import EstimandDefinition
 from .estimates import AnalysisFinding, EffectEstimate
+from .randomized.bayesian.models import BayesianAnalysisResult
 from .randomized.sequential.models import SequentialAnalysisHistory
 from .requests import AnalysisRequest
 from .results import AnalysisOutcome
@@ -35,6 +36,9 @@ DESCRIPTIVE_STATISTICS_RESULT_ADAPTER: TypeAdapter[DescriptiveStatisticsResult] 
 )
 SEQUENTIAL_ANALYSIS_HISTORY_ADAPTER: TypeAdapter[SequentialAnalysisHistory] = TypeAdapter(
     SequentialAnalysisHistory
+)
+BAYESIAN_ANALYSIS_RESULT_ADAPTER: TypeAdapter[BayesianAnalysisResult] = TypeAdapter(
+    BayesianAnalysisResult
 )
 
 
@@ -103,3 +107,8 @@ def descriptive_statistics_result_from_json(payload: str | bytes) -> Descriptive
 def sequential_analysis_history_from_json(payload: str | bytes) -> SequentialAnalysisHistory:
     """Validate JSON as one immutable sequential-analysis audit history."""
     return SEQUENTIAL_ANALYSIS_HISTORY_ADAPTER.validate_json(payload)
+
+
+def bayesian_analysis_result_from_json(payload: str | bytes) -> BayesianAnalysisResult:
+    """Validate JSON as one Bayesian randomized-analysis result."""
+    return BAYESIAN_ANALYSIS_RESULT_ADAPTER.validate_json(payload)

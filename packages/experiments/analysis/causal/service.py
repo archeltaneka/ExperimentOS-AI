@@ -138,9 +138,7 @@ class CausalIdentificationService:
                     else 0
                 ),
                 "effect_modifier_count": len(identification.effect_modifiers),
-                "assumption_codes": tuple(
-                    item.code.value for item in identification.assumptions
-                ),
+                "assumption_codes": tuple(item.code.value for item in identification.assumptions),
                 "diagnostic_codes": tuple(item.code.value for item in result.diagnostics),
                 "abstention_state": result.abstention_reason is not None,
                 "duration_ms": (perf_counter() - started) * 1000.0,
@@ -859,7 +857,8 @@ class CausalIdentificationService:
             sorted(
                 item.code.value
                 for item in diagnostics
-                if item.category in {
+                if item.category
+                in {
                     CausalDiagnosticCategory.ADJUSTMENT,
                     CausalDiagnosticCategory.TIMING,
                 }

@@ -21,14 +21,14 @@ def test_identification_request_and_result_round_trip() -> None:
     result_payload = to_canonical_json(result)
 
     assert (
-        causal_identification_request_from_json(identification_payload)
-        == envelope.identification
+        causal_identification_request_from_json(identification_payload) == envelope.identification
     )
     assert observational_analysis_request_from_json(envelope_payload) == envelope
     assert identification_result_from_json(result_payload) == result
-    assert CAUSAL_IDENTIFICATION_REQUEST_ADAPTER.validate_json(
-        identification_payload
-    ) == envelope.identification
+    assert (
+        CAUSAL_IDENTIFICATION_REQUEST_ADAPTER.validate_json(identification_payload)
+        == envelope.identification
+    )
     assert OBSERVATIONAL_ANALYSIS_REQUEST_ADAPTER.validate_json(envelope_payload) == envelope
     assert IDENTIFICATION_RESULT_ADAPTER.validate_json(result_payload) == result
 

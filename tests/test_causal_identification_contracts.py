@@ -36,8 +36,7 @@ def test_observational_estimand_vocabulary_is_stable_and_distinct() -> None:
     assert estimand(CausalEstimandKind.ATE).target_population.kind is TargetPopulationKind.FULL
     assert estimand(CausalEstimandKind.ATT).target_population.kind is TargetPopulationKind.TREATED
     assert (
-        estimand(CausalEstimandKind.DID_ATT).target_population.kind
-        is TargetPopulationKind.TREATED
+        estimand(CausalEstimandKind.DID_ATT).target_population.kind is TargetPopulationKind.TREATED
     )
     assert estimand(CausalEstimandKind.CATE).effect_modifiers == ("country",)
 
@@ -146,11 +145,13 @@ def test_variable_timing_requires_timezone_aware_references() -> None:
     ).model_dump(mode="python")
     payload["timing"]["treatment_start"] = datetime(2026, 7, 10)
     with pytest.raises(ValidationError, match="timezone-aware"):
-        type(variable(
-            "prior_orders",
-            VariableRole.ADJUSTMENT,
-            timing=MeasurementTiming.PRE_TREATMENT,
-        )).model_validate(payload)
+        type(
+            variable(
+                "prior_orders",
+                VariableRole.ADJUSTMENT,
+                timing=MeasurementTiming.PRE_TREATMENT,
+            )
+        ).model_validate(payload)
 
 
 def test_fixture_timestamps_are_timezone_aware() -> None:

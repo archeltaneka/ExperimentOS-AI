@@ -51,9 +51,7 @@ CAUSAL_IDENTIFICATION_REQUEST_ADAPTER: TypeAdapter[CausalIdentificationRequest] 
 OBSERVATIONAL_ANALYSIS_REQUEST_ADAPTER: TypeAdapter[ObservationalAnalysisRequest] = TypeAdapter(
     ObservationalAnalysisRequest
 )
-IDENTIFICATION_RESULT_ADAPTER: TypeAdapter[IdentificationResult] = TypeAdapter(
-    IdentificationResult
-)
+IDENTIFICATION_RESULT_ADAPTER: TypeAdapter[IdentificationResult] = TypeAdapter(IdentificationResult)
 
 
 def to_canonical_json(model: ContractModel) -> str:

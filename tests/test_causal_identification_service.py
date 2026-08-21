@@ -286,9 +286,7 @@ def test_contradictory_measurement_period_is_invalid() -> None:
             )
         }
     )
-    result = CausalIdentificationService().identify(
-        request(declared_variables=tuple(declared))
-    )
+    result = CausalIdentificationService().identify(request(declared_variables=tuple(declared)))
     assert result.status is IdentificationStatus.INVALID
     assert CausalDiagnosticCode.REVERSED_TIMING in diagnostic_codes(result)
 
@@ -381,9 +379,7 @@ def test_treatment_outcome_and_time_references_require_matching_roles() -> None:
     candidate = request(declared_variables=declared)
     identification = candidate.identification.model_copy(
         update={
-            "time": candidate.identification.time.model_copy(
-                update={"time_variable": "conversion"}
-            )
+            "time": candidate.identification.time.model_copy(update={"time_variable": "conversion"})
         }
     )
     result = CausalIdentificationService().identify(

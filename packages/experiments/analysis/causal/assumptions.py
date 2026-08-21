@@ -75,9 +75,7 @@ class CausalAssumption(ContractModel):
     @model_validator(mode="after")
     def validate_semantics(self) -> Self:
         is_not_applicable = self.status is CausalAssumptionStatus.NOT_APPLICABLE
-        if is_not_applicable != (
-            self.applicability is AssumptionApplicability.NOT_APPLICABLE
-        ):
+        if is_not_applicable != (self.applicability is AssumptionApplicability.NOT_APPLICABLE):
             raise ValueError("not_applicable status and applicability must match")
         if (
             self.code is CausalAssumptionCode.EXCHANGEABILITY

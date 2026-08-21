@@ -52,9 +52,7 @@ def test_not_applicable_assumption_requires_matching_applicability() -> None:
         assumptions()[0].model_copy(
             update={"status": CausalAssumptionStatus.NOT_APPLICABLE}
         ).model_validate(
-            assumptions()[0].model_copy(
-                update={"status": CausalAssumptionStatus.NOT_APPLICABLE}
-            )
+            assumptions()[0].model_copy(update={"status": CausalAssumptionStatus.NOT_APPLICABLE})
         )
 
 

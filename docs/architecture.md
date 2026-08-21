@@ -145,6 +145,15 @@ or the public API. It performs no statistical or business-impact calculations. I
 `POST /ask`, `AgentState`, the current workflows, and existing evaluation behavior remain
 unchanged.
 
+`packages.experiments.analysis.causal` is the additive observational identification boundary.
+`ObservationalAnalysisRequest` requires a `CausalIdentificationRequest`, and
+`CausalIdentificationService` returns an estimate-free `IdentificationResult` before any future
+observational estimator may run. The owned contracts cover estimands, variable roles and timing,
+adjustment sets, a small directed graph, assumptions, evidence limitations, diagnostics,
+abstention, provenance, canonical serialization, and privacy-safe aggregate telemetry. They expose
+no EconML, DoWhy, NetworkX, statsmodels, or scikit-learn objects and do not perform estimation or
+causal discovery.
+
 ### Phase 4 Statistical Input Validation
 
 `packages.experiments.analysis.validation` adds an internal pre-estimator eligibility boundary.

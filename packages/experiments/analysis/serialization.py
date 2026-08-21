@@ -8,6 +8,11 @@ from pydantic import TypeAdapter
 
 from .base import ContractModel
 from .business_impact import BusinessImpactProjection, ProjectedValue
+from .causal.models import (
+    CausalIdentificationRequest,
+    IdentificationResult,
+    ObservationalAnalysisRequest,
+)
 from .descriptive.models import DescriptiveStatisticsResult
 from .estimands import EstimandDefinition
 from .estimates import AnalysisFinding, EffectEstimate
@@ -39,6 +44,15 @@ SEQUENTIAL_ANALYSIS_HISTORY_ADAPTER: TypeAdapter[SequentialAnalysisHistory] = Ty
 )
 BAYESIAN_ANALYSIS_RESULT_ADAPTER: TypeAdapter[BayesianAnalysisResult] = TypeAdapter(
     BayesianAnalysisResult
+)
+CAUSAL_IDENTIFICATION_REQUEST_ADAPTER: TypeAdapter[CausalIdentificationRequest] = TypeAdapter(
+    CausalIdentificationRequest
+)
+OBSERVATIONAL_ANALYSIS_REQUEST_ADAPTER: TypeAdapter[ObservationalAnalysisRequest] = TypeAdapter(
+    ObservationalAnalysisRequest
+)
+IDENTIFICATION_RESULT_ADAPTER: TypeAdapter[IdentificationResult] = TypeAdapter(
+    IdentificationResult
 )
 
 
@@ -112,3 +126,22 @@ def sequential_analysis_history_from_json(payload: str | bytes) -> SequentialAna
 def bayesian_analysis_result_from_json(payload: str | bytes) -> BayesianAnalysisResult:
     """Validate JSON as one Bayesian randomized-analysis result."""
     return BAYESIAN_ANALYSIS_RESULT_ADAPTER.validate_json(payload)
+
+
+def causal_identification_request_from_json(
+    payload: str | bytes,
+) -> CausalIdentificationRequest:
+    """Validate JSON as an observational causal-identification request."""
+    return CAUSAL_IDENTIFICATION_REQUEST_ADAPTER.validate_json(payload)
+
+
+def observational_analysis_request_from_json(
+    payload: str | bytes,
+) -> ObservationalAnalysisRequest:
+    """Validate JSON as a future estimator-facing observational request."""
+    return OBSERVATIONAL_ANALYSIS_REQUEST_ADAPTER.validate_json(payload)
+
+
+def identification_result_from_json(payload: str | bytes) -> IdentificationResult:
+    """Validate JSON as an identification-only result."""
+    return IDENTIFICATION_RESULT_ADAPTER.validate_json(payload)

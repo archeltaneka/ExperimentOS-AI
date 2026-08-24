@@ -1172,6 +1172,91 @@
             "fixture_provenance": "phase4-statistical-fixtures-v1"
         },
         {
+            "case_id": "did-known-positive-effect",
+            "capability": "difference_in_differences",
+            "category": "successful_inference",
+            "analysis_design": "difference_in_differences",
+            "metric_type": "continuous",
+            "fixture_id": "did_known_positive_effect",
+            "expected_status": "completed",
+            "expected_method": "did",
+            "expected_diagnostic_codes": [
+                "did.few_clusters"
+            ],
+            "expected_advisory_codes": [
+                "did.few_clusters"
+            ],
+            "expected_abstention": false,
+            "expected_abstention_reason": null,
+            "expected_values": [
+                {
+                    "path": "cell_means.treated_pre_mean",
+                    "value": 10.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Direct arithmetic mean from the treated pre cell.",
+                        "provenance": "hand-calculated from ten values centered at 10"
+                    }
+                },
+                {
+                    "path": "cell_means.treated_post_mean",
+                    "value": 15.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Direct arithmetic mean from the treated post cell.",
+                        "provenance": "hand-calculated from ten values centered at 15"
+                    }
+                },
+                {
+                    "path": "cell_means.control_pre_mean",
+                    "value": 8.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Direct arithmetic mean from the control pre cell.",
+                        "provenance": "hand-calculated from ten values centered at 8"
+                    }
+                },
+                {
+                    "path": "cell_means.control_post_mean",
+                    "value": 10.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Direct arithmetic mean from the control post cell.",
+                        "provenance": "hand-calculated from ten values centered at 10"
+                    }
+                },
+                {
+                    "path": "cell_means.did_estimate",
+                    "value": 3.0,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Exact two-by-two ATT contrast.",
+                        "provenance": "(15 - 10) - (10 - 8) = 3"
+                    }
+                },
+                {
+                    "path": "test_result.standard_error",
+                    "value": 2.103464143623269,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "CR1 unit-clustered sandwich covariance with 20 clusters.",
+                        "provenance": "independent canonical OLS and statsmodels cov_cluster CR1 formula"
+                    }
+                },
+                {
+                    "path": "test_result.p_value",
+                    "value": 0.17003027022113726,
+                    "tolerance": {
+                        "absolute": 1e-12,
+                        "rationale": "Two-sided Student t tail with 19 degrees of freedom.",
+                        "provenance": "2 * scipy.stats.t.sf(abs(3 / 2.103464143623269), 19)"
+                    }
+                }
+            ],
+            "notes": "Hand-calculated ATT DiD with independently specified CR1 uncertainty.",
+            "fixture_provenance": "phase4-statistical-fixtures-v1"
+        },
+        {
             "case_id": "eligibility-invalid-malformed",
             "capability": "eligibility_validation",
             "category": "invalid_input",

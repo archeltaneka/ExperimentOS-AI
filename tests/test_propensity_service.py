@@ -200,7 +200,5 @@ def test_zero_variance_numeric_covariate_is_reported_as_advisory() -> None:
 
     result = analyze(rows)
 
-    assert any(
-        item.code == "encoding.zero_variance_numeric" for item in result.diagnostics
-    )
+    assert any(item.code == "encoding.zero_variance_numeric" for item in result.diagnostics)
     assert any(item.code == "encoding.zero_variance_numeric" for item in result.warnings)

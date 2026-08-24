@@ -270,9 +270,7 @@ class DeterministicLogisticPropensityEstimator:
             diagnostics=diagnostics,
             warnings=warnings,
             provenance=result_provenance,
-            abstention_reason=(
-                _abstention(diagnostics, "overlap.severe") if blocked else None
-            ),
+            abstention_reason=(_abstention(diagnostics, "overlap.severe") if blocked else None),
         )
 
 

@@ -100,8 +100,7 @@ def test_unknown_treatment_value_is_not_coerced_by_truthiness() -> None:
 
 def test_missing_bound_column_is_invalid_without_row_loss() -> None:
     rows = tuple(
-        {key: value for key, value in row.items() if key != "country"}
-        for row in small_valid_rows()
+        {key: value for key, value in row.items() if key != "country"} for row in small_valid_rows()
     )
 
     result = validate_propensity_input(propensity_execution(), propensity_table(rows))

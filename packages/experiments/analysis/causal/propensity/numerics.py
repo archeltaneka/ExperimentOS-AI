@@ -252,8 +252,7 @@ def build_ess_diagnostic(
             (control_ess, len(control_weights)),
         )
         collapsed = any(
-            ess < config.minimum_effective_sample_size
-            or ess / count < config.minimum_ess_ratio
+            ess < config.minimum_effective_sample_size or ess / count < config.minimum_ess_ratio
             for ess, count in values
         )
         status = (
@@ -453,11 +452,7 @@ def assess_overlap(
         weak = True
         codes.append("weight.extreme_tail")
     status = (
-        OverlapStatus.SEVERE
-        if severe
-        else OverlapStatus.WEAK
-        if weak
-        else OverlapStatus.ACCEPTABLE
+        OverlapStatus.SEVERE if severe else OverlapStatus.WEAK if weak else OverlapStatus.ACCEPTABLE
     )
     return OverlapDiagnostic(
         status=status,

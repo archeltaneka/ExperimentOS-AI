@@ -48,9 +48,7 @@ def test_encoding_preserves_source_alignment_and_separates_model_from_balance_va
 
     assert encoded.unit_ids == ("u-3", "u-1", "u-4", "u-2")
     assert encoded.treated == (True, False, True, False)
-    assert encoded.model_matrix[0] == pytest.approx(
-        (0.0, (4.0 - 2.5) / math.sqrt(1.25))
-    )
+    assert encoded.model_matrix[0] == pytest.approx((0.0, (4.0 - 2.5) / math.sqrt(1.25)))
     assert encoded.balance_matrix[0] == (1.0, 0.0, 4.0)
     assert encoded.model_matrix[1][0] == 1.0
     assert encoded.balance_matrix[1] == (0.0, 1.0, 2.0)

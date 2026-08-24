@@ -458,9 +458,7 @@ class PropensityWeightCapConfig(ContractModel):
 class PropensityConfig(ContractModel):
     """Central deterministic model and diagnostic policy."""
 
-    model_family: Literal["regularized_logistic_regression"] = (
-        "regularized_logistic_regression"
-    )
+    model_family: Literal["regularized_logistic_regression"] = "regularized_logistic_regression"
     link: Literal["logit"] = "logit"
     penalty: Literal["l2"] = "l2"
     l1_ratio: FiniteFloat = 0.0

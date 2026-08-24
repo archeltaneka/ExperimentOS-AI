@@ -61,6 +61,14 @@ from .models import (
     IdentificationStatus,
     ObservationalAnalysisRequest,
 )
+from .propensity import (
+    CappedWeightDiagnostics,
+    DeterministicLogisticPropensityEstimator,
+    PropensityConfig,
+    PropensityExecutionRequest,
+    PropensityResult,
+    RetainedPopulationDiagnostics,
+)
 from .service import CausalIdentificationService
 from .variables import CausalVariable, MeasurementTiming, VariableRole, VariableTiming
 
@@ -98,6 +106,7 @@ __all__ = [
     "DifferenceInDifferencesExecutionRequest",
     "DifferenceInDifferencesResult",
     "DifferenceInDifferencesService",
+    "DeterministicLogisticPropensityEstimator",
     "CausalEstimand",
     "CausalEstimandKind",
     "CausalGraph",
@@ -107,6 +116,7 @@ __all__ = [
     "CausalIdentificationService",
     "CausalOutcome",
     "CausalVariable",
+    "CappedWeightDiagnostics",
     "EffectScale",
     "EvidenceLimitation",
     "EvidenceLimitationCode",
@@ -116,6 +126,10 @@ __all__ = [
     "ObservationalDesign",
     "ObservationalDesignType",
     "ObservationalAnalysisRequest",
+    "PropensityConfig",
+    "PropensityExecutionRequest",
+    "PropensityResult",
+    "RetainedPopulationDiagnostics",
     "TargetPopulation",
     "TargetPopulationKind",
     "TimeSemantics",

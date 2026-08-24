@@ -13,6 +13,7 @@ from .causal.models import (
     IdentificationResult,
     ObservationalAnalysisRequest,
 )
+from .causal.propensity import PropensityResult
 from .descriptive.models import DescriptiveStatisticsResult
 from .estimands import EstimandDefinition
 from .estimates import AnalysisFinding, EffectEstimate
@@ -52,6 +53,7 @@ OBSERVATIONAL_ANALYSIS_REQUEST_ADAPTER: TypeAdapter[ObservationalAnalysisRequest
     ObservationalAnalysisRequest
 )
 IDENTIFICATION_RESULT_ADAPTER: TypeAdapter[IdentificationResult] = TypeAdapter(IdentificationResult)
+PROPENSITY_RESULT_ADAPTER: TypeAdapter[PropensityResult] = TypeAdapter(PropensityResult)
 
 
 def to_canonical_json(model: ContractModel) -> str:
@@ -143,3 +145,8 @@ def observational_analysis_request_from_json(
 def identification_result_from_json(payload: str | bytes) -> IdentificationResult:
     """Validate JSON as an identification-only result."""
     return IDENTIFICATION_RESULT_ADAPTER.validate_json(payload)
+
+
+def propensity_result_from_json(payload: str | bytes) -> PropensityResult:
+    """Validate JSON as an owned propensity-score diagnostic result."""
+    return PROPENSITY_RESULT_ADAPTER.validate_json(payload)

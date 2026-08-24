@@ -192,10 +192,10 @@ def test_repository_cases_pass_all_reliability_dimensions_deterministically() ->
     repeated = StatisticalBaselineEvaluator().evaluate(dataset)
 
     assert first.overall_status == "pass"
-    assert first.dataset_size == 48
+    assert first.dataset_size == 49
     assert first.cases_passed == 38
     assert first.cases_failed == 0
-    assert first.cases_advisory == 9
+    assert first.cases_advisory == 10
     assert first.cases_invalid == 13
     assert first.cases_abstained == 8
     assert first.cases_skipped == 1

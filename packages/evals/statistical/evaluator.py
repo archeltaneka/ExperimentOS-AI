@@ -115,6 +115,7 @@ class StatisticalBaselineEvaluator:
                 allow_additional_codes=case.capability
                 in {
                     StatisticalCapability.CUPED,
+                    StatisticalCapability.DIFFERENCE_IN_DIFFERENCES,
                     StatisticalCapability.SEQUENTIAL,
                     StatisticalCapability.BAYESIAN_BINARY,
                     StatisticalCapability.BAYESIAN_CONTINUOUS,
@@ -136,6 +137,7 @@ class StatisticalBaselineEvaluator:
             checks.extend(check_uncertainty(actual))
         elif case.capability in {
             StatisticalCapability.CUPED,
+            StatisticalCapability.DIFFERENCE_IN_DIFFERENCES,
             StatisticalCapability.SEQUENTIAL,
             StatisticalCapability.BAYESIAN_BINARY,
             StatisticalCapability.BAYESIAN_CONTINUOUS,
@@ -555,6 +557,7 @@ def check_method_uncertainty(
     status = _actual_status_for_capability(capability, actual)
     successful = {
         StatisticalCapability.CUPED: {"completed", "no_improvement", "degraded_precision"},
+        StatisticalCapability.DIFFERENCE_IN_DIFFERENCES: {"completed"},
         StatisticalCapability.SEQUENTIAL: {"continue", "efficacy", "no_rejection"},
         StatisticalCapability.BAYESIAN_BINARY: {"completed"},
         StatisticalCapability.BAYESIAN_CONTINUOUS: {"completed"},
@@ -572,6 +575,18 @@ def check_method_uncertainty(
             "confidence_level": interval.get("confidence_level") is not None,
             "comparable_unadjusted": actual.get("comparable_unadjusted_result") is not None,
             "variance_reduction": bool(_mapping(actual.get("variance_reduction"))),
+        }
+    elif capability is StatisticalCapability.DIFFERENCE_IN_DIFFERENCES:
+        test_result = _mapping(actual.get("test_result"))
+        interval = _mapping(test_result.get("confidence_interval"))
+        required = {
+            "did_point_estimate": _mapping(actual.get("cell_means")).get("did_estimate")
+            is not None,
+            "did_standard_error": test_result.get("standard_error") is not None,
+            "did_confidence_interval": _finite_interval(interval),
+            "did_confidence_level": interval.get("confidence_level") is not None,
+            "did_cluster_count": test_result.get("cluster_count") is not None,
+            "did_p_value": test_result.get("p_value") is not None,
         }
     elif capability is StatisticalCapability.SEQUENTIAL:
         look = _mapping(actual.get("current_look"))
@@ -674,6 +689,8 @@ def _actual_method(case: StatisticalReferenceCase, actual: Mapping[str, Any]) ->
         return str(method) if method is not None else None
     if case.capability is StatisticalCapability.CUPED:
         return str(actual.get("adjustment_method"))
+    if case.capability is StatisticalCapability.DIFFERENCE_IN_DIFFERENCES:
+        return str(actual.get("method"))
     if case.capability is StatisticalCapability.SEQUENTIAL:
         method = _mapping(actual.get("plan")).get("boundary_method")
         return str(method) if method is not None else None
@@ -748,6 +765,13 @@ def _required_assumption_codes(capability: StatisticalCapability) -> tuple[str, 
             "covariate_unaffected_by_treatment",
             "estimand_preserved",
             "random_assignment",
+        )
+    if capability is StatisticalCapability.DIFFERENCE_IN_DIFFERENCES:
+        return (
+            "no_anticipation",
+            "parallel_trends",
+            "stable_treatment_definition",
+            "stable_unit_population",
         )
     if capability is StatisticalCapability.SEQUENTIAL:
         return (

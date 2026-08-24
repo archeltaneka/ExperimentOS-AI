@@ -32,6 +32,7 @@ class StatisticalCaseModel(BaseModel):
 class StatisticalCapability(StrEnum):
     ELIGIBILITY_VALIDATION = "eligibility_validation"
     DESCRIPTIVE_STATISTICS = "descriptive_statistics"
+    DIFFERENCE_IN_DIFFERENCES = "difference_in_differences"
     RANDOMIZED_CONTINUOUS = "randomized_continuous"
     RANDOMIZED_BINARY = "randomized_binary"
     CUPED = "cuped"

@@ -77,7 +77,7 @@ def test_statistical_adapter_exposes_structured_aggregate_metrics(tmp_path: Path
 
     assert loaded is not None
     assert loaded.metrics["statistics.overall_status"].value == "pass"
-    assert loaded.metrics["statistics.dataset_size"].value == 48
+    assert loaded.metrics["statistics.dataset_size"].value == 49
     assert loaded.metrics["statistics.cases_invalid"].value == 13
     assert loaded.metrics["statistics.cases_abstained"].value == 8
     assert loaded.metrics["statistics.failures.uncertainty"].value == 0

@@ -329,9 +329,7 @@ def _finish_result(
         "panel_type": "balanced",
         "cluster_robust": result.test_result is not None,
         "cluster_count": result.sample_counts.retained_units,
-        "pretrend_available": (
-            result.pretrend.availability is DidPretrendAvailability.AVAILABLE
-        ),
+        "pretrend_available": (result.pretrend.availability is DidPretrendAvailability.AVAILABLE),
         "diagnostic_codes": diagnostic_codes,
         "duration_ms": duration_ms,
     }

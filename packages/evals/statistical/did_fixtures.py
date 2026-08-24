@@ -294,9 +294,7 @@ def run_did_fixture(
         analysis_request=did_evaluation_request(),
         binding=_binding(),
     )
-    return DifferenceInDifferencesService(
-        observability_provider=observability_provider
-    ).analyze(
+    return DifferenceInDifferencesService(observability_provider=observability_provider).analyze(
         execution,
         AnalysisTable.from_records(rows),
         provenance=_provenance(f"did-eval-input:{fixture_id}"),

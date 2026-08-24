@@ -92,17 +92,11 @@ def fit_interaction_ols(observations: tuple[DidObservation, ...]) -> DidRegressi
     design = tuple(_design_row(item) for item in observations)
     outcomes = tuple(_finite(item.outcome, name="outcome") for item in observations)
     xtx = tuple(
-        tuple(
-            math.fsum(row[left] * row[right] for row in design)
-            for right in range(4)
-        )
+        tuple(math.fsum(row[left] * row[right] for row in design) for right in range(4))
         for left in range(4)
     )
     xty = tuple(
-        math.fsum(
-            row[column] * outcome
-            for row, outcome in zip(design, outcomes, strict=True)
-        )
+        math.fsum(row[column] * outcome for row, outcome in zip(design, outcomes, strict=True))
         for column in range(4)
     )
     solved = _solve(xtx, xty)
@@ -111,8 +105,7 @@ def fit_interaction_ols(observations: tuple[DidObservation, ...]) -> DidRegressi
         _subtract(
             outcome,
             math.fsum(
-                value * coefficient
-                for value, coefficient in zip(row, coefficients, strict=True)
+                value * coefficient for value, coefficient in zip(row, coefficients, strict=True)
             ),
         )
         for row, outcome in zip(design, outcomes, strict=True)
@@ -144,17 +137,11 @@ def fit_pretrend_ols(
     )
     outcomes = tuple(_finite(item.outcome, name="pre-trend outcome") for item in observations)
     xtx = tuple(
-        tuple(
-            math.fsum(row[left] * row[right] for row in design)
-            for right in range(4)
-        )
+        tuple(math.fsum(row[left] * row[right] for row in design) for right in range(4))
         for left in range(4)
     )
     xty = tuple(
-        math.fsum(
-            row[column] * outcome
-            for row, outcome in zip(design, outcomes, strict=True)
-        )
+        math.fsum(row[column] * outcome for row, outcome in zip(design, outcomes, strict=True))
         for column in range(4)
     )
     solved = _solve(xtx, xty)
@@ -163,8 +150,7 @@ def fit_pretrend_ols(
         _subtract(
             outcome,
             math.fsum(
-                value * coefficient
-                for value, coefficient in zip(row, coefficients, strict=True)
+                value * coefficient for value, coefficient in zip(row, coefficients, strict=True)
             ),
         )
         for row, outcome in zip(design, outcomes, strict=True)
@@ -256,10 +242,7 @@ def cluster_robust_inference(
     bread = _inverse(xtx)
     scores = tuple(
         tuple(
-            math.fsum(
-                fit.design_matrix[index][column] * fit.residuals[index]
-                for index in indexes
-            )
+            math.fsum(fit.design_matrix[index][column] * fit.residuals[index] for index in indexes)
             for column in range(parameter_count)
         )
         for indexes in cluster_rows.values()
@@ -319,6 +302,8 @@ def cluster_robust_inference(
             confidence_level=config.confidence_level,
         ),
     )
+
+
 def _design_row(observation: DidObservation) -> tuple[float, float, float, float]:
     treated = 1.0 if observation.treated else 0.0
     post = 1.0 if observation.post else 0.0

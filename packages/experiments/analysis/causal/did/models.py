@@ -186,9 +186,7 @@ class DifferenceInDifferencesConfig(ContractModel):
         if self.few_cluster_warning_threshold < 3:
             raise ValueError("few_cluster_warning_threshold must be at least three")
         if self.few_cluster_warning_threshold <= self.minimum_cluster_count:
-            raise ValueError(
-                "few-cluster warning threshold must exceed the minimum cluster count"
-            )
+            raise ValueError("few-cluster warning threshold must exceed the minimum cluster count")
         if self.minimum_cluster_count < 2 * self.minimum_cluster_count_per_group:
             raise ValueError("total minimum clusters must cover both group minima")
         return self
@@ -412,8 +410,7 @@ class DifferenceInDifferencesResult(ContractModel):
 
         if self.status is DidStatus.COMPLETED:
             if any(
-                item is None
-                for item in (self.estimand, self.treatment, self.outcome, self.units)
+                item is None for item in (self.estimand, self.treatment, self.outcome, self.units)
             ):
                 raise ValueError("completed results require complete identification echoes")
             if self.cell_means is None or self.test_result is None:

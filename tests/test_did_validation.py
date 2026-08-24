@@ -86,9 +86,7 @@ def test_binary_metric_is_unsupported() -> None:
                 update={
                     "outcome": outcome.model_copy(
                         update={
-                            "metric": outcome.metric.model_copy(
-                                update={"metric": binary_metric}
-                            )
+                            "metric": outcome.metric.model_copy(update={"metric": binary_metric})
                         }
                     )
                 }
@@ -189,9 +187,7 @@ def test_group_membership_switch_is_invalid() -> None:
 def test_staggered_treatment_start_is_invalid() -> None:
     rows = positive_effect_rows()
     rows = tuple(
-        {**row, "treatment_start": at(10) + timedelta(hours=1)}
-        if row["unit_id"] == "t-01"
-        else row
+        {**row, "treatment_start": at(10) + timedelta(hours=1)} if row["unit_id"] == "t-01" else row
         for row in rows
     )
 
@@ -279,12 +275,8 @@ def test_missing_or_nonfinite_outcome_never_becomes_zero(value: object) -> None:
     result = validate_did_input(did_execution(), did_table(rows))
 
     expected = (
-        DidValidationDisposition.ABSTAINED
-        if value is None
-        else DidValidationDisposition.INVALID
+        DidValidationDisposition.ABSTAINED if value is None else DidValidationDisposition.INVALID
     )
     assert result.disposition is expected
-    assert (
-        "did.missing_outcome" if value is None else "did.nonfinite_outcome"
-    ) in _codes(result)
+    assert ("did.missing_outcome" if value is None else "did.nonfinite_outcome") in _codes(result)
     assert result.sample_counts.treated_missing_pre_outcomes == 1

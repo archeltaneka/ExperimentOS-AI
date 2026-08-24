@@ -102,9 +102,7 @@ def validate_did_input(
         )
 
     missing_columns = tuple(
-        column
-        for column in _binding_columns(execution)
-        if column not in table.columns
+        column for column in _binding_columns(execution) if column not in table.columns
     )
     if missing_columns:
         diagnostics.append(
@@ -398,8 +396,7 @@ def _validate_panel(
 
     diagnostics: list[DidDiagnostic] = []
     membership_by_unit = {
-        unit: {row.treated_group for row in unit_rows}
-        for unit, unit_rows in by_unit.items()
+        unit: {row.treated_group for row in unit_rows} for unit, unit_rows in by_unit.items()
     }
     unknown_group_units = {
         unit for unit, memberships in membership_by_unit.items() if None in memberships
@@ -458,17 +455,13 @@ def _validate_panel(
         )
 
     pre_by_unit = {
-        unit: [row for row in unit_rows if not row.post]
-        for unit, unit_rows in by_unit.items()
+        unit: [row for row in unit_rows if not row.post] for unit, unit_rows in by_unit.items()
     }
     post_by_unit = {
-        unit: [row for row in unit_rows if row.post]
-        for unit, unit_rows in by_unit.items()
+        unit: [row for row in unit_rows if row.post] for unit, unit_rows in by_unit.items()
     }
     duplicate_units = {
-        unit
-        for unit in by_unit
-        if len(pre_by_unit[unit]) > 1 or len(post_by_unit[unit]) > 1
+        unit for unit in by_unit if len(pre_by_unit[unit]) > 1 or len(post_by_unit[unit]) > 1
     }
     if duplicate_units:
         diagnostics.append(
@@ -587,9 +580,7 @@ def _diagnostic_window_design_diagnostics(
     pretrend_rows: tuple[DidPretrendObservation, ...],
 ) -> tuple[DidDiagnostic, ...]:
     extra_rows = tuple(
-        row
-        for row in pretrend_rows
-        if row.period_index < len(execution.extra_pre_periods)
+        row for row in pretrend_rows if row.period_index < len(execution.extra_pre_periods)
     )
     if not extra_rows:
         return ()
@@ -614,8 +605,7 @@ def _diagnostic_window_design_diagnostics(
             continue
         if (
             diagnostic_row.unit_id in canonical_membership
-            and diagnostic_row.treated
-            not in canonical_membership[diagnostic_row.unit_id]
+            and diagnostic_row.treated not in canonical_membership[diagnostic_row.unit_id]
         ):
             switching_units.add(diagnostic_row.unit_id)
         if contrast is None:
@@ -625,10 +615,7 @@ def _diagnostic_window_design_diagnostics(
         if diagnostic_row.treated:
             if _strict_equal(diagnostic_row.exposure, contrast.treated_value):
                 anticipation_units.add(diagnostic_row.unit_id)
-            if (
-                declared_start is not None
-                and diagnostic_row.treatment_start != declared_start
-            ):
+            if declared_start is not None and diagnostic_row.treatment_start != declared_start:
                 staggered_units.add(diagnostic_row.unit_id)
         elif diagnostic_row.treatment_start is not None or _strict_equal(
             diagnostic_row.exposure, contrast.treated_value
@@ -825,8 +812,7 @@ def _blocking_declaration_disposition(
     if any(item.code == "did.reversed_timing" for item in diagnostics):
         return DidValidationDisposition.INVALID
     if any(
-        item.code in {"did.treatment_too_early", "did.treatment_too_late"}
-        for item in diagnostics
+        item.code in {"did.treatment_too_early", "did.treatment_too_late"} for item in diagnostics
     ):
         return DidValidationDisposition.INVALID
     if any(item.status is DidDiagnosticStatus.UNAVAILABLE for item in diagnostics):
@@ -836,8 +822,7 @@ def _blocking_declaration_disposition(
             return DidValidationDisposition.UNSUPPORTED
         return DidValidationDisposition.INVALID
     if any(
-        item.code in {"did.unsupported_metric", "did.incompatible_estimand"}
-        for item in diagnostics
+        item.code in {"did.unsupported_metric", "did.incompatible_estimand"} for item in diagnostics
     ):
         return DidValidationDisposition.UNSUPPORTED
     return None
@@ -847,8 +832,7 @@ def _derive_disposition(diagnostics: list[DidDiagnostic]) -> DidValidationDispos
     if any(item.status is DidDiagnosticStatus.UNAVAILABLE for item in diagnostics):
         return DidValidationDisposition.ABSTAINED
     if any(
-        item.code in {"did.unsupported_metric", "did.unsupported_period"}
-        for item in diagnostics
+        item.code in {"did.unsupported_metric", "did.unsupported_period"} for item in diagnostics
     ):
         return DidValidationDisposition.UNSUPPORTED
     if diagnostics:

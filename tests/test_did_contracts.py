@@ -136,8 +136,9 @@ def test_execution_request_requires_issue_97_identification_envelope() -> None:
     assert execution.extra_pre_periods == ()
 
 
-def test_completed_result_contains_owned_finite_inference_and_serializes_deterministically(
-) -> None:
+def test_completed_result_contains_owned_finite_inference_and_serializes_deterministically() -> (
+    None
+):
     execution = DifferenceInDifferencesExecutionRequest(
         analysis_request=did_request(),
         binding=_binding(),

@@ -4,9 +4,7 @@ from pathlib import Path
 
 
 def test_did_documentation_states_supported_design_and_limitations() -> None:
-    documentation = Path("docs/phase4/difference_in_differences.md").read_text(
-        encoding="utf-8"
-    )
+    documentation = Path("docs/phase4/difference_in_differences.md").read_text(encoding="utf-8")
     required_statements = (
         "ATT_DiD",
         "not just a before/after comparison",

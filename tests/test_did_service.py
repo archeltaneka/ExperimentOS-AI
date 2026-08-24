@@ -85,9 +85,7 @@ def test_unbalanced_panel_abstains_without_returning_filtered_estimate() -> None
 
 
 def test_minimum_cluster_policy_abstains_before_estimation() -> None:
-    keep = {f"t-{index:02d}" for index in range(1, 4)} | {
-        f"c-{index:02d}" for index in range(1, 4)
-    }
+    keep = {f"t-{index:02d}" for index in range(1, 4)} | {f"c-{index:02d}" for index in range(1, 4)}
     rows = tuple(row for row in positive_effect_rows() if row["unit_id"] in keep)
 
     result = DifferenceInDifferencesService().analyze(
@@ -121,9 +119,7 @@ def test_divergent_pretrend_warns_without_changing_canonical_att() -> None:
     assert result.cell_means.did_estimate == pytest.approx(3.0, abs=1e-12)
     assert result.pretrend.evidence_concern is True
     assert "did.parallel_trends_evidence_concern" in _codes(result)
-    parallel = next(
-        item for item in result.assumptions if item.code.value == "parallel_trends"
-    )
+    parallel = next(item for item in result.assumptions if item.code.value == "parallel_trends")
     assert parallel.status.value == "asserted"
 
 

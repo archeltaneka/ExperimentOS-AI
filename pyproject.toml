@@ -20,6 +20,7 @@ dependencies = [
   "scipy>=1.16.1",
   "sqlalchemy[asyncio]>=2.0.36",
   "uvicorn[standard]>=0.32.0",
+  "scikit-learn>=1.9.0",
 ]
 
 [dependency-groups]

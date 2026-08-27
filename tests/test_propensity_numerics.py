@@ -19,6 +19,7 @@ from packages.experiments.analysis.causal.propensity import (
 from packages.experiments.analysis.causal.propensity.numerics import (
     PropensityNumericalError,
     assess_overlap,
+    build_ess_diagnostic,
     build_weight_diagnostics,
     common_support_diagnostic,
     compute_weight_values,
@@ -26,6 +27,18 @@ from packages.experiments.analysis.causal.propensity.numerics import (
     standardized_mean_difference,
     summarize_distribution,
 )
+
+
+def test_ess_ratios_are_clamped_to_their_mathematical_probability_bound() -> None:
+    diagnostic = build_ess_diagnostic(
+        (4.0,) * 10 + (4.0 / 3.0,) * 30,
+        (True,) * 10 + (False,) * 30,
+        PropensityConfig(),
+    )
+
+    assert diagnostic.overall_ratio <= 1.0
+    assert diagnostic.treated_ratio == 1.0
+    assert diagnostic.control_ratio == 1.0
 
 
 def _overlap_result(

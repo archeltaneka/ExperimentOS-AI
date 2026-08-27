@@ -8,6 +8,7 @@ from pydantic import TypeAdapter
 
 from .base import ContractModel
 from .business_impact import BusinessImpactProjection, ProjectedValue
+from .causal.ipw import TreatmentEffectResult
 from .causal.models import (
     CausalIdentificationRequest,
     IdentificationResult,
@@ -54,6 +55,9 @@ OBSERVATIONAL_ANALYSIS_REQUEST_ADAPTER: TypeAdapter[ObservationalAnalysisRequest
 )
 IDENTIFICATION_RESULT_ADAPTER: TypeAdapter[IdentificationResult] = TypeAdapter(IdentificationResult)
 PROPENSITY_RESULT_ADAPTER: TypeAdapter[PropensityResult] = TypeAdapter(PropensityResult)
+TREATMENT_EFFECT_RESULT_ADAPTER: TypeAdapter[TreatmentEffectResult] = TypeAdapter(
+    TreatmentEffectResult
+)
 
 
 def to_canonical_json(model: ContractModel) -> str:
@@ -150,3 +154,8 @@ def identification_result_from_json(payload: str | bytes) -> IdentificationResul
 def propensity_result_from_json(payload: str | bytes) -> PropensityResult:
     """Validate JSON as an owned propensity-score diagnostic result."""
     return PROPENSITY_RESULT_ADAPTER.validate_json(payload)
+
+
+def treatment_effect_result_from_json(payload: str | bytes) -> TreatmentEffectResult:
+    """Validate JSON as an owned observational IPW treatment-effect result."""
+    return TREATMENT_EFFECT_RESULT_ADAPTER.validate_json(payload)

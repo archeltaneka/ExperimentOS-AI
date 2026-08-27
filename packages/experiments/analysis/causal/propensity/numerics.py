@@ -268,18 +268,21 @@ def build_ess_diagnostic(
         raw_count=len(weights),
         treated_raw_count=len(treated_weights),
         control_raw_count=len(control_weights),
-        overall_ratio=overall / len(weights) if overall is not None and weights else None,
+        overall_ratio=_ess_ratio(overall, len(weights)),
         treated_ratio=(
-            treated_ess / len(treated_weights)
-            if treated_ess is not None and treated_weights
-            else None
+            _ess_ratio(treated_ess, len(treated_weights))
         ),
         control_ratio=(
-            control_ess / len(control_weights)
-            if control_ess is not None and control_weights
-            else None
+            _ess_ratio(control_ess, len(control_weights))
         ),
     )
+
+
+def _ess_ratio(ess: float | None, count: int) -> float | None:
+    """Keep floating-point roundoff inside Kish ESS's mathematical [0, 1] bound."""
+    if ess is None or count == 0:
+        return None
+    return min(1.0, max(0.0, ess / count))
 
 
 def build_balance_diagnostics(

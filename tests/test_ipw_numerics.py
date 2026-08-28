@@ -124,7 +124,5 @@ def test_ate_stabilization_is_finite_under_unequal_treatment_prevalence(
         treatment_prevalence=prevalence,
     )
 
-    assert stabilized == pytest.approx(
-        (prevalence * raw[0], (1.0 - prevalence) * raw[1])
-    )
+    assert stabilized == pytest.approx((prevalence * raw[0], (1.0 - prevalence) * raw[1]))
     assert effective_sample_size(stabilized) > 1.0

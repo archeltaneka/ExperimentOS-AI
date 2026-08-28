@@ -66,9 +66,7 @@ def known_effect_rows(*, binary_null: bool = False) -> tuple[dict[str, object], 
                     "country": label,
                     "prior_orders": 0.0 if label == "low" else 1.0,
                     "conversion": (
-                        (0 if label == "low" else 1)
-                        if binary_null
-                        else baseline + effect
+                        (0 if label == "low" else 1) if binary_null else baseline + effect
                     ),
                 }
             )
@@ -183,14 +181,10 @@ def exact_propensity_result(
             weighted=StandardizedMeanDifference(
                 available=True,
                 treated_mean=(
-                    weighted_mean
-                    if weighted_mean is not None
-                    else item.raw.treated_mean
+                    weighted_mean if weighted_mean is not None else item.raw.treated_mean
                 ),
                 control_mean=(
-                    weighted_mean
-                    if weighted_mean is not None
-                    else item.raw.treated_mean
+                    weighted_mean if weighted_mean is not None else item.raw.treated_mean
                 ),
                 treated_variance=(
                     weighted_variance
@@ -291,9 +285,7 @@ def retained_ipw_execution() -> IPWExecutionRequest:
     )
     configuration = propensity.configuration.model_copy(update={"trimming": trimming})
     assert propensity.model_provenance is not None
-    model_provenance = propensity.model_provenance.model_copy(
-        update={"trimming_enabled": True}
-    )
+    model_provenance = propensity.model_provenance.model_copy(update={"trimming_enabled": True})
     updated = propensity.model_copy(
         update={
             "configuration": configuration,

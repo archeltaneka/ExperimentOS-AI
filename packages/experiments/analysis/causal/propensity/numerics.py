@@ -269,12 +269,8 @@ def build_ess_diagnostic(
         treated_raw_count=len(treated_weights),
         control_raw_count=len(control_weights),
         overall_ratio=_ess_ratio(overall, len(weights)),
-        treated_ratio=(
-            _ess_ratio(treated_ess, len(treated_weights))
-        ),
-        control_ratio=(
-            _ess_ratio(control_ess, len(control_weights))
-        ),
+        treated_ratio=(_ess_ratio(treated_ess, len(treated_weights))),
+        control_ratio=(_ess_ratio(control_ess, len(control_weights))),
     )
 
 

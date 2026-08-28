@@ -86,9 +86,7 @@ def _severe_overlap(execution: IPWExecutionRequest) -> IPWExecutionRequest:
 def _collapsed_ess(execution: IPWExecutionRequest) -> IPWExecutionRequest:
     propensity = execution.propensity_result
     assert propensity.weights is not None
-    ess = propensity.weights.ess.model_copy(
-        update={"status": EffectiveSampleSizeStatus.COLLAPSED}
-    )
+    ess = propensity.weights.ess.model_copy(update={"status": EffectiveSampleSizeStatus.COLLAPSED})
     weights = propensity.weights.model_copy(update={"ess": ess})
     return execution.model_copy(
         update={"propensity_result": propensity.model_copy(update={"weights": weights})}
@@ -193,9 +191,7 @@ def test_fatal_design_gate_abstains_without_invoking_effect_engine(
 
 def test_invalid_outcome_alignment_stops_before_effect_engine() -> None:
     engine = SpyEngine()
-    table = ipw_table().from_records(
-        ({"account_id": "unmatched", "conversion": 1.0},)
-    )
+    table = ipw_table().from_records(({"account_id": "unmatched", "conversion": 1.0},))
 
     result = IPWTreatmentEffectEstimator(engine=engine).analyze(
         ipw_execution(),
@@ -395,9 +391,7 @@ def test_trimming_that_destroys_overlap_abstains_before_effect_engine() -> None:
     )
     assert overlap.status in {OverlapStatus.ACCEPTABLE, OverlapStatus.WEAK}
     trimming = PropensityTrimmingConfig(lower=0.20, upper=0.80)
-    selected = tuple(
-        item for item in scores if trimming.lower <= item.score <= trimming.upper
-    )
+    selected = tuple(item for item in scores if trimming.lower <= item.score <= trimming.upper)
     selected_treated = sum(item.treated for item in selected)
     selected_scores = tuple(item.score for item in selected)
     selected_arms = tuple(item.treated for item in selected)
@@ -421,9 +415,7 @@ def test_trimming_that_destroys_overlap_abstains_before_effect_engine() -> None:
     assert propensity.model_provenance is not None
     changed = propensity.model_copy(
         update={
-            "configuration": propensity.configuration.model_copy(
-                update={"trimming": trimming}
-            ),
+            "configuration": propensity.configuration.model_copy(update={"trimming": trimming}),
             "model_fit": model_fit,
             "model_provenance": propensity.model_provenance.model_copy(
                 update={"trimming_enabled": True}
@@ -452,9 +444,7 @@ def test_trimming_that_destroys_overlap_abstains_before_effect_engine() -> None:
     assert result.abstention_reason.code == "overlap.selected_fatal"
     assert result.overlap.status is OverlapStatus.SEVERE
     flag = next(
-        item
-        for item in result.sensitivity_flags
-        if item.code is IPWSensitivityCode.POOR_OVERLAP
+        item for item in result.sensitivity_flags if item.code is IPWSensitivityCode.POOR_OVERLAP
     )
     assert flag.severity.value == "fatal"
 

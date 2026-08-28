@@ -82,9 +82,7 @@ def test_explicit_clipping_reports_estimate_and_ess_impact() -> None:
     assert max(item.value for item in result.weights.raw.weights) == pytest.approx(4.0)
     assert max(item.value for item in result.weights.estimation.weights) == pytest.approx(2.0)
     assert result.point_estimate == pytest.approx(8.0)
-    assert IPWSensitivityCode.HEAVY_CLIPPING in {
-        item.code for item in result.sensitivity_flags
-    }
+    assert IPWSensitivityCode.HEAVY_CLIPPING in {item.code for item in result.sensitivity_flags}
     ipw_provenance = next(
         item for item in result.provenance if item.source_id == "inverse_probability_weighting"
     )
@@ -159,6 +157,4 @@ def test_advisory_residual_imbalance_is_preserved_without_claiming_success() -> 
     )
 
     assert result.balance_status is IPWBalanceStatus.CONCERN
-    assert IPWSensitivityCode.RESIDUAL_IMBALANCE in {
-        item.code for item in result.sensitivity_flags
-    }
+    assert IPWSensitivityCode.RESIDUAL_IMBALANCE in {item.code for item in result.sensitivity_flags}

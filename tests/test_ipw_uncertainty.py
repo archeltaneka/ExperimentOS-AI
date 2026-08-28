@@ -22,14 +22,16 @@ def test_robust_uncertainty_matches_hand_calculated_hajek_reference() -> None:
     treatment_mean = 34.0 / 3.0
     control_mean = 16.0 / 3.0
     effect = 6.0
-    treatment_variance = (2.0 / 1.0) * (
-        4.0**2 * (10.0 - treatment_mean) ** 2
-        + 2.0**2 * (14.0 - treatment_mean) ** 2
-    ) / 6.0**2
-    control_variance = (2.0 / 1.0) * (
-        4.0**2 * (4.0 - control_mean) ** 2
-        + 2.0**2 * (8.0 - control_mean) ** 2
-    ) / 6.0**2
+    treatment_variance = (
+        (2.0 / 1.0)
+        * (4.0**2 * (10.0 - treatment_mean) ** 2 + 2.0**2 * (14.0 - treatment_mean) ** 2)
+        / 6.0**2
+    )
+    control_variance = (
+        (2.0 / 1.0)
+        * (4.0**2 * (4.0 - control_mean) ** 2 + 2.0**2 * (8.0 - control_mean) ** 2)
+        / 6.0**2
+    )
     expected_se = math.sqrt(treatment_variance + control_variance)
     expected_statistic = effect / expected_se
     expected_p_value = math.erfc(abs(expected_statistic) / math.sqrt(2.0))
@@ -87,6 +89,4 @@ def test_result_discloses_fixed_propensity_uncertainty_limitation() -> None:
     assert "inference.propensity_scores_treated_as_fixed" in {
         item.code for item in result.diagnostics
     }
-    assert "inference.propensity_scores_treated_as_fixed" in {
-        item.code for item in result.warnings
-    }
+    assert "inference.propensity_scores_treated_as_fixed" in {item.code for item in result.warnings}

@@ -101,8 +101,7 @@ def clip_weights(
         weights=clipped,
         affected_count=affected_count,
         treated_affected_count=sum(
-            changed and is_treated
-            for changed, is_treated in zip(affected, treated, strict=True)
+            changed and is_treated for changed, is_treated in zip(affected, treated, strict=True)
         ),
         control_affected_count=sum(
             changed and not is_treated
@@ -129,8 +128,7 @@ def weighted_mean(values: tuple[float, ...], weights: tuple[float, ...]) -> floa
         raise IPWNumericalError("weighted mean requires finite positive total arm weight")
     try:
         result = math.fsum(
-            (weight / total) * value
-            for value, weight in zip(checked_values, scaled, strict=True)
+            (weight / total) * value for value, weight in zip(checked_values, scaled, strict=True)
         )
     except OverflowError as error:
         raise IPWNumericalError("weighted mean must be finite") from error

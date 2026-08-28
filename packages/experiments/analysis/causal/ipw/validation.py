@@ -376,8 +376,8 @@ def _validate_selected_population(execution: IPWExecutionRequest) -> IPWDiagnost
     retained = propensity.retained
     provenance = propensity.model_provenance
     if trimming is None:
-        invalid = invalid or retained is not None or bool(
-            provenance and provenance.trimming_enabled
+        invalid = (
+            invalid or retained is not None or bool(provenance and provenance.trimming_enabled)
         )
     else:
         if retained is None or provenance is None:

@@ -169,9 +169,7 @@ class IPWTestResult(ContractModel):
 
     variance_method: IPWVarianceMethod
     propensity_scores_treated_as_fixed: Literal[True] = True
-    finite_sample_correction: Literal["arm_n_over_n_minus_one"] = (
-        "arm_n_over_n_minus_one"
-    )
+    finite_sample_correction: Literal["arm_n_over_n_minus_one"] = "arm_n_over_n_minus_one"
     reference_distribution: Literal["standard_normal"] = "standard_normal"
     degrees_of_freedom: None = None
     standard_error: NonNegativeFiniteFloat
@@ -312,9 +310,7 @@ class TreatmentEffectResult(ContractModel):
     outcome_type: Literal["observational_treatment_effect"] = "observational_treatment_effect"
     schema_version: Literal["1"] = "1"
     method: Literal["ipw"] = "ipw"
-    weighting_method: Literal["inverse_probability_weighting"] = (
-        "inverse_probability_weighting"
-    )
+    weighting_method: Literal["inverse_probability_weighting"] = "inverse_probability_weighting"
     request_id: NonEmptyStr
     analysis_request: ObservationalAnalysisRequest
     binding: IPWOutcomeBinding

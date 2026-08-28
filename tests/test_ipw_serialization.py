@@ -44,7 +44,6 @@ def _contains_only_json_values(value: object) -> bool:
         return all(_contains_only_json_values(item) for item in value)
     if isinstance(value, dict):
         return all(
-            isinstance(key, str) and _contains_only_json_values(item)
-            for key, item in value.items()
+            isinstance(key, str) and _contains_only_json_values(item) for key, item in value.items()
         )
     return False

@@ -250,9 +250,7 @@ class IPWTreatmentEffectEstimator:
                 disposition=IPWValidationDisposition.ABSTAINED,
                 rows=(),
                 balance_status=validated.balance_status,
-                diagnostics=(
-                    _inference_diagnostic(),
-                ),
+                diagnostics=(_inference_diagnostic(),),
                 balance=validated.balance,
                 overlap=validated.overlap,
             )
@@ -439,9 +437,7 @@ def _score_model_reference(propensity: PropensityResult) -> IPWScoreModelReferen
             else None
         ),
         "encoding": (
-            propensity.encoding.model_dump(mode="json")
-            if propensity.encoding is not None
-            else None
+            propensity.encoding.model_dump(mode="json") if propensity.encoding is not None else None
         ),
         "scores": tuple(item.model_dump(mode="json") for item in propensity.scores),
     }
@@ -493,27 +489,27 @@ def _analysis_provenance(
         + execution.propensity_result.provenance
         + provenance
         + (
-        ProvenanceRecord(
-            source_type=ProvenanceSourceType.ANALYSIS_REQUEST,
-            source_id=execution.request_id,
-            source_version="ipw_contract=1",
-        ),
-        ProvenanceRecord(
-            source_type=ProvenanceSourceType.DERIVED,
-            source_id="inverse_probability_weighting",
-            source_version=(
-                "analysis=ipw-v1;variance=fixed_propensity_hajek_hc1;"
-                f"formula={formula};"
-                f"stabilized={str(execution.configuration.stabilized).lower()};"
-                f"clip_max={clipping.maximum if clipping is not None else 'disabled'};"
-                "overlap_policy=propensity-v1;"
-                f"balance_threshold={propensity_config.balance_threshold};"
-                f"severe_balance_threshold={execution.configuration.severe_balance_threshold};"
-                f"minimum_ess={propensity_config.minimum_effective_sample_size};"
-                f"minimum_ess_ratio={propensity_config.minimum_ess_ratio};"
-                f"confidence_level={execution.configuration.confidence_level}"
+            ProvenanceRecord(
+                source_type=ProvenanceSourceType.ANALYSIS_REQUEST,
+                source_id=execution.request_id,
+                source_version="ipw_contract=1",
             ),
-        ),
+            ProvenanceRecord(
+                source_type=ProvenanceSourceType.DERIVED,
+                source_id="inverse_probability_weighting",
+                source_version=(
+                    "analysis=ipw-v1;variance=fixed_propensity_hajek_hc1;"
+                    f"formula={formula};"
+                    f"stabilized={str(execution.configuration.stabilized).lower()};"
+                    f"clip_max={clipping.maximum if clipping is not None else 'disabled'};"
+                    "overlap_policy=propensity-v1;"
+                    f"balance_threshold={propensity_config.balance_threshold};"
+                    f"severe_balance_threshold={execution.configuration.severe_balance_threshold};"
+                    f"minimum_ess={propensity_config.minimum_effective_sample_size};"
+                    f"minimum_ess_ratio={propensity_config.minimum_ess_ratio};"
+                    f"confidence_level={execution.configuration.confidence_level}"
+                ),
+            ),
         )
     )
     keyed = {
@@ -566,10 +562,7 @@ def _sensitivity_flags(
         if propensity.weights is not None
         else None
     )
-    if (
-        raw_maximum is not None
-        and raw_maximum > propensity.configuration.extreme_weight_threshold
-    ):
+    if raw_maximum is not None and raw_maximum > propensity.configuration.extreme_weight_threshold:
         add(IPWSensitivityCode.EXTREME_WEIGHTS, "Raw IPW weights exceed the configured threshold.")
     overlap = validated.overlap or propensity.overlap
     if overlap.status in {OverlapStatus.WEAK, OverlapStatus.SEVERE, OverlapStatus.UNAVAILABLE}:
@@ -658,8 +651,7 @@ def _sensitivity_flags(
             ),
         )
     if any(
-        assumption.status
-        in {CausalAssumptionStatus.ASSERTED, CausalAssumptionStatus.UNVERIFIED}
+        assumption.status in {CausalAssumptionStatus.ASSERTED, CausalAssumptionStatus.UNVERIFIED}
         for assumption in execution.identification_result.assumptions
     ):
         add(

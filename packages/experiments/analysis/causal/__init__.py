@@ -53,6 +53,15 @@ from .estimands import (
     TreatmentContrast,
 )
 from .graph import CausalGraph, CausalGraphEdge, CausalGraphNode
+from .ipw import (
+    IPWConfig,
+    IPWExecutionRequest,
+    IPWOutcomeBinding,
+    IPWStatus,
+    IPWTreatmentEffectEstimator,
+    IPWWeightClippingConfig,
+    TreatmentEffectResult,
+)
 from .models import (
     CAUSAL_IDENTIFICATION_CONTRACT_VERSION,
     CausalAbstentionReason,
@@ -122,6 +131,12 @@ __all__ = [
     "EvidenceLimitationCode",
     "IdentificationResult",
     "IdentificationStatus",
+    "IPWConfig",
+    "IPWExecutionRequest",
+    "IPWOutcomeBinding",
+    "IPWStatus",
+    "IPWTreatmentEffectEstimator",
+    "IPWWeightClippingConfig",
     "MeasurementTiming",
     "ObservationalDesign",
     "ObservationalDesignType",
@@ -134,6 +149,7 @@ __all__ = [
     "TargetPopulationKind",
     "TimeSemantics",
     "TreatmentContrast",
+    "TreatmentEffectResult",
     "UnitSemantics",
     "VariableRole",
     "VariableTiming",

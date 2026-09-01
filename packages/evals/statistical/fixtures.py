@@ -28,8 +28,13 @@ from packages.experiments.analysis.randomized import (
 from packages.experiments.analysis.validation.context import ValidationContext
 from packages.observability.base import BaseObservabilityProvider
 
-from .did_fixtures import run_did_fixture
+from .did_fixtures import run_did_coverage_simulation, run_did_fixture
 from .models import StatisticalReferenceCase
+from .observational_fixtures import (
+    run_identification_fixture,
+    run_ipw_fixture,
+    run_propensity_fixture,
+)
 from .randomized_fixtures import run_randomized_inference_fixture
 
 
@@ -46,6 +51,28 @@ def run_statistical_fixture(
         return _run_descriptive(case.fixture_id, reverse_rows, observability_provider)
     if case.fixture_id.startswith("did_"):
         return run_did_fixture(
+            case.fixture_id,
+            reverse_rows=reverse_rows,
+            observability_provider=observability_provider,
+        )
+    if case.fixture_id == "observational_coverage_did_v1":
+        if case.simulation is None:
+            raise ValueError("observational coverage fixture requires simulation metadata")
+        return run_did_coverage_simulation(case.simulation)
+    if case.fixture_id.startswith("identification_"):
+        return run_identification_fixture(
+            case.fixture_id,
+            reverse_rows=reverse_rows,
+            observability_provider=observability_provider,
+        )
+    if case.fixture_id.startswith("propensity_"):
+        return run_propensity_fixture(
+            case.fixture_id,
+            reverse_rows=reverse_rows,
+            observability_provider=observability_provider,
+        )
+    if case.fixture_id.startswith("ipw_"):
+        return run_ipw_fixture(
             case.fixture_id,
             reverse_rows=reverse_rows,
             observability_provider=observability_provider,

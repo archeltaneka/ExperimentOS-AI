@@ -165,6 +165,13 @@ jobs:
           tests/test_statistical_baseline_reporting.py
           tests/test_statistical_baseline_policy.py
           tests/test_statistical_baseline_cli.py
+          tests/test_observational_reliability_dataset.py
+          tests/test_observational_reliability_identification.py
+          tests/test_observational_reliability_did.py
+          tests/test_observational_reliability_propensity.py
+          tests/test_observational_reliability_ipw.py
+          tests/test_observational_reliability_simulation.py
+          tests/test_observational_reliability_telemetry.py
           tests/test_randomized_observability.py
           tests/test_cuped_reference_cases.py
           tests/test_cuped_observability.py

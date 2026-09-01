@@ -42,6 +42,7 @@ def test_markdown_has_method_status_and_reliability_sections() -> None:
 
     for heading in (
         "## Overall Randomized-Inference Status",
+        "## Overall Observational Reliability Status",
         "## Fixed-Horizon Status",
         "## CUPED Status",
         "## Sequential Status",

@@ -570,17 +570,30 @@ def _finish_result(
         return
     ess_status = result.weights.ess.status.value if result.weights is not None else "unavailable"
     metadata: dict[str, object] = {
+        "design": result.analysis_request.identification.design.design_type.value,
         "method": "propensity",
         "estimand": result.estimand.value if result.estimand is not None else "unavailable",
         "model_family": result.configuration.model_family,
         "status": result.status.value,
+        "identification_status": (
+            "identified" if result.status is PropensityStatus.COMPLETED else "not_identified"
+        ),
         "convergence_status": result.model_fit.status.value,
         "overlap_status": result.overlap.status.value,
         "ess_status": ess_status,
+        "balance_status": ("available" if result.balance is not None else "unavailable"),
+        "raw_sample_count": result.sample_counts.raw,
+        "model_sample_count": result.sample_counts.model,
+        "retained_sample_count": (
+            result.retained.retained_count
+            if result.retained is not None
+            else result.sample_counts.model
+        ),
         "weighting_enabled": result.weights is not None,
         "trimming_enabled": result.configuration.trimming is not None,
         "capping_enabled": result.configuration.weight_cap is not None,
         "diagnostic_codes": tuple(item.code for item in result.diagnostics),
+        "assumption_codes": tuple(item.code.value for item in result.assumptions),
         "duration_ms": duration_ms,
     }
     _observe(provider, lambda: span.add_metadata(metadata))

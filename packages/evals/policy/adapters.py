@@ -91,6 +91,9 @@ def _load_statistical_baseline_json(path: Path) -> dict[str, SourceMetric]:
             "assumptions",
             "bayesian_semantics",
             "diagnostics",
+            "estimand",
+            "identification",
+            "provenance",
             "uncertainty",
             "determinism",
             "plan_integrity",
@@ -107,6 +110,12 @@ def _load_statistical_baseline_json(path: Path) -> dict[str, SourceMetric]:
         capability = _expect_nonempty_string(case.get("capability"), "statistics case capability")
         capability_counts[capability] = capability_counts.get(capability, 0) + 1
         method = {
+            "causal_identification": "identification",
+            "difference_in_differences": "did",
+            "propensity_score": "propensity",
+            "ipw_ate": "ipw",
+            "ipw_att": "ipw",
+            "observational_coverage": "coverage",
             "cuped": "cuped",
             "sequential": "sequential",
             "bayesian_binary": "bayesian",

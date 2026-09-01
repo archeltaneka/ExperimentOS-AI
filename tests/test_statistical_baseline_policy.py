@@ -14,11 +14,13 @@ from packages.evals.policy.models import (
     QualityPolicy,
     SeverityLevel,
 )
+from packages.evals.run_statistical_baseline import _policy_rule_evidence
 from packages.evals.statistical.dataset import (
     DEFAULT_STATISTICAL_DATASET_PATH,
     load_statistical_reference_cases,
 )
 from packages.evals.statistical.evaluator import StatisticalBaselineEvaluator
+from packages.evals.statistical.models import CheckStatus, StatisticalCheck
 from packages.evals.statistical.reporting import statistical_baseline_to_json
 
 
@@ -77,10 +79,13 @@ def test_statistical_adapter_exposes_structured_aggregate_metrics(tmp_path: Path
 
     assert loaded is not None
     assert loaded.metrics["statistics.overall_status"].value == "pass"
-    assert loaded.metrics["statistics.dataset_size"].value == 49
-    assert loaded.metrics["statistics.cases_invalid"].value == 13
-    assert loaded.metrics["statistics.cases_abstained"].value == 8
+    assert loaded.metrics["statistics.dataset_size"].value == 92
+    assert loaded.metrics["statistics.cases_invalid"].value == 21
+    assert loaded.metrics["statistics.cases_abstained"].value == 21
     assert loaded.metrics["statistics.failures.uncertainty"].value == 0
+    assert loaded.metrics["statistics.failures.identification"].value == 0
+    assert loaded.metrics["statistics.failures.estimand"].value == 0
+    assert loaded.metrics["statistics.failures.provenance"].value == 0
     assert loaded.metrics["statistics.failures.determinism"].value == 0
 
 
@@ -100,8 +105,8 @@ def test_statistical_policy_passes_expected_invalid_and_abstained_cases(tmp_path
     _write_report(tmp_path)
     policy = _policy(
         _metric("statistics.overall_status", value="pass"),
-        _metric("statistics.cases_invalid", value=13),
-        _metric("statistics.cases_abstained", value=8),
+        _metric("statistics.cases_invalid", value=21),
+        _metric("statistics.cases_abstained", value=21),
         _metric("statistics.cases_failed"),
     )
 
@@ -148,6 +153,47 @@ def test_central_policy_adds_statistical_rules_without_changing_phase3_rules() -
     assert policy.sources["statistics"].format == "statistical_baseline_json"
     assert metrics["statistics.failures.reference_accuracy"].severity == "critical"
     assert metrics["statistics.failures.uncertainty"].severity == "critical"
+    assert metrics["statistics.failures.identification"].severity == "critical"
+    assert metrics["statistics.failures.estimand"].severity == "critical"
+    assert metrics["statistics.failures.provenance"].severity == "critical"
     assert metrics["statistics.minimum_cases_per_capability"].severity == "warning"
     assert metrics["rag.retrieval_success_rate"].value == 1.0
     assert metrics["rag.retrieval_success_rate"].severity == "fail"
+
+
+def test_policy_rule_evidence_prefers_supporting_diagnostic_codes() -> None:
+    report = StatisticalBaselineEvaluator().evaluate(
+        load_statistical_reference_cases(DEFAULT_STATISTICAL_DATASET_PATH)
+    )
+    target = next(
+        case
+        for case in report.case_results
+        if case.case_id == "identification-post-treatment-adjustment"
+    )
+    failed_check = StatisticalCheck(
+        check_id="post_treatment_adjustment",
+        rule_id="statistics.identification.post_treatment_adjustment",
+        dimension="identification",
+        status=CheckStatus.FAIL,
+        expected="absent",
+        actual="present",
+        message="Post-treatment adjustment was accepted.",
+    )
+    changed = target.model_copy(
+        update={
+            "checks": (*target.checks, failed_check),
+            "diagnostic_codes": ("adjustment.post_treatment",),
+        }
+    )
+    mutated = report.model_copy(
+        update={
+            "case_results": tuple(
+                changed if case.case_id == target.case_id else case for case in report.case_results
+            )
+        }
+    )
+
+    assert _policy_rule_evidence("statistics.failures.identification", mutated) == (
+        "identification-post-treatment-adjustment:adjustment.post_treatment",
+        "identification-post-treatment-adjustment:statistics.identification.post_treatment_adjustment",
+    )

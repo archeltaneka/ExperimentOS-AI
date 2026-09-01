@@ -23,8 +23,44 @@ def render_statistical_baseline_markdown(report: StatisticalBaselineReport) -> s
         "## Overall Randomized-Inference Status",
         "",
         f"- Status: {report.overall_status}",
-        "- Covered methods: fixed-horizon, CUPED, sequential, and Bayesian A/B.",
+        (
+            "- Covered methods: fixed-horizon, CUPED, sequential, Bayesian A/B, causal "
+            "identification, DiD, propensity diagnostics, IPW ATE, and IPW ATT."
+        ),
     ]
+    _method_section(
+        lines,
+        report,
+        "Overall Observational Reliability Status",
+        {
+            StatisticalCapability.CAUSAL_IDENTIFICATION,
+            StatisticalCapability.DIFFERENCE_IN_DIFFERENCES,
+            StatisticalCapability.PROPENSITY_SCORE,
+            StatisticalCapability.IPW_ATE,
+            StatisticalCapability.IPW_ATT,
+            StatisticalCapability.OBSERVATIONAL_COVERAGE,
+        },
+    )
+    _method_section(
+        lines,
+        report,
+        "Identification Status",
+        {StatisticalCapability.CAUSAL_IDENTIFICATION},
+    )
+    _method_section(
+        lines,
+        report,
+        "Difference-in-Differences Results",
+        {StatisticalCapability.DIFFERENCE_IN_DIFFERENCES},
+    )
+    _method_section(
+        lines,
+        report,
+        "Propensity Diagnostics",
+        {StatisticalCapability.PROPENSITY_SCORE},
+    )
+    _method_section(lines, report, "ATE Status", {StatisticalCapability.IPW_ATE})
+    _method_section(lines, report, "ATT Status", {StatisticalCapability.IPW_ATT})
     _method_section(
         lines,
         report,
@@ -75,6 +111,8 @@ def render_statistical_baseline_markdown(report: StatisticalBaselineReport) -> s
     _dimension_section(lines, report, "Determinism", "determinism")
     _dimension_section(lines, report, "Telemetry Privacy", "telemetry_privacy")
     _dimension_section(lines, report, "Assumption Completeness", "assumptions")
+    _dimension_section(lines, report, "Identification Completeness", "identification")
+    _dimension_section(lines, report, "Coverage Simulation Summary", "coverage")
     _dimension_section(lines, report, "Sequential Plan Integrity", "plan_integrity")
     _dimension_section(lines, report, "Diagnostic Completeness", "diagnostics")
     _dimension_section(lines, report, "Uncertainty Completeness", "uncertainty")

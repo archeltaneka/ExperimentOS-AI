@@ -1,5 +1,10 @@
 # Phase 4 Statistical Reliability Baseline
 
+The shared baseline now also covers observational causal reliability for DiD, propensity-score
+diagnostics, IPW ATE, and IPW ATT. See
+[`observational_causal_reliability.md`](observational_causal_reliability.md) for the reference
+cases, versioned simulation, policy classifications, telemetry privacy rules, and limitations.
+
 ## Purpose
 
 The Phase 4 statistical reliability baseline is the repository-owned, deterministic check for the
@@ -16,6 +21,10 @@ This baseline currently covers:
 - CUPED covariate adjustment;
 - sequential testing with pre-registered looks;
 - Bayesian A/B testing with explicit conjugate priors.
+- observational causal-identification contracts;
+- two-group/two-period Difference-in-Differences;
+- deterministic propensity-score overlap, balance, weight, and ESS diagnostics;
+- IPW ATE and IPW ATT estimation.
 
 It does not replace the Phase 3 evaluation or quality gates.
 
@@ -47,7 +56,9 @@ hosted observability provider is required.
 
 ## Reference Dataset
 
-`data/eval/phase4_statistical_baseline.json` is a versioned repository-local inventory. Each case
+`data/eval/phase4_statistical_baseline.json` and its
+`data/eval/phase4_observational_reliability.json` companion form the versioned repository-local
+inventory. Each case
 declares a stable case ID, capability, category, method, analysis design, metric type, fixture ID,
 expected status and estimator method, structured diagnostic codes, advisory codes, required
 assumptions, required uncertainty fields, abstention state and reason, independently specified
@@ -82,11 +93,16 @@ abstention.
 Diagnostic completeness uses structured codes and warning records. It checks required codes,
 advisory codes, repeated ordering, and contradictory states without parsing prose.
 
-Uncertainty completeness applies only to successful randomized inference. Fixed-horizon and CUPED
+Uncertainty completeness applies to every successful treatment-effect estimator. Fixed-horizon and CUPED
 results require frequentist standard errors and confidence intervals. Sequential looks additionally
 require the registered boundary, cumulative alpha, and look metadata. Bayesian results require
 posterior effect summaries, credible intervals and levels, explicit prior/posterior parameters, and
 posterior computation metadata. Bayesian checks never require p-values or confidence intervals.
+Successful DiD results require cluster-robust standard errors, confidence intervals, confidence
+level, p-value, variance method, and cluster metadata. Successful IPW results require fixed-score
+robust standard errors, confidence intervals, confidence level, p-value, variance method, and
+finite-sample metadata. Propensity diagnostics are not effect estimates and do not require
+uncertainty.
 
 Assumption completeness is method-specific and blocking for successful inference. CUPED discloses
 randomization, pre-treatment and treatment-unaffected covariate semantics, supported analysis units,
@@ -112,7 +128,8 @@ existing policy engine reads the authoritative baseline JSON through the additiv
 
 Blocking rules cover reference accuracy, abstention integrity, diagnostic and assumption
 completeness, method-appropriate uncertainty, sequential plan integrity, Bayesian semantics,
-telemetry privacy, determinism, status correctness, and non-finite output. Advisory rules cover
+observational identification, estimand and transformation provenance, telemetry privacy,
+determinism, status correctness, and non-finite output. Advisory rules cover
 negative or negligible CUPED variance reduction, weak correlation, sample loss, imbalance, stable
 Bayesian prior-dominance diagnostics, wide uncertainty, approximation proximity, latency, and
 minimum reference coverage. Favorable statistical outcomes are never confused with software
@@ -140,6 +157,11 @@ outcomes, covariate arrays, raw covariate values, posterior draws, sequential ro
 full experiment records, credentials, arbitrary analysis IDs, prompts, or private payloads.
 Structured low-cardinality codes are used instead of arbitrary diagnostic messages.
 
+Observational spans use the same abstraction and add only aggregate design, identification,
+assumption, overlap, ESS, balance, convergence, clipping/stabilization, cluster, and pre-trend
+states. Privacy tests inspect nested keys and values and reject row-level outcomes, treatment
+values, propensity scores, covariates, unit weights, identifiers, and raw panel observations.
+
 ## CI Behavior
 
 The existing `offline-eval-smoke` GitHub Actions job runs the baseline with repository-local
@@ -150,16 +172,15 @@ abstentions, invalid cases, and advisories whenever the structured artifact is p
 
 ## Limitations
 
-This suite covers fixed-horizon randomized analysis, CUPED, sequential testing, and Bayesian A/B
-testing. It does not yet cover:
+This suite covers fixed-horizon randomized analysis, CUPED, sequential testing, Bayesian A/B,
+DiD, propensity diagnostics, IPW ATE, and IPW ATT. It does not yet cover:
 
-- Difference-in-Differences;
-- propensity scores or inverse-probability weighting;
-- observational ATE or ATT;
 - DML;
 - heterogeneous treatment effects;
 - EconML;
 - DoWhy;
+- causal forests;
+- unmeasured-confounding sensitivity analysis;
 - business-impact estimation;
 - product-intelligence workflow integration;
 - production telemetry deployment;

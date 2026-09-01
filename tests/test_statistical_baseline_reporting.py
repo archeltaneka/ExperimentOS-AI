@@ -30,13 +30,16 @@ def test_json_is_authoritative_structured_and_deterministic() -> None:
     assert first.endswith("\n")
     assert payload["schema_version"] == "1"
     assert payload["overall_status"] == "pass"
-    assert payload["dataset_size"] == 49
-    assert len(payload["case_results"]) == 49
+    assert payload["dataset_size"] == 92
+    assert len(payload["case_results"]) == 92
     assert {item["actual_status"] for item in payload["case_results"]} >= {
         "completed",
         "ineligible",
         "abstained",
         "unsupported",
+        "identified",
+        "invalid",
+        "partially_identified",
     }
 
 
@@ -60,6 +63,12 @@ def test_markdown_contains_required_investigation_sections() -> None:
     for heading in (
         "# Phase 4 Statistical Reliability Baseline",
         "## Evaluated Capabilities",
+        "## Overall Observational Reliability Status",
+        "## Identification Status",
+        "## Difference-in-Differences Results",
+        "## Propensity Diagnostics",
+        "## ATE Status",
+        "## ATT Status",
         "## Summary Counts",
         "## Blocking Failures",
         "## Advisory Findings",
@@ -69,12 +78,44 @@ def test_markdown_contains_required_investigation_sections() -> None:
         "## Determinism",
         "## Diagnostic Completeness",
         "## Uncertainty Completeness",
+        "## Coverage Simulation Summary",
         "## Limitations",
         "## Offline Execution",
     ):
         assert heading in markdown
     assert "13" in markdown
     assert "no network" in markdown.lower()
+
+
+def test_artifact_schema_has_observational_dimensions_without_raw_analysis_records() -> None:
+    payload = json.loads(statistical_baseline_to_json(_report()))
+    observational = [
+        case
+        for case in payload["case_results"]
+        if case["capability"]
+        in {
+            "causal_identification",
+            "difference_in_differences",
+            "propensity_score",
+            "ipw_ate",
+            "ipw_att",
+            "observational_coverage",
+        }
+    ]
+
+    assert observational
+    assert all(
+        {"case_id", "design", "estimand", "method", "reference_result", "tolerances", "duration_ms"}
+        <= set(case)
+        for case in observational
+    )
+    coverage = next(
+        case for case in observational if case["capability"] == "observational_coverage"
+    )
+    assert coverage["simulation_metadata"]["dgp_version"] == "1.0.0"
+    serialized = json.dumps(payload)
+    for forbidden in ('"scores":', '"weights":', '"unit_id":', '"outcome":'):
+        assert forbidden not in serialized
 
 
 def test_markdown_is_derived_without_becoming_the_policy_source() -> None:

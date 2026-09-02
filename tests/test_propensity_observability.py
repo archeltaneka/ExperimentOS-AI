@@ -57,17 +57,24 @@ def test_service_emits_only_controlled_aggregate_metadata() -> None:
     assert record.name == "propensity_score_diagnostics"
     assert record.inputs == {"row_count": 60}
     assert set(record.metadata) == {
+        "design",
         "method",
         "estimand",
         "model_family",
         "status",
+        "identification_status",
         "convergence_status",
         "overlap_status",
         "ess_status",
+        "balance_status",
+        "raw_sample_count",
+        "model_sample_count",
+        "retained_sample_count",
         "weighting_enabled",
         "trimming_enabled",
         "capping_enabled",
         "diagnostic_codes",
+        "assumption_codes",
         "duration_ms",
     }
     assert record.metadata["method"] == "propensity"

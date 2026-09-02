@@ -723,6 +723,7 @@ def _finish_result(
         else "unavailable"
     )
     metadata: dict[str, object] = {
+        "design": result.analysis_request.identification.design.design_type.value,
         "method": "ipw",
         "estimand": result.estimand.estimand_type.value if result.estimand else "unavailable",
         "stabilization_enabled": result.configuration.stabilized,
@@ -732,7 +733,12 @@ def _finish_result(
         "balance_status": result.balance_status.value,
         "outcome_type": outcome_type,
         "status": result.status.value,
+        "identification_status": result.causal_status.value,
+        "overlap_gate_status": ("passed" if result.status is IPWStatus.COMPLETED else "blocked"),
+        "raw_sample_count": result.sample_counts.raw_count,
+        "selected_sample_count": result.sample_counts.selected_count,
         "diagnostic_codes": tuple(item.code for item in result.diagnostics),
+        "assumption_codes": tuple(item.code.value for item in result.assumptions),
         "duration_ms": duration_ms,
     }
     _observe(provider, lambda: span.add_metadata(metadata))

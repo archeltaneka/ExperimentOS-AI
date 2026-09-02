@@ -1,6 +1,6 @@
 {
     "baseline_id": "phase4-statistical-reliability",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "fixture_provenance": "phase4-statistical-fixtures-v1",
     "cases": [
         {
@@ -1175,7 +1175,10 @@
             "case_id": "did-known-positive-effect",
             "capability": "difference_in_differences",
             "category": "successful_inference",
+            "method": "did",
             "analysis_design": "difference_in_differences",
+            "estimand": "did_att",
+            "target_population": "treated",
             "metric_type": "continuous",
             "fixture_id": "did_known_positive_effect",
             "expected_status": "completed",

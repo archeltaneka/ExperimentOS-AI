@@ -321,15 +321,22 @@ def _finish_result(
         return
     diagnostic_codes = tuple(item.code for item in result.diagnostics)
     metadata: dict[str, object] = {
+        "design": result.design.design_type.value,
         "method": "did",
         "status": result.status.value,
+        "identification_status": (
+            "identified" if result.status is DidStatus.COMPLETED else "not_identified"
+        ),
         "estimand_type": (
             result.estimand.estimand_type.value if result.estimand is not None else "unavailable"
         ),
         "panel_type": "balanced",
         "cluster_robust": result.test_result is not None,
         "cluster_count": result.sample_counts.retained_units,
+        "raw_row_count": result.sample_counts.rows,
+        "retained_unit_count": result.sample_counts.retained_units,
         "pretrend_available": (result.pretrend.availability is DidPretrendAvailability.AVAILABLE),
+        "assumption_codes": tuple(item.code.value for item in result.assumptions),
         "diagnostic_codes": diagnostic_codes,
         "duration_ms": duration_ms,
     }

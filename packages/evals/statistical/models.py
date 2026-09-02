@@ -30,9 +30,14 @@ class StatisticalCaseModel(BaseModel):
 
 
 class StatisticalCapability(StrEnum):
+    CAUSAL_IDENTIFICATION = "causal_identification"
     ELIGIBILITY_VALIDATION = "eligibility_validation"
     DESCRIPTIVE_STATISTICS = "descriptive_statistics"
     DIFFERENCE_IN_DIFFERENCES = "difference_in_differences"
+    PROPENSITY_SCORE = "propensity_score"
+    IPW_ATE = "ipw_ate"
+    IPW_ATT = "ipw_att"
+    OBSERVATIONAL_COVERAGE = "observational_coverage"
     RANDOMIZED_CONTINUOUS = "randomized_continuous"
     RANDOMIZED_BINARY = "randomized_binary"
     CUPED = "cuped"
@@ -77,6 +82,13 @@ class StatisticalCaseResult(StatisticalCaseModel):
     case_id: NonEmptyStr
     capability: StatisticalCapability
     category: StatisticalCaseCategory
+    design: NonEmptyStr = "unspecified"
+    estimand: NonEmptyStr = "not_applicable"
+    method: NonEmptyStr = "unspecified"
+    target_population: NonEmptyStr = "not_applicable"
+    reference_result: dict[NonEmptyStr, Any] = Field(default_factory=dict)
+    tolerances: dict[NonEmptyStr, FiniteFloat] = Field(default_factory=dict)
+    simulation_metadata: dict[NonEmptyStr, Any] | None = None
     expected_status: NonEmptyStr
     actual_status: NonEmptyStr
     evaluation_status: CheckStatus
@@ -111,6 +123,8 @@ class StatisticalPolicyRuleResult(StatisticalCaseModel):
     required: StrictBool
     message: NonEmptyStr
     method: NonEmptyStr
+    design: NonEmptyStr = "aggregate"
+    estimand: NonEmptyStr = "aggregate"
     case_id: NonEmptyStr
     expected_value: Any = None
     actual_value: Any = None
@@ -171,6 +185,57 @@ class StatisticalExpectedValue(StatisticalCaseModel):
         return self
 
 
+class ObservationalSimulationSpecification(StatisticalCaseModel):
+    """Complete versioned configuration for one deterministic observational DGP."""
+
+    dgp_name: NonEmptyStr
+    dgp_version: NonEmptyStr
+    seed: StrictInt
+    sample_size: Annotated[StrictInt, Field(gt=0)]
+    treatment_assignment: NonEmptyStr
+    confounders: Annotated[tuple[NonEmptyStr, ...], Field(min_length=1)]
+    outcome_formula: NonEmptyStr
+    true_causal_effect: FiniteFloat
+    estimand: NonEmptyStr
+    repetitions: Annotated[StrictInt, Field(gt=0)]
+    model_configuration: dict[NonEmptyStr, ExpectedScalar]
+    coverage_lower: Annotated[FiniteFloat, Field(ge=0, le=1)]
+    coverage_upper: Annotated[FiniteFloat, Field(ge=0, le=1)]
+    tolerance: Annotated[FiniteFloat, Field(ge=0)]
+
+    @model_validator(mode="after")
+    def validate_configuration(self) -> Self:
+        if not self.model_configuration:
+            raise ValueError("simulation model configuration must not be empty")
+        if self.coverage_lower > self.coverage_upper:
+            raise ValueError("simulation coverage bounds must be ordered")
+        return self
+
+
+class ObservationalCoverageResult(StatisticalCaseModel):
+    """Aggregate-only result of a deterministic repeated observational DGP."""
+
+    status: NonEmptyStr = "completed"
+    method: NonEmptyStr
+    estimand: NonEmptyStr
+    true_effect: FiniteFloat
+    repetitions: Annotated[StrictInt, Field(gt=0)]
+    completed_repetitions: Annotated[StrictInt, Field(ge=0)]
+    intervals_containing: Annotated[StrictInt, Field(ge=0)]
+    interval_coverage: Annotated[FiniteFloat, Field(ge=0, le=1)]
+    mean_estimate: FiniteFloat
+    coverage_status: NonEmptyStr
+    simulation: ObservationalSimulationSpecification
+
+    @model_validator(mode="after")
+    def validate_counts(self) -> Self:
+        if self.completed_repetitions != self.repetitions:
+            raise ValueError("coverage simulation requires every repetition to complete")
+        if self.intervals_containing > self.completed_repetitions:
+            raise ValueError("coverage count cannot exceed completed repetitions")
+        return self
+
+
 class StatisticalReferenceCase(StatisticalCaseModel):
     """One deterministic Phase 4 capability input and independent expectation."""
 
@@ -179,6 +244,8 @@ class StatisticalReferenceCase(StatisticalCaseModel):
     category: StatisticalCaseCategory
     method: NonEmptyStr = "fixed_horizon_ab"
     analysis_design: NonEmptyStr
+    estimand: NonEmptyStr = "not_applicable"
+    target_population: NonEmptyStr = "not_applicable"
     metric_type: NonEmptyStr
     fixture_id: NonEmptyStr
     expected_status: NonEmptyStr
@@ -193,6 +260,7 @@ class StatisticalReferenceCase(StatisticalCaseModel):
     deterministic_configuration: dict[NonEmptyStr, ExpectedScalar] = Field(
         default_factory=_default_deterministic_configuration
     )
+    simulation: ObservationalSimulationSpecification | None = None
     reference_provenance: NonEmptyStr | None = None
     notes: NonEmptyStr
     fixture_provenance: NonEmptyStr
@@ -218,6 +286,16 @@ class StatisticalReferenceCase(StatisticalCaseModel):
         )
         if not self.deterministic_configuration:
             raise ValueError("deterministic configuration must not be empty")
+        if (
+            self.capability is StatisticalCapability.OBSERVATIONAL_COVERAGE
+            and self.simulation is None
+        ):
+            raise ValueError("observational coverage cases require simulation metadata")
+        if (
+            self.capability is not StatisticalCapability.OBSERVATIONAL_COVERAGE
+            and self.simulation is not None
+        ):
+            raise ValueError("only observational coverage cases may declare simulation metadata")
         if self.reference_provenance is None:
             object.__setattr__(self, "reference_provenance", self.fixture_provenance)
         return self
@@ -250,6 +328,8 @@ class StatisticalReferenceDataset(StatisticalCaseModel):
 
 __all__ = [
     "CheckStatus",
+    "ObservationalSimulationSpecification",
+    "ObservationalCoverageResult",
     "StatisticalBaselineReport",
     "StatisticalCapability",
     "StatisticalCapabilityResult",

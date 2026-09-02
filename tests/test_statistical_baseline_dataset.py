@@ -54,7 +54,27 @@ def test_repository_dataset_loads_in_stable_case_id_order() -> None:
     assert case_ids == tuple(sorted(case_ids))
     assert len(case_ids) == len(set(case_ids))
     assert dataset.baseline_id == "phase4-statistical-reliability"
-    assert dataset.version == "2.0.0"
+    assert dataset.version == "3.0.0"
+    assert {
+        "causal_identification",
+        "difference_in_differences",
+        "propensity_score",
+        "ipw_ate",
+        "ipw_att",
+    } <= {case.capability.value for case in dataset.cases}
+
+
+def test_repository_dataset_absolute_path_keeps_observational_companion(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    absolute_path = DEFAULT_STATISTICAL_DATASET_PATH.resolve()
+    monkeypatch.chdir(tmp_path)
+
+    dataset = load_statistical_reference_cases(absolute_path)
+
+    assert len(dataset.cases) == 92
+    assert "ipw-att-known-effect" in {case.case_id for case in dataset.cases}
 
 
 def test_loader_rejects_duplicate_case_ids(tmp_path: Path) -> None:

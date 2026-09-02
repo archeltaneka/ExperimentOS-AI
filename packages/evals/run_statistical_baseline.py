@@ -16,6 +16,7 @@ from packages.evals.statistical.dataset import (
 from packages.evals.statistical.evaluator import StatisticalBaselineEvaluator
 from packages.evals.statistical.models import (
     StatisticalBaselineReport,
+    StatisticalCaseResult,
     StatisticalPolicyRuleResult,
     StatisticalPolicySummary,
 )
@@ -90,6 +91,8 @@ def run_statistical_baseline(args: argparse.Namespace) -> StatisticalBaselineRep
                 required=item.required,
                 message=item.message,
                 method=_policy_rule_method(item.metric_id),
+                design=_policy_rule_design(item.metric_id, report),
+                estimand=_policy_rule_estimand(item.metric_id, report),
                 case_id=_policy_rule_case_id(item.metric_id, report),
                 expected_value=item.threshold_value,
                 actual_value=item.observed_value,
@@ -117,7 +120,17 @@ def _write(path: Path, content: str) -> None:
 
 
 def _policy_rule_method(metric_id: str) -> str:
-    for method in ("cuped", "sequential", "bayesian", "fixed_horizon"):
+    for method in (
+        "identification",
+        "did",
+        "propensity",
+        "ipw",
+        "coverage",
+        "cuped",
+        "sequential",
+        "bayesian",
+        "fixed_horizon",
+    ):
         if f".{method}." in metric_id:
             return method
     if "plan_integrity" in metric_id:
@@ -125,6 +138,18 @@ def _policy_rule_method(metric_id: str) -> str:
     if "bayesian" in metric_id:
         return "bayesian"
     return "all_randomized_inference"
+
+
+def _policy_rule_design(metric_id: str, report: StatisticalBaselineReport) -> str:
+    cases = _matching_cases(metric_id, report)
+    designs = tuple(sorted({case.design for case in cases}))
+    return ",".join(designs) if designs else "aggregate"
+
+
+def _policy_rule_estimand(metric_id: str, report: StatisticalBaselineReport) -> str:
+    cases = _matching_cases(metric_id, report)
+    estimands = tuple(sorted({case.estimand for case in cases}))
+    return ",".join(estimands) if estimands else "aggregate"
 
 
 def _policy_rule_case_id(metric_id: str, report: StatisticalBaselineReport) -> str:
@@ -137,13 +162,18 @@ def _policy_rule_evidence(
     report: StatisticalBaselineReport,
 ) -> tuple[str, ...]:
     dimension = metric_id.removeprefix("statistics.failures.")
-    evidence = tuple(
-        f"{case.case_id}:{check.rule_id}"
-        for case in report.case_results
-        for check in case.checks
-        if check.status.value == "fail" and check.dimension == dimension
-    )
-    return evidence or (f"observed:{metric_id}",)
+    evidence: set[str] = set()
+    for case in report.case_results:
+        failed_rules = tuple(
+            check.rule_id
+            for check in case.checks
+            if check.status.value == "fail" and check.dimension == dimension
+        )
+        if not failed_rules:
+            continue
+        codes = tuple(sorted({*failed_rules, *case.diagnostic_codes}))
+        evidence.update(f"{case.case_id}:{code}" for code in codes)
+    return tuple(sorted(evidence)) or (f"observed:{metric_id}",)
 
 
 def _matching_case_ids(
@@ -158,6 +188,14 @@ def _matching_case_ids(
             check.status.value == "fail" and check.dimension == dimension for check in case.checks
         )
     )
+
+
+def _matching_cases(
+    metric_id: str,
+    report: StatisticalBaselineReport,
+) -> tuple[StatisticalCaseResult, ...]:
+    matching_ids = set(_matching_case_ids(metric_id, report))
+    return tuple(case for case in report.case_results if case.case_id in matching_ids)
 
 
 def main(argv: list[str] | None = None) -> int:

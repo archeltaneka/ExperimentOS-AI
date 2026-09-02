@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from random import Random
 
 from packages.experiments.analysis import (
     AnalysisTable,
@@ -48,12 +49,15 @@ from packages.experiments.analysis.causal import (
     VariableTiming,
 )
 from packages.experiments.analysis.causal.did import (
+    DidStatus,
     DifferenceInDifferencesDataBinding,
     DifferenceInDifferencesExecutionRequest,
     DifferenceInDifferencesResult,
     DifferenceInDifferencesService,
 )
 from packages.observability.base import BaseObservabilityProvider
+
+from .models import ObservationalCoverageResult, ObservationalSimulationSpecification
 
 _DEVIATIONS = (-4.5, -3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5, 4.5)
 _POST_DEVIATIONS = (1.5, -2.5, 4.5, -0.5, 2.5, -4.5, 0.5, -3.5, 3.5, -1.5)
@@ -276,6 +280,37 @@ def _post_only_treated_unit(rows: Sequence[dict[str, object]]) -> tuple[dict[str
     )
 
 
+def _extra_pre_periods() -> tuple[TimePeriod, TimePeriod]:
+    return (
+        TimePeriod(start=datetime(2026, 6, 1, tzinfo=UTC), end=datetime(2026, 6, 2, tzinfo=UTC)),
+        TimePeriod(start=datetime(2026, 6, 3, tzinfo=UTC), end=datetime(2026, 6, 4, tzinfo=UTC)),
+    )
+
+
+def _add_extra_pre_rows(
+    canonical_rows: tuple[dict[str, object], ...],
+) -> tuple[dict[str, object], ...]:
+    periods = _extra_pre_periods()
+    means = {"treated": (4.0, 8.0), "control": (8.0, 8.0)}
+    units = tuple(canonical_rows[index] for index in range(0, len(canonical_rows), 2))
+    extra: list[dict[str, object]] = []
+    for unit_index, unit in enumerate(units):
+        group = str(unit["group"])
+        for period_index, period in enumerate(periods):
+            deviations = _POST_DEVIATIONS if period_index == 0 else _DEVIATIONS
+            extra.append(
+                {
+                    "unit_id": unit["unit_id"],
+                    "observed_at": period.start,
+                    "group": group,
+                    "exposed": 0,
+                    "treatment_start": unit["treatment_start"],
+                    "outcome": means[group][period_index] + deviations[unit_index % 10],
+                }
+            )
+    return tuple(extra) + canonical_rows
+
+
 def run_did_fixture(
     fixture_id: str,
     *,
@@ -284,15 +319,51 @@ def run_did_fixture(
 ) -> DifferenceInDifferencesResult:
     """Execute one deterministic DiD fixture through the production service."""
     rows = _rows(15.0)
+    request = did_evaluation_request()
+    extra_pre_periods: tuple[TimePeriod, ...] = ()
     if fixture_id == "did_post_only_treated_unit":
         rows = _post_only_treated_unit(rows)
-    elif fixture_id != "did_known_positive_effect":
+    elif fixture_id == "did_null_effect":
+        rows = _rows(12.0)
+    elif fixture_id == "did_staggered_adoption":
+        rows = tuple(
+            row | {"treatment_start": _at(11)} if row["unit_id"] == "t-10" else row for row in rows
+        )
+    elif fixture_id == "did_reversed_timing":
+        identification = request.identification
+        request = request.model_copy(
+            update={
+                "identification": identification.model_copy(
+                    update={
+                        "time": identification.time.model_copy(
+                            update={
+                                "pre_period": TimePeriod(start=_at(1), end=_at(12)),
+                                "post_period": TimePeriod(start=_at(10), end=_at(20)),
+                            }
+                        )
+                    }
+                )
+            }
+        )
+    elif fixture_id == "did_missing_treated_group":
+        rows = tuple(row for row in rows if row["group"] == "control")
+    elif fixture_id == "did_missing_control_group":
+        rows = tuple(row for row in rows if row["group"] == "treated")
+    elif fixture_id == "did_incomplete_periods":
+        rows = tuple(
+            row for row in rows if not (row["unit_id"] == "t-10" and row["observed_at"] == _at(15))
+        )
+    elif fixture_id == "did_divergent_pretrend":
+        rows = _add_extra_pre_rows(rows)
+        extra_pre_periods = _extra_pre_periods()
+    elif fixture_id not in {"did_known_positive_effect", "did_few_clusters"}:
         raise ValueError(f"unknown DiD fixture_id: {fixture_id}")
     if reverse_rows:
         rows = tuple(reversed(rows))
     execution = DifferenceInDifferencesExecutionRequest(
-        analysis_request=did_evaluation_request(),
+        analysis_request=request,
         binding=_binding(),
+        extra_pre_periods=extra_pre_periods,
     )
     return DifferenceInDifferencesService(observability_provider=observability_provider).analyze(
         execution,
@@ -301,4 +372,92 @@ def run_did_fixture(
     )
 
 
-__all__ = ["did_evaluation_request", "run_did_fixture"]
+def run_did_coverage_simulation(
+    specification: ObservationalSimulationSpecification,
+) -> ObservationalCoverageResult:
+    """Run a fully declared seeded DiD DGP through the production estimator."""
+    if specification.dgp_name != "did_parallel_trends_gaussian":
+        raise ValueError(f"unsupported observational DGP: {specification.dgp_name}")
+    if specification.dgp_version != "1.0.0":
+        raise ValueError(f"unsupported observational DGP version: {specification.dgp_version}")
+    if specification.estimand != "did_att" or specification.sample_size % 2:
+        raise ValueError("DiD coverage v1 requires did_att and an even sample size")
+    generator = Random(specification.seed)
+    estimates: list[float] = []
+    intervals_containing = 0
+    half = specification.sample_size // 2
+    request = did_evaluation_request()
+    for repetition in range(specification.repetitions):
+        rows: list[dict[str, object]] = []
+        for treated in (False, True):
+            group = "treated" if treated else "control"
+            for index in range(half):
+                unit_id = f"r{repetition:03d}-{group}-{index:03d}"
+                unit_baseline = generator.gauss(0.0, 1.0)
+                pre_error = generator.gauss(0.0, 1.0)
+                post_error = generator.gauss(0.0, 1.0)
+                baseline = 8.0 + (2.0 if treated else 0.0) + unit_baseline
+                treatment_start = _at(10) if treated else None
+                rows.extend(
+                    (
+                        {
+                            "unit_id": unit_id,
+                            "observed_at": _at(5),
+                            "group": group,
+                            "exposed": 0,
+                            "treatment_start": treatment_start,
+                            "outcome": baseline + pre_error,
+                        },
+                        {
+                            "unit_id": unit_id,
+                            "observed_at": _at(15),
+                            "group": group,
+                            "exposed": int(treated),
+                            "treatment_start": treatment_start,
+                            "outcome": baseline
+                            + 2.0
+                            + (specification.true_causal_effect if treated else 0.0)
+                            + post_error,
+                        },
+                    )
+                )
+        result = DifferenceInDifferencesService().analyze(
+            DifferenceInDifferencesExecutionRequest(
+                analysis_request=request,
+                binding=_binding(),
+            ),
+            AnalysisTable.from_records(rows),
+            provenance=_provenance(
+                f"{specification.dgp_name}:{specification.dgp_version}:{repetition}"
+            ),
+        )
+        if result.status is not DidStatus.COMPLETED:
+            raise RuntimeError(f"coverage repetition {repetition} did not complete")
+        assert result.cell_means is not None
+        assert result.test_result is not None
+        estimate = result.cell_means.did_estimate
+        interval = result.test_result.confidence_interval
+        estimates.append(estimate)
+        intervals_containing += int(
+            interval.lower <= specification.true_causal_effect <= interval.upper
+        )
+    coverage = intervals_containing / specification.repetitions
+    return ObservationalCoverageResult(
+        method="did",
+        estimand=specification.estimand,
+        true_effect=specification.true_causal_effect,
+        repetitions=specification.repetitions,
+        completed_repetitions=specification.repetitions,
+        intervals_containing=intervals_containing,
+        interval_coverage=coverage,
+        mean_estimate=sum(estimates) / len(estimates),
+        coverage_status=(
+            "within_aspirational_range"
+            if specification.coverage_lower <= coverage <= specification.coverage_upper
+            else "outside_aspirational_range"
+        ),
+        simulation=specification,
+    )
+
+
+__all__ = ["did_evaluation_request", "run_did_coverage_simulation", "run_did_fixture"]

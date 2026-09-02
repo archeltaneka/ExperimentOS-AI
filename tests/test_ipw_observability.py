@@ -51,6 +51,7 @@ def test_ipw_emits_only_controlled_aggregate_metadata() -> None:
     assert record.name == "ipw_treatment_effect"
     assert record.inputs == {"row_count": 80}
     assert set(record.metadata) == {
+        "design",
         "method",
         "estimand",
         "stabilization_enabled",
@@ -60,7 +61,12 @@ def test_ipw_emits_only_controlled_aggregate_metadata() -> None:
         "balance_status",
         "outcome_type",
         "status",
+        "identification_status",
+        "overlap_gate_status",
+        "raw_sample_count",
+        "selected_sample_count",
         "diagnostic_codes",
+        "assumption_codes",
         "duration_ms",
     }
     assert record.metadata["method"] == "ipw"

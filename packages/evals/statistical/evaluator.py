@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 from collections import Counter
@@ -23,10 +24,11 @@ from .models import (
 )
 from .telemetry import evaluate_fixture_telemetry_privacy
 
-STATISTICAL_POLICY_VERSION = "2026-08-11"
+STATISTICAL_POLICY_VERSION = "2026-08-29"
 LIMITATIONS = (
-    "Difference-in-Differences, propensity scores, and observational ATE/ATT are not covered.",
-    "Inverse-probability weighting, DML, HTE, EconML, and DoWhy are not covered.",
+    "Observational reliability covers DiD, propensity diagnostics, IPW ATE, and IPW ATT.",
+    "DML, heterogeneous effects, EconML, DoWhy, causal forests, and unmeasured-confounding "
+    "sensitivity analysis are not covered.",
     "Business-impact conversion, auto-stop actions, rollout automation, and dashboards are "
     "not covered.",
     "Bayesian v1 uses deterministic quadrature and has no seeded sampling path to evaluate.",
@@ -34,6 +36,19 @@ LIMITATIONS = (
 _MISSING = object()
 _FIXTURE_CACHE: dict[tuple[str, bool, str], Any] = {}
 _TELEMETRY_PRIVACY_CACHE: dict[str, tuple[bool, tuple[str, ...]]] = {}
+_OBSERVATIONAL_CAPABILITIES = {
+    StatisticalCapability.CAUSAL_IDENTIFICATION,
+    StatisticalCapability.DIFFERENCE_IN_DIFFERENCES,
+    StatisticalCapability.PROPENSITY_SCORE,
+    StatisticalCapability.IPW_ATE,
+    StatisticalCapability.IPW_ATT,
+    StatisticalCapability.OBSERVATIONAL_COVERAGE,
+}
+_OBSERVATIONAL_EFFECT_CAPABILITIES = {
+    StatisticalCapability.DIFFERENCE_IN_DIFFERENCES,
+    StatisticalCapability.IPW_ATE,
+    StatisticalCapability.IPW_ATT,
+}
 
 
 class StatisticalBaselineEvaluator:
@@ -119,6 +134,7 @@ class StatisticalBaselineEvaluator:
                     StatisticalCapability.SEQUENTIAL,
                     StatisticalCapability.BAYESIAN_BINARY,
                     StatisticalCapability.BAYESIAN_CONTINUOUS,
+                    *_OBSERVATIONAL_CAPABILITIES,
                 },
             )
         )
@@ -141,6 +157,10 @@ class StatisticalBaselineEvaluator:
             StatisticalCapability.SEQUENTIAL,
             StatisticalCapability.BAYESIAN_BINARY,
             StatisticalCapability.BAYESIAN_CONTINUOUS,
+            StatisticalCapability.IPW_ATE,
+            StatisticalCapability.IPW_ATT,
+            StatisticalCapability.CAUSAL_IDENTIFICATION,
+            StatisticalCapability.PROPENSITY_SCORE,
         }:
             is_successful = actual_status in {
                 "completed",
@@ -166,6 +186,12 @@ class StatisticalBaselineEvaluator:
                 )
             )
             checks.extend(check_method_uncertainty(case.capability, actual))
+            if case.capability in _OBSERVATIONAL_EFFECT_CAPABILITIES:
+                checks.extend(check_identification_completeness(actual))
+                checks.extend(check_observational_estimand_integrity(case, actual))
+                checks.extend(check_observational_transformation_provenance(actual))
+            if case.capability is StatisticalCapability.PROPENSITY_SCORE:
+                checks.extend(check_propensity_transformation_provenance(actual))
             if case.capability is StatisticalCapability.SEQUENTIAL:
                 checks.extend(check_sequential_plan_integrity(actual))
             if case.capability in {
@@ -193,24 +219,26 @@ class StatisticalBaselineEvaluator:
                     )
                 )
             checks.extend(_method_advisories(case, actual, warnings))
-        canonical = _canonical_json(actual)
+        canonical = _canonical_fingerprint(actual)
         determinism_checks = (
             _exact_check(
                 check_id="repeatability",
                 rule_id="statistics.determinism.repeated_result",
                 dimension="determinism",
                 expected=canonical,
-                actual=_canonical_json(repeated_payload),
+                actual=_canonical_fingerprint(repeated_payload),
             ),
             _exact_check(
                 check_id="row_order_invariance",
                 rule_id="statistics.determinism.row_order",
                 dimension="determinism",
                 expected=canonical,
-                actual=_canonical_json(reordered_payload),
+                actual=_canonical_fingerprint(reordered_payload),
             ),
         )
         checks.extend(determinism_checks)
+        if case.capability is StatisticalCapability.OBSERVATIONAL_COVERAGE:
+            checks.extend(check_observational_coverage(case, actual))
         check_tuple = tuple(checks)
         blocking = tuple(check.rule_id for check in check_tuple if check.status is CheckStatus.FAIL)
         advisories = tuple(
@@ -234,6 +262,19 @@ class StatisticalBaselineEvaluator:
             case_id=case.case_id,
             capability=case.capability,
             category=case.category,
+            design=case.analysis_design,
+            estimand=case.estimand,
+            method=case.method,
+            target_population=case.target_population,
+            reference_result={item.path: item.value for item in case.expected_values},
+            tolerances={
+                item.path: item.tolerance.absolute
+                for item in case.expected_values
+                if item.tolerance is not None
+            },
+            simulation_metadata=(
+                case.simulation.model_dump(mode="json") if case.simulation is not None else None
+            ),
             expected_status=case.expected_status,
             actual_status=actual_status,
             evaluation_status=evaluation_status,
@@ -341,7 +382,7 @@ def _cached_fixture(
     reverse_rows: bool,
     execution_slot: str,
 ) -> Any:
-    key = (case.fixture_id, reverse_rows, execution_slot)
+    key = (_case_cache_identity(case), reverse_rows, execution_slot)
     if key not in _FIXTURE_CACHE:
         _FIXTURE_CACHE[key] = run_statistical_fixture(case, reverse_rows=reverse_rows)
     return _FIXTURE_CACHE[key]
@@ -350,9 +391,15 @@ def _cached_fixture(
 def _cached_telemetry_privacy(
     case: StatisticalReferenceCase,
 ) -> tuple[bool, tuple[str, ...]]:
-    if case.fixture_id not in _TELEMETRY_PRIVACY_CACHE:
-        _TELEMETRY_PRIVACY_CACHE[case.fixture_id] = evaluate_fixture_telemetry_privacy(case)
-    return _TELEMETRY_PRIVACY_CACHE[case.fixture_id]
+    identity = _case_cache_identity(case)
+    if identity not in _TELEMETRY_PRIVACY_CACHE:
+        _TELEMETRY_PRIVACY_CACHE[identity] = evaluate_fixture_telemetry_privacy(case)
+    return _TELEMETRY_PRIVACY_CACHE[identity]
+
+
+def _case_cache_identity(case: StatisticalReferenceCase) -> str:
+    """Fingerprint every field that can affect fixture execution or telemetry."""
+    return _canonical_fingerprint(case.model_dump(mode="json"))
 
 
 def check_abstention(
@@ -561,6 +608,8 @@ def check_method_uncertainty(
         StatisticalCapability.SEQUENTIAL: {"continue", "efficacy", "no_rejection"},
         StatisticalCapability.BAYESIAN_BINARY: {"completed"},
         StatisticalCapability.BAYESIAN_CONTINUOUS: {"completed"},
+        StatisticalCapability.IPW_ATE: {"completed"},
+        StatisticalCapability.IPW_ATT: {"completed"},
     }.get(capability, set())
     if status not in successful:
         return ()
@@ -599,6 +648,18 @@ def check_method_uncertainty(
             "cumulative_alpha": look.get("cumulative_alpha_spent") is not None,
             "look_metadata": look.get("look_index") is not None,
         }
+    elif capability in {StatisticalCapability.IPW_ATE, StatisticalCapability.IPW_ATT}:
+        test_result = _mapping(actual.get("test_result"))
+        interval = _mapping(test_result.get("confidence_interval"))
+        required = {
+            "ipw_point_estimate": actual.get("point_estimate") is not None,
+            "ipw_standard_error": test_result.get("standard_error") is not None,
+            "ipw_confidence_interval": _finite_interval(interval),
+            "ipw_confidence_level": interval.get("confidence_level") is not None,
+            "ipw_variance_method": bool(test_result.get("variance_method")),
+            "ipw_p_value": test_result.get("p_value") is not None,
+            "ipw_finite_sample_correction": bool(test_result.get("finite_sample_correction")),
+        }
     else:
         effect = _mapping(actual.get("effect"))
         interval = _mapping(effect.get("credible_interval"))
@@ -622,6 +683,199 @@ def check_method_uncertainty(
             actual=value,
         )
         for name, value in required.items()
+    )
+
+
+def check_identification_completeness(
+    actual: Mapping[str, Any],
+) -> tuple[StatisticalCheck, ...]:
+    """Block conclusive observational estimates missing identification declarations."""
+    status = str(actual.get("status", "invalid"))
+    if status != "completed":
+        return ()
+    analysis_request = _mapping(actual.get("analysis_request"))
+    identification_request = _mapping(analysis_request.get("identification"))
+    estimand = _mapping(actual.get("estimand"))
+    assumptions = _sequence(actual.get("assumptions"))
+    required = {
+        "estimand": bool(estimand.get("estimand_type")),
+        "target_population": bool(_mapping(estimand.get("target_population"))),
+        "treatment": bool(_mapping(actual.get("treatment"))),
+        "outcome": bool(_mapping(actual.get("outcome"))),
+        "population": bool(
+            _mapping(_mapping(estimand.get("target_population")).get("population"))
+            or _mapping(actual.get("population"))
+        ),
+        "adjustment_set": bool(
+            _mapping(actual.get("adjustment_set"))
+            or _mapping(identification_request.get("adjustment_set"))
+        ),
+        "causal_assumptions": bool(assumptions),
+        "timing_information": bool(_mapping(identification_request.get("time"))),
+        "identification_status": actual.get("causal_status") is not None
+        or actual.get("identification_status") is not None
+        or bool(identification_request),
+        "evidence_limitations": bool(_sequence(actual.get("evidence_limitations"))),
+        "assumptions_not_auto_verified": all(
+            _mapping(item).get("status") != "verified" for item in assumptions
+        ),
+    }
+    return tuple(
+        _exact_check(
+            check_id=f"identification_{name}",
+            rule_id=f"statistics.identification.{name}",
+            dimension="identification",
+            expected=True,
+            actual=value,
+        )
+        for name, value in required.items()
+    )
+
+
+def check_observational_estimand_integrity(
+    case: StatisticalReferenceCase,
+    actual: Mapping[str, Any],
+) -> tuple[StatisticalCheck, ...]:
+    """Block observational estimand or target-population substitution."""
+    if str(actual.get("status", "invalid")) != "completed":
+        return ()
+    estimand = _mapping(actual.get("estimand"))
+    target_population = _mapping(estimand.get("target_population"))
+    checks = [
+        _exact_check(
+            check_id="observational_estimand",
+            rule_id="statistics.estimand.declared",
+            dimension="estimand",
+            expected=case.estimand,
+            actual=estimand.get("estimand_type"),
+        ),
+        _exact_check(
+            check_id="observational_target_population",
+            rule_id="statistics.estimand.target_population",
+            dimension="estimand",
+            expected=case.target_population,
+            actual=target_population.get("kind"),
+        ),
+    ]
+    if case.capability in {StatisticalCapability.IPW_ATE, StatisticalCapability.IPW_ATT}:
+        weights = _mapping(actual.get("weights"))
+        expected_formulas = {
+            "ate": ("1/e(X)", "1/(1-e(X))"),
+            "att": ("1", "e(X)/(1-e(X))"),
+        }
+        formulas = expected_formulas.get(case.estimand)
+        actual_formulas = (
+            weights.get("raw_treated_formula"),
+            weights.get("raw_control_formula"),
+        )
+        checks.append(
+            _exact_check(
+                check_id="observational_weighting_formula",
+                rule_id="statistics.estimand.weighting_formula",
+                dimension="estimand",
+                expected=(case.estimand, formulas),
+                actual=(weights.get("estimand"), actual_formulas),
+            )
+        )
+    return tuple(checks)
+
+
+def check_observational_transformation_provenance(
+    actual: Mapping[str, Any],
+) -> tuple[StatisticalCheck, ...]:
+    """Block silent IPW stabilization or clipping on successful estimates."""
+    if str(actual.get("status", "invalid")) != "completed":
+        return ()
+    configuration = _mapping(actual.get("configuration"))
+    weights = _mapping(actual.get("weights"))
+    if not weights:
+        return ()
+    stabilization_configured = configuration.get("stabilized") is True
+    stabilization_recorded = weights.get("stabilized") is not None and bool(
+        weights.get("stabilization_rule")
+    )
+    clipping_configured = bool(_mapping(configuration.get("clipping")))
+    clipping_recorded = _mapping(weights.get("clipping")).get("enabled") is True
+    return (
+        _exact_check(
+            check_id="observational_stabilization_provenance",
+            rule_id="statistics.provenance.stabilization",
+            dimension="provenance",
+            expected=stabilization_configured,
+            actual=stabilization_recorded,
+        ),
+        _exact_check(
+            check_id="observational_clipping_provenance",
+            rule_id="statistics.provenance.clipping",
+            dimension="provenance",
+            expected=clipping_configured,
+            actual=clipping_recorded,
+        ),
+    )
+
+
+def check_propensity_transformation_provenance(
+    actual: Mapping[str, Any],
+) -> tuple[StatisticalCheck, ...]:
+    """Block silent propensity trimming or weight capping on usable diagnostics."""
+    if str(actual.get("status", "invalid")) != "completed":
+        return ()
+    configuration = _mapping(actual.get("configuration"))
+    trimming_configured = bool(_mapping(configuration.get("trimming")))
+    trimming_recorded = bool(_mapping(actual.get("retained")))
+    capping_configured = bool(_mapping(configuration.get("weight_cap")))
+    capping_recorded = bool(_mapping(actual.get("capped_weights")))
+    return (
+        _exact_check(
+            check_id="propensity_trimming_provenance",
+            rule_id="statistics.provenance.trimming",
+            dimension="provenance",
+            expected=trimming_configured,
+            actual=trimming_recorded,
+        ),
+        _exact_check(
+            check_id="propensity_weight_capping_provenance",
+            rule_id="statistics.provenance.weight_capping",
+            dimension="provenance",
+            expected=capping_configured,
+            actual=capping_recorded,
+        ),
+    )
+
+
+def check_observational_coverage(
+    case: StatisticalReferenceCase,
+    actual: Mapping[str, Any],
+) -> tuple[StatisticalCheck, ...]:
+    """Keep empirical coverage aspirational and deterministic in the initial policy."""
+    if case.simulation is None:
+        return ()
+    coverage = actual.get("interval_coverage")
+    in_range = (
+        isinstance(coverage, (int, float))
+        and not isinstance(coverage, bool)
+        and case.simulation.coverage_lower <= float(coverage) <= case.simulation.coverage_upper
+    )
+    return (
+        StatisticalCheck(
+            check_id="observational_interval_coverage",
+            rule_id="statistics.performance.observational_interval_coverage",
+            dimension="coverage",
+            status=CheckStatus.PASS if in_range else CheckStatus.ADVISORY,
+            expected={
+                "lower": case.simulation.coverage_lower,
+                "upper": case.simulation.coverage_upper,
+            },
+            actual=coverage,
+            tolerance=case.simulation.tolerance,
+            tolerance_rationale="Versioned DGP aspirational coverage range; advisory in v1.",
+            tolerance_provenance=f"{case.simulation.dgp_name}:{case.simulation.dgp_version}",
+            message=(
+                "Empirical interval coverage is within the aspirational range."
+                if in_range
+                else "Empirical interval coverage is outside the aspirational range."
+            ),
+        ),
     )
 
 
@@ -690,6 +944,10 @@ def _actual_method(case: StatisticalReferenceCase, actual: Mapping[str, Any]) ->
     if case.capability is StatisticalCapability.CUPED:
         return str(actual.get("adjustment_method"))
     if case.capability is StatisticalCapability.DIFFERENCE_IN_DIFFERENCES:
+        return str(actual.get("method"))
+    if case.capability in {StatisticalCapability.IPW_ATE, StatisticalCapability.IPW_ATT}:
+        return str(actual.get("method"))
+    if case.capability is StatisticalCapability.OBSERVATIONAL_COVERAGE:
         return str(actual.get("method"))
     if case.capability is StatisticalCapability.SEQUENTIAL:
         method = _mapping(actual.get("plan")).get("boundary_method")
@@ -816,6 +1074,14 @@ def _abstention_payload(
             aliases.get(str(reason), reason),
             adjusted.get("point_effect"),
             _mapping(adjusted.get("test_result")),
+            None,
+        )
+    if capability in {StatisticalCapability.IPW_ATE, StatisticalCapability.IPW_ATT}:
+        reason = _mapping(actual.get("abstention_reason")).get("code")
+        return (
+            aliases.get(str(reason), reason),
+            actual.get("point_estimate"),
+            _mapping(actual.get("test_result")),
             None,
         )
     if capability is StatisticalCapability.SEQUENTIAL:
@@ -951,12 +1217,20 @@ def _canonical_json(payload: Mapping[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
 
 
+def _canonical_fingerprint(payload: Mapping[str, Any]) -> str:
+    return hashlib.sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
+
+
 __all__ = [
     "StatisticalBaselineEvaluator",
     "check_abstention",
     "check_assumptions",
     "check_diagnostics",
     "check_expected_value",
+    "check_identification_completeness",
     "check_method_uncertainty",
+    "check_observational_estimand_integrity",
+    "check_observational_transformation_provenance",
+    "check_propensity_transformation_provenance",
     "check_uncertainty",
 ]

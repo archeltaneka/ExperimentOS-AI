@@ -529,6 +529,33 @@ metrics:
     required: false
     weight: 1.5
     description: Successful inferential results must disclose every method-relevant assumption.
+  - metric_id: statistics.failures.identification
+    source: statistics
+    category: Causal Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Successful observational effects must retain complete identification metadata.
+  - metric_id: statistics.failures.estimand
+    source: statistics
+    category: Causal Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Observational estimands, targets, and weighting formulas must remain unchanged.
+  - metric_id: statistics.failures.provenance
+    source: statistics
+    category: Causal Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Clipping, trimming, and stabilization must never occur silently.
   - metric_id: statistics.failures.plan_integrity
     source: statistics
     category: Statistical Reliability

@@ -4,6 +4,7 @@ from typing import Any
 
 import pytest
 
+from packages.evals.statistical import evaluator as statistical_evaluator
 from packages.evals.statistical.dataset import (
     DEFAULT_STATISTICAL_DATASET_PATH,
     load_statistical_reference_cases,
@@ -19,6 +20,10 @@ from packages.evals.statistical.models import (
     CheckStatus,
     StatisticalExpectedValue,
     StatisticalTolerance,
+)
+from packages.evals.statistical.observational_fixtures import (
+    run_ipw_fixture,
+    run_propensity_fixture,
 )
 
 
@@ -185,6 +190,108 @@ def test_abstention_does_not_require_uncertainty() -> None:
     assert check_uncertainty({"status": "abstained", "test_result": None}) == ()
 
 
+def test_observational_estimand_integrity_blocks_att_substitution() -> None:
+    dataset = load_statistical_reference_cases(DEFAULT_STATISTICAL_DATASET_PATH)
+    case = next(item for item in dataset.cases if item.case_id == "ipw-att-known-effect")
+    actual = run_ipw_fixture("ipw_att_known_effect").model_dump(mode="json")
+    actual["estimand"]["estimand_type"] = "ate"
+    actual["estimand"]["target_population"]["kind"] = "full"
+    actual["weights"]["estimand"] = "ate"
+
+    checks = statistical_evaluator.check_observational_estimand_integrity(case, actual)
+
+    failures = {check.rule_id for check in checks if check.status is CheckStatus.FAIL}
+    assert "statistics.estimand.declared" in failures
+    assert "statistics.estimand.target_population" in failures
+    assert "statistics.estimand.weighting_formula" in failures
+
+
+def test_observational_provenance_blocks_silent_stabilization_and_clipping() -> None:
+    stabilized = run_ipw_fixture("ipw_ate_stabilized").model_dump(mode="json")
+    stabilized["weights"]["stabilized"] = None
+    stabilized["weights"]["stabilization_rule"] = None
+    clipped = run_ipw_fixture("ipw_ate_clipped").model_dump(mode="json")
+    clipped["weights"]["clipping"]["enabled"] = False
+
+    stabilized_checks = statistical_evaluator.check_observational_transformation_provenance(
+        stabilized
+    )
+    clipped_checks = statistical_evaluator.check_observational_transformation_provenance(clipped)
+
+    assert any(
+        check.rule_id == "statistics.provenance.stabilization" and check.status is CheckStatus.FAIL
+        for check in stabilized_checks
+    )
+    assert any(
+        check.rule_id == "statistics.provenance.clipping" and check.status is CheckStatus.FAIL
+        for check in clipped_checks
+    )
+
+
+def test_propensity_provenance_blocks_silent_trimming_and_weight_capping() -> None:
+    silently_trimmed = run_propensity_fixture("propensity_good_overlap").model_dump(mode="json")
+    silently_trimmed["configuration"]["trimming"] = {"lower": 0.1, "upper": 0.9}
+    silently_trimmed["retained"] = None
+    silently_capped = run_propensity_fixture("propensity_good_overlap").model_dump(mode="json")
+    silently_capped["configuration"]["weight_cap"] = {"maximum": 5.0}
+    silently_capped["capped_weights"] = None
+
+    trimming_checks = statistical_evaluator.check_propensity_transformation_provenance(
+        silently_trimmed
+    )
+    capping_checks = statistical_evaluator.check_propensity_transformation_provenance(
+        silently_capped
+    )
+
+    assert any(
+        check.rule_id == "statistics.provenance.trimming" and check.status is CheckStatus.FAIL
+        for check in trimming_checks
+    )
+    assert any(
+        check.rule_id == "statistics.provenance.weight_capping" and check.status is CheckStatus.FAIL
+        for check in capping_checks
+    )
+
+
+def test_fixture_caches_include_complete_case_identity(monkeypatch: pytest.MonkeyPatch) -> None:
+    dataset = load_statistical_reference_cases(DEFAULT_STATISTICAL_DATASET_PATH)
+    first = next(case for case in dataset.cases if case.case_id == "observational-coverage-did-v1")
+    assert first.simulation is not None
+    second = first.model_copy(
+        update={
+            "case_id": "observational-coverage-did-alternate",
+            "simulation": first.simulation.model_copy(update={"seed": first.simulation.seed + 1}),
+        }
+    )
+    fixture_calls: list[int] = []
+    privacy_calls: list[int] = []
+
+    def fake_fixture(case, *, reverse_rows=False):
+        fixture_calls.append(case.simulation.seed)
+        return object()
+
+    def fake_privacy(case):
+        privacy_calls.append(case.simulation.seed)
+        return True, ()
+
+    statistical_evaluator._FIXTURE_CACHE.clear()
+    statistical_evaluator._TELEMETRY_PRIVACY_CACHE.clear()
+    monkeypatch.setattr(statistical_evaluator, "run_statistical_fixture", fake_fixture)
+    monkeypatch.setattr(statistical_evaluator, "evaluate_fixture_telemetry_privacy", fake_privacy)
+
+    try:
+        statistical_evaluator._cached_fixture(first, reverse_rows=False, execution_slot="first")
+        statistical_evaluator._cached_fixture(second, reverse_rows=False, execution_slot="first")
+        statistical_evaluator._cached_telemetry_privacy(first)
+        statistical_evaluator._cached_telemetry_privacy(second)
+
+        assert fixture_calls == [first.simulation.seed, second.simulation.seed]
+        assert privacy_calls == [first.simulation.seed, second.simulation.seed]
+    finally:
+        statistical_evaluator._FIXTURE_CACHE.clear()
+        statistical_evaluator._TELEMETRY_PRIVACY_CACHE.clear()
+
+
 def test_repository_cases_pass_all_reliability_dimensions_deterministically() -> None:
     dataset = load_statistical_reference_cases(DEFAULT_STATISTICAL_DATASET_PATH)
 
@@ -192,12 +299,12 @@ def test_repository_cases_pass_all_reliability_dimensions_deterministically() ->
     repeated = StatisticalBaselineEvaluator().evaluate(dataset)
 
     assert first.overall_status == "pass"
-    assert first.dataset_size == 49
-    assert first.cases_passed == 38
+    assert first.dataset_size == 92
+    assert first.cases_passed == 69
     assert first.cases_failed == 0
-    assert first.cases_advisory == 10
-    assert first.cases_invalid == 13
-    assert first.cases_abstained == 8
+    assert first.cases_advisory == 22
+    assert first.cases_invalid == 21
+    assert first.cases_abstained == 21
     assert first.cases_skipped == 1
     assert tuple(result.case_id for result in first.case_results) == tuple(
         sorted(result.case_id for result in first.case_results)

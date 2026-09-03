@@ -130,6 +130,8 @@ class EvidenceLimitationCode(StrEnum):
     NO_SENSITIVITY_ANALYSIS = "no_sensitivity_analysis"
     ADJUSTMENT_SET_NOT_GRAPH_VALIDATED = "adjustment_set_not_graph_validated"
     USER_SUPPLIED_GRAPH = "user_supplied_graph"
+    NUISANCE_MODEL_MISSPECIFICATION = "nuisance_model_misspecification_possible"
+    PARTIALLY_LINEAR_MODEL_RESTRICTION = "partially_linear_model_restriction"
 
 
 class EvidenceLimitation(ContractModel):

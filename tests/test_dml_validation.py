@@ -117,9 +117,7 @@ def test_dml_rejects_unsupported_estimand_design_and_outcome() -> None:
 
 
 def test_dml_rejects_invalid_issue_97_identification() -> None:
-    identification = dml_identification(
-        adjustment_timing=MeasurementTiming.POST_TREATMENT
-    )
+    identification = dml_identification(adjustment_timing=MeasurementTiming.POST_TREATMENT)
 
     result = validate_dml_input(
         dml_execution(identification_result=identification),
@@ -172,13 +170,9 @@ def test_dml_rejects_treatment_or_outcome_binding_identity_mismatch() -> None:
     treatment_binding = dml_binding().model_copy(
         update={"treatment_variable_id": "another_treatment"}
     )
-    outcome_binding = dml_binding().model_copy(
-        update={"outcome_variable_id": "another_outcome"}
-    )
+    outcome_binding = dml_binding().model_copy(update={"outcome_variable_id": "another_outcome"})
 
-    treatment_result = validate_dml_input(
-        dml_execution(binding=treatment_binding), dml_table()
-    )
+    treatment_result = validate_dml_input(dml_execution(binding=treatment_binding), dml_table())
     outcome_result = validate_dml_input(dml_execution(binding=outcome_binding), dml_table())
 
     assert treatment_result.disposition is DMLValidationDisposition.INVALID

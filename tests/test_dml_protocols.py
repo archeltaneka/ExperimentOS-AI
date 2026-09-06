@@ -23,9 +23,7 @@ class DeterministicOutcomeAdapter:
     metadata: NuisanceAdapterMetadata
 
     def for_fold(self, seed: int) -> DeterministicOutcomeAdapter:
-        return DeterministicOutcomeAdapter(
-            self.metadata.model_copy(update={"seed": seed})
-        )
+        return DeterministicOutcomeAdapter(self.metadata.model_copy(update={"seed": seed}))
 
     def fit(
         self,

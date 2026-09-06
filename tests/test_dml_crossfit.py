@@ -239,9 +239,7 @@ def test_cross_fitting_rejects_mutated_fold_plan_with_stale_fingerprint() -> Non
     mutated = plan.model_copy(
         update={
             "assignments": (
-                first.model_copy(
-                    update={"fold_index": (first.fold_index + 1) % plan.fold_count}
-                ),
+                first.model_copy(update={"fold_index": (first.fold_index + 1) % plan.fold_count}),
                 *plan.assignments[1:],
             )
         }
@@ -252,9 +250,7 @@ def test_cross_fitting_rejects_mutated_fold_plan_with_stale_fingerprint() -> Non
             validated.rows,
             mutated,
             feature_names=("prior_orders",),
-            outcome_adapter=RecordingOutcomeAdapter(
-                adapter_metadata(NuisanceRole.OUTCOME), []
-            ),
+            outcome_adapter=RecordingOutcomeAdapter(adapter_metadata(NuisanceRole.OUTCOME), []),
             treatment_adapter=RecordingTreatmentAdapter(
                 adapter_metadata(NuisanceRole.TREATMENT), []
             ),

@@ -93,9 +93,7 @@ class DMLResult(ContractModel):
     outcome_type: Literal["double_machine_learning"] = "double_machine_learning"
     schema_version: Literal["1"] = "1"
     method: Literal["dml"] = "dml"
-    score_method: Literal["partialling_out_orthogonal_score"] = (
-        "partialling_out_orthogonal_score"
-    )
+    score_method: Literal["partialling_out_orthogonal_score"] = "partialling_out_orthogonal_score"
     request_id: NonEmptyStr
     analysis_request: ObservationalAnalysisRequest
     binding: DMLDataBinding

@@ -525,9 +525,7 @@ def _finish_result(
         "cross_fitting_status": "complete" if result.fold_fits else "not_complete",
         "overlap_status": result.overlap.status.value if result.overlap else "unavailable",
         "outcome_nuisance_family": (
-            result.fold_fits[0].outcome_adapter.model_family
-            if result.fold_fits
-            else "unavailable"
+            result.fold_fits[0].outcome_adapter.model_family if result.fold_fits else "unavailable"
         ),
         "treatment_nuisance_family": (
             result.fold_fits[0].treatment_adapter.model_family

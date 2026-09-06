@@ -70,9 +70,7 @@ def test_dml_service_is_row_order_invariant_with_stable_ids() -> None:
 
 def test_dml_service_normalizes_invalid_identification_without_fitting() -> None:
     execution = dml_execution(
-        identification_result=dml_identification(
-            adjustment_timing=MeasurementTiming.POST_TREATMENT
-        )
+        identification_result=dml_identification(adjustment_timing=MeasurementTiming.POST_TREATMENT)
     )
 
     result = DoubleMachineLearningEstimator().analyze(
@@ -92,9 +90,7 @@ def test_dml_service_normalizes_failed_nuisance_fit_with_fold_and_role() -> None
         outcome_adapter=RecordingOutcomeAdapter(
             adapter_metadata(NuisanceRole.OUTCOME), [], fail_fit=True
         ),
-        treatment_adapter=RecordingTreatmentAdapter(
-            adapter_metadata(NuisanceRole.TREATMENT), []
-        ),
+        treatment_adapter=RecordingTreatmentAdapter(adapter_metadata(NuisanceRole.TREATMENT), []),
     )
 
     result = estimator.analyze(
@@ -122,9 +118,7 @@ def test_dml_service_abstains_for_fatal_cross_fitted_overlap() -> None:
         for index in range(40)
     )
     estimator = DoubleMachineLearningEstimator(
-        outcome_adapter=RecordingOutcomeAdapter(
-            adapter_metadata(NuisanceRole.OUTCOME), []
-        ),
+        outcome_adapter=RecordingOutcomeAdapter(adapter_metadata(NuisanceRole.OUTCOME), []),
         treatment_adapter=RecordingTreatmentAdapter(
             adapter_metadata(NuisanceRole.TREATMENT), [], "extreme_by_feature"
         ),
@@ -178,9 +172,7 @@ def test_dml_nonlinear_nuisance_fixture_uses_supplied_owned_adapters() -> None:
         outcome_adapter=RecordingOutcomeAdapter(
             adapter_metadata(NuisanceRole.OUTCOME), [], "square"
         ),
-        treatment_adapter=RecordingTreatmentAdapter(
-            adapter_metadata(NuisanceRole.TREATMENT), []
-        ),
+        treatment_adapter=RecordingTreatmentAdapter(adapter_metadata(NuisanceRole.TREATMENT), []),
     )
 
     result = estimator.analyze(
@@ -192,6 +184,4 @@ def test_dml_nonlinear_nuisance_fixture_uses_supplied_owned_adapters() -> None:
     assert result.status is DMLStatus.COMPLETED
     assert result.point_estimate is not None
     assert abs(result.point_estimate - 1.5) < 0.15
-    assert {item.outcome_adapter.model_family for item in result.fold_fits} == {
-        "test_constant"
-    }
+    assert {item.outcome_adapter.model_family for item in result.fold_fits} == {"test_constant"}

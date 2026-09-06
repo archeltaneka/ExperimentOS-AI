@@ -92,9 +92,7 @@ def dml_request(
                     "estimand": updated_estimand,
                     "treatment": contrast,
                     "outcome": outcome,
-                    "time": source.identification.time.model_copy(
-                        update={"time_variable": None}
-                    ),
+                    "time": source.identification.time.model_copy(update={"time_variable": None}),
                     "variables": dml_variables(adjustment_timing=adjustment_timing),
                     "covariates": ("prior_orders",),
                     "adjustment_set": adjustment.model_copy(
@@ -120,9 +118,7 @@ def dml_binding() -> DMLDataBinding:
         treatment_column="treated",
         outcome_variable_id="outcome",
         outcome_column="outcome",
-        covariates=(
-            DMLCovariateBinding(variable_id="prior_orders", column="prior_orders"),
-        ),
+        covariates=(DMLCovariateBinding(variable_id="prior_orders", column="prior_orders"),),
     )
 
 

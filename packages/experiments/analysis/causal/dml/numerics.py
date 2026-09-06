@@ -327,10 +327,7 @@ def assess_dml_overlap(
     extreme_fraction = extreme_count / len(scores)
     severe_codes: list[str] = []
     weak_codes: list[str] = []
-    shared_nonextreme_point = (
-        max(scores) == min(scores)
-        and threshold < scores[0] < 1.0 - threshold
-    )
+    shared_nonextreme_point = max(scores) == min(scores) and threshold < scores[0] < 1.0 - threshold
     if support.status is CommonSupportStatus.EMPTY:
         severe_codes.append("dml.overlap.empty_support")
     elif support.status is CommonSupportStatus.UNAVAILABLE:

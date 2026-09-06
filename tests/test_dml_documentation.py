@@ -6,9 +6,7 @@ from pathlib import Path
 
 
 def test_dml_documentation_states_identification_and_scope_limits() -> None:
-    documentation = Path("docs/phase4/double_machine_learning.md").read_text(
-        encoding="utf-8"
-    )
+    documentation = Path("docs/phase4/double_machine_learning.md").read_text(encoding="utf-8")
 
     for required in (
         "DML does not remove unmeasured confounding",

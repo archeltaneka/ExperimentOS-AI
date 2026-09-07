@@ -90,6 +90,10 @@ def test_causal_telemetry_contains_required_low_cardinality_dimensions(
         ({"payload": {"outcome": 0.25}}, "forbidden_key:outcome"),
         ({"payload": {"unitId": "opaque"}}, "forbidden_key:unit_id"),
         ({"payload": {"Unit_ID": "opaque"}}, "forbidden_key:unit_id"),
+        ({"payload": {"nuisance_predictions": [0.2]}}, "forbidden_key:nuisance_predictions"),
+        ({"payload": {"residuals": [0.1]}}, "forbidden_key:residuals"),
+        ({"payload": {"influence_values": [0.1]}}, "forbidden_key:influence_values"),
+        ({"payload": {"fold_membership": [1]}}, "forbidden_key:fold_membership"),
     ],
 )
 def test_telemetry_privacy_rejects_forbidden_keys_and_value_shapes(

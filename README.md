@@ -149,15 +149,79 @@ The intended public deployment is a **Vercel fixture-mode frontend** with `apps/
 
 The backend is intentionally separate from the public portfolio demo. It requires PostgreSQL 16 with pgvector and an ingested experiment before the live Ask adapter can answer a question.
 
+Update `uv` dependencies and the environment variables:
+
 ```sh
 uv sync
 cp .env.example .env
+```
+
+Setup the local database:
+```sh
 docker compose up -d postgres
 export DATABASE_URL="postgresql+psycopg://experimentos:experimentos@localhost:5433/experimentos"
 uv run alembic upgrade head
+```
+
+Ingest an example of a synthethic experiment data:
+
+```sh
 uv run python scripts/generate_synthetic_experiments.py
-uv run python -m packages.ingestion.load_experiment --experiment-dir data/synthetic/experiments/exp-001-payment-recommendation --embedding-provider fake
+uv run python -m packages.ingestion.load_experiment --experiment-dir data/synthetic/experiments/exp-001-payment-recommendation
+```
+
+If you want to use the ollama local model, you need to pull two different models (1 for embedding and 1 for the LLM itself):
+
+```sh
+ollama pull nomic-embed-text
+ollama pull qwen2.5:7b
+```
+
+Start the backend server:
+
+```sh
 uv run uvicorn apps.api.main:app --reload
+```
+
+Then open the following URL in your browser:
+```text
+http://127.0.0.1:8000/docs
+```
+
+To try the `/ask` endpoint, click the arrow under `/ask` green button and a collapsible panel will appear. Click the `Try it out` button below it and another collapsible text will appear. It will look something like this:
+
+```text
+{
+  "question": "string",
+  "experiment_id": "string",
+  "top_k": 5
+}
+```
+
+You will need the `experiment_id` from the ingested experiment data from earlier. To find the `experiment_id` run:
+
+```sh
+docker compose exec postgres psql -U experimentos -d experimentos \
+    -c "select id, name, config->>'experiment_id' as synthetic_experiment_id from experiments order by name;"
+```
+
+Then copy the `id` and replace the `question` param with the question that you want to ask:
+
+```sh
+{
+  "question": "summarize this experiment",
+  "experiment_id": "bbc97861-afef-45c0-b17e-184303cb0420",
+  "top_k": 5
+}
+```
+
+To ingest the remaining of the synthethic experiment data:
+
+```sh
+for experiment_dir in data/synthetic/experiments/*; do
+    uv run python -m packages.ingestion.load_experiment \
+      --experiment-dir "$experiment_dir"
+done
 ```
 
 In a second terminal, set the frontend to live Ask mode:

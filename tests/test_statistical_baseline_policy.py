@@ -86,7 +86,33 @@ def test_statistical_adapter_exposes_structured_aggregate_metrics(tmp_path: Path
     assert loaded.metrics["statistics.failures.identification"].value == 0
     assert loaded.metrics["statistics.failures.estimand"].value == 0
     assert loaded.metrics["statistics.failures.provenance"].value == 0
+    assert loaded.metrics["statistics.failures.heterogeneity_safety"].value == 0
     assert loaded.metrics["statistics.failures.determinism"].value == 0
+
+
+def test_statistical_adapter_counts_heterogeneity_safety_failures(tmp_path: Path) -> None:
+    path = _write_report(tmp_path)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["case_results"][0]["checks"].append(
+        {
+            "check_id": "direct_heterogeneity_evidence",
+            "rule_id": "statistics.hte.direct_evidence",
+            "dimension": "heterogeneity_safety",
+            "status": "fail",
+            "message": "Direct heterogeneity evidence is missing.",
+        }
+    )
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    source = PolicySource(
+        source_id="statistics",
+        path=Path("phase4/statistical_baseline.json"),
+        format="statistical_baseline_json",
+    )
+
+    loaded = load_source(source, tmp_path)
+
+    assert loaded is not None
+    assert loaded.metrics["statistics.failures.heterogeneity_safety"].value == 1
 
 
 def test_statistical_adapter_rejects_fractional_count_fields(tmp_path: Path) -> None:
@@ -156,6 +182,7 @@ def test_central_policy_adds_statistical_rules_without_changing_phase3_rules() -
     assert metrics["statistics.failures.identification"].severity == "critical"
     assert metrics["statistics.failures.estimand"].severity == "critical"
     assert metrics["statistics.failures.provenance"].severity == "critical"
+    assert metrics["statistics.failures.heterogeneity_safety"].severity == "critical"
     assert metrics["statistics.minimum_cases_per_capability"].severity == "warning"
     assert metrics["rag.retrieval_success_rate"].value == 1.0
     assert metrics["rag.retrieval_success_rate"].severity == "fail"

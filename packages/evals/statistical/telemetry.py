@@ -30,6 +30,8 @@ FORBIDDEN_TELEMETRY_KEYS = {
     "propensity_score",
     "scores",
     "sequential_rows",
+    "subgroup_membership",
+    "raw_subgroup_rows",
     "treatment_assignments",
     "treatment_values",
     "treated",

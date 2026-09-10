@@ -119,6 +119,7 @@ treatments, covariates, predictions, propensities, residual arrays, and influenc
 DML is not causal identification by itself. Positivity remains necessary, nuisance
 misspecification remains possible, and the constant partially linear effect is restrictive.
 V1 has no IV-DML or PLIV, continuous or multiple treatment, ATT-specific DML, automatic
-nuisance selection, AutoML, hyperparameter optimization, causal forests, heterogeneous or
-individualized effects, EconML, DoWhy, business-impact calculation, workflow integration,
-live LLM functionality, network execution, or database dependency.
+nuisance selection, AutoML, hyperparameter optimization, causal forests, individualized
+effects, EconML, DoWhy, business-impact calculation, workflow integration, live LLM
+functionality, network execution, or database dependency. The bounded discrete subgroup
+extension is documented separately in [Heterogeneous Treatment Effects](heterogeneous_treatment_effects.md).

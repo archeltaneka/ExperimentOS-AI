@@ -556,6 +556,15 @@ metrics:
     required: false
     weight: 1.5
     description: Clipping, trimming, and stabilization must never occur silently.
+  - metric_id: statistics.failures.heterogeneity_safety
+    source: statistics
+    category: Causal Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Conclusive subgroup effects must preserve timing, sparsity, overlap, uncertainty, pre-specification, and direct-comparison safeguards.
   - metric_id: statistics.failures.plan_integrity
     source: statistics
     category: Statistical Reliability

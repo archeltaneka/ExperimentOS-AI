@@ -94,6 +94,8 @@ def test_causal_telemetry_contains_required_low_cardinality_dimensions(
         ({"payload": {"residuals": [0.1]}}, "forbidden_key:residuals"),
         ({"payload": {"influence_values": [0.1]}}, "forbidden_key:influence_values"),
         ({"payload": {"fold_membership": [1]}}, "forbidden_key:fold_membership"),
+        ({"payload": {"subgroup_membership": ["a"]}}, "forbidden_key:subgroup_membership"),
+        ({"payload": {"raw_subgroup_rows": ["a"]}}, "forbidden_key:raw_subgroup_rows"),
     ],
 )
 def test_telemetry_privacy_rejects_forbidden_keys_and_value_shapes(

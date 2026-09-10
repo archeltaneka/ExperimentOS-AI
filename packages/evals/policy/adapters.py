@@ -92,6 +92,7 @@ def _load_statistical_baseline_json(path: Path) -> dict[str, SourceMetric]:
             "bayesian_semantics",
             "diagnostics",
             "estimand",
+            "heterogeneity_safety",
             "identification",
             "provenance",
             "uncertainty",

@@ -90,9 +90,11 @@ class HTEValidationResult:
 def validate_hte_input(
     execution: HTEExecutionRequest,
     table: AnalysisTable,
+    *,
+    supported_method: str = "partialling_out_dml_subgroup_interactions",
 ) -> HTEValidationResult:
     """Validate HTE eligibility before constructing folds or fitting nuisances."""
-    diagnostics, disposition = _validate_declarations(execution)
+    diagnostics, disposition = _validate_declarations(execution, supported_method)
     if diagnostics:
         return _empty(execution, table, disposition, diagnostics)
     required = _required_columns(execution)
@@ -225,6 +227,7 @@ def validate_hte_input(
 
 def _validate_declarations(
     execution: HTEExecutionRequest,
+    supported_method: str,
 ) -> tuple[tuple[HTEDiagnostic, ...], HTEValidationDisposition]:
     result = execution.identification_result
     if result.status is not IdentificationStatus.IDENTIFIED:
@@ -233,8 +236,7 @@ def _validate_declarations(
         ), HTEValidationDisposition.INVALID
     if (
         result.design_type is not ObservationalDesignType.HETEROGENEOUS_EFFECTS
-        or result.identification_request.design.method
-        != "partialling_out_dml_subgroup_interactions"
+        or result.identification_request.design.method != supported_method
     ):
         return (
             _diagnostic(

@@ -10,6 +10,7 @@ from pydantic import Field, model_validator
 from ...base import ContractModel, FiniteFloat, NonEmptyStr, Probability
 from ...provenance import DiagnosticSeverity, ProvenanceRecords
 from ...uncertainty import ConfidenceInterval
+from ..advanced.models import AdvancedAdapterProvenance
 from ..assumptions import CausalAssumption
 from ..dml.models import DMLFoldPlan, DMLNuisanceDiagnostics, DMLOverlapDiagnostic
 from ..dml.results import DMLFoldFitProvenance
@@ -74,6 +75,8 @@ class SubgroupSampleCounts(ContractModel):
 
 
 class SubgroupEffectResult(ContractModel):
+    """Normalized subgroup effect and support with explicit uncertainty."""
+
     subgroup_id: NonEmptyStr
     label: NonEmptyStr
     rule: NonEmptyStr
@@ -84,7 +87,9 @@ class SubgroupEffectResult(ContractModel):
     confidence_interval: ConfidenceInterval | None = None
     p_value: Probability | None = None
     adjusted_p_value: Probability | None = None
-    uncertainty_method: Literal["orthogonal_score_influence_hc1"] | None = None
+    uncertainty_method: (
+        Literal["orthogonal_score_influence_hc1", "doubly_robust_statsmodels_hc1"] | None
+    ) = None
     effective_sample_size: None = None
     overlap: DMLOverlapDiagnostic | None = None
     diagnostics: tuple[HTEDiagnostic, ...] = ()
@@ -128,9 +133,10 @@ class GlobalHeterogeneityEvidence(ContractModel):
     null_hypothesis: Literal["all_supported_subgroup_effects_are_equal"] = (
         "all_supported_subgroup_effects_are_equal"
     )
-    method: Literal["joint_orthogonal_interaction_wald_chi_square"] = (
-        "joint_orthogonal_interaction_wald_chi_square"
-    )
+    method: Literal[
+        "joint_orthogonal_interaction_wald_chi_square",
+        "doubly_robust_interaction_wald_chi_square",
+    ] = "joint_orthogonal_interaction_wald_chi_square"
     statistic: NonNegativeFiniteFloat | None = None
     degrees_of_freedom: PositiveCount | None = None
     p_value: Probability | None = None
@@ -159,9 +165,13 @@ class MultiplicityContext(ContractModel):
 
 
 class HeterogeneousEffectResult(ContractModel):
+    """Owned aggregate HTE evidence without individualized recommendations."""
+
     outcome_type: Literal["heterogeneous_treatment_effects"] = "heterogeneous_treatment_effects"
     schema_version: Literal["1"] = "1"
-    method: Literal["dml_orthogonal_subgroup_interactions"] = "dml_orthogonal_subgroup_interactions"
+    method: Literal["dml_orthogonal_subgroup_interactions", "doubly_robust_subgroup_effects"] = (
+        "dml_orthogonal_subgroup_interactions"
+    )
     request_id: NonEmptyStr
     execution_request: HTEExecutionRequest
     status: HTEStatus
@@ -184,6 +194,7 @@ class HeterogeneousEffectResult(ContractModel):
     assumptions: tuple[CausalAssumption, ...]
     diagnostics: tuple[HTEDiagnostic, ...]
     provenance: ProvenanceRecords
+    adapter_provenance: AdvancedAdapterProvenance | None = None
     abstention_reason: NonEmptyStr | None = None
 
 

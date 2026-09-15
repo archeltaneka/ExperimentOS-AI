@@ -78,6 +78,8 @@ type HTESubgroupDefinition = Annotated[
 
 
 class EffectModifierDefinition(ContractModel):
+    """Prespecified pre-treatment groups for conditional causal effects."""
+
     variable_id: NonEmptyStr
     column: NonEmptyStr
     role: Literal[VariableRole.EFFECT_MODIFIER]
@@ -173,12 +175,14 @@ class HTEDataBinding(ContractModel):
 
 
 class HTEConfig(ContractModel):
+    """Deterministic HTE support, overlap and uncertainty configuration."""
+
     dml: DMLConfig
     minimum_subgroup_retained: PositiveCount = 20
     minimum_subgroup_treated: PositiveCount = 5
     minimum_subgroup_control: PositiveCount = 5
     multiplicity_method: Literal[HTEMultiplicityMethod.HOLM] = HTEMultiplicityMethod.HOLM
-    analysis_version: Literal["hte-dml-v1"] = "hte-dml-v1"
+    analysis_version: Literal["hte-dml-v1", "hte-dr-v1"] = "hte-dml-v1"
 
     @model_validator(mode="after")
     def validate_sparse_thresholds(self) -> Self:
@@ -191,6 +195,8 @@ class HTEConfig(ContractModel):
 
 
 class HTEExecutionRequest(ContractModel):
+    """Owned identified request, data binding and modifier declaration."""
+
     schema_version: Literal["1"] = "1"
     identification_result: IdentificationResult
     binding: HTEDataBinding

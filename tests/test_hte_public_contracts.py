@@ -26,5 +26,14 @@ def test_public_hte_surface_contains_no_third_party_result_types() -> None:
     for public_type in public_types:
         assert not any(name in public_type.__module__.lower() for name in forbidden)
 
-    serialized = str(HeterogeneousEffectResult.model_json_schema()).lower()
-    assert not any(name in serialized for name in forbidden)
+    # Library names are legitimate scalar provenance; contract classes stay owned.
+    from tests.causal_identification_fixtures import provenance
+    from tests.econml_fixtures import assert_owned_graph
+    from tests.hte_fixtures import effect_rows, hte_execution, hte_table
+
+    result = HeterogeneousEffectEstimator().analyze(
+        hte_execution(), hte_table(effect_rows()), provenance=provenance()
+    )
+    assert_owned_graph(result)
+    schema = HeterogeneousEffectResult.model_json_schema()
+    assert "AdvancedAdapterProvenance" in schema["$defs"]

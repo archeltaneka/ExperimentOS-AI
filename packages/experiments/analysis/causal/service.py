@@ -490,6 +490,14 @@ class CausalIdentificationService:
         if graph is None:
             return ()
         diagnostics: list[CausalDiagnostic] = []
+        if not graph.is_dag:
+            diagnostics.append(
+                _diagnostic(
+                    CausalDiagnosticCode.GRAPH_NOT_DAG,
+                    CausalDiagnosticCategory.GRAPH,
+                    "The supported causal graph must explicitly declare DAG semantics.",
+                )
+            )
         node_ids = tuple(node.node_id for node in graph.nodes)
         variable_ids = {item.variable_id for item in request.variables}
         for duplicate in _duplicates(node_ids):
@@ -549,6 +557,34 @@ class CausalIdentificationService:
                     "A graph declared as a DAG cannot contain a directed cycle.",
                 )
             )
+        nodes_by_variable = {node.variable_id: node for node in graph.nodes}
+        endpoints = (
+            (
+                request.treatment.treatment_variable if request.treatment is not None else None,
+                CausalDiagnosticCode.GRAPH_MISSING_TREATMENT,
+                "The treatment must be represented in the supplied graph.",
+            ),
+            (
+                request.outcome.variable_id if request.outcome is not None else None,
+                CausalDiagnosticCode.GRAPH_MISSING_OUTCOME,
+                "The outcome must be represented in the supplied graph.",
+            ),
+        )
+        for variable_id, code, message in endpoints:
+            if variable_id is None:
+                continue
+            endpoint_node = nodes_by_variable.get(variable_id)
+            if endpoint_node is None:
+                diagnostics.append(_diagnostic(code, CausalDiagnosticCategory.GRAPH, message))
+            elif not endpoint_node.observed:
+                diagnostics.append(
+                    _diagnostic(
+                        CausalDiagnosticCode.GRAPH_UNOBSERVED_ENDPOINT,
+                        CausalDiagnosticCategory.GRAPH,
+                        "Treatment and outcome nodes must be observed.",
+                        context={"variable_id": variable_id},
+                    )
+                )
         if request.adjustment_set is not None:
             graph_variables = {node.variable_id for node in graph.nodes}
             for variable_id in request.adjustment_set.variable_ids:
@@ -561,7 +597,50 @@ class CausalIdentificationService:
                             context={"variable_id": variable_id},
                         )
                     )
+            if request.treatment is not None:
+                treatment_node = nodes_by_variable.get(request.treatment.treatment_variable)
+                if treatment_node is not None:
+                    descendants = CausalIdentificationService._descendants(
+                        treatment_node.node_id,
+                        node_id_set,
+                        edge_pairs,
+                    )
+                    node_by_id = {node.node_id: node for node in graph.nodes}
+                    descendant_variables = {
+                        node_by_id[node_id].variable_id
+                        for node_id in descendants
+                        if node_id in node_by_id
+                    }
+                    for variable_id in request.adjustment_set.variable_ids:
+                        if variable_id in descendant_variables:
+                            diagnostics.append(
+                                _diagnostic(
+                                    CausalDiagnosticCode.GRAPH_ADJUSTMENT_DESCENDANT,
+                                    CausalDiagnosticCategory.GRAPH,
+                                    "Adjustment variables cannot be descendants of treatment.",
+                                    context={"variable_id": variable_id},
+                                )
+                            )
         return tuple(diagnostics)
+
+    @staticmethod
+    def _descendants(
+        start: str,
+        nodes: set[str],
+        edges: tuple[tuple[str, str], ...],
+    ) -> frozenset[str]:
+        adjacency: dict[str, tuple[str, ...]] = {
+            node: tuple(sorted(effect for cause, effect in edges if cause == node))
+            for node in nodes
+        }
+        pending = list(reversed(adjacency.get(start, ())))
+        found: set[str] = set()
+        while pending:
+            node = pending.pop()
+            if node not in found:
+                found.add(node)
+                pending.extend(reversed(adjacency.get(node, ())))
+        return frozenset(found)
 
     @staticmethod
     def _has_cycle(nodes: set[str], edges: tuple[tuple[str, str], ...]) -> bool:

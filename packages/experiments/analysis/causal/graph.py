@@ -13,6 +13,7 @@ class CausalGraphNode(ContractModel):
 
     node_id: NonEmptyStr
     variable_id: NonEmptyStr
+    observed: bool = True
 
 
 class CausalGraphEdge(ContractModel):

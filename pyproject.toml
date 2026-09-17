@@ -24,6 +24,9 @@ dependencies = [
 ]
 
 [dependency-groups]
+dowhy = [
+  "dowhy==0.14; python_version >= '3.13' and python_version < '3.14'",
+]
 econml = [
   "econml==0.17.0; python_version < '3.15'",
 ]

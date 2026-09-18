@@ -1,4 +1,8 @@
-"""Fully sourced business-impact input and projection contracts."""
+"""Legacy serializable projection contracts (not scenario eligibility evidence).
+
+New computations use ``analysis.impact.BusinessImpactService``. These contracts
+remain readable for compatibility and do not validate source causal eligibility.
+"""
 
 from __future__ import annotations
 

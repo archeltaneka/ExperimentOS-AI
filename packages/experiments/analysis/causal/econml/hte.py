@@ -12,6 +12,7 @@ from packages.observability.noop import NoOpObservabilityProvider
 
 from ...provenance import DiagnosticSeverity, ProvenanceRecords
 from ...validation.table import AnalysisTable
+from ..advanced.conformance import configuration_fingerprint
 from ..advanced.models import AdvancedEstimatorConfig, AdvancedFailureCode
 from ..dml.folds import canonical_observation_key
 from ..dml.numerics import assess_dml_overlap, build_nuisance_diagnostics
@@ -72,6 +73,16 @@ class EconMLHTEAdapter:
     ) -> HeterogeneousEffectResult:
         started = perf_counter()
         result = self._analyze(execution, table, provenance=provenance)
+        try:
+            result = result.model_copy(
+                update={
+                    "configuration_fingerprint_sha256": configuration_fingerprint(
+                        execution, "econml_linear_dr_subgroups", self.configuration
+                    )
+                }
+            )
+        except (TypeError, ValueError, AttributeError):
+            pass  # Malformed input refusals retain the safe diagnostic, not a fabricated digest.
         observe_result(
             self.observability_provider,
             result,

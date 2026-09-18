@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from packages.observability.base import BaseObservabilityProvider
 
+from ..advanced.conformance import execution_metadata
 from .models import DoWhyAnalysisResult
 
 
@@ -25,6 +26,8 @@ def observe_dowhy_result(
             "dowhy_causal_adapter",
             run_type="chain",
             metadata={
+                **execution_metadata(result, "experimentos_dowhy"),
+                "graph_fingerprint": result.identification.graph_fingerprint,
                 "adapter": "dowhy",
                 "operation": operation,
                 "estimand": "ate",

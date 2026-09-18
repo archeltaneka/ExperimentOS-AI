@@ -86,6 +86,11 @@ def _load_statistical_baseline_json(path: Path) -> dict[str, SourceMetric]:
     failures: dict[str, int] = {
         dimension: 0
         for dimension in (
+            "interface_leakage",
+            "exception_normalization",
+            "unsupported_inference",
+            "data_leakage",
+            "dependency",
             "reference_accuracy",
             "abstention",
             "assumptions",
@@ -111,6 +116,15 @@ def _load_statistical_baseline_json(path: Path) -> dict[str, SourceMetric]:
         capability = _expect_nonempty_string(case.get("capability"), "statistics case capability")
         capability_counts[capability] = capability_counts.get(capability, 0) + 1
         method = {
+            "repository_dml": "dml",
+            "repository_hte": "hte",
+            "econml_dml": "econml",
+            "econml_hte": "econml",
+            "dowhy_identification": "dowhy",
+            "dowhy_estimation": "dowhy",
+            "dowhy_placebo": "dowhy",
+            "dowhy_common_cause": "dowhy",
+            "dowhy_subset": "dowhy",
             "causal_identification": "identification",
             "difference_in_differences": "did",
             "propensity_score": "propensity",

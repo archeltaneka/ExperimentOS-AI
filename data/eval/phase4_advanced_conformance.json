@@ -1,0 +1,1607 @@
+{
+  "baseline_id": "phase4-advanced-causal-conformance",
+  "version": "1.0.0",
+  "fixture_provenance": "phase4-statistical-fixtures-v1",
+  "cases": [
+    {
+      "case_id": "advanced-dowhy_common_cause-absent",
+      "capability": "dowhy_common_cause",
+      "category": "abstention",
+      "method": "random_common_cause",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_common_cause_absent",
+      "expected_status": "abstained",
+      "expected_method": "random_common_cause",
+      "expected_diagnostic_codes": [
+        "OPTIONAL_DEPENDENCY_UNAVAILABLE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "OPTIONAL_DEPENDENCY_UNAVAILABLE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_common_cause",
+        "scenario": "absent",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_common_cause-refuter_failure",
+      "capability": "dowhy_common_cause",
+      "category": "abstention",
+      "method": "random_common_cause",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_common_cause_refuter_failure",
+      "expected_status": "abstained",
+      "expected_method": "random_common_cause",
+      "expected_diagnostic_codes": [
+        "REFUTER_FAILURE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "REFUTER_FAILURE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_common_cause",
+        "scenario": "refuter_failure",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_common_cause-success",
+      "capability": "dowhy_common_cause",
+      "category": "successful_inference",
+      "method": "random_common_cause",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_common_cause_success",
+      "expected_status": "completed",
+      "expected_method": "random_common_cause",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_common_cause",
+        "scenario": "success",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_estimation-absent",
+      "capability": "dowhy_estimation",
+      "category": "abstention",
+      "method": "backdoor.linear_regression",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_estimation_absent",
+      "expected_status": "abstained",
+      "expected_method": "backdoor.linear_regression",
+      "expected_diagnostic_codes": [
+        "OPTIONAL_DEPENDENCY_UNAVAILABLE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "OPTIONAL_DEPENDENCY_UNAVAILABLE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_estimation",
+        "scenario": "absent",
+        "seed": 105,
+        "uncertainty": "optional",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_estimation-estimation_failure",
+      "capability": "dowhy_estimation",
+      "category": "abstention",
+      "method": "backdoor.linear_regression",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_estimation_estimation_failure",
+      "expected_status": "abstained",
+      "expected_method": "backdoor.linear_regression",
+      "expected_diagnostic_codes": [
+        "ESTIMATION_FAILURE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "ESTIMATION_FAILURE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_estimation",
+        "scenario": "estimation_failure",
+        "seed": 105,
+        "uncertainty": "optional",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_estimation-nonfinite",
+      "capability": "dowhy_estimation",
+      "category": "abstention",
+      "method": "backdoor.linear_regression",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_estimation_nonfinite",
+      "expected_status": "abstained",
+      "expected_method": "backdoor.linear_regression",
+      "expected_diagnostic_codes": [
+        "NONFINITE_ESTIMATE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "NONFINITE_ESTIMATE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_estimation",
+        "scenario": "nonfinite",
+        "seed": 105,
+        "uncertainty": "optional",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_estimation-success",
+      "capability": "dowhy_estimation",
+      "category": "successful_inference",
+      "method": "backdoor.linear_regression",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_estimation_success",
+      "expected_status": "completed",
+      "expected_method": "backdoor.linear_regression",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [
+        {
+          "path": "estimate.point_estimate",
+          "value": 2,
+          "tolerance": {
+            "absolute": 0.15,
+            "rationale": "Existing independently known effect DGP recovery bound.",
+            "provenance": "issue-105:known-confounding"
+          }
+        }
+      ],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_estimation",
+        "scenario": "success",
+        "seed": 105,
+        "uncertainty": "optional",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_identification-absent",
+      "capability": "dowhy_identification",
+      "category": "abstention",
+      "method": "default_backdoor",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_identification_absent",
+      "expected_status": "abstained",
+      "expected_method": "default_backdoor",
+      "expected_diagnostic_codes": [
+        "OPTIONAL_DEPENDENCY_UNAVAILABLE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "OPTIONAL_DEPENDENCY_UNAVAILABLE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_identification",
+        "scenario": "absent",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_identification-contradictory_graph",
+      "capability": "dowhy_identification",
+      "category": "invalid_input",
+      "method": "default_backdoor",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_identification_contradictory_graph",
+      "expected_status": "invalid",
+      "expected_method": "default_backdoor",
+      "expected_diagnostic_codes": [
+        "INVALID_GRAPH"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "INVALID_GRAPH",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_identification",
+        "scenario": "contradictory_graph",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_identification-malformed",
+      "capability": "dowhy_identification",
+      "category": "abstention",
+      "method": "default_backdoor",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_identification_malformed",
+      "expected_status": "error",
+      "expected_method": "default_backdoor",
+      "expected_diagnostic_codes": [
+        "MALFORMED_DOWHY_RESULT"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "MALFORMED_DOWHY_RESULT",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_identification",
+        "scenario": "malformed",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_identification-missing_graph",
+      "capability": "dowhy_identification",
+      "category": "abstention",
+      "method": "default_backdoor",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_identification_missing_graph",
+      "expected_status": "abstained",
+      "expected_method": "default_backdoor",
+      "expected_diagnostic_codes": [
+        "INVALID_GRAPH"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "INVALID_GRAPH",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_identification",
+        "scenario": "missing_graph",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_identification-runtime_failure",
+      "capability": "dowhy_identification",
+      "category": "abstention",
+      "method": "default_backdoor",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_identification_runtime_failure",
+      "expected_status": "error",
+      "expected_method": "default_backdoor",
+      "expected_diagnostic_codes": [
+        "MODEL_CONSTRUCTION_FAILURE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "MODEL_CONSTRUCTION_FAILURE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_identification",
+        "scenario": "runtime_failure",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_identification-success",
+      "capability": "dowhy_identification",
+      "category": "successful_inference",
+      "method": "default_backdoor",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_identification_success",
+      "expected_status": "completed",
+      "expected_method": "default_backdoor",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_identification",
+        "scenario": "success",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_identification-unidentified",
+      "capability": "dowhy_identification",
+      "category": "abstention",
+      "method": "default_backdoor",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_identification_unidentified",
+      "expected_status": "abstained",
+      "expected_method": "default_backdoor",
+      "expected_diagnostic_codes": [
+        "IDENTIFICATION_UNAVAILABLE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "IDENTIFICATION_UNAVAILABLE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_identification",
+        "scenario": "unidentified",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_placebo-absent",
+      "capability": "dowhy_placebo",
+      "category": "abstention",
+      "method": "placebo_treatment_refuter",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_placebo_absent",
+      "expected_status": "abstained",
+      "expected_method": "placebo_treatment_refuter",
+      "expected_diagnostic_codes": [
+        "OPTIONAL_DEPENDENCY_UNAVAILABLE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "OPTIONAL_DEPENDENCY_UNAVAILABLE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_placebo",
+        "scenario": "absent",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_placebo-refuter_failure",
+      "capability": "dowhy_placebo",
+      "category": "abstention",
+      "method": "placebo_treatment_refuter",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_placebo_refuter_failure",
+      "expected_status": "abstained",
+      "expected_method": "placebo_treatment_refuter",
+      "expected_diagnostic_codes": [
+        "REFUTER_FAILURE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "REFUTER_FAILURE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_placebo",
+        "scenario": "refuter_failure",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_placebo-success",
+      "capability": "dowhy_placebo",
+      "category": "successful_inference",
+      "method": "placebo_treatment_refuter",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_placebo_success",
+      "expected_status": "completed",
+      "expected_method": "placebo_treatment_refuter",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_placebo",
+        "scenario": "success",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_subset-absent",
+      "capability": "dowhy_subset",
+      "category": "abstention",
+      "method": "data_subset_refuter",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_subset_absent",
+      "expected_status": "abstained",
+      "expected_method": "data_subset_refuter",
+      "expected_diagnostic_codes": [
+        "OPTIONAL_DEPENDENCY_UNAVAILABLE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "OPTIONAL_DEPENDENCY_UNAVAILABLE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_subset",
+        "scenario": "absent",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_subset-refuter_failure",
+      "capability": "dowhy_subset",
+      "category": "abstention",
+      "method": "data_subset_refuter",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_subset_refuter_failure",
+      "expected_status": "abstained",
+      "expected_method": "data_subset_refuter",
+      "expected_diagnostic_codes": [
+        "REFUTER_FAILURE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "REFUTER_FAILURE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_subset",
+        "scenario": "refuter_failure",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-dowhy_subset-success",
+      "capability": "dowhy_subset",
+      "category": "successful_inference",
+      "method": "data_subset_refuter",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_dowhy_subset_success",
+      "expected_status": "completed",
+      "expected_method": "data_subset_refuter",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "dowhy_subset",
+        "scenario": "success",
+        "seed": 105,
+        "uncertainty": "not_applicable",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_dml-absent",
+      "capability": "econml_dml",
+      "category": "abstention",
+      "method": "partialling_out_dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_dml_absent",
+      "expected_status": "abstained",
+      "expected_method": "partialling_out_dml",
+      "expected_diagnostic_codes": [
+        "OPTIONAL_DEPENDENCY_UNAVAILABLE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "OPTIONAL_DEPENDENCY_UNAVAILABLE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_dml",
+        "scenario": "absent",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_dml-inference_failure",
+      "capability": "econml_dml",
+      "category": "abstention",
+      "method": "partialling_out_dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_dml_inference_failure",
+      "expected_status": "abstained",
+      "expected_method": "partialling_out_dml",
+      "expected_diagnostic_codes": [
+        "INFERENCE_FAILURE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "INFERENCE_FAILURE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_dml",
+        "scenario": "inference_failure",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_dml-invalid",
+      "capability": "econml_dml",
+      "category": "invalid_input",
+      "method": "partialling_out_dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_dml_invalid",
+      "expected_status": "invalid",
+      "expected_method": "partialling_out_dml",
+      "expected_diagnostic_codes": [
+        "dml.identification.invalid"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "dml.identification.invalid",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_dml",
+        "scenario": "invalid",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_dml-malformed",
+      "capability": "econml_dml",
+      "category": "abstention",
+      "method": "partialling_out_dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_dml_malformed",
+      "expected_status": "abstained",
+      "expected_method": "partialling_out_dml",
+      "expected_diagnostic_codes": [
+        "INFERENCE_FAILURE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "INFERENCE_FAILURE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_dml",
+        "scenario": "malformed",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_dml-nonfinite",
+      "capability": "econml_dml",
+      "category": "abstention",
+      "method": "partialling_out_dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_dml_nonfinite",
+      "expected_status": "abstained",
+      "expected_method": "partialling_out_dml",
+      "expected_diagnostic_codes": [
+        "NONFINITE_ESTIMATE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "NONFINITE_ESTIMATE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_dml",
+        "scenario": "nonfinite",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_dml-null",
+      "capability": "econml_dml",
+      "category": "successful_inference",
+      "method": "partialling_out_dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_dml_null",
+      "expected_status": "completed",
+      "expected_method": "partialling_out_dml",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [
+        {
+          "path": "point_estimate",
+          "value": 0,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing independently known effect DGP recovery bound.",
+            "provenance": "issue-104:known-effect"
+          }
+        }
+      ],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_dml",
+        "scenario": "null",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_dml-runtime_failure",
+      "capability": "econml_dml",
+      "category": "abstention",
+      "method": "partialling_out_dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_dml_runtime_failure",
+      "expected_status": "abstained",
+      "expected_method": "partialling_out_dml",
+      "expected_diagnostic_codes": [
+        "ESTIMATOR_FIT_FAILURE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "ESTIMATOR_FIT_FAILURE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_dml",
+        "scenario": "runtime_failure",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_dml-success",
+      "capability": "econml_dml",
+      "category": "successful_inference",
+      "method": "partialling_out_dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_dml_success",
+      "expected_status": "completed",
+      "expected_method": "partialling_out_dml",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [
+        {
+          "path": "point_estimate",
+          "value": 2,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing independently known effect DGP recovery bound.",
+            "provenance": "issue-104:known-effect"
+          }
+        }
+      ],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_dml",
+        "scenario": "success",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_dml-unsupported_inference",
+      "capability": "econml_dml",
+      "category": "invalid_input",
+      "method": "partialling_out_dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_dml_unsupported_inference",
+      "expected_status": "unsupported",
+      "expected_method": "partialling_out_dml",
+      "expected_diagnostic_codes": [
+        "UNSUPPORTED_INFERENCE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "UNSUPPORTED_INFERENCE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_dml",
+        "scenario": "unsupported_inference",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_hte-absent",
+      "capability": "econml_hte",
+      "category": "abstention",
+      "method": "doubly_robust_subgroup_effects",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_hte_absent",
+      "expected_status": "abstained",
+      "expected_method": "doubly_robust_subgroup_effects",
+      "expected_diagnostic_codes": [
+        "OPTIONAL_DEPENDENCY_UNAVAILABLE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "OPTIONAL_DEPENDENCY_UNAVAILABLE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_hte",
+        "scenario": "absent",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_hte-homogeneous",
+      "capability": "econml_hte",
+      "category": "successful_inference",
+      "method": "doubly_robust_subgroup_effects",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_hte_homogeneous",
+      "expected_status": "completed",
+      "expected_method": "doubly_robust_subgroup_effects",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [
+        {
+          "path": "subgroup_results.0.estimate",
+          "value": 2,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing #103/#104 finite-sample subgroup reference recovery bound.",
+            "provenance": "issue-104:subgroup-reference"
+          }
+        },
+        {
+          "path": "subgroup_results.1.estimate",
+          "value": 2,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing #103/#104 finite-sample subgroup reference recovery bound.",
+            "provenance": "issue-104:subgroup-reference"
+          }
+        }
+      ],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_hte",
+        "scenario": "homogeneous",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_hte-inference_failure",
+      "capability": "econml_hte",
+      "category": "abstention",
+      "method": "doubly_robust_subgroup_effects",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_hte_inference_failure",
+      "expected_status": "abstained",
+      "expected_method": "doubly_robust_subgroup_effects",
+      "expected_diagnostic_codes": [
+        "INFERENCE_FAILURE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "INFERENCE_FAILURE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_hte",
+        "scenario": "inference_failure",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_hte-invalid_modifier",
+      "capability": "econml_hte",
+      "category": "invalid_input",
+      "method": "doubly_robust_subgroup_effects",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_hte_invalid_modifier",
+      "expected_status": "invalid",
+      "expected_method": "doubly_robust_subgroup_effects",
+      "expected_diagnostic_codes": [
+        "hte.modifier.post_treatment"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "hte.modifier.post_treatment",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_hte",
+        "scenario": "invalid_modifier",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_hte-malformed",
+      "capability": "econml_hte",
+      "category": "abstention",
+      "method": "doubly_robust_subgroup_effects",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_hte_malformed",
+      "expected_status": "abstained",
+      "expected_method": "doubly_robust_subgroup_effects",
+      "expected_diagnostic_codes": [
+        "INFERENCE_FAILURE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "INFERENCE_FAILURE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_hte",
+        "scenario": "malformed",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_hte-nonfinite",
+      "capability": "econml_hte",
+      "category": "abstention",
+      "method": "doubly_robust_subgroup_effects",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_hte_nonfinite",
+      "expected_status": "abstained",
+      "expected_method": "doubly_robust_subgroup_effects",
+      "expected_diagnostic_codes": [
+        "NONFINITE_ESTIMATE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "NONFINITE_ESTIMATE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_hte",
+        "scenario": "nonfinite",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_hte-runtime_failure",
+      "capability": "econml_hte",
+      "category": "abstention",
+      "method": "doubly_robust_subgroup_effects",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_hte_runtime_failure",
+      "expected_status": "abstained",
+      "expected_method": "doubly_robust_subgroup_effects",
+      "expected_diagnostic_codes": [
+        "ESTIMATOR_FIT_FAILURE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "ESTIMATOR_FIT_FAILURE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_hte",
+        "scenario": "runtime_failure",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_hte-success",
+      "capability": "econml_hte",
+      "category": "successful_inference",
+      "method": "doubly_robust_subgroup_effects",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_hte_success",
+      "expected_status": "completed",
+      "expected_method": "doubly_robust_subgroup_effects",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [
+        {
+          "path": "subgroup_results.0.estimate",
+          "value": 1,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing #103/#104 finite-sample subgroup reference recovery bound.",
+            "provenance": "issue-104:subgroup-reference"
+          }
+        },
+        {
+          "path": "subgroup_results.1.estimate",
+          "value": 3,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing #103/#104 finite-sample subgroup reference recovery bound.",
+            "provenance": "issue-104:subgroup-reference"
+          }
+        }
+      ],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_hte",
+        "scenario": "success",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-econml_hte-unsupported_inference",
+      "capability": "econml_hte",
+      "category": "invalid_input",
+      "method": "doubly_robust_subgroup_effects",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_econml_hte_unsupported_inference",
+      "expected_status": "unsupported",
+      "expected_method": "doubly_robust_subgroup_effects",
+      "expected_diagnostic_codes": [
+        "UNSUPPORTED_INFERENCE"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "UNSUPPORTED_INFERENCE",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "econml_hte",
+        "scenario": "unsupported_inference",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "optional",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_dml-degenerate",
+      "capability": "repository_dml",
+      "category": "abstention",
+      "method": "dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_dml_degenerate",
+      "expected_status": "abstained",
+      "expected_method": "dml",
+      "expected_diagnostic_codes": [
+        "dml.degenerate_treatment_residual"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "dml.degenerate_treatment_residual",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_dml",
+        "scenario": "degenerate",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "core",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_dml-invalid",
+      "capability": "repository_dml",
+      "category": "invalid_input",
+      "method": "dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_dml_invalid",
+      "expected_status": "invalid",
+      "expected_method": "dml",
+      "expected_diagnostic_codes": [
+        "dml.identification.invalid"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "dml.identification.invalid",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_dml",
+        "scenario": "invalid",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "core",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_dml-null",
+      "capability": "repository_dml",
+      "category": "successful_inference",
+      "method": "dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_dml_null",
+      "expected_status": "completed",
+      "expected_method": "dml",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [
+        {
+          "path": "point_estimate",
+          "value": 0,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing independently known effect DGP recovery bound.",
+            "provenance": "issue-104:known-effect"
+          }
+        }
+      ],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_dml",
+        "scenario": "null",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "core",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_dml-overlap",
+      "capability": "repository_dml",
+      "category": "abstention",
+      "method": "dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_dml_overlap",
+      "expected_status": "abstained",
+      "expected_method": "dml",
+      "expected_diagnostic_codes": [
+        "dml.overlap.severe"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "dml.overlap.severe",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_dml",
+        "scenario": "overlap",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_dml-runtime_failure",
+      "capability": "repository_dml",
+      "category": "abstention",
+      "method": "dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_dml_runtime_failure",
+      "expected_status": "abstained",
+      "expected_method": "dml",
+      "expected_diagnostic_codes": [
+        "dml.nuisance.fit_failure"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "dml.nuisance.fit_failure",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_dml",
+        "scenario": "runtime_failure",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_dml-success",
+      "capability": "repository_dml",
+      "category": "successful_inference",
+      "method": "dml",
+      "analysis_design": "advanced_causal",
+      "estimand": "ate",
+      "target_population": "full",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_dml_success",
+      "expected_status": "completed",
+      "expected_method": "dml",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [
+        {
+          "path": "point_estimate",
+          "value": 2,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing independently known effect DGP recovery bound.",
+            "provenance": "issue-104:known-effect"
+          }
+        }
+      ],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_dml",
+        "scenario": "success",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "core",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_hte-homogeneous",
+      "capability": "repository_hte",
+      "category": "successful_inference",
+      "method": "dml_orthogonal_subgroup_interactions",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_hte_homogeneous",
+      "expected_status": "completed",
+      "expected_method": "dml_orthogonal_subgroup_interactions",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [
+        {
+          "path": "subgroup_results.0.estimate",
+          "value": 2,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing #103/#104 finite-sample subgroup reference recovery bound.",
+            "provenance": "issue-104:subgroup-reference"
+          }
+        },
+        {
+          "path": "subgroup_results.1.estimate",
+          "value": 2,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing #103/#104 finite-sample subgroup reference recovery bound.",
+            "provenance": "issue-104:subgroup-reference"
+          }
+        }
+      ],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_hte",
+        "scenario": "homogeneous",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "core",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_hte-invalid_modifier",
+      "capability": "repository_hte",
+      "category": "invalid_input",
+      "method": "dml_orthogonal_subgroup_interactions",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_hte_invalid_modifier",
+      "expected_status": "invalid",
+      "expected_method": "dml_orthogonal_subgroup_interactions",
+      "expected_diagnostic_codes": [
+        "hte.modifier.post_treatment"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "hte.modifier.post_treatment",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_hte",
+        "scenario": "invalid_modifier",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "core",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_hte-overlap",
+      "capability": "repository_hte",
+      "category": "abstention",
+      "method": "dml_orthogonal_subgroup_interactions",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_hte_overlap",
+      "expected_status": "abstained",
+      "expected_method": "dml_orthogonal_subgroup_interactions",
+      "expected_diagnostic_codes": [
+        "hte.overlap.global_severe"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "hte.overlap.global_severe",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_hte",
+        "scenario": "overlap",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_hte-runtime_failure",
+      "capability": "repository_hte",
+      "category": "abstention",
+      "method": "dml_orthogonal_subgroup_interactions",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_hte_runtime_failure",
+      "expected_status": "abstained",
+      "expected_method": "dml_orthogonal_subgroup_interactions",
+      "expected_diagnostic_codes": [
+        "dml.nuisance.fit_failure"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "dml.nuisance.fit_failure",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_hte",
+        "scenario": "runtime_failure",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "controlled",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_hte-sparse",
+      "capability": "repository_hte",
+      "category": "abstention",
+      "method": "dml_orthogonal_subgroup_interactions",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_hte_sparse",
+      "expected_status": "abstained",
+      "expected_method": "dml_orthogonal_subgroup_interactions",
+      "expected_diagnostic_codes": [
+        "hte.subgroup.sparse_total"
+      ],
+      "expected_advisory_codes": [],
+      "expected_abstention": true,
+      "expected_abstention_reason": "hte.subgroup.sparse_total",
+      "expected_values": [],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_hte",
+        "scenario": "sparse",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "core",
+        "fingerprint_expectation": "stable"
+      }
+    },
+    {
+      "case_id": "advanced-repository_hte-success",
+      "capability": "repository_hte",
+      "category": "successful_inference",
+      "method": "dml_orthogonal_subgroup_interactions",
+      "analysis_design": "advanced_causal",
+      "estimand": "cate",
+      "target_population": "conditioned",
+      "metric_type": "continuous",
+      "fixture_id": "advanced_repository_hte_success",
+      "expected_status": "completed",
+      "expected_method": "dml_orthogonal_subgroup_interactions",
+      "expected_diagnostic_codes": [],
+      "expected_advisory_codes": [],
+      "expected_abstention": false,
+      "expected_abstention_reason": null,
+      "expected_values": [
+        {
+          "path": "subgroup_results.0.estimate",
+          "value": 1,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing #103/#104 finite-sample subgroup reference recovery bound.",
+            "provenance": "issue-104:subgroup-reference"
+          }
+        },
+        {
+          "path": "subgroup_results.1.estimate",
+          "value": 3,
+          "tolerance": {
+            "absolute": 0.25,
+            "rationale": "Existing #103/#104 finite-sample subgroup reference recovery bound.",
+            "provenance": "issue-104:subgroup-reference"
+          }
+        }
+      ],
+      "notes": "Versioned public-boundary conformance; expected refusals are not quality failures.",
+      "fixture_provenance": "phase4-statistical-fixtures-v1",
+      "advanced": {
+        "capability_id": "repository_hte",
+        "scenario": "success",
+        "seed": 812,
+        "uncertainty": "required",
+        "dependency_expectation": "core",
+        "fingerprint_expectation": "stable"
+      }
+    }
+  ]
+}

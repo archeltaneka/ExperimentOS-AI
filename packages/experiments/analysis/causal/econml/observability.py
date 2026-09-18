@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from packages.observability.base import BaseObservabilityProvider
 
+from ..advanced.conformance import execution_metadata
 from ..advanced.models import AdvancedCausalResult
 from ..hte.results import HeterogeneousEffectResult
 
@@ -29,6 +30,10 @@ def observe_result(
             "advanced_causal_estimator",
             run_type="chain",
             metadata={
+                **execution_metadata(
+                    result,
+                    "econml_linear_dml" if category == "dml" else "econml_linear_dr_subgroups",
+                ),
                 "adapter": "econml",
                 "estimator": estimator,
                 "estimator_category": category,

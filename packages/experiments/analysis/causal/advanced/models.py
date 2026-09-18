@@ -112,6 +112,7 @@ class AdvancedCausalResult(ContractModel):
 
     outcome_type: Literal["advanced_causal_effect"] = "advanced_causal_effect"
     schema_version: Literal["1"] = "1"
+    configuration_fingerprint_sha256: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None = None
     method: Literal["partialling_out_dml"] = "partialling_out_dml"
     execution_request: DMLExecutionRequest
     configuration: AdvancedEstimatorConfig

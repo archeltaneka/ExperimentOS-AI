@@ -16,6 +16,11 @@ from ...provenance import (
     ProvenanceSourceType,
 )
 from ...validation.table import AnalysisTable
+from ..advanced.conformance import (
+    configuration_fingerprint,
+    execution_metadata,
+    supplied_nuisance_fingerprints,
+)
 from ..diagnostics import EvidenceLimitation, EvidenceLimitationCode
 from ..models import ObservationalAnalysisRequest
 from ..propensity import OverlapStatus
@@ -83,6 +88,19 @@ class DoubleMachineLearningEstimator:
         )
         try:
             result = self._analyze(execution, table, provenance=provenance)
+            try:
+                fingerprint = configuration_fingerprint(
+                    execution,
+                    "repository_dml",
+                    nuisance_fingerprints=supplied_nuisance_fingerprints(
+                        self._outcome_adapter, self._treatment_adapter
+                    ),
+                )
+            except (ValueError, TypeError, AttributeError):
+                # Preserve an existing normalized refusal for a malformed request.
+                # Missing provenance remains a blocking conformance finding.
+                fingerprint = None
+            result = result.model_copy(update={"configuration_fingerprint_sha256": fingerprint})
         except Exception as error:
             _finish_failure(
                 self.observability_provider,
@@ -516,6 +534,7 @@ def _finish_result(
     if span is None:
         return
     metadata: dict[str, object] = {
+        **execution_metadata(result, "repository_dml"),
         "method": "dml",
         "status": result.status.value,
         "estimand": (

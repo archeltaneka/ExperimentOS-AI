@@ -1,4 +1,4 @@
-version: "2026-08-17"
+version: "2026-09-18"
 sources:
   rag:
     path: evaluation.md
@@ -646,3 +646,48 @@ metrics:
     required: false
     weight: 0.5
     description: Each implemented statistical capability should have at least two references.
+  - metric_id: statistics.failures.interface_leakage
+    source: statistics
+    category: Advanced Causal Conformance
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Advanced causal interface leakage violations block reliability.
+  - metric_id: statistics.failures.exception_normalization
+    source: statistics
+    category: Advanced Causal Conformance
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Advanced causal exception normalization violations block reliability.
+  - metric_id: statistics.failures.unsupported_inference
+    source: statistics
+    category: Advanced Causal Conformance
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Advanced causal unsupported inference violations block reliability.
+  - metric_id: statistics.failures.data_leakage
+    source: statistics
+    category: Advanced Causal Conformance
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Advanced causal data leakage violations block reliability.
+  - metric_id: statistics.failures.dependency
+    source: statistics
+    category: Advanced Causal Conformance
+    operator: lte
+    value: 0
+    severity: critical
+    required: false
+    weight: 1.5
+    description: Advanced causal dependency violations block reliability.

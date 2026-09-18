@@ -16,10 +16,14 @@ from tests.hte_fixtures import effect_rows, hte_table
 
 @pytest.mark.parametrize("hte", [False, True])
 @pytest.mark.parametrize("exception", [ModuleNotFoundError, ImportError, OSError])
-def test_optional_import_failures_return_explicit_owned_unavailable_state(
+def test_installed_import_failures_return_explicit_owned_incompatible_state(
     monkeypatch, hte: bool, exception: type[Exception]
 ) -> None:
-    from packages.experiments.analysis.causal.econml import EconMLDMLAdapter, EconMLHTEAdapter
+    from packages.experiments.analysis.causal.econml import (
+        EconMLDMLAdapter,
+        EconMLHTEAdapter,
+        dependency,
+    )
 
     original = importlib.import_module
 
@@ -29,6 +33,8 @@ def test_optional_import_failures_return_explicit_owned_unavailable_state(
         return original(name, *args, **kwargs)
 
     monkeypatch.setattr(importlib, "import_module", blocked)
+    monkeypatch.setattr(dependency.metadata, "version", lambda name: "0.17.0")
+    monkeypatch.setattr(dependency.metadata, "requires", lambda name: ())
     adapter = (
         EconMLHTEAdapter()
         if hte
@@ -41,7 +47,7 @@ def test_optional_import_failures_return_explicit_owned_unavailable_state(
     result = adapter.analyze(execution, table, provenance=provenance())
     reason = result.abstention_reason
     code = reason if isinstance(reason, str) else reason.code
-    assert code == "OPTIONAL_DEPENDENCY_UNAVAILABLE"
+    assert code == "INCOMPATIBLE_DEPENDENCY_RUNTIME"
     assert result.status.value == "abstained"
     assert "sensitive row" not in result.model_dump_json()
     assert_owned_graph(result)
@@ -66,6 +72,7 @@ def test_incompatible_econml_version_is_explicit(monkeypatch) -> None:
 def test_future_interpreter_is_unsupported_without_narrowing_core(monkeypatch) -> None:
     from packages.experiments.analysis.causal.econml import EconMLDMLAdapter, dependency
 
+    monkeypatch.setattr(dependency.metadata, "version", lambda name: "0.17.0")
     monkeypatch.setattr(dependency, "python_version", lambda: "3.15.0")
     result = EconMLDMLAdapter(
         constant_effect_assumption=True,

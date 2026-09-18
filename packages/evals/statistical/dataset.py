@@ -30,13 +30,15 @@ def load_statistical_reference_cases(path: Path) -> StatisticalReferenceDataset:
         if path.resolve() == default_path:
             companion_path = path.resolve().with_name(DEFAULT_OBSERVATIONAL_DATASET_PATH.name)
             observational = _load_companion(companion_path)
+            advanced = _load_companion(path.resolve().with_name("phase4_advanced_conformance.json"))
             if observational.fixture_provenance != dataset.fixture_provenance:
                 raise ValueError("observational fixture provenance must match the baseline")
             dataset = dataset.model_copy(
                 update={
                     "cases": tuple(
                         sorted(
-                            (*dataset.cases, *observational.cases), key=lambda case: case.case_id
+                            (*dataset.cases, *observational.cases, *advanced.cases),
+                            key=lambda case: case.case_id,
                         )
                     )
                 }

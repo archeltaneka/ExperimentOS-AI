@@ -33,6 +33,11 @@ def test_dml_telemetry_contains_only_safe_aggregate_metadata() -> None:
     assert record.name == "double_machine_learning"
     assert record.inputs == {"row_count": 80}
     assert set(record.metadata) == {
+        "adapter_id",
+        "adapter_version",
+        "configuration_fingerprint",
+        "dependency_state",
+        "dependency_version",
         "method",
         "fold_count",
         "status",

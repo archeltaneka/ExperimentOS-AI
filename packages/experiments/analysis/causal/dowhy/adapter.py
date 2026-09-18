@@ -14,6 +14,7 @@ from packages.observability.noop import NoOpObservabilityProvider
 
 from ...provenance import ProvenanceRecords
 from ...validation.table import AnalysisTable
+from ..advanced.conformance import configuration_fingerprint
 from ..estimands import CausalEstimandKind, EffectScale
 from ..models import IdentificationStatus, ObservationalAnalysisRequest
 from ..service import CausalIdentificationService
@@ -57,6 +58,16 @@ class DoWhyAdapter:
     ) -> DoWhyAnalysisResult:
         started = perf_counter()
         result = self._analyze(execution, table, provenance=provenance)
+        try:
+            result = result.model_copy(
+                update={
+                    "configuration_fingerprint_sha256": configuration_fingerprint(
+                        execution, "experimentos_dowhy"
+                    )
+                }
+            )
+        except (TypeError, ValueError, AttributeError):
+            pass  # Malformed input refusals retain the safe diagnostic, not a fabricated digest.
         observe_dowhy_result(
             self.observability_provider, result, (perf_counter() - started) * 1000.0
         )

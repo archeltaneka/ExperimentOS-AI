@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from enum import StrEnum
 from typing import Annotated, Any, Self
 
@@ -14,6 +15,8 @@ from pydantic import (
     StrictInt,
     model_validator,
 )
+
+from .advanced.models import AdvancedCaseDetails, AdvancedResultDetails
 
 type NonEmptyStr = Annotated[str, Field(strict=True, min_length=1)]
 type ExpectedScalar = StrictBool | StrictInt | FiniteFloat | NonEmptyStr | None
@@ -30,6 +33,15 @@ class StatisticalCaseModel(BaseModel):
 
 
 class StatisticalCapability(StrEnum):
+    REPOSITORY_DML = "repository_dml"
+    REPOSITORY_HTE = "repository_hte"
+    ECONML_DML = "econml_dml"
+    ECONML_HTE = "econml_hte"
+    DOWHY_IDENTIFICATION = "dowhy_identification"
+    DOWHY_ESTIMATION = "dowhy_estimation"
+    DOWHY_PLACEBO = "dowhy_placebo"
+    DOWHY_COMMON_CAUSE = "dowhy_common_cause"
+    DOWHY_SUBSET = "dowhy_subset"
     CAUSAL_IDENTIFICATION = "causal_identification"
     ELIGIBILITY_VALIDATION = "eligibility_validation"
     DESCRIPTIVE_STATISTICS = "descriptive_statistics"
@@ -71,6 +83,7 @@ class StatisticalCheck(StatisticalCaseModel):
     actual: Any = None
     delta: FiniteFloat | None = None
     tolerance: Annotated[FiniteFloat, Field(ge=0)] | None = None
+    relative_tolerance: Annotated[FiniteFloat, Field(ge=0)] | None = None
     tolerance_rationale: NonEmptyStr | None = None
     tolerance_provenance: NonEmptyStr | None = None
     message: NonEmptyStr
@@ -80,6 +93,7 @@ class StatisticalCaseResult(StatisticalCaseModel):
     """Evaluation result for one reference case without raw source rows."""
 
     case_id: NonEmptyStr
+    advanced: AdvancedResultDetails | None = None
     capability: StatisticalCapability
     category: StatisticalCaseCategory
     design: NonEmptyStr = "unspecified"
@@ -167,8 +181,16 @@ class StatisticalTolerance(StatisticalCaseModel):
     """One independently justified absolute tolerance."""
 
     absolute: Annotated[FiniteFloat, Field(ge=0)]
+    relative: Annotated[FiniteFloat, Field(ge=0)] = 0.0
     rationale: NonEmptyStr
     provenance: NonEmptyStr
+
+    def accepts(self, actual: float, reference: float) -> bool:
+        return (
+            math.isfinite(actual)
+            and math.isfinite(reference)
+            and abs(actual - reference) <= self.absolute + self.relative * abs(reference)
+        )
 
 
 class StatisticalExpectedValue(StatisticalCaseModel):
@@ -240,6 +262,7 @@ class StatisticalReferenceCase(StatisticalCaseModel):
     """One deterministic Phase 4 capability input and independent expectation."""
 
     case_id: NonEmptyStr
+    advanced: AdvancedCaseDetails | None = None
     capability: StatisticalCapability
     category: StatisticalCaseCategory
     method: NonEmptyStr = "fixed_horizon_ab"
@@ -267,6 +290,19 @@ class StatisticalReferenceCase(StatisticalCaseModel):
 
     @model_validator(mode="after")
     def validate_expectation_shape(self) -> Self:
+        from .advanced.registry import REGISTRY
+
+        is_advanced = self.capability.value in REGISTRY
+        if is_advanced != (self.advanced is not None):
+            raise ValueError("advanced capabilities require explicit conformance metadata")
+        if self.advanced is not None:
+            capability = REGISTRY[self.capability.value]
+            if (
+                self.advanced.capability_id != self.capability.value
+                or self.method != capability.method
+                or self.advanced.uncertainty != capability.uncertainty
+            ):
+                raise ValueError("advanced case metadata contradicts capability registry")
         if self.expected_abstention != (self.expected_abstention_reason is not None):
             raise ValueError(
                 "expected_abstention and expected_abstention_reason must be declared together"

@@ -10,6 +10,26 @@ def _workflow_jobs() -> dict[str, object]:
     return workflow["jobs"]
 
 
+def test_advanced_conformance_runs_core_and_required_optional_adapters() -> None:
+    jobs = _workflow_jobs()
+    core_runs = "\n".join(step.get("run", "") for step in jobs["unit"]["steps"])
+    assert "tests/test_advanced*.py" in core_runs
+    optional = jobs["advanced-causal-optional"]
+    runs = "\n".join(step.get("run", "") for step in optional["steps"])
+    assert "--group econml --group dowhy --frozen" in runs
+    assert "packages.evals.cli statistical-baseline" in runs
+    assert "--require-optional econml --require-optional dowhy" in runs
+    assert "tests/test_econml*.py" in runs
+    assert "tests/test_dowhy*.py" in runs
+    assert "services" not in optional
+    assert "advanced-causal-optional" in jobs["ai-quality-gate"]["needs"]
+    prerequisites = next(
+        step for step in jobs["ai-quality-gate"]["steps"] if step.get("id") == "prerequisites"
+    )
+    assert "needs.advanced-causal-optional.result" in str(prerequisites)
+    assert '"$ADVANCED_CAUSAL_RESULT"' in prerequisites["run"]
+
+
 def test_ci_workflow_declares_ai_quality_gate_and_offline_defaults() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
 

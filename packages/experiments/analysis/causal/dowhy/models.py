@@ -142,6 +142,7 @@ class DoWhyAdapterProvenance(ContractModel):
 
 class DoWhyAnalysisResult(ContractModel):
     outcome_type: Literal["dowhy_causal_evidence"] = "dowhy_causal_evidence"
+    configuration_fingerprint_sha256: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None = None
     execution_request: DoWhyExecutionRequest
     status: DoWhyOperationStatus
     identification: DoWhyIdentificationEvidence

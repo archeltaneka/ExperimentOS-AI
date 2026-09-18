@@ -196,6 +196,55 @@ jobs:
           tests/test_repository_hygiene.py
           -v
 
+      - name: Run advanced causal core conformance
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+        run: >-
+          uv run pytest -q
+          tests/test_advanced*.py tests/test_dml*.py tests/test_hte*.py
+          tests/test_econml*.py tests/test_dowhy*.py
+
+  advanced-causal-optional:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install supported optional adapter environment
+        run: uv sync --group dev --group econml --group dowhy --frozen
+      - name: Validate installed dependencies
+        run: uv pip check
+      - name: Run installed adapter conformance
+        run: >-
+          uv run --no-sync pytest -q tests/test_advanced*.py
+          tests/test_econml*.py tests/test_dowhy*.py
+      - name: Run canonical Phase 4 reliability with required adapters
+        run: >-
+          uv run --no-sync python -m packages.evals.cli statistical-baseline
+          --require-optional econml --require-optional dowhy
+          --json-output artifacts/ci/advanced/phase4/statistical_baseline.json
+          --output artifacts/ci/advanced/phase4/statistical_baseline.md
+      - name: Upload advanced causal reliability artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: advanced-causal-optional
+          path: artifacts/ci/advanced
+          if-no-files-found: warn
+
   offline-eval-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -396,6 +445,7 @@ jobs:
       - validate
       - unit
       - offline-eval-smoke
+      - advanced-causal-optional
       - integration-db
     if: ${{ always() }}
     runs-on: ubuntu-latest
@@ -426,11 +476,12 @@ jobs:
           VALIDATE_RESULT: ${{ needs.validate.result }}
           UNIT_RESULT: ${{ needs.unit.result }}
           OFFLINE_EVAL_RESULT: ${{ needs.offline-eval-smoke.result }}
+          ADVANCED_CAUSAL_RESULT: ${{ needs.advanced-causal-optional.result }}
           INTEGRATION_RESULT: ${{ needs.integration-db.result }}
         shell: bash
         run: |
           prerequisite_exit_code=0
-          for result in "$FORMAT_RESULT" "$LINT_RESULT" "$VALIDATE_RESULT" "$UNIT_RESULT" "$OFFLINE_EVAL_RESULT" "$INTEGRATION_RESULT"; do
+          for result in "$FORMAT_RESULT" "$LINT_RESULT" "$VALIDATE_RESULT" "$UNIT_RESULT" "$OFFLINE_EVAL_RESULT" "$ADVANCED_CAUSAL_RESULT" "$INTEGRATION_RESULT"; do
             if [[ "$result" != "success" ]]; then
               prerequisite_exit_code=2
             fi

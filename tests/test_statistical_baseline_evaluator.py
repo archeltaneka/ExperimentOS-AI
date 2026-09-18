@@ -294,6 +294,10 @@ def test_fixture_caches_include_complete_case_identity(monkeypatch: pytest.Monke
 
 def test_repository_cases_pass_all_reliability_dimensions_deterministically() -> None:
     dataset = load_statistical_reference_cases(DEFAULT_STATISTICAL_DATASET_PATH)
+    # Keep exact pre-106 gates; advanced replay/duration has dedicated coverage.
+    dataset = dataset.model_copy(
+        update={"cases": tuple(c for c in dataset.cases if c.advanced is None)}
+    )
 
     first = StatisticalBaselineEvaluator().evaluate(dataset)
     repeated = StatisticalBaselineEvaluator().evaluate(dataset)

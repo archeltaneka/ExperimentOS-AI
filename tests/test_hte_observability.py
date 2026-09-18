@@ -31,6 +31,11 @@ def test_hte_success_telemetry_contains_only_aggregate_dimensions() -> None:
     assert record.name == "heterogeneous_treatment_effects"
     assert record.inputs == {"row_count": 160}
     assert set(record.metadata) == {
+        "adapter_id",
+        "adapter_version",
+        "configuration_fingerprint",
+        "dependency_state",
+        "dependency_version",
         "method",
         "estimand",
         "modifier_type",

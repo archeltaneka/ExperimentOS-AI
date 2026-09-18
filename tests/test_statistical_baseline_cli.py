@@ -40,7 +40,8 @@ def test_cli_success_writes_json_and_markdown_artifacts(tmp_path: Path) -> None:
     assert all("expected_value" in rule for rule in payload["quality_policy"]["rules"])
     assert all("actual_value" in rule for rule in payload["quality_policy"]["rules"])
     assert all(rule["diagnostic_evidence"] for rule in payload["quality_policy"]["rules"])
-    assert payload["dataset_size"] == 92
+    assert len([c for c in payload["case_results"] if c["advanced"] is None]) == 92
+    assert payload["dataset_size"] == len(payload["case_results"])
     assert "# Phase 4 Statistical Reliability Baseline" in markdown_output.read_text(
         encoding="utf-8"
     )
@@ -124,7 +125,15 @@ def test_cli_artifacts_are_byte_stable_across_repeated_runs(tmp_path: Path) -> N
             )
         )
 
-    assert outputs[0] == outputs[1]
+    # New advanced cases record real duration; statistical evidence remains stable.
+    payloads = [json.loads(output[0]) for output in outputs]
+    for payload in payloads:
+        for case in payload["case_results"]:
+            if case["advanced"] is not None:
+                assert case["duration_ms"] > 0
+                case.pop("duration_ms")
+    assert payloads[0] == payloads[1]
+    assert outputs[0][1] == outputs[1][1]
 
 
 def test_existing_evaluation_cli_dispatches_statistical_baseline(tmp_path: Path) -> None:

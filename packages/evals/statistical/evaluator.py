@@ -27,8 +27,9 @@ from .telemetry import evaluate_fixture_telemetry_privacy
 STATISTICAL_POLICY_VERSION = "2026-08-29"
 LIMITATIONS = (
     "Observational reliability covers DiD, propensity diagnostics, IPW ATE, and IPW ATT.",
-    "DML, heterogeneous effects, EconML, DoWhy, causal forests, and unmeasured-confounding "
-    "sensitivity analysis are not covered.",
+    "Advanced causal conformance covers bounded fixtures, not correctness on every dataset.",
+    "Cross-library agreement and passed refuters do not establish causal validity; "
+    "comparisons require compatible estimands, populations, and assumptions.",
     "Business-impact conversion, auto-stop actions, rollout automation, and dashboards are "
     "not covered.",
     "Bayesian v1 uses deterministic quadrature and has no seeded sampling path to evaluate.",
@@ -54,8 +55,14 @@ _OBSERVATIONAL_EFFECT_CAPABILITIES = {
 class StatisticalBaselineEvaluator:
     """Evaluate typed references without external services or generated expectations."""
 
+    def __init__(self, *, required_dependencies: tuple[str, ...] = ()) -> None:
+        self.required_dependencies = required_dependencies
+
     def evaluate(self, dataset: StatisticalReferenceDataset) -> StatisticalBaselineReport:
         case_results = tuple(self._evaluate_case(case) for case in dataset.cases)
+        from .advanced.comparisons import attach_comparisons
+
+        case_results = attach_comparisons(dataset.cases, case_results)
         counts = Counter(result.evaluation_status for result in case_results)
         capability_results = tuple(
             self._capability_result(capability, case_results)
@@ -88,6 +95,10 @@ class StatisticalBaselineEvaluator:
         )
 
     def _evaluate_case(self, case: StatisticalReferenceCase) -> StatisticalCaseResult:
+        if case.advanced is not None:
+            from .advanced.harness import evaluate_advanced_case
+
+            return evaluate_advanced_case(case, self.required_dependencies)
         first = _cached_fixture(case, reverse_rows=False, execution_slot="first")
         repeated = _cached_fixture(case, reverse_rows=False, execution_slot="repeat")
         reordered = _cached_fixture(case, reverse_rows=True, execution_slot="reordered")

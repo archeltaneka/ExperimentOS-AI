@@ -11,6 +11,7 @@ from packages.observability.noop import NoOpObservabilityProvider
 
 from ...provenance import DiagnosticSeverity, ProvenanceRecords
 from ...validation.table import AnalysisTable
+from ..advanced.conformance import configuration_fingerprint
 from ..advanced.models import AdvancedCausalResult, AdvancedEstimatorConfig, AdvancedFailureCode
 from ..diagnostics import EvidenceLimitation, EvidenceLimitationCode
 from ..dml.models import (
@@ -72,6 +73,16 @@ class EconMLDMLAdapter:
     ) -> AdvancedCausalResult:
         started = perf_counter()
         result = self._analyze(execution, table, provenance=provenance)
+        try:
+            result = result.model_copy(
+                update={
+                    "configuration_fingerprint_sha256": configuration_fingerprint(
+                        execution, "econml_linear_dml", self.configuration
+                    )
+                }
+            )
+        except (TypeError, ValueError, AttributeError):
+            pass  # Malformed input refusals retain the safe diagnostic, not a fabricated digest.
         observe_result(
             self.observability_provider,
             result,

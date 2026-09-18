@@ -73,7 +73,8 @@ def test_repository_dataset_absolute_path_keeps_observational_companion(
 
     dataset = load_statistical_reference_cases(absolute_path)
 
-    assert len(dataset.cases) == 92
+    assert len([c for c in dataset.cases if c.advanced is None]) == 92
+    assert any(c.advanced is not None for c in dataset.cases)
     assert "ipw-att-known-effect" in {case.case_id for case in dataset.cases}
 
 

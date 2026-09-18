@@ -33,13 +33,25 @@ class EconMLBackend:
 def load_econml() -> EconMLBackend:
     """Check installation metadata before importing optional compiled implementations."""
     try:
+        installed = metadata.version("econml")
+    except metadata.PackageNotFoundError:
+        raise AdapterError(
+            AdvancedFailureCode.OPTIONAL_DEPENDENCY_UNAVAILABLE,
+            "Optional EconML is not installed.",
+        ) from None
+    except Exception:
+        raise AdapterError(
+            AdvancedFailureCode.INCOMPATIBLE_DEPENDENCY_RUNTIME,
+            "The installed EconML runtime could not be validated.",
+        ) from None
+
+    try:
         runtime = Version(python_version())
         if runtime.release[:2] not in ((3, 12), (3, 13), (3, 14)):
             raise AdapterError(
                 AdvancedFailureCode.INCOMPATIBLE_DEPENDENCY_RUNTIME,
                 "This adapter supports Python 3.12 through 3.14 only.",
             )
-        installed = metadata.version("econml")
         if Version(installed) != Version("0.17.0"):
             raise AdapterError(
                 AdvancedFailureCode.INCOMPATIBLE_DEPENDENCY_RUNTIME,
@@ -64,6 +76,6 @@ def load_econml() -> EconMLBackend:
         raise
     except Exception:
         raise AdapterError(
-            AdvancedFailureCode.OPTIONAL_DEPENDENCY_UNAVAILABLE,
-            "Optional EconML installation is unavailable or could not be imported.",
+            AdvancedFailureCode.INCOMPATIBLE_DEPENDENCY_RUNTIME,
+            "The installed EconML runtime is incompatible or could not be imported.",
         ) from None

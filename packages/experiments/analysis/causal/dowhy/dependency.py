@@ -28,13 +28,25 @@ class DoWhyBackend:
 
 def load_dowhy() -> DoWhyBackend:
     try:
+        installed = metadata.version("dowhy")
+    except metadata.PackageNotFoundError:
+        raise AdapterError(
+            DoWhyFailureCode.OPTIONAL_DEPENDENCY_UNAVAILABLE,
+            "Optional DoWhy is not installed.",
+        ) from None
+    except Exception:
+        raise AdapterError(
+            DoWhyFailureCode.INCOMPATIBLE_DEPENDENCY_RUNTIME,
+            "The installed DoWhy runtime could not be validated.",
+        ) from None
+
+    try:
         runtime = Version(python_version())
         if runtime.release[:2] != (3, 13):
             raise AdapterError(
                 DoWhyFailureCode.INCOMPATIBLE_DEPENDENCY_RUNTIME,
                 "The verified DoWhy adapter runtime is Python 3.13 only.",
             )
-        installed = metadata.version("dowhy")
         if Version(installed) != Version("0.14"):
             raise AdapterError(
                 DoWhyFailureCode.INCOMPATIBLE_DEPENDENCY_RUNTIME,
@@ -55,6 +67,6 @@ def load_dowhy() -> DoWhyBackend:
         raise
     except Exception:
         raise AdapterError(
-            DoWhyFailureCode.OPTIONAL_DEPENDENCY_UNAVAILABLE,
-            "Optional DoWhy installation is unavailable or could not be imported.",
+            DoWhyFailureCode.INCOMPATIBLE_DEPENDENCY_RUNTIME,
+            "The installed DoWhy runtime is incompatible or could not be imported.",
         ) from None

@@ -30,8 +30,8 @@ def test_json_is_authoritative_structured_and_deterministic() -> None:
     assert first.endswith("\n")
     assert payload["schema_version"] == "1"
     assert payload["overall_status"] == "pass"
-    assert payload["dataset_size"] == 92
-    assert len(payload["case_results"]) == 92
+    assert len([c for c in payload["case_results"] if c["advanced"] is None]) == 92
+    assert payload["dataset_size"] == len(payload["case_results"])
     assert {item["actual_status"] for item in payload["case_results"]} >= {
         "completed",
         "ineligible",

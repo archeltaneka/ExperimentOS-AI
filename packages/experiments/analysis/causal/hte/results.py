@@ -169,6 +169,7 @@ class HeterogeneousEffectResult(ContractModel):
 
     outcome_type: Literal["heterogeneous_treatment_effects"] = "heterogeneous_treatment_effects"
     schema_version: Literal["1"] = "1"
+    configuration_fingerprint_sha256: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None = None
     method: Literal["dml_orthogonal_subgroup_interactions", "doubly_robust_subgroup_effects"] = (
         "dml_orthogonal_subgroup_interactions"
     )

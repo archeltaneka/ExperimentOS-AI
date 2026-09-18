@@ -104,6 +104,7 @@ def render_statistical_baseline_markdown(report: StatisticalBaselineReport) -> s
         ]
     )
     _finding_section(lines, report, "Blocking Failures", CheckStatus.FAIL)
+    _advanced_section(lines, report)
     _finding_section(lines, report, "Advisory Findings", CheckStatus.ADVISORY)
     _finding_section(lines, report, "Skipped Checks", CheckStatus.SKIPPED)
     _dimension_section(lines, report, "Numerical Reference Failures", "reference_accuracy")
@@ -156,6 +157,51 @@ def render_statistical_baseline_markdown(report: StatisticalBaselineReport) -> s
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _advanced_section(lines: list[str], report: StatisticalBaselineReport) -> None:
+    cases = tuple(c for c in report.case_results if c.advanced is not None)
+    if not cases:
+        return
+    lines.extend(
+        [
+            "",
+            "## Advanced Causal Conformance",
+            "",
+            "Suite version: 1. Execution status and conformance verdict are separate.",
+            "",
+            "| Case / capability | Native / semantic status | Verdict | Dependency / version | "
+            "Adapter / implementation | Configuration fingerprint | Execution |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for case in cases:
+        detail = case.advanced
+        assert detail is not None
+        lines.append(
+            f"| `{case.case_id}` | {case.actual_status} / {detail.semantic_status} | "
+            f"{case.evaluation_status.value} | {detail.dependency_state} / "
+            f"{detail.dependency_version or 'not installed'} | {detail.adapter_id} "
+            f"v{detail.adapter_version} / {detail.implementation_version} | "
+            f"`{detail.configuration_fingerprint or 'unavailable'}` | {detail.execution_kind} |"
+        )
+    for dimension, title in (
+        ("determinism", "Advanced Determinism"),
+        ("uncertainty", "Advanced Uncertainty"),
+        ("telemetry_privacy", "Advanced Privacy"),
+        ("provenance", "Advanced Provenance"),
+    ):
+        checks = [c for case in cases for c in case.checks if c.dimension == dimension]
+        lines.extend(
+            [
+                "",
+                f"### {title}",
+                "",
+                f"Checks: {len(checks)}; "
+                f"failed: {sum(c.status is CheckStatus.FAIL for c in checks)}; "
+                f"skipped: {sum(c.status is CheckStatus.SKIPPED for c in checks)}.",
+            ]
+        )
 
 
 def _finding_section(

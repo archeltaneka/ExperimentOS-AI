@@ -173,12 +173,12 @@ abstentions, invalid cases, and advisories whenever the structured artifact is p
 ## Limitations
 
 This suite covers fixed-horizon randomized analysis, CUPED, sequential testing, Bayesian A/B,
-DiD, propensity diagnostics, IPW ATE, and IPW ATT. It does not yet cover:
+DiD, propensity diagnostics, IPW ATE, and IPW ATT. It also includes
+[advanced causal conformance](advanced_causal_conformance.md) for repository DML/HTE,
+the supported EconML adapters, and existing DoWhy identification/handoff/refuters.
+Optional adapter absence is advisory; installed contract failures block.
+It does not cover:
 
-- DML;
-- heterogeneous treatment effects;
-- EconML;
-- DoWhy;
 - causal forests;
 - unmeasured-confounding sensitivity analysis;
 - business-impact estimation;

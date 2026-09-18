@@ -37,6 +37,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         description="Run the deterministic offline Phase 4 statistical reliability baseline."
     )
     parser.add_argument("--dataset", type=Path, default=DEFAULT_STATISTICAL_DATASET_PATH)
+    parser.add_argument(
+        "--require-optional",
+        choices=("econml", "dowhy"),
+        action="append",
+        default=[],
+        help="Require installed optional capabilities; absence becomes blocking.",
+    )
     parser.add_argument("--policy", type=Path, default=DEFAULT_POLICY_PATH)
     parser.add_argument("--json-output", type=Path, default=DEFAULT_JSON_OUTPUT)
     parser.add_argument("--output", type=Path, default=DEFAULT_MARKDOWN_OUTPUT)
@@ -48,7 +55,7 @@ def run_statistical_baseline(args: argparse.Namespace) -> StatisticalBaselineRep
     central_policy = load_quality_policy(args.policy)
     dataset = load_statistical_reference_cases(args.dataset)
     report = (
-        StatisticalBaselineEvaluator()
+        StatisticalBaselineEvaluator(required_dependencies=tuple(args.require_optional))
         .evaluate(dataset)
         .model_copy(update={"policy_version": central_policy.version})
     )
@@ -120,6 +127,17 @@ def _write(path: Path, content: str) -> None:
 
 
 def _policy_rule_method(metric_id: str) -> str:
+    if any(
+        name in metric_id
+        for name in (
+            "interface_leakage",
+            "exception_normalization",
+            "unsupported_inference",
+            "data_leakage",
+            "dependency",
+        )
+    ):
+        return "advanced_causal"
     for method in (
         "identification",
         "did",

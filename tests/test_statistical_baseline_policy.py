@@ -26,6 +26,9 @@ from packages.evals.statistical.reporting import statistical_baseline_to_json
 
 def _write_report(root: Path, **updates: object) -> Path:
     dataset = load_statistical_reference_cases(DEFAULT_STATISTICAL_DATASET_PATH)
+    dataset = dataset.model_copy(
+        update={"cases": tuple(c for c in dataset.cases if c.advanced is None)}
+    )
     report = StatisticalBaselineEvaluator().evaluate(dataset)
     payload = json.loads(statistical_baseline_to_json(report))
     payload.update(updates)

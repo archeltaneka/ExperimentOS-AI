@@ -17,6 +17,11 @@ from ...provenance import (
 )
 from ...uncertainty import ConfidenceInterval
 from ...validation.table import AnalysisTable
+from ..advanced.conformance import (
+    configuration_fingerprint,
+    execution_metadata,
+    supplied_nuisance_fingerprints,
+)
 from ..assumptions import CausalAssumption
 from ..dml.adapter import SklearnLogisticTreatmentAdapter, SklearnRidgeOutcomeAdapter
 from ..dml.crossfit import CrossFitError, CrossFittedNuisanceResult, cross_fit_nuisances
@@ -111,6 +116,19 @@ class HeterogeneousEffectEstimator:
         span = _start_span(self.observability_provider, len(table.rows))
         try:
             result = self._analyze(execution, table, provenance=provenance)
+            try:
+                fingerprint = configuration_fingerprint(
+                    execution,
+                    "repository_hte",
+                    nuisance_fingerprints=supplied_nuisance_fingerprints(
+                        self._outcome_adapter, self._treatment_adapter
+                    ),
+                )
+            except (ValueError, TypeError, AttributeError):
+                # Match the adapter boundary: malformed requests cannot make
+                # provenance construction replace an owned refusal with an error.
+                fingerprint = None
+            result = result.model_copy(update={"configuration_fingerprint_sha256": fingerprint})
         except Exception as error:
             _finish_failure(
                 self.observability_provider,
@@ -630,6 +648,7 @@ def _finish_result(
     if span is None:
         return
     metadata: dict[str, object] = {
+        **execution_metadata(result, "repository_hte"),
         "method": result.method,
         "estimand": result.estimand.estimand_type.value if result.estimand else "unavailable",
         "modifier_type": result.modifier.modifier_type.value,

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from packages.agents.state import create_initial_state
 
 
@@ -166,6 +168,90 @@ def test_business_impact_agent_carries_annualized_impact_from_source_evidence() 
     }
     assert update["business_impact"]["affected_segment"] == "high-intent wallet users"
     assert update["metrics"]["business_impact"]["has_annualized_impact"] is True
+
+
+@pytest.mark.parametrize(
+    "quote",
+    [
+        "Annualized impact: 1250000 for high-intent wallet users.",
+        "Annualized impact: $1250000 for high-intent wallet users.",
+        "Annualized impact: XUSD 1250000 for high-intent wallet users.",
+        "Annualized impact: USDX 1250000 for high-intent wallet users.",
+        "Annualized impact was 125000.",
+        "Annualized savings are 125000.",
+        "Annualized impact for 1000 users is unknown.",
+    ],
+)
+def test_business_impact_agent_does_not_infer_currency_from_annualized_text(
+    quote: str,
+) -> None:
+    from packages.agents.business_impact_agent import BusinessImpactAgent
+
+    state = build_business_impact_state()
+    state["citations"] = [
+        {
+            "document_id": "doc-annualized",
+            "experiment_id": "exp-001-payment-recommendation",
+            "quote": quote,
+            "section": "Business Impact",
+            "metadata": {"section": "Business Impact"},
+        }
+    ]
+    state["experiment_analysis"]["evidence_citations"] = list(state["citations"])
+
+    update = BusinessImpactAgent().run(state)
+
+    assert update["business_impact"]["estimated_annualized_impact"] is None
+    assert update["metrics"]["business_impact"]["has_annualized_impact"] is False
+
+
+@pytest.mark.parametrize(
+    ("currency", "expected_currency"),
+    [("USD", "USD"), ("IDR", "IDR"), ("usd", "USD"), ("idr", "IDR")],
+)
+def test_business_impact_agent_parses_explicit_annualized_currency_codes(
+    currency: str,
+    expected_currency: str,
+) -> None:
+    from packages.agents.business_impact_agent import BusinessImpactAgent
+
+    state = build_business_impact_state()
+    state["citations"] = [
+        {
+            "document_id": "doc-annualized",
+            "experiment_id": "exp-001-payment-recommendation",
+            "quote": f"Estimated annualized impact is {currency} 1,250,000.",
+            "section": "Business Impact",
+            "metadata": {"section": "Business Impact"},
+        }
+    ]
+    state["experiment_analysis"]["evidence_citations"] = list(state["citations"])
+
+    update = BusinessImpactAgent().run(state)
+
+    assert update["business_impact"]["estimated_annualized_impact"] == {
+        "amount": 1250000.0,
+        "currency": expected_currency,
+        "period": "annual",
+    }
+
+
+def test_business_impact_agent_labels_legacy_outputs_as_descriptive_and_reported() -> None:
+    from packages.agents.business_impact_agent import BusinessImpactAgent
+
+    state = build_business_impact_state()
+    state["experiment_metadata"]["estimated_annualized_impact"] = {
+        "amount": 1250000,
+        "currency": "IDR",
+        "period": "annual",
+    }
+
+    update = BusinessImpactAgent().run(state)
+
+    summary = update["business_impact"]["summary"].lower()
+    assert "descriptive lift" in summary
+    assert "source-reported annualized amount" in summary
+    assert "estimated business impact" not in summary
 
 
 def test_business_impact_agent_returns_insufficient_data_without_analysis_inputs() -> None:

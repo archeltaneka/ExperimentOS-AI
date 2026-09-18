@@ -18,8 +18,11 @@ from packages.agents.tools import execute_tool
 
 BUSINESS_IMPACT_NODE = "business_impact"
 _ANNUALIZED_TEXT_PATTERN = re.compile(
-    r"annualized (?:impact|savings)[^\dA-Z$]*"
-    r"(?:(USD|AUD|GBP|EUR|JPY|SGD)\s*)?\$?([0-9][0-9,]*(?:\.\d+)?)",
+    r"\bannualized\s+(?:impact|savings)\b"
+    r"\s*(?:(?:is|of)\s+|[:=]\s*)?"
+    r"(?P<currency>(?<![A-Z])(?:USD|AUD|GBP|EUR|JPY|SGD|IDR)(?![A-Z]))"
+    r"\s*(?:\$\s*)?"
+    r"(?P<amount>[0-9][0-9,]*(?:\.\d+)?)",
     re.IGNORECASE,
 )
 
@@ -186,13 +189,16 @@ def _build_business_impact(state: AgentState) -> tuple[BusinessImpact, list[dict
 
     if annualized_impact is not None:
         assumptions.append(
-            "Estimated annualized impact was carried forward from explicit source data."
+            "A source-reported annualized amount was carried forward in a legacy field; "
+            "it was not computed from the descriptive lift."
         )
     else:
         limitations.append("No explicit annualized impact was available in shared state evidence.")
 
     if operational_savings is not None:
-        assumptions.append("Operational savings were carried forward from explicit source data.")
+        assumptions.append(
+            "Source-reported operational savings were carried forward from explicit source data."
+        )
 
     summary = _build_summary(
         impact_status=impact_status,
@@ -237,21 +243,35 @@ def _build_summary(
 ) -> str:
     if impact_status == "estimated" and baseline is not None and treatment is not None:
         summary = (
-            f"Estimated business impact for {primary_metric}: baseline={baseline:.4f}, "
+            f"Descriptive lift for {primary_metric}: baseline={baseline:.4f}, "
             f"treatment={treatment:.4f}, absolute_lift={absolute_lift:.6f}."
         )
         if relative_lift is not None:
             summary += f" Relative lift={relative_lift:.6f}."
         if annualized_impact is not None:
-            summary += " Annualized impact was carried from source evidence."
+            summary += (
+                " A source-reported annualized amount is present in the legacy output; "
+                "it was not computed from this lift."
+            )
         return summary
     if impact_status == "partial_estimate" and relative_lift is not None:
-        return (
-            f"Partial business impact estimate for {primary_metric}: observed relative lift "
+        summary = (
+            f"Partial descriptive lift for {primary_metric}: observed relative lift "
             f"was {relative_lift:.4f}, but the underlying baseline/treatment values "
             "were incomplete."
         )
-    return "Insufficient data to estimate grounded business impact."
+        if annualized_impact is not None:
+            summary += (
+                " A source-reported annualized amount is present in the legacy output; "
+                "it was not computed from this lift."
+            )
+        return summary
+    if annualized_impact is not None:
+        return (
+            "Insufficient data to report descriptive lift. A source-reported annualized "
+            "amount is present in the legacy output and was not computed by this agent."
+        )
+    return "Insufficient data to report descriptive lift."
 
 
 def _metric_value(record: dict[str, object] | None, key: str) -> float | None:
@@ -340,8 +360,8 @@ def _parse_annualized_text(text: str) -> dict[str, object] | None:
     match = _ANNUALIZED_TEXT_PATTERN.search(text)
     if match is None:
         return None
-    currency = (match.group(1) or "USD").upper()
-    amount = float(match.group(2).replace(",", ""))
+    currency = match.group("currency").upper()
+    amount = float(match.group("amount").replace(",", ""))
     return {
         "amount": amount,
         "currency": currency,

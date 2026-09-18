@@ -3,7 +3,7 @@
 Date: 2026-09-18
 Issue: https://github.com/archeltaneka/ExperimentOS-AI/issues/107
 Branch: `107-uncertainty-aware-business-impact` (linked to issue #107)
-Status: conversational design approved; written specification awaiting review.
+Status: approved specification implemented and verified on the issue branch.
 
 ## Objective and boundary
 
@@ -346,7 +346,9 @@ quality policy; business arithmetic cannot upgrade its verdicts.
 
 ## Review record
 
-The user approved the conversational architecture on 2026-09-18. This written
-specification records that design and makes boundary behavior explicit. After
-written-spec review, create the implementation plan using the Superpowers
-writing-plans workflow, then implement and verify the approved scope.
+The user approved the conversational architecture and this written specification
+on 2026-09-18. The implementation plan is recorded in
+`docs/superpowers/plans/2026-09-18-business-impact.md`. Review strengthened the
+repository-evidence boundary with resolved structured records, retained subgroup
+diagnostic scope, and distinguished effect-independent inputs from statistical
+intervals. No new estimator, forecast, or decision capability was introduced.

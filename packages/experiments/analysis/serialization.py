@@ -18,6 +18,7 @@ from .causal.propensity import PropensityResult
 from .descriptive.models import DescriptiveStatisticsResult
 from .estimands import EstimandDefinition
 from .estimates import AnalysisFinding, EffectEstimate
+from .impact.results import BusinessImpactResult
 from .randomized.bayesian.models import BayesianAnalysisResult
 from .randomized.sequential.models import SequentialAnalysisHistory
 from .requests import AnalysisRequest
@@ -159,3 +160,8 @@ def propensity_result_from_json(payload: str | bytes) -> PropensityResult:
 def treatment_effect_result_from_json(payload: str | bytes) -> TreatmentEffectResult:
     """Validate JSON as an owned observational IPW treatment-effect result."""
     return TREATMENT_EFFECT_RESULT_ADAPTER.validate_json(payload)
+
+
+def business_impact_result_from_json(payload: str | bytes) -> BusinessImpactResult:
+    """Restore a sourced impact scenario, retaining separate uncertainty layers."""
+    return BusinessImpactResult.model_validate_json(payload)

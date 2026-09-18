@@ -357,7 +357,6 @@ __all__ = [
     "TimeHorizon",
     "render_scenario",
     "business_impact_result_from_json",
-
     "ANALYSIS_FINDING_ADAPTER",
     "ANALYSIS_OUTCOME_ADAPTER",
     "ANALYSIS_REQUEST_ADAPTER",

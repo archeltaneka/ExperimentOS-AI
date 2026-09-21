@@ -45,8 +45,15 @@ def test_deterministic_agents_remain_prompt_and_llm_free() -> None:
 def test_public_ask_contract_and_default_mode_are_stable(monkeypatch) -> None:
     monkeypatch.delenv("ASK_MODE", raising=False)
 
-    assert tuple(AskRequest.model_fields) == ("question", "experiment_id", "top_k")
-    assert tuple(AskResponse.model_fields) == (
+    assert tuple(AskRequest.model_fields)[:3] == ("question", "experiment_id", "top_k")
+    assert set(AskRequest.model_fields) - {"question", "experiment_id", "top_k"} == {
+        "analysis",
+        "analysis_datasets",
+    }
+    assert not AskRequest.model_fields["analysis"].is_required()
+    assert not AskRequest.model_fields["analysis_datasets"].is_required()
+    assert AskRequest(question="ordinary question", experiment_id="legacy").analysis is None
+    assert tuple(AskResponse.model_fields)[:-1] == (
         "answer",
         "citations",
         "retrieved_chunks",
@@ -61,6 +68,8 @@ def test_public_ask_contract_and_default_mode_are_stable(monkeypatch) -> None:
         "agent_metrics",
         "approval_status",
     )
+    assert tuple(AskResponse.model_fields)[-1] == "analysis"
+    assert not AskResponse.model_fields["analysis"].is_required()
     assert get_ask_mode() == "agent_workflow"
 
 

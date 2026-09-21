@@ -326,6 +326,8 @@ def test_run_phase3_baseline_writes_aggregate_report(tmp_path: Path, monkeypatch
     assert rag_output.is_file()
     assert agent_output.is_file()
     assert agent_e2e_output.is_file()
+    assert agent_output.with_suffix(".json").is_file()
+    assert agent_e2e_output.with_suffix(".json").is_file()
     assert factuality_output.is_file()
     assert factuality_json_output.is_file()
     assert quality_policy_output.is_file()

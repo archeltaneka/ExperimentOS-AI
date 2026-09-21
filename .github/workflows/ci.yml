@@ -205,6 +205,23 @@ jobs:
           tests/test_advanced*.py tests/test_dml*.py tests/test_hte*.py
           tests/test_econml*.py tests/test_dowhy*.py
 
+      - name: Run deterministic workflow analysis integration
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+        run: >-
+          uv run pytest -q
+          tests/test_analysis_service.py tests/test_analysis_dispatch*.py
+          tests/test_analysis_orchestration_requests.py tests/test_analysis_datasets.py
+          tests/test_analysis_envelope.py tests/test_agent_state.py
+          tests/test_agent_analysis*.py tests/test_analysis_e2e.py
+          tests/test_analysis_integrity.py tests/test_analysis_rendering.py
+          tests/test_analysis_artifacts.py tests/test_api_analysis.py
+          tests/test_analysis_business_gating.py tests/test_impact*.py
+          tests/test_analysis_workflow_observability.py
+          tests/test_agent_analysis_evaluation.py tests/test_analysis_policy.py
+          tests/test_analysis_workflow_documentation.py
+
   advanced-causal-optional:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -300,6 +317,18 @@ jobs:
           uv run python -m packages.evals.cli statistical-baseline
           --json-output artifacts/ci/offline/phase4/statistical_baseline.json
           --output artifacts/ci/offline/phase4/statistical_baseline.md
+
+      - name: Run deterministic agent workflow evaluation
+        run: >-
+          uv run python -m packages.evals.run_agent
+          --output artifacts/ci/offline/agent_evaluation.md
+          --json-output artifacts/ci/offline/agent_evaluation.json
+
+      - name: Run deterministic end-to-end workflow evaluation
+        run: >-
+          uv run python -m packages.evals.run_agent_e2e
+          --output artifacts/ci/offline/agent_e2e_evaluation.md
+          --json-output artifacts/ci/offline/agent_e2e_evaluation.json
 
       - name: Publish Phase 4 statistical summary
         if: ${{ always() }}

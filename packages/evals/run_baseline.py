@@ -7,8 +7,11 @@ from os.path import commonpath
 from pathlib import Path
 
 from packages.evals.agent_dataset import DEFAULT_AGENT_DATASET_PATH
-from packages.evals.agent_e2e_report import render_agent_e2e_report
-from packages.evals.agent_report import render_agent_evaluation_report
+from packages.evals.agent_e2e_report import agent_e2e_report_to_json, render_agent_e2e_report
+from packages.evals.agent_report import (
+    agent_evaluation_report_to_json,
+    render_agent_evaluation_report,
+)
 from packages.evals.baseline import (
     build_phase3_baseline_report,
     render_phase3_baseline_report,
@@ -243,10 +246,16 @@ async def _run_phase3_baseline(args: argparse.Namespace, observability_provider)
     agent_run = _build_agent_run(agent_args)
     agent_report = render_agent_evaluation_report(agent_run)
     _write_report(args.agent_output, agent_report)
+    _write_report(
+        args.agent_output.with_suffix(".json"), agent_evaluation_report_to_json(agent_run)
+    )
 
     agent_e2e_run = _build_agent_e2e_run(agent_e2e_args)
     agent_e2e_report = render_agent_e2e_report(agent_e2e_run)
     _write_report(args.agent_e2e_output, agent_e2e_report)
+    _write_report(
+        args.agent_e2e_output.with_suffix(".json"), agent_e2e_report_to_json(agent_e2e_run)
+    )
     factuality_run = _build_factuality_run(factuality_args, qa_run, agent_run)
     factuality_report = render_factuality_report(factuality_run)
     _write_report(args.factuality_output, factuality_report)

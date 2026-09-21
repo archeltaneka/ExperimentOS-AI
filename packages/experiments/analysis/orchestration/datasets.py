@@ -59,6 +59,25 @@ class AnalysisDataResolver(Protocol):
     ) -> ResolvedAnalysisDataset | DatasetResolutionFailure: ...
 
 
+class DatasetResolutionError(ValueError):
+    """Internal control flow with a safe code, never a raw dataset value."""
+
+    def __init__(self, code: str) -> None:
+        self.code = code
+        super().__init__(code)
+
+
+def resolve_dataset(
+    resolver: AnalysisDataResolver, reference: DatasetReference, experiment_id: str
+) -> ResolvedAnalysisDataset:
+    result = resolver.resolve(reference.reference, experiment_id)
+    if isinstance(result, DatasetResolutionFailure):
+        raise DatasetResolutionError(result.code)
+    if result.version != reference.version:
+        raise DatasetResolutionError("analysis.dataset_version")
+    return result
+
+
 class RequestDatasetResolver:
     def __init__(self, datasets: tuple[AnalysisDatasetInput, ...]) -> None:
         self._datasets: dict[str, AnalysisDatasetInput] = {}

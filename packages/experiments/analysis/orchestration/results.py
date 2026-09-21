@@ -3,18 +3,73 @@
 import hashlib
 import json
 from datetime import datetime
-from typing import Literal, Self
+from typing import Annotated, Literal, Self
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from ..base import ContractModel, NonEmptyStr
+from ..causal.advanced.models import AdvancedCausalResult
+from ..causal.did.models import DifferenceInDifferencesResult
+from ..causal.dml.results import DMLResult
+from ..causal.dowhy.models import DoWhyAnalysisResult
+from ..causal.hte.results import HeterogeneousEffectResult
+from ..causal.ipw.models import TreatmentEffectResult
+from ..causal.models import IdentificationResult
+from ..causal.propensity.models import PropensityResult
 from ..provenance import Diagnostic, ProvenanceRecord
+from ..randomized.bayesian.models import BayesianAnalysisResult
+from ..randomized.cuped.models import CupedAnalysisResult
 from ..randomized.models import RandomizedAnalysisResult
+from ..randomized.sequential.models import SequentialAnalysisHistory
 from ..results import AbstentionReason
-from .evidence_randomized import RandomizedEvidence, project_randomized
+from .evidence_causal import (
+    AdvancedEvidence,
+    DidEvidence,
+    DMLEvidence,
+    DoWhyEvidence,
+    HTEEvidence,
+    IdentificationEvidence,
+    IPWEvidence,
+    PropensityEvidence,
+)
+from .evidence_randomized import (
+    BayesianEvidence,
+    CupedEvidence,
+    RandomizedEvidence,
+    SequentialEvidence,
+    SequentialLookEvidence,
+    project_randomized,
+)
 
-type OwnedAnalysisResult = RandomizedAnalysisResult
-type AnalysisEvidence = RandomizedEvidence
+type OwnedAnalysisResult = (
+    RandomizedAnalysisResult
+    | BayesianAnalysisResult
+    | CupedAnalysisResult
+    | SequentialAnalysisHistory
+    | DifferenceInDifferencesResult
+    | PropensityResult
+    | TreatmentEffectResult
+    | DMLResult
+    | HeterogeneousEffectResult
+    | IdentificationResult
+    | AdvancedCausalResult
+    | DoWhyAnalysisResult
+)
+type AnalysisEvidence = Annotated[
+    RandomizedEvidence
+    | BayesianEvidence
+    | CupedEvidence
+    | SequentialEvidence
+    | DidEvidence
+    | PropensityEvidence
+    | IPWEvidence
+    | DMLEvidence
+    | HTEEvidence
+    | IdentificationEvidence
+    | AdvancedEvidence
+    | DoWhyEvidence,
+    Field(discriminator="evidence_type"),
+]
 type ExecutionStatus = Literal[
     "completed", "inconclusive", "invalid", "abstained", "unavailable", "failed"
 ]
@@ -79,11 +134,133 @@ class AnalysisResultEnvelope(ContractModel):
 
 
 def project_evidence(native: OwnedAnalysisResult) -> AnalysisEvidence:
-    return project_randomized(native)
+    if isinstance(native, TreatmentEffectResult):
+        values = {
+            field: getattr(native, field)
+            for field in IPWEvidence.model_fields
+            if field != "evidence_type"
+        }
+        if native.weights is not None:
+            values["weights"] = native.weights.model_dump(
+                exclude={
+                    name: {"weights"}
+                    for name in ("raw", "stabilized", "pre_clipping", "estimation")
+                }
+            )
+        return IPWEvidence.model_validate(values)
+    if isinstance(native, AdvancedCausalResult | DoWhyAnalysisResult):
+        projection = AdvancedEvidence if isinstance(native, AdvancedCausalResult) else DoWhyEvidence
+        identification = native.execution_request.identification_result
+        values = {
+            field: getattr(native, field)
+            for field in projection.model_fields
+            if field
+            not in {
+                "evidence_type",
+                "request_id",
+                "estimand",
+                "assumptions",
+                "evidence_limitations",
+            }
+        }
+        values.update(
+            request_id=identification.request_id,
+            estimand=identification.estimand,
+            assumptions=identification.assumptions,
+            evidence_limitations=(
+                native.evidence_limitations
+                if isinstance(native, AdvancedCausalResult)
+                else identification.evidence_limitations
+            ),
+        )
+        return projection.model_validate(values)
+    for native_type, evidence_type in (
+        (DifferenceInDifferencesResult, DidEvidence),
+        (PropensityResult, PropensityEvidence),
+        (DMLResult, DMLEvidence),
+        (IdentificationResult, IdentificationEvidence),
+    ):
+        if isinstance(native, native_type):
+            return evidence_type.model_validate(
+                {
+                    field: getattr(native, field)
+                    for field in evidence_type.model_fields
+                    if field != "evidence_type"
+                }
+            )
+    if isinstance(native, HeterogeneousEffectResult):
+        values = {
+            field: getattr(native, field)
+            for field in HTEEvidence.model_fields
+            if field not in {"evidence_type", "evidence_limitations"}
+        }
+        values["evidence_limitations"] = (
+            native.execution_request.identification_result.evidence_limitations
+        )
+        return HTEEvidence.model_validate(values)
+    if isinstance(native, RandomizedAnalysisResult):
+        return project_randomized(native)
+    if isinstance(native, BayesianAnalysisResult):
+        return BayesianEvidence.model_validate(
+            {
+                field: getattr(native, field)
+                for field in BayesianEvidence.model_fields
+                if field != "evidence_type"
+            }
+        )
+    if isinstance(native, CupedAnalysisResult):
+        values = {
+            field: getattr(native, field)
+            for field in CupedEvidence.model_fields
+            if field != "evidence_type"
+        }
+        for name in (
+            "adjusted_result",
+            "comparable_unadjusted_result",
+            "full_sample_unadjusted_result",
+        ):
+            result = getattr(native, name)
+            values[name] = project_randomized(result) if result is not None else None
+        return CupedEvidence.model_validate(values)
+    if not isinstance(native, SequentialAnalysisHistory):
+        raise TypeError("unsupported owned result")
+    looks = []
+    for look in native.looks:
+        values = {field: getattr(look, field) for field in SequentialLookEvidence.model_fields}
+        values["look_level_analysis"] = (
+            project_randomized(look.look_level_analysis) if look.look_level_analysis else None
+        )
+        looks.append(SequentialLookEvidence.model_validate(values))
+    return SequentialEvidence(
+        plan_id=native.plan.plan_id,
+        plan_fingerprint=native.plan.plan_fingerprint,
+        estimand=native.plan.analysis_request.estimand,
+        current_status=native.current_status,
+        plan_integrity=native.plan_integrity,
+        alpha_summary=native.alpha_summary,
+        boundaries=native.boundaries,
+        looks=tuple(looks),
+        deviations=native.deviations,
+        first_look=native.first_look,
+        latest_look=native.latest_look,
+        provenance=native.provenance,
+    )
 
 
 def native_status(native: OwnedAnalysisResult) -> ExecutionStatus:
+    reason = getattr(native, "abstention_reason", None)
+    code = reason if isinstance(reason, str) else getattr(reason, "code", None)
+    if code in {"OPTIONAL_DEPENDENCY_UNAVAILABLE", "INCOMPATIBLE_DEPENDENCY_RUNTIME"}:
+        return "unavailable"
+    if isinstance(native, SequentialAnalysisHistory):
+        if native.current_status.value == "invalid":
+            return "invalid"
+        if not native.looks or native.current_status.value == "abstain":
+            return "abstained"
+        return "completed" if native.current_status.value == "efficacy" else "inconclusive"
     value = native.status.value
+    if value in {"no_improvement", "degraded_precision"}:
+        return "completed"
     if value in {"completed", "inconclusive", "invalid", "abstained"}:
         return value  # type: ignore[return-value]
     return "abstained"

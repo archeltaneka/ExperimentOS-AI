@@ -6,6 +6,7 @@ from uuid import uuid4
 from packages.observability.base import BaseObservabilityProvider
 from packages.observability.noop import NoOpObservabilityProvider
 
+from ..randomized.sequential.models import SequentialAnalysisHistory
 from ..results import AbstentionReason
 from .datasets import AnalysisDataResolver, DatasetResolutionError
 from .registry import AnalysisMethodRegistry, default_registry
@@ -95,17 +96,21 @@ class AnalysisService:
             )
         self._native[analysis_id] = native.model_copy(deep=True)
         self._requests[analysis_id] = request.model_copy(deep=True)
-        reason = native.abstention_reason
+        reason = None if isinstance(native, SequentialAnalysisHistory) else native.abstention_reason
         abstention = (
-            AbstentionReason(
+            refusal_reason(reason)
+            if isinstance(reason, str)
+            else AbstentionReason(
                 code=reason.code,
                 message=reason.message,
-                missing_or_invalid_information=reason.missing_or_invalid_information
+                missing_or_invalid_information=getattr(reason, "missing_or_invalid_information", ())
                 or (reason.code,),
             )
             if reason is not None
             else None
         )
+        if abstention is None and status in {"abstained", "invalid", "unavailable"}:
+            abstention = refusal_reason("analysis." + status)
         updated = AnalysisResultEnvelope.model_validate(
             {
                 **envelope.model_dump(),

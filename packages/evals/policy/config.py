@@ -15,6 +15,8 @@ from packages.evals.policy.models import (
 )
 
 _ALLOWED_FORMATS = {
+    "agent_json",
+    "agent_e2e_json",
     "rag_markdown",
     "agent_markdown",
     "agent_e2e_markdown",

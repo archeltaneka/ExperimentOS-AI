@@ -88,6 +88,43 @@ _ROI_PATTERN = re.compile(
 
 
 def evaluate_case(case: FactualityCase) -> FactualityCaseResult:
+    if case.analysis is not None:
+        from packages.experiments.analysis.orchestration.rendering import render_analysis
+
+        findings = [*_check_citation_presence(case), *_check_citation_support(case)]
+        if case.answer != render_analysis(case.analysis):
+            findings.append(
+                FactualityFinding(
+                    category="contradiction_with_structured_experiment_data",
+                    severity="critical",
+                    claim="Noncanonical analysis presentation",
+                    evidence=(),
+                    source_ids=tuple(artifact.artifact_id for artifact in case.analysis.artifacts),
+                    confidence=1.0,
+                    detector="structured_analysis_canonical",
+                    passed=False,
+                    explanation=(
+                        "Generated presentation differs from authoritative structured evidence."
+                    ),
+                )
+            )
+        return FactualityCaseResult(
+            case_id=case.case_id,
+            dataset_identifier=case.dataset_identifier,
+            category=case.category,
+            surface=case.surface,
+            findings=tuple(findings),
+            checks_executed=(
+                "citation_presence",
+                "citation_support",
+                "structured_analysis_canonical",
+            ),
+            skipped_checks=(),
+            citation_coverage=1.0 if case.citations else 0.0,
+            unparsed_claims=False,
+            prompt_id=case.prompt_id,
+            prompt_version=case.prompt_version,
+        )
     findings: list[FactualityFinding] = []
     checks_executed = [
         "citation_presence",

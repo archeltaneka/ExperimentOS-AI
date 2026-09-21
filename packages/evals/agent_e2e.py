@@ -15,6 +15,14 @@ from apps.api.main import (
     get_question_answering_service,
 )
 from packages.agents.state import AgentState, create_initial_state
+from packages.evals.agent_analysis_cases import (
+    AnalysisCheck,
+    AnalysisWorkflowCase,
+    analysis_case_plan,
+    build_analysis_case_service,
+    check_analysis_response,
+    load_analysis_workflow_cases,
+)
 from packages.evals.dataset_manifest import build_payload_manifest
 from packages.llm.client import LLMMetrics
 from packages.qa.question_answering_service import Citation, QAResponse
@@ -29,6 +37,7 @@ AgentE2EScenario = Literal[
     "business_impact",
     "agent_failure",
     "legacy_fallback",
+    "analysis",
 ]
 
 FULL_AGENT_TRACE_NODES = (
@@ -76,6 +85,7 @@ class AgentE2ECase:
     expected_trace_nodes: tuple[str, ...] = ()
     expect_agent_metrics: bool = False
     expected_error_detail: str | None = None
+    analysis_case: AnalysisWorkflowCase | None = None
 
 
 @dataclass(frozen=True)
@@ -88,6 +98,7 @@ class AgentE2ESampleResult:
     used_legacy_fallback: bool
     passed: bool
     failure_reasons: tuple[str, ...]
+    analysis_checks: dict[str, AnalysisCheck] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -225,6 +236,7 @@ class AgentE2EEvaluator:
         manifest = build_payload_manifest(
             json.dumps(
                 [asdict(case) for case in self.cases],
+                default=lambda value: value.model_dump(mode="json"),
                 sort_keys=True,
                 separators=(",", ":"),
             ).encode("utf-8"),
@@ -270,7 +282,9 @@ class AgentE2EEvaluator:
                 started_at = perf_counter()
                 response = client.post(
                     "/ask",
-                    json={
+                    json=case.analysis_case.ask_payload
+                    if case.analysis_case
+                    else {
                         "question": case.question,
                         "experiment_id": case.experiment_id,
                         "top_k": case.top_k,
@@ -295,6 +309,12 @@ class AgentE2EEvaluator:
                 used_agent_workflow=used_agent_workflow,
                 used_legacy_fallback=used_legacy_fallback,
             )
+            checks = (
+                check_analysis_response(case.analysis_case, response_json)
+                if case.analysis_case
+                else {}
+            )
+            failure_reasons.extend(c.code for c in checks.values() if c.status == "fail")
             return AgentE2ESampleResult(
                 case=case,
                 status_code=response.status_code,
@@ -304,6 +324,7 @@ class AgentE2EEvaluator:
                 used_legacy_fallback=used_legacy_fallback,
                 passed=not failure_reasons,
                 failure_reasons=tuple(failure_reasons),
+                analysis_checks=checks,
             )
         finally:
             app.dependency_overrides.clear()
@@ -314,7 +335,24 @@ class AgentE2EEvaluator:
 
 
 def build_default_agent_e2e_cases() -> list[AgentE2ECase]:
+    analysis_cases = [
+        AgentE2ECase(
+            id="analysis-" + case.case_id,
+            question=str(case.ask_payload["question"]),
+            experiment_id=str(case.ask_payload["experiment_id"]),
+            scenario="analysis",
+            analysis_case=case,
+            expected_intent=analysis_case_plan(case).intent,
+            expected_required_agents=tuple(analysis_case_plan(case).required_agents),
+            expect_agent_trace=True,
+            expected_trace_nodes=FULL_AGENT_TRACE_NODES,
+            expect_executive_summary=True,
+            expected_min_citations=1,
+        )
+        for case in load_analysis_workflow_cases()
+    ]
     return [
+        *analysis_cases,
         AgentE2ECase(
             id="decision-loyalty-default",
             question="Should we roll out the loyalty tier progress nudges experiment?",
@@ -499,6 +537,8 @@ def build_default_agent_e2e_cases() -> list[AgentE2ECase]:
 
 
 def _build_workflow_service(case: AgentE2ECase) -> StubWorkflowService:
+    if case.analysis_case is not None:
+        return build_analysis_case_service(case.analysis_case)
     if case.scenario == "agent_failure":
         return StubWorkflowService(failure_message="workflow exploded")
     return StubWorkflowService(state=_build_state_for_case(case))

@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from packages.evals.agent_analysis_cases import AnalysisWorkflowCase
+
 DEFAULT_AGENT_DATASET_PATH = Path("data/eval/agent_dataset.json")
 _VALID_CATEGORIES = {
     "approval_workflow",
@@ -57,6 +59,7 @@ class AgentEvaluationCase:
     expected_min_citations: int | None = None
     expected_failure_mode: str | None = None
     notes: str | None = None
+    analysis_case: AnalysisWorkflowCase | None = None
 
 
 def load_agent_evaluation_dataset(
@@ -76,6 +79,24 @@ def load_agent_evaluation_dataset(
     case_ids = [case.id for case in cases]
     if len(case_ids) != len(set(case_ids)):
         raise ValueError("agent evaluation dataset contains duplicate case ids")
+    if path == DEFAULT_AGENT_DATASET_PATH:
+        from packages.evals.agent_analysis_cases import (
+            analysis_case_plan,
+            load_analysis_workflow_cases,
+        )
+
+        for analysis in load_analysis_workflow_cases():
+            plan = analysis_case_plan(analysis)
+            cases.append(
+                AgentEvaluationCase(
+                    id="analysis-" + analysis.case_id,
+                    question=str(analysis.ask_payload["question"]),
+                    category="analysis",
+                    expected_intent=plan.intent,
+                    expected_required_agents=tuple(plan.required_agents),
+                    analysis_case=analysis,
+                )
+            )
     return cases
 
 

@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Literal
 
 SourceFormat = Literal[
+    "agent_json",
+    "agent_e2e_json",
     "rag_markdown",
     "agent_markdown",
     "agent_e2e_markdown",

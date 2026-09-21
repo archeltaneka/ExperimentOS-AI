@@ -85,6 +85,9 @@ class AnalysisIntegrityFinding(ContractModel):
     code: NonEmptyStr
     node: NonEmptyStr
     severity: Literal["fail", "warning"] = "fail"
+    message: Literal[
+        "Candidate update rejected; authoritative evidence and presentation retained."
+    ] = "Candidate update rejected; authoritative evidence and presentation retained."
 
 
 class AnalysisArtifactReference(ContractModel):

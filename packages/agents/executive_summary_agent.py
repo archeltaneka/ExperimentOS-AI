@@ -13,6 +13,7 @@ from packages.agents.state import (
     create_error_entry,
     create_trace_entry,
 )
+from packages.experiments.analysis.orchestration.rendering import render_analysis
 
 EXECUTIVE_SUMMARY_NODE = "executive_summary"
 
@@ -86,6 +87,28 @@ class ExecutiveSummaryAgent:
 
 
 def _build_executive_summary(state: AgentState) -> ExecutiveSummary:
+    if state.get("analysis_result") is not None:
+        result = state["analysis_result"]
+        assert result is not None
+        return {
+            **state["executive_summary"],
+            "summary_status": "generated"
+            if result.status in {"completed", "inconclusive"}
+            else "insufficient_data",
+            "headline": f"{result.method}: {result.status}",
+            "summary": render_analysis(result),
+            "recommendation": "No automatic rollout authorization.",
+            "key_findings": [f"Authoritative analysis artifact: {result.analysis_id}"],
+            "business_impact_summary": result.business_impact.status
+            if result.business_impact
+            else "Not requested.",
+            "risk_summary": "Review the structured analyzer diagnostics and operational readiness.",
+            "decision_rationale": state["decision"]["rationale"],
+            "recommended_next_actions": list(state["decision"]["recommended_next_actions"]),
+            "confidence": "unknown",
+            "evidence_citations": list(state["citations"]),
+            "limitations": [result.abstention.message] if result.abstention else [],
+        }
     analysis = state["experiment_analysis"]
     decision = state["decision"]
     approval = state["human_approval"]

@@ -24,6 +24,7 @@ from .requests import (
 from .results import (
     AnalysisArtifactReference,
     AnalysisFailure,
+    AnalysisIntegrityFinding,
     AnalysisResultEnvelope,
     OwnedAnalysisResult,
     native_status,
@@ -132,6 +133,14 @@ class AnalysisService:
 
     def authoritative_result(self, analysis_id: str) -> AnalysisResultEnvelope:
         return self._results[analysis_id].model_copy(deep=True)
+
+    def record_integrity(self, analysis_id: str, *, node: str, code: str) -> AnalysisResultEnvelope:
+        result = self.authoritative_result(analysis_id)
+        finding = AnalysisIntegrityFinding(code=code, node=node)
+        findings = result.integrity_findings
+        if finding not in findings:
+            findings = (*findings, finding)
+        return self._save(result.model_copy(update={"integrity_findings": findings}))
 
     def analyze_business(self, analysis_id: str) -> AnalysisResultEnvelope:
         envelope = self.authoritative_result(analysis_id)

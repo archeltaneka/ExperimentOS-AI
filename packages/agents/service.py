@@ -25,6 +25,7 @@ from packages.experiments.analysis.orchestration.datasets import (
     AnalysisDatasetInput,
     RequestDatasetResolver,
 )
+from packages.experiments.analysis.orchestration.integrity import protect_response
 from packages.experiments.analysis.orchestration.requests import AnalysisInput
 from packages.experiments.analysis.orchestration.service import AnalysisService
 from packages.observability.base import BaseObservabilityProvider
@@ -96,6 +97,7 @@ class AgentWorkflowService:
             analysis_request=analysis_request,
         )
         workflow = self.workflow
+        analysis_service = None
         if analysis_request is not None:
             analysis_service = AnalysisService(
                 resolver=RequestDatasetResolver(analysis_datasets),
@@ -104,6 +106,7 @@ class AgentWorkflowService:
             workflow = build_agent_workflow(
                 **{
                     **self._agents,
+                    "analysis_service": analysis_service,
                     "experiment_analysis_agent": ExperimentAnalysisAgent(
                         analysis_service=analysis_service
                     ),
@@ -154,6 +157,8 @@ class AgentWorkflowService:
                     tags=("agent_workflow",),
                 )
                 state = workflow.invoke(initial_state, config=config)
+                if analysis_service is not None:
+                    state = protect_response(state, analysis_service)
                 state["run_metadata"] = {
                     **state["run_metadata"],
                     "run_id": initial_state["run_metadata"]["run_id"],

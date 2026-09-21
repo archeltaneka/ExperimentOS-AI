@@ -1,0 +1,1016 @@
+{
+  "case_id": "optional_unavailable",
+  "ask_payload": {
+    "question": "Analyze",
+    "experiment_id": "experiment-a",
+    "analysis": {
+      "schema_version": "1",
+      "request_id": "causal-request-001",
+      "method": "econml_dml",
+      "parameters": {
+        "dataset": {
+          "reference": "sample",
+          "version": "1"
+        },
+        "analysis_request": {
+          "schema_version": "1",
+          "request_id": "causal-request-001",
+          "identification": {
+            "request_version": "1",
+            "contract_version": "1",
+            "design": {
+              "design_type": "double_machine_learning",
+              "method": "partialling_out_dml",
+              "treated_group": null,
+              "comparison_group": null,
+              "stable_treatment_adoption": null,
+              "provenance": [
+                {
+                  "source_type": "user_supplied",
+                  "source_id": "design",
+                  "source_version": "1",
+                  "source_uri": null,
+                  "observed_at": null
+                }
+              ]
+            },
+            "estimand": {
+              "estimand_type": "ate",
+              "treatment_contrast": {
+                "treatment_variable": "treated",
+                "treated_value": 1,
+                "control_value": 0,
+                "exposure_definition": "Account received the product treatment.",
+                "provenance": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "contrast",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ]
+              },
+              "target_population": {
+                "kind": "full",
+                "population": {
+                  "population_id": "eligible_accounts",
+                  "label": "Eligible accounts",
+                  "criteria": []
+                }
+              },
+              "outcome_variable": "outcome",
+              "effect_scale": "mean_difference",
+              "effect_modifiers": [],
+              "conditioning_definition": null,
+              "provenance": [
+                {
+                  "source_type": "user_supplied",
+                  "source_id": "estimand",
+                  "source_version": "1",
+                  "source_uri": null,
+                  "observed_at": null
+                }
+              ]
+            },
+            "treatment": {
+              "treatment_variable": "treated",
+              "treated_value": 1,
+              "control_value": 0,
+              "exposure_definition": "Account received the product treatment.",
+              "provenance": [
+                {
+                  "source_type": "user_supplied",
+                  "source_id": "contrast",
+                  "source_version": "1",
+                  "source_uri": null,
+                  "observed_at": null
+                }
+              ]
+            },
+            "outcome": {
+              "variable_id": "outcome",
+              "metric": {
+                "metric": {
+                  "metric_id": "outcome",
+                  "label": "Continuous outcome",
+                  "metric_type": "continuous",
+                  "unit": {
+                    "dimension": "dimensionless",
+                    "value_scale": "raw",
+                    "symbol": "units",
+                    "scale_to_base_unit": 1,
+                    "currency_code": null,
+                    "custom_dimension_name": null
+                  }
+                },
+                "direction": "increase"
+              }
+            },
+            "population": {
+              "population_id": "eligible_accounts",
+              "label": "Eligible accounts",
+              "criteria": []
+            },
+            "units": {
+              "analysis_unit": {
+                "unit_id": "account",
+                "label": "Account"
+              },
+              "observation_unit": {
+                "unit_id": "account-day",
+                "label": "Account day"
+              },
+              "clustering_unit": {
+                "unit_id": "account",
+                "label": "Account"
+              }
+            },
+            "time": {
+              "time_variable": null,
+              "treatment_start": "2026-07-10T00:00:00Z",
+              "pre_period": null,
+              "post_period": null,
+              "provenance": [
+                {
+                  "source_type": "user_supplied",
+                  "source_id": "time-semantics",
+                  "source_version": "1",
+                  "source_uri": null,
+                  "observed_at": null
+                }
+              ]
+            },
+            "variables": [
+              {
+                "variable_id": "account_id",
+                "label": "Account Id",
+                "roles": [
+                  "identifier"
+                ],
+                "timing": {
+                  "measurement_timing": "time_invariant",
+                  "reference_period": null,
+                  "reference_timestamp": null,
+                  "treatment_start": "2026-07-10T00:00:00Z",
+                  "evidence": [
+                    {
+                      "source_type": "user_supplied",
+                      "source_id": "timing:account_id",
+                      "source_version": "1",
+                      "source_uri": null,
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "provenance": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "variable:account_id",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ]
+              },
+              {
+                "variable_id": "treated",
+                "label": "Treated",
+                "roles": [
+                  "treatment"
+                ],
+                "timing": {
+                  "measurement_timing": "at_treatment",
+                  "reference_period": {
+                    "start": "2026-07-10T00:00:00Z",
+                    "end": "2026-07-11T00:00:00Z"
+                  },
+                  "reference_timestamp": null,
+                  "treatment_start": "2026-07-10T00:00:00Z",
+                  "evidence": [
+                    {
+                      "source_type": "user_supplied",
+                      "source_id": "timing:treated",
+                      "source_version": "1",
+                      "source_uri": null,
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "provenance": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "variable:treated",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ]
+              },
+              {
+                "variable_id": "outcome",
+                "label": "Outcome",
+                "roles": [
+                  "outcome"
+                ],
+                "timing": {
+                  "measurement_timing": "post_treatment",
+                  "reference_period": {
+                    "start": "2026-07-15T00:00:00Z",
+                    "end": "2026-07-20T00:00:00Z"
+                  },
+                  "reference_timestamp": null,
+                  "treatment_start": "2026-07-10T00:00:00Z",
+                  "evidence": [
+                    {
+                      "source_type": "user_supplied",
+                      "source_id": "timing:outcome",
+                      "source_version": "1",
+                      "source_uri": null,
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "provenance": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "variable:outcome",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ]
+              },
+              {
+                "variable_id": "prior_orders",
+                "label": "Prior Orders",
+                "roles": [
+                  "adjustment"
+                ],
+                "timing": {
+                  "measurement_timing": "pre_treatment",
+                  "reference_period": {
+                    "start": "2026-07-01T00:00:00Z",
+                    "end": "2026-07-05T00:00:00Z"
+                  },
+                  "reference_timestamp": null,
+                  "treatment_start": "2026-07-10T00:00:00Z",
+                  "evidence": [
+                    {
+                      "source_type": "user_supplied",
+                      "source_id": "timing:prior_orders",
+                      "source_version": "1",
+                      "source_uri": null,
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "provenance": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "variable:prior_orders",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ]
+              }
+            ],
+            "covariates": [
+              "prior_orders"
+            ],
+            "adjustment_set": {
+              "variable_ids": [
+                "prior_orders"
+              ],
+              "purpose": "confounding_control",
+              "estimand_type": "ate",
+              "source": "user_supplied",
+              "validation_status": "unvalidated",
+              "diagnostics": [],
+              "provenance": [
+                {
+                  "source_type": "user_supplied",
+                  "source_id": "adjustment-set",
+                  "source_version": "1",
+                  "source_uri": null,
+                  "observed_at": null
+                }
+              ]
+            },
+            "effect_modifiers": [],
+            "causal_graph": null,
+            "assumptions": [
+              {
+                "code": "consistency",
+                "description": "Declared consistency assumption.",
+                "applicability": "required",
+                "status": "asserted",
+                "testability": "partially_testable",
+                "evidence": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "assumption:consistency",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ],
+                "diagnostic_references": [],
+                "limitations": [
+                  "consistency is declared, not proven."
+                ]
+              },
+              {
+                "code": "exchangeability",
+                "description": "Declared exchangeability assumption.",
+                "applicability": "required",
+                "status": "asserted",
+                "testability": "not_fully_testable",
+                "evidence": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "assumption:exchangeability",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ],
+                "diagnostic_references": [],
+                "limitations": [
+                  "exchangeability is declared, not proven."
+                ]
+              },
+              {
+                "code": "interference_limitation",
+                "description": "Declared interference_limitation assumption.",
+                "applicability": "required",
+                "status": "asserted",
+                "testability": "partially_testable",
+                "evidence": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "assumption:interference_limitation",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ],
+                "diagnostic_references": [],
+                "limitations": [
+                  "interference_limitation is declared, not proven."
+                ]
+              },
+              {
+                "code": "positivity",
+                "description": "Declared positivity assumption.",
+                "applicability": "required",
+                "status": "asserted",
+                "testability": "partially_testable",
+                "evidence": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "assumption:positivity",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ],
+                "diagnostic_references": [],
+                "limitations": [
+                  "positivity is declared, not proven."
+                ]
+              },
+              {
+                "code": "stable_treatment_definition",
+                "description": "Declared stable_treatment_definition assumption.",
+                "applicability": "required",
+                "status": "asserted",
+                "testability": "partially_testable",
+                "evidence": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "assumption:stable_treatment_definition",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ],
+                "diagnostic_references": [],
+                "limitations": [
+                  "stable_treatment_definition is declared, not proven."
+                ]
+              },
+              {
+                "code": "stable_unit_population",
+                "description": "Declared stable_unit_population assumption.",
+                "applicability": "required",
+                "status": "asserted",
+                "testability": "partially_testable",
+                "evidence": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "assumption:stable_unit_population",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ],
+                "diagnostic_references": [],
+                "limitations": [
+                  "stable_unit_population is declared, not proven."
+                ]
+              },
+              {
+                "code": "temporal_ordering",
+                "description": "Declared temporal_ordering assumption.",
+                "applicability": "required",
+                "status": "asserted",
+                "testability": "partially_testable",
+                "evidence": [
+                  {
+                    "source_type": "user_supplied",
+                    "source_id": "assumption:temporal_ordering",
+                    "source_version": "1",
+                    "source_uri": null,
+                    "observed_at": null
+                  }
+                ],
+                "diagnostic_references": [],
+                "limitations": [
+                  "temporal_ordering is declared, not proven."
+                ]
+              }
+            ],
+            "evidence_limitations": [],
+            "provenance": [
+              {
+                "source_type": "user_supplied",
+                "source_id": "identification-request",
+                "source_version": "1",
+                "source_uri": null,
+                "observed_at": null
+              }
+            ]
+          }
+        },
+        "binding": {
+          "observation_id_column": "account_id",
+          "treatment_variable_id": "treated",
+          "treatment_column": "treated",
+          "outcome_variable_id": "outcome",
+          "outcome_column": "outcome",
+          "covariates": [
+            {
+              "variable_id": "prior_orders",
+              "column": "prior_orders"
+            }
+          ]
+        },
+        "configuration": {
+          "fold_count": 4,
+          "random_seed": 812,
+          "confidence_level": 0.95,
+          "complete_case": true,
+          "minimum_training_rows": 4,
+          "minimum_scoring_rows": 2,
+          "treatment_residual_tolerance": 1e-12,
+          "outcome_residual_variance_tolerance": 1e-12,
+          "extreme_score_threshold": 0.05,
+          "weak_extreme_score_fraction": 0.05,
+          "severe_extreme_score_fraction": 0.2,
+          "weak_outside_support_fraction": 0.1,
+          "severe_outside_support_fraction": 0.25,
+          "weak_support_width": 0.2,
+          "severe_support_width": 0.05,
+          "score_quantiles": [
+            0.01,
+            0.05,
+            0.25,
+            0.5,
+            0.75,
+            0.95,
+            0.99
+          ],
+          "metric_probability_clip": 1e-15,
+          "analysis_version": "dml-v1"
+        },
+        "adapter_configuration": {
+          "inference_mode": "statsmodels_hc1",
+          "constant_effect_assumption": true,
+          "ridge_alpha": 1,
+          "logistic_c": 1,
+          "logistic_tolerance": 1e-8,
+          "logistic_max_iterations": 1000
+        }
+      }
+    },
+    "analysis_datasets": [
+      {
+        "reference": "sample",
+        "experiment_id": "experiment-a",
+        "version": "1",
+        "columns": [
+          "account_id",
+          "treated",
+          "outcome",
+          "prior_orders"
+        ],
+        "rows": [
+          [
+            "unit-000",
+            0,
+            -3.165,
+            -3.95
+          ],
+          [
+            "unit-001",
+            0,
+            -2.4949999999999997,
+            -3.85
+          ],
+          [
+            "unit-002",
+            1,
+            -0.125,
+            -3.75
+          ],
+          [
+            "unit-003",
+            0,
+            -2.8549999999999995,
+            -3.65
+          ],
+          [
+            "unit-004",
+            1,
+            -0.3849999999999999,
+            -3.55
+          ],
+          [
+            "unit-005",
+            0,
+            -2.815,
+            -3.45
+          ],
+          [
+            "unit-006",
+            1,
+            -0.14499999999999974,
+            -3.35
+          ],
+          [
+            "unit-007",
+            0,
+            -1.775,
+            -3.25
+          ],
+          [
+            "unit-008",
+            0,
+            -2.5049999999999994,
+            -3.15
+          ],
+          [
+            "unit-009",
+            1,
+            -0.03499999999999978,
+            -3.05
+          ],
+          [
+            "unit-010",
+            0,
+            -2.465,
+            -2.95
+          ],
+          [
+            "unit-011",
+            1,
+            0.20500000000000013,
+            -2.85
+          ],
+          [
+            "unit-012",
+            0,
+            -1.4249999999999998,
+            -2.75
+          ],
+          [
+            "unit-013",
+            1,
+            -0.15499999999999975,
+            -2.65
+          ],
+          [
+            "unit-014",
+            0,
+            -1.6849999999999996,
+            -2.55
+          ],
+          [
+            "unit-015",
+            0,
+            -2.115,
+            -2.45
+          ],
+          [
+            "unit-016",
+            1,
+            0.5549999999999999,
+            -2.35
+          ],
+          [
+            "unit-017",
+            0,
+            -1.075,
+            -2.25
+          ],
+          [
+            "unit-018",
+            1,
+            0.19500000000000012,
+            -2.15
+          ],
+          [
+            "unit-019",
+            0,
+            -1.3349999999999997,
+            -2.05
+          ],
+          [
+            "unit-020",
+            1,
+            0.235,
+            -1.95
+          ],
+          [
+            "unit-021",
+            0,
+            -1.095,
+            -1.85
+          ],
+          [
+            "unit-022",
+            0,
+            -0.7249999999999999,
+            -1.75
+          ],
+          [
+            "unit-023",
+            1,
+            0.5450000000000002,
+            -1.65
+          ],
+          [
+            "unit-024",
+            0,
+            -0.985,
+            -1.55
+          ],
+          [
+            "unit-025",
+            1,
+            0.5850000000000001,
+            -1.45
+          ],
+          [
+            "unit-026",
+            0,
+            -0.7449999999999999,
+            -1.35
+          ],
+          [
+            "unit-027",
+            1,
+            1.625,
+            -1.25
+          ],
+          [
+            "unit-028",
+            0,
+            -1.105,
+            -1.15
+          ],
+          [
+            "unit-029",
+            0,
+            -0.635,
+            -1.05
+          ],
+          [
+            "unit-030",
+            1,
+            0.9349999999999999,
+            -0.95
+          ],
+          [
+            "unit-031",
+            0,
+            -0.39499999999999996,
+            -0.85
+          ],
+          [
+            "unit-032",
+            1,
+            1.975,
+            -0.75
+          ],
+          [
+            "unit-033",
+            0,
+            -0.7549999999999999,
+            -0.65
+          ],
+          [
+            "unit-034",
+            1,
+            1.715,
+            -0.55
+          ],
+          [
+            "unit-035",
+            0,
+            -0.7150000000000001,
+            -0.45
+          ],
+          [
+            "unit-036",
+            0,
+            -0.04499999999999996,
+            -0.35
+          ],
+          [
+            "unit-037",
+            1,
+            2.325,
+            -0.25
+          ],
+          [
+            "unit-038",
+            0,
+            -0.40499999999999997,
+            -0.15
+          ],
+          [
+            "unit-039",
+            1,
+            2.065,
+            -0.05
+          ],
+          [
+            "unit-040",
+            0,
+            -0.36500000000000005,
+            0.05
+          ],
+          [
+            "unit-041",
+            1,
+            2.305,
+            0.15
+          ],
+          [
+            "unit-042",
+            0,
+            0.675,
+            0.25
+          ],
+          [
+            "unit-043",
+            0,
+            -0.05500000000000002,
+            0.35
+          ],
+          [
+            "unit-044",
+            1,
+            2.415,
+            0.45
+          ],
+          [
+            "unit-045",
+            0,
+            -0.015000000000000013,
+            0.55
+          ],
+          [
+            "unit-046",
+            1,
+            2.6550000000000002,
+            0.65
+          ],
+          [
+            "unit-047",
+            0,
+            1.025,
+            0.75
+          ],
+          [
+            "unit-048",
+            1,
+            2.295,
+            0.85
+          ],
+          [
+            "unit-049",
+            0,
+            0.7649999999999999,
+            0.95
+          ],
+          [
+            "unit-050",
+            0,
+            0.33499999999999996,
+            1.05
+          ],
+          [
+            "unit-051",
+            1,
+            3.005,
+            1.15
+          ],
+          [
+            "unit-052",
+            0,
+            1.375,
+            1.25
+          ],
+          [
+            "unit-053",
+            1,
+            2.645,
+            1.35
+          ],
+          [
+            "unit-054",
+            0,
+            1.115,
+            1.45
+          ],
+          [
+            "unit-055",
+            1,
+            2.685,
+            1.55
+          ],
+          [
+            "unit-056",
+            0,
+            1.3549999999999998,
+            1.65
+          ],
+          [
+            "unit-057",
+            0,
+            1.7249999999999999,
+            1.75
+          ],
+          [
+            "unit-058",
+            1,
+            2.995,
+            1.85
+          ],
+          [
+            "unit-059",
+            0,
+            1.465,
+            1.95
+          ],
+          [
+            "unit-060",
+            1,
+            3.0349999999999997,
+            2.05
+          ],
+          [
+            "unit-061",
+            0,
+            1.7049999999999998,
+            2.15
+          ],
+          [
+            "unit-062",
+            1,
+            4.075,
+            2.25
+          ],
+          [
+            "unit-063",
+            0,
+            1.345,
+            2.35
+          ],
+          [
+            "unit-064",
+            0,
+            1.8150000000000002,
+            2.45
+          ],
+          [
+            "unit-065",
+            1,
+            3.385,
+            2.55
+          ],
+          [
+            "unit-066",
+            0,
+            2.0549999999999997,
+            2.65
+          ],
+          [
+            "unit-067",
+            1,
+            4.425,
+            2.75
+          ],
+          [
+            "unit-068",
+            0,
+            1.6949999999999998,
+            2.85
+          ],
+          [
+            "unit-069",
+            1,
+            4.164999999999999,
+            2.95
+          ],
+          [
+            "unit-070",
+            0,
+            1.7349999999999999,
+            3.05
+          ],
+          [
+            "unit-071",
+            0,
+            2.405,
+            3.15
+          ],
+          [
+            "unit-072",
+            1,
+            4.775,
+            3.25
+          ],
+          [
+            "unit-073",
+            0,
+            2.045,
+            3.35
+          ],
+          [
+            "unit-074",
+            1,
+            4.515,
+            3.45
+          ],
+          [
+            "unit-075",
+            0,
+            2.085,
+            3.55
+          ],
+          [
+            "unit-076",
+            1,
+            4.755,
+            3.65
+          ],
+          [
+            "unit-077",
+            0,
+            3.125,
+            3.75
+          ],
+          [
+            "unit-078",
+            0,
+            2.395,
+            3.85
+          ],
+          [
+            "unit-079",
+            1,
+            4.865,
+            3.95
+          ]
+        ],
+        "provenance": [
+          {
+            "source_type": "experiment_data",
+            "source_id": "exp-001-payment-recommendation",
+            "source_version": null,
+            "source_uri": null,
+            "observed_at": null
+          }
+        ]
+      }
+    ]
+  },
+  "expected_method": "econml_dml",
+  "expected_status": "unavailable",
+  "optional_unavailable": true
+}

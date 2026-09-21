@@ -1,0 +1,136 @@
+{
+  "case_id": "insufficient",
+  "ask_payload": {
+    "question": "Analyze",
+    "experiment_id": "experiment-a",
+    "analysis": {
+      "method": "randomized_fixed_horizon",
+      "request_id": "request-091",
+      "parameters": {
+        "execution": {
+          "request_id": "request-091",
+          "analysis_request": {
+            "schema_version": "1",
+            "population": {
+              "population_id": "checkout_users",
+              "label": "Checkout users",
+              "criteria": []
+            },
+            "segment": null,
+            "treatment": {
+              "treatment_id": "ranked_payment",
+              "label": "Ranked payment",
+              "assignment_value": "treatment",
+              "description": "Rank payment methods using the recommendation model."
+            },
+            "control": {
+              "control_id": "standard_payment",
+              "label": "Standard payment",
+              "assignment_value": "control",
+              "description": "Use the standard payment-method ordering."
+            },
+            "outcome": {
+              "metric": {
+                "metric_id": "payment_success_rate",
+                "label": "Payment success rate",
+                "metric_type": "continuous",
+                "unit": {
+                  "dimension": "proportion",
+                  "value_scale": "proportion",
+                  "symbol": "1",
+                  "scale_to_base_unit": 1,
+                  "currency_code": null,
+                  "custom_dimension_name": null
+                }
+              },
+              "direction": "increase"
+            },
+            "estimand": {
+              "kind": "difference_in_means",
+              "conditioning_segment": null
+            },
+            "study_design": {
+              "design_type": "randomized_experiment",
+              "method": "fixed_horizon_ab",
+              "experiment_period": {
+                "start": "2026-07-01T00:00:00Z",
+                "end": "2026-07-15T00:00:00Z"
+              },
+              "randomization_unit": {
+                "unit_id": "account",
+                "label": "Account"
+              },
+              "treatment_allocation": 0.5,
+              "control_allocation": 0.5
+            },
+            "unit_of_analysis": {
+              "unit_id": "account",
+              "label": "Account"
+            },
+            "clustering": {
+              "kind": "none"
+            },
+            "sample_counts": {
+              "total": 40,
+              "treatment": 20,
+              "control": 20
+            },
+            "uncertainty": {
+              "kind": "confidence",
+              "level": 0.95
+            },
+            "covariates": [],
+            "pre_treatment_metrics": []
+          },
+          "alternative": "two_sided"
+        },
+        "binding": {
+          "treatment_column": "arm",
+          "outcome": {
+            "value_column": "outcome",
+            "numerator_column": null,
+            "denominator_column": null,
+            "lower_bound": null,
+            "upper_bound": null,
+            "allow_negative": true
+          },
+          "observation_unit_column": "unit_id",
+          "randomization_unit_column": "unit_id",
+          "clustering_unit_column": null,
+          "timestamp_column": null,
+          "covariates": [],
+          "pre_treatment_metrics": [],
+          "treatment_timestamp_column": null
+        },
+        "dataset": {
+          "reference": "sample",
+          "version": "1"
+        }
+      }
+    },
+    "analysis_datasets": [
+      {
+        "reference": "sample",
+        "experiment_id": "experiment-a",
+        "version": "1",
+        "columns": [
+          "unit_id",
+          "arm",
+          "outcome"
+        ],
+        "rows": [],
+        "provenance": [
+          {
+            "source_type": "experiment_data",
+            "source_id": "exp-001-payment-recommendation",
+            "source_version": null,
+            "source_uri": null,
+            "observed_at": null
+          }
+        ]
+      }
+    ]
+  },
+  "expected_method": "randomized_fixed_horizon",
+  "expected_status": "abstained"
+}

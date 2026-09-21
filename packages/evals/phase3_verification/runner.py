@@ -10,6 +10,7 @@ from typing import Literal
 
 from packages.evals.agent_dataset import (
     DEFAULT_AGENT_DATASET_PATH,
+    build_agent_dataset_manifest,
     load_agent_evaluation_dataset,
 )
 from packages.evals.dataset import DEFAULT_DATASET_PATH, load_evaluation_dataset
@@ -659,11 +660,7 @@ def _build_review(
         dataset_id="qa.golden",
         case_count=len(qa_questions),
     )
-    agent_manifest = build_dataset_manifest(
-        DEFAULT_AGENT_DATASET_PATH,
-        dataset_id="agent.golden",
-        case_count=len(agent_cases),
-    )
+    agent_manifest = build_agent_dataset_manifest(DEFAULT_AGENT_DATASET_PATH, agent_cases)
     focused_passed = any(
         result.command_id == "tests.focused" and result.status == "pass"
         for result in command_results

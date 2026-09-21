@@ -25,6 +25,7 @@ from ..results import AbstentionReason
 from .business import BusinessImpactEvidence
 from .evidence_causal import (
     AdvancedEvidence,
+    CausalContext,
     DidEvidence,
     DMLEvidence,
     DoWhyEvidence,
@@ -138,13 +139,30 @@ class AnalysisResultEnvelope(ContractModel):
         return self
 
 
+def _causal_context(native: OwnedAnalysisResult) -> CausalContext:
+    if isinstance(native, IdentificationResult):
+        declaration = native.identification_request
+    elif isinstance(native, AdvancedCausalResult | DoWhyAnalysisResult | HeterogeneousEffectResult):
+        declaration = native.execution_request.identification_result.identification_request
+    elif isinstance(
+        native, DifferenceInDifferencesResult | PropensityResult | TreatmentEffectResult | DMLResult
+    ):
+        declaration = native.analysis_request.identification
+    else:
+        raise TypeError("causal context requires causal evidence")
+    return CausalContext.model_validate(
+        {field: getattr(declaration, field) for field in CausalContext.model_fields}
+    )
+
+
 def project_evidence(native: OwnedAnalysisResult) -> AnalysisEvidence:
     if isinstance(native, TreatmentEffectResult):
         values = {
             field: getattr(native, field)
             for field in IPWEvidence.model_fields
-            if field != "evidence_type"
+            if field not in {"evidence_type", "context"}
         }
+        values["context"] = _causal_context(native)
         if native.weights is not None:
             values["weights"] = native.weights.model_dump(
                 exclude={
@@ -166,9 +184,11 @@ def project_evidence(native: OwnedAnalysisResult) -> AnalysisEvidence:
                 "estimand",
                 "assumptions",
                 "evidence_limitations",
+                "context",
             }
         }
         values.update(
+            context=_causal_context(native),
             request_id=identification.request_id,
             estimand=identification.estimand,
             assumptions=identification.assumptions,
@@ -186,19 +206,33 @@ def project_evidence(native: OwnedAnalysisResult) -> AnalysisEvidence:
         (IdentificationResult, IdentificationEvidence),
     ):
         if isinstance(native, native_type):
-            return evidence_type.model_validate(
-                {
-                    field: getattr(native, field)
-                    for field in evidence_type.model_fields
-                    if field != "evidence_type"
-                }
-            )
+            values = {
+                field: getattr(native, field)
+                for field in evidence_type.model_fields
+                if field not in {"evidence_type", "context"}
+            }
+            values["context"] = _causal_context(native)
+            if isinstance(native, PropensityResult):
+                for name, excluded in (
+                    ("model_fit", "scores"),
+                    ("weights", "raw"),
+                    ("retained", "scores"),
+                    ("capped_weights", "weights"),
+                ):
+                    value = getattr(native, name)
+                    values[name] = value.model_dump(exclude={excluded}) if value else None
+            if isinstance(native, DMLResult) and native.fold_plan is not None:
+                values["fold_plan"] = native.fold_plan.model_dump(exclude={"assignments"})
+            return evidence_type.model_validate(values)
     if isinstance(native, HeterogeneousEffectResult):
         values = {
             field: getattr(native, field)
             for field in HTEEvidence.model_fields
-            if field not in {"evidence_type", "evidence_limitations"}
+            if field not in {"evidence_type", "evidence_limitations", "context"}
         }
+        values["context"] = _causal_context(native)
+        if native.fold_plan is not None:
+            values["fold_plan"] = native.fold_plan.model_dump(exclude={"assignments"})
         values["evidence_limitations"] = (
             native.execution_request.identification_result.evidence_limitations
         )

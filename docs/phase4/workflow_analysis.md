@@ -61,6 +61,8 @@ contains `method`, `request_id`, `parameters` and optional `business`. Parameter
 the native request and a dataset reference, not generated prose as method selection.
 Request-local scalar tables require explicit columns, experiment ownership, version
 and provenance. There is no new database table or arbitrary filesystem data loader.
+Supplying datasets without an analysis declaration explicitly abstains in agent mode;
+it never silently answers an ordinary question from different evidence.
 DiD converts ISO timestamps only in its explicitly bound time columns; invalid/naive
 timestamps remain invalid rather than being repaired.
 
@@ -76,6 +78,9 @@ and optional business evidence. Evidence families preserve applicable estimates,
 uncertainty, estimands, assumptions, diagnostics, limitations and provenance, without
 forcing every estimator into a p-value/CI schema. Raw rows, row-aligned weights,
 propensity/CATE arrays, posterior samples, graphs and estimator objects are excluded.
+Causal evidence includes declared outcome/units/population/time context, safe propensity
+fit/ESS/trimming/capping summaries, IPW score-model provenance and aggregate DML/HTE
+fold-fit provenance. Fold memberships and unit-level scores remain private.
 
 `agent_workflow` remains the default. `legacy_rag` retains retrieval → versioned
 `rag.answer` → generation → text citations; optional analysis inputs do not activate
@@ -120,8 +125,9 @@ traces or responses. Structured results cannot be mutated by generated summaries
 
 Artifacts are request-lifetime references, not persisted downloadable objects. They
 carry an analysis ID, kind, version, evidence fingerprint and provenance; the response
-envelope supplies timestamp and typed result. Existing citation objects reference
-these structured artifacts with source-type/version/fingerprint metadata, not fake
+envelope supplies timestamp and typed result. Citation objects reference these artifacts
+with explicit `artifact_id` and `schema_version` plus source-type/version/fingerprint
+metadata. They do not put artifact IDs in database `document_id` fields or fake
 document quotations. Dataset/business provenance remains distinct from text retrieval.
 Clients needing durable artifacts must store the safe response themselves; no new
 database persistence is introduced.
@@ -211,3 +217,7 @@ into graph nodes or GitHub Actions. The current unit/offline/optional/AI-quality
 run the coverage; optional installed-adapter conformance remains a separate existing
 job from default unavailable-path coverage. The offline smoke policy command is
 diagnostic; the existing database-backed AI-quality gate is the blocking gate.
+Required case identities must be unique and complete; applicable checks cannot be
+skipped. Missing business outputs, optional refusal evidence, or changed public summary
+and decision narratives block evaluation. Agent dataset versions fingerprint every
+executed case, including analysis fixtures; absolute and relative default paths agree.

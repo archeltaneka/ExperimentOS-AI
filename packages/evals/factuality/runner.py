@@ -148,7 +148,12 @@ def build_agent_workflow_cases(
             )
             citations = tuple(
                 CitationRecord(
-                    source_id=str(item.get("document_id") or item.get("chunk_id") or ""),
+                    source_id=str(
+                        item.get("artifact_id")
+                        or item.get("document_id")
+                        or item.get("chunk_id")
+                        or ""
+                    ),
                     source_type="analysis_artifact",
                     metadata=dict(item.get("metadata", {})),
                 )

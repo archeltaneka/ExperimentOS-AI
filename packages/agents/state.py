@@ -115,6 +115,8 @@ class RetrievedChunk(TypedDict, total=False):
 
 
 class Citation(TypedDict, total=False):
+    artifact_id: str
+    schema_version: str
     chunk_id: str
     document_id: str
     experiment_id: str

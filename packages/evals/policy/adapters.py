@@ -64,7 +64,11 @@ def load_source(source: PolicySource, report_dir: Path) -> LoadedSource | None:
 
 
 def _load_agent_json(path: Path, prefix: str) -> dict[str, SourceMetric]:
-    from packages.evals.agent_analysis_cases import ANALYSIS_CHECK_CODES
+    from packages.evals.agent_analysis_cases import (
+        ANALYSIS_CHECK_CODES,
+        analysis_check_applicability,
+        load_analysis_workflow_cases,
+    )
 
     payload = _load_json(path)
     summary = payload.get("summary")
@@ -84,6 +88,10 @@ def _load_agent_json(path: Path, prefix: str) -> dict[str, SourceMetric]:
         if isinstance(value, int | float | str | bool)
     }
     failures = dict.fromkeys(ANALYSIS_CHECK_CODES, 0)
+    cases = {case.case_id: case for case in load_analysis_workflow_cases()}
+    required = set(cases)
+    seen: set[str] = set()
+    inventory_failures = 0
     count = 0
     for sample in samples:
         if not isinstance(sample, dict):
@@ -91,7 +99,21 @@ def _load_agent_json(path: Path, prefix: str) -> dict[str, SourceMetric]:
         checks = sample.get("analysis_checks", {})
         if not isinstance(checks, dict):
             raise ValueError("analysis checks must be mappings")
-        if checks:
+        case = sample.get("case", {})
+        identity = case.get("analysis_case_id") if isinstance(case, dict) else None
+        if (
+            identity is None
+            and isinstance(case, dict)
+            and str(case.get("id", "")).startswith("analysis-")
+        ):
+            identity = str(case["id"])[len("analysis-") :]
+        if identity is not None:
+            if identity not in required or identity in seen:
+                inventory_failures += 1
+            seen.add(identity)
+        elif checks:
+            inventory_failures += 1
+        if checks or identity is not None:
             count += 1
             for missing in failures.keys() - checks.keys():
                 failures[missing] += 1
@@ -102,12 +124,24 @@ def _load_agent_json(path: Path, prefix: str) -> dict[str, SourceMetric]:
                 or check.get("status") not in {"pass", "warning", "fail", "skipped"}
             ):
                 raise ValueError("invalid analysis check")
-            if check["status"] == "fail":
+            if (
+                check["status"] == "fail"
+                or (check["status"] == "skipped" and check.get("applicable") is not False)
+                or (check["status"] != "skipped" and check.get("applicable") is False)
+                or (
+                    identity in cases
+                    and check.get("applicable")
+                    is not analysis_check_applicability(cases[identity])[code]
+                )
+            ):
                 failures[code] += 1
     for code, count_failed in failures.items():
         key = f"analysis.failures.{code}"
         metrics[key] = _value_metric(key, count_failed)
     metrics["analysis.case_count"] = _value_metric("analysis.case_count", count)
+    metrics["analysis.failures.case_inventory"] = _value_metric(
+        "analysis.failures.case_inventory", inventory_failures + len(required - seen)
+    )
     return metrics
 
 

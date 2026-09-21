@@ -153,7 +153,7 @@ class AgentWorkflowAskService:
             raise UnknownExperimentError(f"experiment {request.experiment_id} was not found")
         try:
             analysis_options = {}
-            if request.analysis is not None:
+            if request.analysis is not None or request.analysis_datasets:
                 analysis_options = {
                     "analysis_request": normalize_analysis_input(
                         request.analysis, experiment_id=request.experiment_id
@@ -168,14 +168,14 @@ class AgentWorkflowAskService:
                 **analysis_options,
             )
         except Exception as exc:
-            if request.analysis is not None:
+            if request.analysis is not None or request.analysis_datasets:
                 raise AgentWorkflowExecutionError(
                     "Analysis workflow infrastructure unavailable"
                 ) from None
             raise AgentWorkflowExecutionError(str(exc)) from exc
         provider = (
             safe_analysis_provider(self.observability_provider)
-            if request.analysis is not None
+            if request.analysis is not None or request.analysis_datasets
             else self.observability_provider
         )
         span = provider.start_span(

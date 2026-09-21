@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -79,7 +79,7 @@ def load_agent_evaluation_dataset(
     case_ids = [case.id for case in cases]
     if len(case_ids) != len(set(case_ids)):
         raise ValueError("agent evaluation dataset contains duplicate case ids")
-    if path == DEFAULT_AGENT_DATASET_PATH:
+    if path.resolve() == DEFAULT_AGENT_DATASET_PATH.resolve():
         from packages.evals.agent_analysis_cases import (
             analysis_case_plan,
             load_analysis_workflow_cases,
@@ -98,6 +98,26 @@ def load_agent_evaluation_dataset(
                 )
             )
     return cases
+
+
+def build_agent_dataset_manifest(path: Path, cases: list[AgentEvaluationCase]):
+    from packages.evals.dataset_manifest import build_payload_manifest
+
+    return build_payload_manifest(
+        json.dumps(
+            [asdict(case) for case in cases],
+            sort_keys=True,
+            separators=(",", ":"),
+            default=lambda item: item.model_dump(mode="json"),
+        ).encode(),
+        dataset_id="agent.golden"
+        if path.resolve() == DEFAULT_AGENT_DATASET_PATH.resolve()
+        else "agent.custom",
+        relative_path=DEFAULT_AGENT_DATASET_PATH.as_posix()
+        if path.resolve() == DEFAULT_AGENT_DATASET_PATH.resolve()
+        else path.name,
+        case_count=len(cases),
+    )
 
 
 def _case_from_mapping(item: Any, *, index: int) -> AgentEvaluationCase:

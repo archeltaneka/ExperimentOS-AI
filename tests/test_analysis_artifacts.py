@@ -9,7 +9,9 @@ def test_graph_cites_returned_analysis_artifact_without_fake_quote():
         "Analyze", analysis_request=request, analysis_datasets=(dataset,)
     )
     result = state["analysis_result"]
-    citation = next(c for c in state["citations"] if c.get("document_id") == result.analysis_id)
+    citation = next(c for c in state["citations"] if c.get("artifact_id") == result.analysis_id)
+    assert "document_id" not in citation
+    assert citation["schema_version"] == "1"
     assert citation["metadata"]["source_type"] == "analysis_artifact"
     assert not citation.get("quote")
     assert citation["metadata"]["evidence_fingerprint"] == result.evidence_fingerprint

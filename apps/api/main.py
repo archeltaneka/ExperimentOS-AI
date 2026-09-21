@@ -322,7 +322,7 @@ async def ask(
     ],
 ) -> AskResponse:
     ask_mode = get_ask_mode()
-    if request.analysis is not None and ask_mode != "legacy_rag":
+    if (request.analysis is not None or request.analysis_datasets) and ask_mode != "legacy_rag":
         observability_provider = safe_analysis_provider(observability_provider)
     request_id = str(uuid.uuid4())
     root_span = observability_provider.start_root_span(

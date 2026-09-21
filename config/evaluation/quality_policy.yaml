@@ -25,6 +25,14 @@ sources:
     path: phase4/statistical_baseline.json
     format: statistical_baseline_json
 metrics:
+  - metric_id: analysis.failures.case_inventory
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Required analysis case identities must be unique and complete.
   - metric_id: analysis.case_count
     source: agent_e2e
     category: Workflow

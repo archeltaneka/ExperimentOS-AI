@@ -27,7 +27,10 @@ from packages.experiments.analysis.orchestration.datasets import (
 )
 from packages.experiments.analysis.orchestration.integrity import protect_response
 from packages.experiments.analysis.orchestration.observability import safe_analysis_provider
-from packages.experiments.analysis.orchestration.requests import AnalysisInput
+from packages.experiments.analysis.orchestration.requests import (
+    AnalysisInput,
+    normalize_analysis_input,
+)
 from packages.experiments.analysis.orchestration.service import AnalysisService
 from packages.observability.base import BaseObservabilityProvider
 from packages.observability.noop import NoOpObservabilityProvider
@@ -88,6 +91,10 @@ class AgentWorkflowService:
         analysis_datasets: tuple[AnalysisDatasetInput, ...] = (),
     ) -> AgentState:
         normalized_question = question.strip()
+        if analysis_request is None and analysis_datasets:
+            analysis_request = normalize_analysis_input(
+                None, experiment_id=experiment_id or "unknown"
+            )
         provider = (
             safe_analysis_provider(self.observability_provider)
             if analysis_request is not None

@@ -14,7 +14,8 @@ from .results import AnalysisResultEnvelope
 def artifact_citations(result: AnalysisResultEnvelope, experiment_id: str) -> list["Citation"]:
     return [
         {
-            "document_id": artifact.artifact_id,
+            "artifact_id": artifact.artifact_id,
+            "schema_version": "1",
             "experiment_id": experiment_id,
             "section": "Structured analysis",
             "metadata": {

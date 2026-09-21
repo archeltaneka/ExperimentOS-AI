@@ -5,21 +5,90 @@ from typing import Literal
 from ..base import ContractModel
 from ..causal.advanced import models as advanced
 from ..causal.assumptions import CausalAssumption
+from ..causal.designs import CausalOutcome, ObservationalDesign, TimeSemantics, UnitSemantics
 from ..causal.diagnostics import CausalDiagnostic, EvidenceLimitation
 from ..causal.did import models as did
 from ..causal.dml import models as dml
 from ..causal.dml import results as dml_results
 from ..causal.dowhy import models as dowhy
-from ..causal.estimands import CausalEstimand, CausalEstimandKind
+from ..causal.estimands import CausalEstimand, CausalEstimandKind, TreatmentContrast
 from ..causal.hte import models as hte
 from ..causal.hte import results as hte_results
 from ..causal.ipw import models as ipw
 from ..causal.models import CausalAbstentionReason, IdentificationStatus
 from ..causal.propensity import models as ps
+from ..populations import PopulationDefinition
 from ..provenance import AnalysisWarning, ProvenanceRecords
 
 
+class CausalContext(ContractModel):
+    design: ObservationalDesign
+    treatment: TreatmentContrast | None
+    outcome: CausalOutcome | None
+    population: PopulationDefinition
+    units: UnitSemantics | None
+    time: TimeSemantics
+
+
+class PropensityFitEvidence(ContractModel):
+    status: ps.PropensityFitStatus
+    converged: bool
+    classes: tuple[int, ...]
+    iteration_count: int | None
+    solver: str
+    warning_codes: tuple[str, ...]
+    sklearn_version: str
+    training_accuracy: float | None
+    maximum_absolute_coefficient: float | None
+    extreme_score_fraction: float | None
+
+
+class PropensityWeightsEvidence(ContractModel):
+    estimand: CausalEstimandKind
+    overall: ps.DistributionSummary
+    treated: ps.DistributionSummary
+    control: ps.DistributionSummary
+    extreme_weight_count: int
+    extreme_weight_proportion: float
+    ess: ps.EffectiveSampleSizeDiagnostic
+
+
+class RetainedEvidence(ContractModel):
+    configuration: ps.PropensityTrimmingConfig
+    retained_count: int
+    treated_retained: int
+    control_retained: int
+    dropped_count: int
+    treated_dropped: int
+    control_dropped: int
+    retained_proportion: float
+    common_support: ps.CommonSupportDiagnostic
+    score_diagnostics: ps.PropensityScoreDiagnostics | None
+
+
+class CappedWeightsEvidence(ContractModel):
+    configuration: ps.PropensityWeightCapConfig
+    overall: ps.DistributionSummary
+    treated: ps.DistributionSummary
+    control: ps.DistributionSummary
+    affected_count: int
+    affected_proportion: float
+    ess_before: ps.EffectiveSampleSizeDiagnostic
+    ess_after: ps.EffectiveSampleSizeDiagnostic
+
+
+class FoldPlanEvidence(ContractModel):
+    fold_count: int
+    random_seed: int
+    split_method: str
+    split_version: str
+    stratification_policy: str
+    summaries: tuple[dml.DMLFoldSummary, ...]
+    fingerprint_sha256: str
+
+
 class CausalEvidenceBase(ContractModel):
+    context: CausalContext
     request_id: str
     assumptions: tuple[CausalAssumption, ...]
     evidence_limitations: tuple[EvidenceLimitation, ...]
@@ -55,6 +124,12 @@ class PropensityEvidence(CausalEvidenceBase):
     estimand: CausalEstimandKind | None
     configuration: ps.PropensityConfig
     adjustment_covariates: tuple[str, ...]
+    model_fit: PropensityFitEvidence
+    model_provenance: ps.PropensityModelProvenance | None
+    encoding: ps.PropensityEncodingMetadata | None
+    weights: PropensityWeightsEvidence | None
+    retained: RetainedEvidence | None
+    capped_weights: CappedWeightsEvidence | None
     sample_counts: ps.PropensitySampleCounts
     score_diagnostics: ps.PropensityScoreDiagnostics | None
     common_support: ps.CommonSupportDiagnostic
@@ -97,6 +172,7 @@ class IPWEvidence(CausalEvidenceBase):
     control_mean: float | None
     test_result: ipw.IPWTestResult | None
     weights: IPWWeightEvidence | None
+    score_model: ipw.IPWScoreModelReference | None
     overlap: ps.OverlapDiagnostic
     balance: ps.BalanceDiagnostics | None
     balance_status: ipw.IPWBalanceStatus
@@ -114,6 +190,8 @@ class DMLEvidence(CausalEvidenceBase):
     estimand: CausalEstimand | None
     configuration: dml.DMLConfig
     configuration_fingerprint_sha256: str | None
+    fold_plan: FoldPlanEvidence | None
+    fold_fits: tuple[dml_results.DMLFoldFitProvenance, ...]
     point_estimate: float | None
     test_result: dml.DMLTestResult | None
     nuisance_diagnostics: dml.DMLNuisanceDiagnostics | None
@@ -134,6 +212,9 @@ class HTEEvidence(CausalEvidenceBase):
     analysis_semantics: hte.HTEPreSpecificationStatus
     estimand: CausalEstimand | None
     configuration_fingerprint_sha256: str | None
+    fold_plan: FoldPlanEvidence | None
+    fold_fits: tuple[dml_results.DMLFoldFitProvenance, ...]
+    assignment_fingerprint_sha256: str | None
     modifier: hte.EffectModifierDefinition
     subgroup_results: tuple[hte_results.SubgroupEffectResult, ...]
     interactions: tuple[hte_results.InteractionEffectResult, ...]

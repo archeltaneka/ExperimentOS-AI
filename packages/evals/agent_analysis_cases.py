@@ -15,6 +15,7 @@ from packages.experiments.analysis.orchestration.datasets import AnalysisDataset
 from packages.experiments.analysis.orchestration.requests import (
     AnalysisRoutingRefusal,
     DidWorkflowRequest,
+    EconMLDMLWorkflowRequest,
     FixedHorizonWorkflowRequest,
     normalize_analysis_input,
 )
@@ -62,6 +63,18 @@ ANALYSIS_CHECK_CODES = (
 )
 
 
+def analysis_check_applicability(case: AnalysisWorkflowCase) -> dict[str, bool]:
+    evidence_checks = {
+        "uncertainty_preserved",
+        "assumptions_preserved",
+        "provenance_preserved",
+        "estimand_preserved",
+        "limitations_preserved",
+    }
+    has_reference = case.expected_method in {"randomized_fixed_horizon", "did", "econml_dml"}
+    return {code: has_reference or code not in evidence_checks for code in ANALYSIS_CHECK_CODES}
+
+
 def check_analysis_response(
     case: AnalysisWorkflowCase, payload: dict[str, object]
 ) -> dict[str, AnalysisCheck]:
@@ -83,7 +96,7 @@ def check_analysis_response(
             routing=result.method == case.expected_method,
             adapter_identity=result.method == case.expected_method,
             execution_status=result.status == case.expected_status,
-            result_integrity=evidence == expected if expected is not None else None,
+            result_integrity=evidence == expected,
             abstention_preserved=(result.abstention is not None)
             == (case.expected_status in {"abstained", "invalid", "unavailable"}),
         )
@@ -100,18 +113,34 @@ def check_analysis_response(
                 if expected is not None
                 else None
             )
+        if expected is None:
+            refusal = normalize_analysis_input(
+                case.ask_payload["analysis"], experiment_id=str(case.ask_payload["experiment_id"])
+            )
+            verdicts["diagnostics_preserved"] = (
+                isinstance(refusal, AnalysisRoutingRefusal)
+                and result.diagnostics == refusal.diagnostics
+            )
+            verdicts["abstention_preserved"] = (
+                isinstance(refusal, AnalysisRoutingRefusal)
+                and result.abstention == refusal.abstention
+            )
         impact = result.business_impact
         verdicts["downstream_gating"] = (
             impact is None or impact.status in {"abstained", "failed"}
             if result.status not in {"completed", "inconclusive"}
             else True
         )
-        verdicts["business_provenance"] = (
-            bool(impact.inputs and impact.provenance)
-            if impact and impact.status in {"completed", "inconclusive"}
-            else None
+        declaration = case.ask_payload.get("analysis")
+        requested_business = (
+            isinstance(declaration, dict) and declaration.get("business") is not None
         )
-        verdicts["prose_grounding"] = response.answer == render_analysis(result)
+        verdicts["business_provenance"] = (
+            _business_matches(case, impact) if requested_business else impact is None
+        )
+        verdicts["prose_grounding"] = response.answer == render_analysis(
+            result
+        ) and _public_narratives_match(case, response)
         # Typed public contracts reject foreign estimator objects and raw rows.
         verdicts["object_privacy"] = not _private_payload(result.model_dump(mode="json"))
     return {
@@ -142,6 +171,62 @@ def _private_payload(value: object) -> bool:
     elif isinstance(value, list):
         return any(_private_payload(item) for item in value)
     return False
+
+
+def _business_matches(case, impact) -> bool:
+    from packages.experiments.analysis.impact.service import BusinessImpactService
+    from packages.experiments.analysis.orchestration.business import project_business
+    from packages.experiments.analysis.orchestration.requests import BusinessInputRefusal
+
+    request = normalize_analysis_input(
+        case.ask_payload["analysis"], experiment_id=str(case.ask_payload["experiment_id"])
+    )
+    if impact is None:
+        return False
+    if isinstance(request.business, BusinessInputRefusal):
+        return (
+            impact.status == "abstained"
+            and impact.abstention == request.business.abstention
+            and impact.diagnostics == request.business.diagnostics
+        )
+    native = _run_native_reference(case)
+    if native is None:
+        return False
+    expected = project_business(BusinessImpactService().analyze(native, request.business))
+    return impact == expected
+
+
+def _public_narratives_match(case, response) -> bool:
+    from packages.agents.decision_agent import DecisionAgent
+    from packages.agents.executive_summary_agent import ExecutiveSummaryAgent
+    from packages.agents.human_approval_agent import HumanApprovalAgent
+    from packages.agents.risk_assessment_agent import RiskAssessmentAgent
+    from packages.agents.state import create_initial_state
+    from packages.experiments.analysis.orchestration.integrity import artifact_citations
+
+    plan = analysis_case_plan(case)
+    state = create_initial_state(
+        str(case.ask_payload["question"]), experiment_id=str(case.ask_payload["experiment_id"])
+    )
+    state.update(
+        intent=plan.intent,
+        required_agents=plan.required_agents,
+        analysis_result=response.analysis,
+        citations=artifact_citations(response.analysis, str(case.ask_payload["experiment_id"])),
+    )
+    for name, agent in (
+        ("risk_assessment", RiskAssessmentAgent()),
+        ("decision", DecisionAgent()),
+        ("human_approval", HumanApprovalAgent()),
+        ("executive_summary", ExecutiveSummaryAgent()),
+    ):
+        if name in plan.required_agents:
+            state.update(agent.run(state))
+    return (
+        response.executive_summary == state["executive_summary"]
+        and response.decision == state["decision"]
+        and response.citations == state["citations"]
+    )
 
 
 def analysis_case_plan(case: AnalysisWorkflowCase):
@@ -255,6 +340,11 @@ def build_analysis_case_service(case: AnalysisWorkflowCase) -> AgentWorkflowServ
 
 def run_direct_reference(case: AnalysisWorkflowCase) -> AnalysisEvidence | None:
     """Call native analyzers directly, without orchestration registry or dispatch."""
+    native = _run_native_reference(case)
+    return project_evidence(native) if native is not None else None
+
+
+def _run_native_reference(case):
     request = normalize_analysis_input(
         case.ask_payload["analysis"], experiment_id=str(case.ask_payload["experiment_id"])
     )
@@ -264,10 +354,8 @@ def run_direct_reference(case: AnalysisWorkflowCase) -> AnalysisEvidence | None:
     dataset = AnalysisDatasetInput.model_validate(datasets[0])
     table = AnalysisTable(columns=dataset.columns, rows=dataset.rows)
     if isinstance(request, FixedHorizonWorkflowRequest):
-        return project_evidence(
-            RandomizedAnalysisService().analyze(
-                request.execution, table, request.binding, provenance=dataset.provenance
-            )
+        return RandomizedAnalysisService().analyze(
+            request.execution, table, request.binding, provenance=dataset.provenance
         )
     if isinstance(request, DidWorkflowRequest):
         columns = {
@@ -283,11 +371,30 @@ def run_direct_reference(case: AnalysisWorkflowCase) -> AnalysisEvidence | None:
             )
             for row in table.rows
         )
-        return project_evidence(
-            DifferenceInDifferencesService().analyze(
-                request.execution,
-                AnalysisTable(columns=table.columns, rows=rows),
-                provenance=dataset.provenance,
-            )
+        return DifferenceInDifferencesService().analyze(
+            request.execution,
+            AnalysisTable(columns=table.columns, rows=rows),
+            provenance=dataset.provenance,
         )
+    if isinstance(request, EconMLDMLWorkflowRequest) and case.optional_unavailable:
+        from packages.experiments.analysis.causal.dml.models import DMLExecutionRequest
+        from packages.experiments.analysis.causal.econml import EconMLDMLAdapter
+        from packages.experiments.analysis.causal.econml.dependency import AdapterError
+        from packages.experiments.analysis.causal.service import CausalIdentificationService
+
+        identified = CausalIdentificationService().identify(request.analysis_request)
+        execution = DMLExecutionRequest(
+            identification_result=identified,
+            binding=request.binding,
+            configuration=request.configuration,
+        )
+        with patch(
+            "packages.experiments.analysis.causal.econml.dependency.load_econml",
+            side_effect=AdapterError(
+                "OPTIONAL_DEPENDENCY_UNAVAILABLE", "Offline unavailable-runtime case"
+            ),
+        ):
+            return EconMLDMLAdapter(configuration=request.adapter_configuration).analyze(
+                execution, table, provenance=dataset.provenance
+            )
     return None

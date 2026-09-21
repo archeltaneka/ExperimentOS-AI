@@ -107,6 +107,7 @@ class AgentWorkflowService:
                     "experiment_analysis_agent": ExperimentAnalysisAgent(
                         analysis_service=analysis_service
                     ),
+                    "business_impact_agent": BusinessImpactAgent(analysis_service=analysis_service),
                 }
             )
         metadata = {

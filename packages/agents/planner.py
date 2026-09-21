@@ -168,7 +168,7 @@ def plan_analysis(request: AnalysisInput, legacy_plan: PlannerPlan) -> PlannerPl
         intent=legacy_plan.intent,
         required_agents=agents,
         experiment_context={"experiment_ids": [request.experiment_id], "filters": {}},
-        planner_notes="Explicit typed analysis request; statistical method preserved without selection.",
+        planner_notes="Explicit typed analysis request; method preserved without selection.",
         metrics={
             **legacy_plan.metrics,
             "planner_required_agent_count": len(agents),

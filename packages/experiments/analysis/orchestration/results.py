@@ -22,6 +22,7 @@ from ..randomized.cuped.models import CupedAnalysisResult
 from ..randomized.models import RandomizedAnalysisResult
 from ..randomized.sequential.models import SequentialAnalysisHistory
 from ..results import AbstentionReason
+from .business import BusinessImpactEvidence
 from .evidence_causal import (
     AdvancedEvidence,
     DidEvidence,
@@ -119,6 +120,7 @@ class AnalysisResultEnvelope(ContractModel):
     failure: AnalysisFailure | None = None
     artifacts: tuple[AnalysisArtifactReference, ...] = ()
     integrity_findings: tuple[AnalysisIntegrityFinding, ...] = ()
+    business_impact: BusinessImpactEvidence | None = None
 
     @model_validator(mode="after")
     def validate_envelope(self) -> Self:

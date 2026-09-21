@@ -8,6 +8,7 @@ from packages.observability.noop import NoOpObservabilityProvider
 
 from ..randomized.sequential.models import SequentialAnalysisHistory
 from ..results import AbstentionReason
+from .business import analyze_business
 from .datasets import AnalysisDataResolver, DatasetResolutionError
 from .registry import AnalysisMethodRegistry, default_registry
 from .requests import (
@@ -131,6 +132,29 @@ class AnalysisService:
 
     def authoritative_result(self, analysis_id: str) -> AnalysisResultEnvelope:
         return self._results[analysis_id].model_copy(deep=True)
+
+    def analyze_business(self, analysis_id: str) -> AnalysisResultEnvelope:
+        envelope = self.authoritative_result(analysis_id)
+        request = self._requests.get(analysis_id)
+        impact = analyze_business(
+            self._native.get(analysis_id), request.business if request else None, envelope.status
+        )
+        artifact = AnalysisArtifactReference(
+            artifact_id=analysis_id + ":business",
+            kind="business_impact",
+            version="1",
+            provenance=impact.provenance,
+            evidence_fingerprint=envelope.evidence_fingerprint,
+        )
+        return self._save(
+            envelope.model_copy(
+                update={
+                    "business_impact": impact,
+                    "artifacts": tuple(a for a in envelope.artifacts if a.kind != "business_impact")
+                    + (artifact,),
+                }
+            )
+        )
 
     def _save(self, result: AnalysisResultEnvelope) -> AnalysisResultEnvelope:
         validated = AnalysisResultEnvelope.model_validate(result.model_dump(warnings=False))

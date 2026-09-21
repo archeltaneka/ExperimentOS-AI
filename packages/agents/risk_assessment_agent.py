@@ -129,6 +129,46 @@ class RiskAssessmentAgent:
 def _build_risk_assessment(
     state: AgentState,
 ) -> tuple[RiskAssessment, list[RiskRecord], list[dict[str, object]]]:
+    if state.get("analysis_request") is not None:
+        result = state.get("analysis_result")
+        diagnostics = list(result.diagnostics) if result else []
+        if result and result.evidence:
+            diagnostics.extend(getattr(result.evidence, "diagnostics", ()))
+            diagnostics.extend(getattr(result.evidence, "deviations", ()))
+        if result and result.business_impact:
+            diagnostics.extend(result.business_impact.diagnostics)
+        factors = [
+            {
+                "code": item.code,
+                "title": item.code,
+                "severity": str(getattr(item, "severity", "info")),
+                "category": "analysis",
+                "detail": item.message,
+                "mitigation": "Review the authoritative analyzer diagnostic.",
+            }
+            for item in diagnostics
+        ]
+        return (
+            {
+                **state["risk_assessment"],
+                "risk_status": "partial_assessment",
+                "overall_risk_level": "unknown",
+                "risk_score": None,
+                "risk_factors": factors,
+                "data_quality_concerns": [
+                    item["detail"] for item in factors if item["severity"] in {"error", "fatal"}
+                ],
+                "statistical_concerns": [
+                    item["detail"] for item in factors if item["severity"] == "warning"
+                ],
+                "limitations": [
+                    "Analyzer diagnostics are preserved; operational risks need separate evidence."
+                ],
+                "confidence_level": "unknown",
+            },
+            [],
+            [],
+        )
     analysis = state["experiment_analysis"]
     business_impact = state["business_impact"]
     citations = list(analysis["evidence_citations"]) or list(state["citations"])

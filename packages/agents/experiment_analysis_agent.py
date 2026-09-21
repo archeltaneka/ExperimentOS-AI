@@ -23,6 +23,8 @@ from packages.agents.state import (
 )
 from packages.db.models import Experiment, ExperimentMetric
 from packages.db.session import create_async_session_factory, create_database_engine
+from packages.experiments.analysis.orchestration.datasets import RequestDatasetResolver
+from packages.experiments.analysis.orchestration.service import AnalysisService
 from packages.ingestion.load_experiment import run_async
 
 EXPERIMENT_ANALYSIS_NODE = "experiment_analysis"
@@ -148,6 +150,7 @@ class RuntimeExperimentAnalysisRepository:
 @dataclass
 class ExperimentAnalysisAgent:
     repository: ExperimentAnalysisRepository | None = None
+    analysis_service: AnalysisService | None = None
 
     def __post_init__(self) -> None:
         if self.repository is None:
@@ -156,6 +159,28 @@ class ExperimentAnalysisAgent:
     def run(self, state: AgentState) -> AgentStateUpdate:
         started_at = perf_counter()
         trace = [create_trace_entry(node=EXPERIMENT_ANALYSIS_NODE, event="started")]
+        request = state.get("analysis_request")
+        if request is not None:
+            service = self.analysis_service or AnalysisService(resolver=RequestDatasetResolver(()))
+            result = service.analyze(request)
+            return {
+                "analysis_result": result,
+                "trace": [
+                    *trace,
+                    create_trace_entry(
+                        node=EXPERIMENT_ANALYSIS_NODE,
+                        event="completed",
+                        details={"method": result.method, "status": result.status},
+                    ),
+                ],
+                "metrics": {
+                    "experiment_analysis": {
+                        "status": result.status,
+                        "method": result.method,
+                        "latency_ms": (perf_counter() - started_at) * 1000,
+                    }
+                },
+            }
         try:
             analysis, experiment_metadata, experiment_metrics, resolved_count = run_async(
                 self._analyze(state)

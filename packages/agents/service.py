@@ -21,6 +21,12 @@ from packages.agents.retrieval_agent import RetrievalAgent
 from packages.agents.risk_assessment_agent import RiskAssessmentAgent
 from packages.agents.state import AgentState, create_initial_state
 from packages.agents.workflow import build_agent_workflow
+from packages.experiments.analysis.orchestration.datasets import (
+    AnalysisDatasetInput,
+    RequestDatasetResolver,
+)
+from packages.experiments.analysis.orchestration.requests import AnalysisInput
+from packages.experiments.analysis.orchestration.service import AnalysisService
 from packages.observability.base import BaseObservabilityProvider
 from packages.observability.noop import NoOpObservabilityProvider
 
@@ -58,7 +64,7 @@ class AgentWorkflowService:
             human_approval_agent = HumanApprovalAgent()
         if executive_summary_agent is None:
             executive_summary_agent = ExecutiveSummaryAgent()
-        self.workflow = build_agent_workflow(
+        self._agents = dict(
             retrieval_agent=retrieval_agent,
             experiment_analysis_agent=experiment_analysis_agent,
             business_impact_agent=business_impact_agent,
@@ -67,6 +73,7 @@ class AgentWorkflowService:
             human_approval_agent=human_approval_agent,
             executive_summary_agent=executive_summary_agent,
         )
+        self.workflow = build_agent_workflow(**self._agents)
 
     def run(
         self,
@@ -74,6 +81,9 @@ class AgentWorkflowService:
         experiment_id: str | None = None,
         top_k: int = 5,
         human_approval_input: dict[str, object] | None = None,
+        *,
+        analysis_request: AnalysisInput | None = None,
+        analysis_datasets: tuple[AnalysisDatasetInput, ...] = (),
     ) -> AgentState:
         normalized_question = question.strip()
         if not normalized_question:
@@ -83,7 +93,22 @@ class AgentWorkflowService:
             experiment_id=experiment_id,
             top_k=top_k,
             human_approval_input=human_approval_input,
+            analysis_request=analysis_request,
         )
+        workflow = self.workflow
+        if analysis_request is not None:
+            analysis_service = AnalysisService(
+                resolver=RequestDatasetResolver(analysis_datasets),
+                observability_provider=self.observability_provider,
+            )
+            workflow = build_agent_workflow(
+                **{
+                    **self._agents,
+                    "experiment_analysis_agent": ExperimentAnalysisAgent(
+                        analysis_service=analysis_service
+                    ),
+                }
+            )
         metadata = {
             "surface": "agent_workflow",
             "workflow": initial_state["run_metadata"]["workflow"],
@@ -127,7 +152,7 @@ class AgentWorkflowService:
                     },
                     tags=("agent_workflow",),
                 )
-                state = self.workflow.invoke(initial_state, config=config)
+                state = workflow.invoke(initial_state, config=config)
                 state["run_metadata"] = {
                     **state["run_metadata"],
                     "run_id": initial_state["run_metadata"]["run_id"],

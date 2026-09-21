@@ -1,6 +1,7 @@
 """Request-scoped orchestration of explicitly selected validated analysis."""
 
 from datetime import UTC, datetime
+from time import perf_counter
 from uuid import uuid4
 
 from packages.observability.base import BaseObservabilityProvider
@@ -10,6 +11,7 @@ from ..randomized.sequential.models import SequentialAnalysisHistory
 from ..results import AbstentionReason
 from .business import analyze_business
 from .datasets import AnalysisDataResolver, DatasetResolutionError
+from .observability import analysis_metadata, safe_analysis_provider
 from .registry import AnalysisMethodRegistry, default_registry
 from .requests import (
     WORKFLOW_REQUEST_ADAPTER,
@@ -42,14 +44,36 @@ class AnalysisService:
     ) -> None:
         self.resolver = resolver
         self.registry = registry if registry is not None else default_registry()
-        self.provider = observability_provider or NoOpObservabilityProvider()
+        self.provider = safe_analysis_provider(
+            observability_provider or NoOpObservabilityProvider()
+        )
         self._results: dict[str, AnalysisResultEnvelope] = {}
         self._native: dict[str, OwnedAnalysisResult] = {}
         self._requests: dict[str, WorkflowAnalysisRequest] = {}
 
     def analyze(self, request: AnalysisInput) -> AnalysisResultEnvelope:
+        started = perf_counter()
+        span = self.provider.start_span("analysis")
+        with span.activate():
+            result = self._analyze(request)
+            span.add_metadata(analysis_metadata(result))
+            span.finish(
+                outputs={"status": result.status, "duration_ms": (perf_counter() - started) * 1000}
+            )
+            return result
+
+    def _analyze(self, request: AnalysisInput) -> AnalysisResultEnvelope:
         analysis_id = str(uuid4())
-        request = self._revalidate(request)
+        validation = self.provider.start_span("validation")
+        with validation.activate():
+            request = self._revalidate(request)
+            validation.finish(
+                outputs={
+                    "status": "invalid"
+                    if isinstance(request, AnalysisRoutingRefusal)
+                    else "validated"
+                }
+            )
         envelope = AnalysisResultEnvelope(
             analysis_id=analysis_id,
             request_id=request.request_id,
@@ -80,12 +104,19 @@ class AnalysisService:
             return self._refuse(envelope, "analysis.method_unsupported")
         envelope = envelope.model_copy(update={"capability": registration.capability})
         try:
-            native = registration.handler(request, self.resolver, self.provider)
+            estimator = self.provider.start_span(
+                "estimator", metadata={"method": registration.method_id}
+            )
+            with estimator.activate():
+                native = registration.handler(request, self.resolver, self.provider)
+                estimator.finish(outputs={"status": native_status(native)})
             evidence = project_evidence(native)
             status = native_status(native)
         except DatasetResolutionError as exc:
+            estimator.finish(outputs={"status": "abstained"})
             return self._refuse(envelope, exc.code)
         except Exception as exc:
+            estimator.finish(outputs={"status": "failed", "error_type": type(exc).__name__})
             return self._save(
                 envelope.model_copy(
                     update={
@@ -143,6 +174,18 @@ class AnalysisService:
         return self._save(result.model_copy(update={"integrity_findings": findings}))
 
     def analyze_business(self, analysis_id: str) -> AnalysisResultEnvelope:
+        span = self.provider.start_span("analysis.business_impact")
+        with span.activate():
+            result = self._analyze_business(analysis_id)
+            span.add_metadata(analysis_metadata(result))
+            span.finish(
+                outputs={
+                    "status": result.business_impact.status if result.business_impact else "skipped"
+                }
+            )
+            return result
+
+    def _analyze_business(self, analysis_id: str) -> AnalysisResultEnvelope:
         envelope = self.authoritative_result(analysis_id)
         request = self._requests.get(analysis_id)
         impact = analyze_business(

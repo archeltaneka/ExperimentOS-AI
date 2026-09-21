@@ -33,6 +33,7 @@ from packages.agents.service import AgentWorkflowService
 from packages.config.env import load_environment
 from packages.db.models import Document, Experiment
 from packages.db.session import create_async_session_factory, create_database_engine
+from packages.experiments.analysis.orchestration.observability import safe_analysis_provider
 from packages.ingestion.embeddings import build_embedding_provider
 from packages.llm.client import (
     GeminiLLMClient,
@@ -321,6 +322,8 @@ async def ask(
     ],
 ) -> AskResponse:
     ask_mode = get_ask_mode()
+    if request.analysis is not None and ask_mode != "legacy_rag":
+        observability_provider = safe_analysis_provider(observability_provider)
     request_id = str(uuid.uuid4())
     root_span = observability_provider.start_root_span(
         "ask_request",

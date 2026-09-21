@@ -26,6 +26,7 @@ from packages.experiments.analysis.orchestration.datasets import (
     RequestDatasetResolver,
 )
 from packages.experiments.analysis.orchestration.integrity import protect_response
+from packages.experiments.analysis.orchestration.observability import safe_analysis_provider
 from packages.experiments.analysis.orchestration.requests import AnalysisInput
 from packages.experiments.analysis.orchestration.service import AnalysisService
 from packages.observability.base import BaseObservabilityProvider
@@ -87,6 +88,11 @@ class AgentWorkflowService:
         analysis_datasets: tuple[AnalysisDatasetInput, ...] = (),
     ) -> AgentState:
         normalized_question = question.strip()
+        provider = (
+            safe_analysis_provider(self.observability_provider)
+            if analysis_request is not None
+            else self.observability_provider
+        )
         if not normalized_question:
             raise AgentWorkflowInputError("question must not be empty")
         initial_state = create_initial_state(
@@ -101,7 +107,7 @@ class AgentWorkflowService:
         if analysis_request is not None:
             analysis_service = AnalysisService(
                 resolver=RequestDatasetResolver(analysis_datasets),
-                observability_provider=self.observability_provider,
+                observability_provider=provider,
             )
             workflow = build_agent_workflow(
                 **{
@@ -123,9 +129,9 @@ class AgentWorkflowService:
             "top_k": top_k,
             "experiment_id": experiment_id or "",
         }
-        parent_span = self.observability_provider.current_span()
+        parent_span = provider.current_span()
         if parent_span is None:
-            span = self.observability_provider.start_root_span(
+            span = provider.start_root_span(
                 "workflow",
                 trace_id=initial_state["run_metadata"]["run_id"],
                 inputs={
@@ -137,7 +143,7 @@ class AgentWorkflowService:
                 tags=("agent_workflow",),
             )
         else:
-            span = self.observability_provider.start_span(
+            span = provider.start_span(
                 "workflow",
                 inputs={
                     "question": normalized_question,
@@ -149,7 +155,7 @@ class AgentWorkflowService:
             )
         with span.activate():
             try:
-                config = self.observability_provider.build_langgraph_config(
+                config = provider.build_langgraph_config(
                     metadata={
                         "workflow": initial_state["run_metadata"]["workflow"],
                         "experimentos_trace_id": initial_state["run_metadata"]["run_id"],

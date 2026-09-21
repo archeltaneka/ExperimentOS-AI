@@ -10,6 +10,7 @@ from packages.agents.service import AgentWorkflowService
 from packages.agents.state import AgentState
 from packages.config.env import resolve_setting
 from packages.experiments.analysis.orchestration.datasets import AnalysisDatasetInput
+from packages.experiments.analysis.orchestration.observability import safe_analysis_provider
 from packages.experiments.analysis.orchestration.requests import normalize_analysis_input
 from packages.experiments.analysis.orchestration.results import AnalysisResultEnvelope
 from packages.observability.base import BaseObservabilityProvider
@@ -172,7 +173,12 @@ class AgentWorkflowAskService:
                     "Analysis workflow infrastructure unavailable"
                 ) from None
             raise AgentWorkflowExecutionError(str(exc)) from exc
-        span = self.observability_provider.start_span(
+        provider = (
+            safe_analysis_provider(self.observability_provider)
+            if request.analysis is not None
+            else self.observability_provider
+        )
+        span = provider.start_span(
             "response_serialization",
             metadata={
                 "surface": "agent_workflow",

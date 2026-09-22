@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
 
 from packages.evals.agent_e2e import AgentE2ERun
 
 KNOWN_LIMITATIONS = (
-    "The E2E evaluator uses deterministic fake workflow and legacy QA backends rather than the "
-    "live database-backed retrieval path.",
-    "Assertions are structural and intentionally avoid exact prose matching.",
+    "Legacy cases use fake workflow/QA backends; analysis cases use real graph "
+    "and native analyzers with local data.",
+    "Analysis checks compare typed evidence and canonical presentation; "
+    "legacy checks remain structural.",
     "Failure-path coverage validates structured API surfacing, not downstream recovery behavior.",
 )
 
 PHASE3_NEXT_STEPS = (
-    "Add causal inference once the Phase 2 contract is stable.",
+    "Expand native analysis fixture coverage as implemented capabilities evolve.",
     "Add LLM-as-judge only after deterministic regression coverage is mature.",
     "Expand database-backed integrated evaluation beyond fake workflow fixtures.",
 )
@@ -63,7 +63,9 @@ def render_agent_e2e_report(run: AgentE2ERun) -> str:
 
 
 def agent_e2e_report_to_json(run: AgentE2ERun) -> str:
-    return json.dumps(asdict(run), indent=2) + "\n"
+    from packages.evals.agent_analysis_cases import safe_run_payload
+
+    return json.dumps(safe_run_payload(run), indent=2) + "\n"
 
 
 def _percent(value: float) -> str:

@@ -86,6 +86,11 @@ def test_committed_datasets_preserve_declared_order_and_unique_ids() -> None:
     agent_ids = [case.id for case in load_agent_evaluation_dataset()]
 
     assert qa_ids == [row["id"] for row in qa_raw]
-    assert agent_ids == [row["id"] for row in agent_raw]
+    assert agent_ids[: len(agent_raw)] == [row["id"] for row in agent_raw]
+    from packages.evals.agent_analysis_cases import load_analysis_workflow_cases
+
+    assert agent_ids[len(agent_raw) :] == [
+        "analysis-" + case.case_id for case in load_analysis_workflow_cases()
+    ]
     assert len(qa_ids) == len(set(qa_ids))
     assert len(agent_ids) == len(set(agent_ids))

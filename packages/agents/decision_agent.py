@@ -119,6 +119,30 @@ class DecisionAgent:
 
 
 def _build_decision(state: AgentState) -> tuple[DecisionRecord, list[dict[str, object]]]:
+    if state.get("analysis_request") is not None:
+        result = state.get("analysis_result")
+        eligible = result is not None and result.status in {"completed", "inconclusive"}
+        return {
+            **state["decision"],
+            "decision_status": "needs_more_data" if eligible else "blocked",
+            "recommendation": "needs_more_data",
+            "confidence": "unknown",
+            "rationale": (
+                "Structured analysis does not establish product readiness; "
+                "guardrails and operational review remain required."
+            ),
+            "supporting_evidence": [f"Analysis artifact: {result.analysis_id}"] if result else [],
+            "blocking_issues": [] if eligible else ["Analysis is unavailable or abstained."],
+            "recommended_next_actions": [
+                "Review evidence and supply readiness and guardrail evidence."
+            ],
+            "approval_required": bool(
+                state["decision"]["approval_required"] or state["human_approval"]["required"]
+            ),
+            "limitations": [
+                "No rollout authorization follows from statistical or monetary effect alone."
+            ],
+        }, []
     analysis = state["experiment_analysis"]
     business_impact = state["business_impact"]
     risk_assessment = state["risk_assessment"]

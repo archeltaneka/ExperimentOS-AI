@@ -4,6 +4,8 @@ from collections import Counter
 from dataclasses import asdict, dataclass, field
 from typing import Literal
 
+from packages.experiments.analysis.orchestration.results import AnalysisResultEnvelope
+
 FindingCategory = Literal[
     "unsupported_factual_claim",
     "unsupported_numerical_claim",
@@ -56,6 +58,7 @@ class FactualityCase:
     category: str
     surface: FactualitySurface
     answer: str
+    analysis: AnalysisResultEnvelope | None = None
     citations: tuple[CitationRecord, ...] = ()
     evidence: tuple[EvidenceRecord, ...] = ()
     experiment_analysis: dict[str, object] = field(default_factory=dict)

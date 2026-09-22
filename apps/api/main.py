@@ -10,10 +10,14 @@ from functools import lru_cache
 from typing import Annotated, Protocol
 
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from starlette.requests import Request
 
 from apps.api.ask_service import (
     AgentWorkflowAskService,
@@ -29,6 +33,7 @@ from packages.agents.service import AgentWorkflowService
 from packages.config.env import load_environment
 from packages.db.models import Document, Experiment
 from packages.db.session import create_async_session_factory, create_database_engine
+from packages.experiments.analysis.orchestration.observability import safe_analysis_provider
 from packages.ingestion.embeddings import build_embedding_provider
 from packages.llm.client import (
     GeminiLLMClient,
@@ -62,6 +67,31 @@ async def app_lifespan(app: FastAPI):
 
 
 app = FastAPI(title="ExperimentOS AI API", version="0.1.0", lifespan=app_lifespan)
+
+
+@app.exception_handler(RequestValidationError)
+async def safe_analysis_validation(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    if request.url.path == "/ask" and any(
+        len(error.get("loc", ())) > 1 and error["loc"][1] in {"analysis", "analysis_datasets"}
+        for error in errors
+    ):
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": [
+                    {
+                        "loc": error.get("loc", ()),
+                        "type": error.get("type", "value_error"),
+                        "msg": "Invalid analysis input",
+                    }
+                    for error in errors
+                ]
+            },
+        )
+    return await request_validation_exception_handler(request, exc)
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=("http://localhost:3000", "http://127.0.0.1:3000"),
@@ -292,6 +322,8 @@ async def ask(
     ],
 ) -> AskResponse:
     ask_mode = get_ask_mode()
+    if (request.analysis is not None or request.analysis_datasets) and ask_mode != "legacy_rag":
+        observability_provider = safe_analysis_provider(observability_provider)
     request_id = str(uuid.uuid4())
     root_span = observability_provider.start_root_span(
         "ask_request",

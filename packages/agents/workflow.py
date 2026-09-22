@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from functools import partial
 
 from langgraph.graph import END, START, StateGraph
@@ -29,6 +30,8 @@ from packages.agents.nodes import (
 from packages.agents.retrieval_agent import RetrievalAgent
 from packages.agents.risk_assessment_agent import RiskAssessmentAgent
 from packages.agents.state import AgentInputState, AgentState
+from packages.experiments.analysis.orchestration.integrity import protect_update
+from packages.experiments.analysis.orchestration.service import AnalysisService
 
 
 def build_agent_workflow(
@@ -40,6 +43,7 @@ def build_agent_workflow(
     decision_agent: DecisionAgentLike | None = None,
     human_approval_agent: HumanApprovalAgentLike | None = None,
     executive_summary_agent: ExecutiveSummaryAgentLike | None = None,
+    analysis_service: AnalysisService | None = None,
 ):
     if retrieval_agent is None:
         retrieval_agent = RetrievalAgent()
@@ -56,51 +60,82 @@ def build_agent_workflow(
     if executive_summary_agent is None:
         executive_summary_agent = ExecutiveSummaryAgent()
     builder = StateGraph(AgentState, input_schema=AgentInputState)
+
+    def protected(node, handler):
+        if analysis_service is None:
+            return handler
+
+        def run(state):
+            proposed = handler(deepcopy(state))
+            return protect_update(
+                node=node, current=state, proposed=proposed, analysis_service=analysis_service
+            )
+
+        return run
+
     builder.add_node("planner", planner_node)
     builder.add_node(
         "retrieval",
-        partial(retrieval_node, retrieval_agent=retrieval_agent),
+        protected("retrieval", partial(retrieval_node, retrieval_agent=retrieval_agent)),
     )
     builder.add_node(
         "experiment_analysis",
-        partial(
-            experiment_analysis_node,
-            experiment_analysis_agent=experiment_analysis_agent,
+        protected(
+            "experiment_analysis",
+            partial(
+                experiment_analysis_node,
+                experiment_analysis_agent=experiment_analysis_agent,
+            ),
         ),
     )
     builder.add_node(
         "business_impact",
-        partial(
-            business_impact_node,
-            business_impact_agent=business_impact_agent,
+        protected(
+            "business_impact",
+            partial(
+                business_impact_node,
+                business_impact_agent=business_impact_agent,
+            ),
         ),
     )
     builder.add_node(
         "risk_assessment",
-        partial(
-            risk_assessment_node,
-            risk_assessment_agent=risk_assessment_agent,
+        protected(
+            "risk_assessment",
+            partial(
+                risk_assessment_node,
+                risk_assessment_agent=risk_assessment_agent,
+            ),
         ),
     )
     builder.add_node(
         "decision",
-        partial(
-            decision_node,
-            decision_agent=decision_agent,
+        protected(
+            "decision",
+            partial(
+                decision_node,
+                decision_agent=decision_agent,
+            ),
         ),
     )
     builder.add_node(
         "human_approval",
-        partial(
-            human_approval_node,
-            human_approval_agent=human_approval_agent,
+        protected(
+            "human_approval",
+            partial(
+                human_approval_node,
+                human_approval_agent=human_approval_agent,
+            ),
         ),
     )
     builder.add_node(
         "executive_summary",
-        partial(
-            executive_summary_node,
-            executive_summary_agent=executive_summary_agent,
+        protected(
+            "executive_summary",
+            partial(
+                executive_summary_node,
+                executive_summary_agent=executive_summary_agent,
+            ),
         ),
     )
     builder.add_edge(START, "planner")

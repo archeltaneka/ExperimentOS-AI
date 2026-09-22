@@ -278,7 +278,7 @@ The CI quality gate combines these signals with policy checks. Details and confi
 | Enterprise Platform | Future |
 | Research and Advanced Intelligence | Future research |
 
-Phase 4 currently includes typed contracts, eligibility validation, descriptive summaries, and an unadjusted randomized-analysis foundation. It does not expose CUPED, sequential testing, Bayesian A/B testing, Difference-in-Differences, propensity-score methods, Double Machine Learning, EconML, DoWhy, or business-impact estimation as operational functionality.
+Phase 4 includes validated randomized, causal and uncertainty-aware business-impact services. Optional structured `/ask` requests expose the implemented methods through the existing agent workflow, with explicit method selection, typed evidence, abstention and human-approval safeguards. EconML/DoWhy remain optional; the LLM never calculates statistics or invents business inputs. See [workflow analysis and runnable examples](docs/phase4/workflow_analysis.md) for the supported-method inventory and limitations. No autonomous rollout or production deployment is implied.
 
 ## Known limitations
 

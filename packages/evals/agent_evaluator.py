@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from time import perf_counter
 from typing import Protocol
 
@@ -12,6 +12,11 @@ from packages.agents.observability import extract_workflow_observation
 from packages.agents.risk_assessment_agent import RiskAssessmentAgent
 from packages.agents.service import AgentWorkflowService
 from packages.agents.state import AgentState, AgentStateUpdate, create_trace_entry
+from packages.evals.agent_analysis_cases import (
+    AnalysisCheck,
+    build_analysis_case_service,
+    check_analysis_response,
+)
 from packages.evals.agent_dataset import AgentEvaluationCase
 from packages.evals.agent_metrics import (
     AgentEvaluationSummary,
@@ -33,6 +38,7 @@ class AgentEvaluationSampleResult:
     observation: object | None
     metrics: AgentSampleMetrics | None
     error: str | None
+    analysis_checks: dict[str, AnalysisCheck] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -61,9 +67,41 @@ class AgentWorkflowEvaluator:
         samples: list[AgentEvaluationSampleResult] = []
         for case in self.cases:
             try:
-                state = self.workflow_service.run(case.question)
+                checks = {}
+                if case.analysis_case is not None:
+                    from apps.api.ask_service import AskRequest, map_agent_state_to_ask_response
+                    from packages.experiments.analysis.orchestration.requests import (
+                        normalize_analysis_input,
+                    )
+
+                    request = AskRequest.model_validate(case.analysis_case.ask_payload)
+                    state = build_analysis_case_service(case.analysis_case).run(
+                        request.question,
+                        experiment_id=request.experiment_id,
+                        top_k=request.top_k,
+                        analysis_request=normalize_analysis_input(
+                            request.analysis, experiment_id=request.experiment_id
+                        ),
+                        analysis_datasets=request.analysis_datasets,
+                    )
+                    checks = check_analysis_response(
+                        case.analysis_case,
+                        map_agent_state_to_ask_response(state).model_dump(mode="json"),
+                    )
+                else:
+                    state = self.workflow_service.run(case.question)
                 observation = extract_workflow_observation(state)
                 metrics = calculate_agent_sample_metrics(case=case, observation=observation)
+                if checks:
+                    failures = metrics.failure_reasons + tuple(
+                        c.code for c in checks.values() if c.status == "fail"
+                    )
+                    metrics = replace(
+                        metrics,
+                        passed=not failures,
+                        workflow_success=not failures,
+                        failure_reasons=failures,
+                    )
                 samples.append(
                     AgentEvaluationSampleResult(
                         case=case,
@@ -71,6 +109,7 @@ class AgentWorkflowEvaluator:
                         observation=observation,
                         metrics=metrics,
                         error=None,
+                        analysis_checks=checks,
                     )
                 )
             except Exception as exc:

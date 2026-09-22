@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Annotated, Literal
+from typing import Annotated, Literal, NotRequired
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 from typing_extensions import TypedDict
+
+from packages.experiments.analysis.orchestration.requests import AnalysisInput
+from packages.experiments.analysis.orchestration.results import AnalysisResultEnvelope
 
 AgentIntent = Literal[
     "general_question",
@@ -83,6 +86,7 @@ class AgentRequest(TypedDict, total=False):
 
 class AgentInputState(BaseModel):
     question: str
+    analysis_request: AnalysisInput | None = None
     request: dict[str, object] = Field(default_factory=dict)
     human_approval_input: dict[str, object] = Field(default_factory=dict)
 
@@ -111,6 +115,8 @@ class RetrievedChunk(TypedDict, total=False):
 
 
 class Citation(TypedDict, total=False):
+    artifact_id: str
+    schema_version: str
     chunk_id: str
     document_id: str
     experiment_id: str
@@ -333,6 +339,8 @@ def append_dict_list[T](
 
 
 class AgentState(TypedDict):
+    analysis_request: NotRequired[AnalysisInput | None]
+    analysis_result: NotRequired[AnalysisResultEnvelope | None]
     question: str
     request: AgentRequest
     intent: AgentIntent
@@ -360,6 +368,8 @@ class AgentState(TypedDict):
 
 
 class AgentStateUpdate(TypedDict, total=False):
+    analysis_request: AnalysisInput | None
+    analysis_result: AnalysisResultEnvelope | None
     request: AgentRequest
     intent: AgentIntent
     required_agents: list[RequiredAgent]
@@ -441,6 +451,7 @@ def create_initial_state(
     experiment_id: str | None = None,
     top_k: int = 5,
     human_approval_input: dict[str, object] | None = None,
+    analysis_request: AnalysisInput | None = None,
 ) -> AgentState:
     normalized_question = question.strip()
     now = _utc_now_iso()
@@ -455,6 +466,8 @@ def create_initial_state(
         experiment_ids.append(experiment_id)
     return {
         "question": question,
+        "analysis_request": analysis_request,
+        "analysis_result": None,
         "request": request,
         "intent": "unknown",
         "required_agents": [],

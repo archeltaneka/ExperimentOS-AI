@@ -4,11 +4,11 @@ sources:
     path: evaluation.md
     format: rag_markdown
   agent:
-    path: agent_evaluation.md
-    format: agent_markdown
+    path: agent_evaluation.json
+    format: agent_json
   agent_e2e:
-    path: agent_e2e_evaluation.md
-    format: agent_e2e_markdown
+    path: agent_e2e_evaluation.json
+    format: agent_e2e_json
   ragas:
     path: phase3/ragas_report.json
     format: ragas_json
@@ -25,6 +25,142 @@ sources:
     path: phase4/statistical_baseline.json
     format: statistical_baseline_json
 metrics:
+  - metric_id: analysis.failures.case_inventory
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Required analysis case identities must be unique and complete.
+  - metric_id: analysis.case_count
+    source: agent_e2e
+    category: Workflow
+    operator: gte
+    value: 6
+    severity: fail
+    required: true
+    description: Required offline workflow-analysis cases must run.
+  - metric_id: analysis.failures.routing
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant routing.
+  - metric_id: analysis.failures.execution_status
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant execution_status.
+  - metric_id: analysis.failures.adapter_identity
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant adapter_identity.
+  - metric_id: analysis.failures.result_integrity
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant result_integrity.
+  - metric_id: analysis.failures.uncertainty_preserved
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant uncertainty_preserved.
+  - metric_id: analysis.failures.assumptions_preserved
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant assumptions_preserved.
+  - metric_id: analysis.failures.diagnostics_preserved
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant diagnostics_preserved.
+  - metric_id: analysis.failures.provenance_preserved
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant provenance_preserved.
+  - metric_id: analysis.failures.estimand_preserved
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant estimand_preserved.
+  - metric_id: analysis.failures.limitations_preserved
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant limitations_preserved.
+  - metric_id: analysis.failures.abstention_preserved
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant abstention_preserved.
+  - metric_id: analysis.failures.downstream_gating
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant downstream_gating.
+  - metric_id: analysis.failures.business_provenance
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant business_provenance.
+  - metric_id: analysis.failures.prose_grounding
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant prose_grounding.
+  - metric_id: analysis.failures.object_privacy
+    source: agent_e2e
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Preserve workflow analysis invariant object_privacy.
   - metric_id: rag.retrieval_success_rate
     source: rag
     category: Retrieval

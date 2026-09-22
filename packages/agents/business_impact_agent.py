@@ -15,6 +15,7 @@ from packages.agents.state import (
     create_trace_entry,
 )
 from packages.agents.tools import execute_tool
+from packages.experiments.analysis.orchestration.service import AnalysisService
 
 BUSINESS_IMPACT_NODE = "business_impact"
 _ANNUALIZED_TEXT_PATTERN = re.compile(
@@ -29,9 +30,42 @@ _ANNUALIZED_TEXT_PATTERN = re.compile(
 
 @dataclass
 class BusinessImpactAgent:
+    analysis_service: AnalysisService | None = None
+
     def run(self, state: AgentState) -> AgentStateUpdate:
         started_at = perf_counter()
         trace = [create_trace_entry(node=BUSINESS_IMPACT_NODE, event="started")]
+        if state.get("analysis_request") is not None:
+            result = state.get("analysis_result")
+            if result is None or self.analysis_service is None:
+                return {
+                    "trace": [
+                        create_trace_entry(
+                            node=BUSINESS_IMPACT_NODE,
+                            event="skipped",
+                            details={"reason": "analysis_unavailable"},
+                        )
+                    ]
+                }
+            updated = self.analysis_service.analyze_business(result.analysis_id)
+            impact = updated.business_impact
+            return {
+                "analysis_result": updated,
+                "trace": [
+                    *trace,
+                    create_trace_entry(
+                        node=BUSINESS_IMPACT_NODE,
+                        event="completed",
+                        details={"status": impact.status if impact else "abstained"},
+                    ),
+                ],
+                "metrics": {
+                    "business_impact": {
+                        "status": impact.status if impact else "abstained",
+                        "latency_ms": (perf_counter() - started_at) * 1000,
+                    }
+                },
+            }
         try:
             business_impact, tool_calls = _build_business_impact(state)
         except Exception as exc:

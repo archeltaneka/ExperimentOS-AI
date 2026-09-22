@@ -4,11 +4,15 @@ import asyncio
 from dataclasses import asdict
 from typing import Protocol
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, JsonValue, field_validator
 
 from packages.agents.service import AgentWorkflowService
 from packages.agents.state import AgentState
 from packages.config.env import resolve_setting
+from packages.experiments.analysis.orchestration.datasets import AnalysisDatasetInput
+from packages.experiments.analysis.orchestration.observability import safe_analysis_provider
+from packages.experiments.analysis.orchestration.requests import normalize_analysis_input
+from packages.experiments.analysis.orchestration.results import AnalysisResultEnvelope
 from packages.observability.base import BaseObservabilityProvider
 from packages.observability.noop import NoOpObservabilityProvider
 from packages.qa.question_answering_service import (
@@ -22,6 +26,8 @@ class AskRequest(BaseModel):
     question: str = Field(min_length=1)
     experiment_id: str = Field(min_length=1)
     top_k: int = Field(default=5, ge=1, le=20)
+    analysis: JsonValue | None = None
+    analysis_datasets: tuple[AnalysisDatasetInput, ...] = ()
 
     @field_validator("question")
     @classmethod
@@ -45,6 +51,7 @@ class AskResponse(BaseModel):
     agent_trace: list[dict[str, object]] = Field(default_factory=list)
     agent_metrics: dict[str, object] = Field(default_factory=dict)
     approval_status: str | None = None
+    analysis: AnalysisResultEnvelope | None = None
 
 
 class AskService(Protocol):
@@ -145,15 +152,33 @@ class AgentWorkflowAskService:
         ):
             raise UnknownExperimentError(f"experiment {request.experiment_id} was not found")
         try:
+            analysis_options = {}
+            if request.analysis is not None or request.analysis_datasets:
+                analysis_options = {
+                    "analysis_request": normalize_analysis_input(
+                        request.analysis, experiment_id=request.experiment_id
+                    ),
+                    "analysis_datasets": request.analysis_datasets,
+                }
             state = await asyncio.to_thread(
                 self.workflow_service.run,
                 request.question,
                 experiment_id=request.experiment_id,
                 top_k=request.top_k,
+                **analysis_options,
             )
         except Exception as exc:
+            if request.analysis is not None or request.analysis_datasets:
+                raise AgentWorkflowExecutionError(
+                    "Analysis workflow infrastructure unavailable"
+                ) from None
             raise AgentWorkflowExecutionError(str(exc)) from exc
-        span = self.observability_provider.start_span(
+        provider = (
+            safe_analysis_provider(self.observability_provider)
+            if request.analysis is not None or request.analysis_datasets
+            else self.observability_provider
+        )
+        span = provider.start_span(
             "response_serialization",
             metadata={
                 "surface": "agent_workflow",
@@ -194,6 +219,7 @@ def map_agent_state_to_ask_response(state: AgentState) -> AskResponse:
     }
     return AskResponse(
         answer=answer,
+        analysis=state.get("analysis_result"),
         citations=[dict(citation) for citation in state["citations"]],
         retrieved_chunks=[
             {

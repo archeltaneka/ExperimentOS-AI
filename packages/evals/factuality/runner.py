@@ -132,6 +132,33 @@ def build_agent_workflow_cases(
             or str(state["decision"].get("rationale", "")).strip()
             or str(state["experiment_analysis"].get("summary", "")).strip()
         )
+        analysis = state.get("analysis_result")
+        if analysis is not None:
+            evidence = tuple(
+                EvidenceRecord(
+                    source_id=artifact.artifact_id,
+                    source_type="analysis_artifact",
+                    text="Structured analysis artifact",
+                    metadata={
+                        "version": artifact.version,
+                        "evidence_fingerprint": artifact.evidence_fingerprint,
+                    },
+                )
+                for artifact in analysis.artifacts
+            )
+            citations = tuple(
+                CitationRecord(
+                    source_id=str(
+                        item.get("artifact_id")
+                        or item.get("document_id")
+                        or item.get("chunk_id")
+                        or ""
+                    ),
+                    source_type="analysis_artifact",
+                    metadata=dict(item.get("metadata", {})),
+                )
+                for item in state["citations"]
+            )
         cases.append(
             FactualityCase(
                 case_id=sample.case.id,
@@ -139,6 +166,7 @@ def build_agent_workflow_cases(
                 question=sample.case.question,
                 category=sample.case.category,
                 surface="agent_workflow",
+                analysis=analysis,
                 answer=answer,
                 citations=citations,
                 evidence=evidence,

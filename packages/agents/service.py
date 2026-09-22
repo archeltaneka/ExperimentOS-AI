@@ -21,6 +21,17 @@ from packages.agents.retrieval_agent import RetrievalAgent
 from packages.agents.risk_assessment_agent import RiskAssessmentAgent
 from packages.agents.state import AgentState, create_initial_state
 from packages.agents.workflow import build_agent_workflow
+from packages.experiments.analysis.orchestration.datasets import (
+    AnalysisDatasetInput,
+    RequestDatasetResolver,
+)
+from packages.experiments.analysis.orchestration.integrity import protect_response
+from packages.experiments.analysis.orchestration.observability import safe_analysis_provider
+from packages.experiments.analysis.orchestration.requests import (
+    AnalysisInput,
+    normalize_analysis_input,
+)
+from packages.experiments.analysis.orchestration.service import AnalysisService
 from packages.observability.base import BaseObservabilityProvider
 from packages.observability.noop import NoOpObservabilityProvider
 
@@ -58,7 +69,7 @@ class AgentWorkflowService:
             human_approval_agent = HumanApprovalAgent()
         if executive_summary_agent is None:
             executive_summary_agent = ExecutiveSummaryAgent()
-        self.workflow = build_agent_workflow(
+        self._agents = dict(
             retrieval_agent=retrieval_agent,
             experiment_analysis_agent=experiment_analysis_agent,
             business_impact_agent=business_impact_agent,
@@ -67,6 +78,7 @@ class AgentWorkflowService:
             human_approval_agent=human_approval_agent,
             executive_summary_agent=executive_summary_agent,
         )
+        self.workflow = build_agent_workflow(**self._agents)
 
     def run(
         self,
@@ -74,8 +86,20 @@ class AgentWorkflowService:
         experiment_id: str | None = None,
         top_k: int = 5,
         human_approval_input: dict[str, object] | None = None,
+        *,
+        analysis_request: AnalysisInput | None = None,
+        analysis_datasets: tuple[AnalysisDatasetInput, ...] = (),
     ) -> AgentState:
         normalized_question = question.strip()
+        if analysis_request is None and analysis_datasets:
+            analysis_request = normalize_analysis_input(
+                None, experiment_id=experiment_id or "unknown"
+            )
+        provider = (
+            safe_analysis_provider(self.observability_provider)
+            if analysis_request is not None
+            else self.observability_provider
+        )
         if not normalized_question:
             raise AgentWorkflowInputError("question must not be empty")
         initial_state = create_initial_state(
@@ -83,7 +107,25 @@ class AgentWorkflowService:
             experiment_id=experiment_id,
             top_k=top_k,
             human_approval_input=human_approval_input,
+            analysis_request=analysis_request,
         )
+        workflow = self.workflow
+        analysis_service = None
+        if analysis_request is not None:
+            analysis_service = AnalysisService(
+                resolver=RequestDatasetResolver(analysis_datasets),
+                observability_provider=provider,
+            )
+            workflow = build_agent_workflow(
+                **{
+                    **self._agents,
+                    "analysis_service": analysis_service,
+                    "experiment_analysis_agent": ExperimentAnalysisAgent(
+                        analysis_service=analysis_service
+                    ),
+                    "business_impact_agent": BusinessImpactAgent(analysis_service=analysis_service),
+                }
+            )
         metadata = {
             "surface": "agent_workflow",
             "workflow": initial_state["run_metadata"]["workflow"],
@@ -94,9 +136,9 @@ class AgentWorkflowService:
             "top_k": top_k,
             "experiment_id": experiment_id or "",
         }
-        parent_span = self.observability_provider.current_span()
+        parent_span = provider.current_span()
         if parent_span is None:
-            span = self.observability_provider.start_root_span(
+            span = provider.start_root_span(
                 "workflow",
                 trace_id=initial_state["run_metadata"]["run_id"],
                 inputs={
@@ -108,7 +150,7 @@ class AgentWorkflowService:
                 tags=("agent_workflow",),
             )
         else:
-            span = self.observability_provider.start_span(
+            span = provider.start_span(
                 "workflow",
                 inputs={
                     "question": normalized_question,
@@ -120,14 +162,16 @@ class AgentWorkflowService:
             )
         with span.activate():
             try:
-                config = self.observability_provider.build_langgraph_config(
+                config = provider.build_langgraph_config(
                     metadata={
                         "workflow": initial_state["run_metadata"]["workflow"],
                         "experimentos_trace_id": initial_state["run_metadata"]["run_id"],
                     },
                     tags=("agent_workflow",),
                 )
-                state = self.workflow.invoke(initial_state, config=config)
+                state = workflow.invoke(initial_state, config=config)
+                if analysis_service is not None:
+                    state = protect_response(state, analysis_service)
                 state["run_metadata"] = {
                     **state["run_metadata"],
                     "run_id": initial_state["run_metadata"]["run_id"],

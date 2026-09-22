@@ -6,6 +6,7 @@ from pathlib import Path
 
 from packages.evals.agent_dataset import (
     DEFAULT_AGENT_DATASET_PATH,
+    build_agent_dataset_manifest,
     load_agent_evaluation_dataset,
 )
 from packages.evals.agent_evaluator import (
@@ -16,7 +17,6 @@ from packages.evals.agent_report import (
     agent_evaluation_report_to_json,
     render_agent_evaluation_report,
 )
-from packages.evals.dataset_manifest import build_dataset_manifest
 from packages.observability.factory import resolve_observability_provider
 
 DEFAULT_AGENT_REPORT_PATH = Path("reports/agent_evaluation.md")
@@ -73,11 +73,7 @@ def build_evaluation_run(args: argparse.Namespace):
 
 def _build_evaluation_run(args: argparse.Namespace, observability_provider):
     cases = load_agent_evaluation_dataset(args.dataset)
-    dataset_manifest = build_dataset_manifest(
-        args.dataset,
-        dataset_id=_dataset_id_for_path(args.dataset),
-        case_count=len(cases),
-    )
+    dataset_manifest = build_agent_dataset_manifest(args.dataset, cases)
     evaluator = AgentWorkflowEvaluator(
         workflow_service=build_default_agent_workflow_service(observability_provider),
         cases=cases,

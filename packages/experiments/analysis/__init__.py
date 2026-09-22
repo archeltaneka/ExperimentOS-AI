@@ -137,6 +137,7 @@ from .metrics import (
     UnitDimension,
     ValueScale,
 )
+from .orchestration.service import AnalysisService
 from .populations import (
     CriterionOperator,
     PopulationDefinition,
@@ -333,6 +334,7 @@ from .validation import (
 )
 
 __all__ = [
+    "AnalysisService",
     "BaselineRate",
     "BusinessImpactRequest",
     "BusinessImpactResult",

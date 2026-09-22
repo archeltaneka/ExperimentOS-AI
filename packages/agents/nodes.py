@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from packages.agents.planner import plan_question
+from packages.agents.planner import plan_analysis, plan_question
 from packages.agents.state import (
     AgentInputState,
     AgentState,
@@ -50,12 +50,14 @@ class ExecutiveSummaryAgentLike(Protocol):
 
 def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
     if isinstance(state, dict):
+        analysis_request = state.get("analysis_request")
         question = state["question"]
         request = state.get("request", {})
         human_approval_input = state.get("human_approval_input", {})
         preserved_run_metadata = state.get("run_metadata")
         preserved_timestamps = state.get("timestamps")
     else:
+        analysis_request = state.analysis_request
         question = state.question
         request = dict(getattr(state, "request", {}))
         human_approval_input = dict(getattr(state, "human_approval_input", {}))
@@ -66,8 +68,11 @@ def planner_node(state: AgentInputState | AgentState) -> AgentStateUpdate:
         experiment_id=request.get("experiment_id"),
         top_k=request.get("top_k", 5),
         human_approval_input=human_approval_input,
+        analysis_request=analysis_request,
     )
     plan = plan_question(question)
+    if analysis_request is not None:
+        plan = plan_analysis(analysis_request, plan)
     preserved_experiment_ids = list(defaults["experiment_context"]["experiment_ids"])
     planned_filters = dict(plan.experiment_context["filters"])
     trace_entry = create_trace_entry(

@@ -4,6 +4,10 @@ import re
 from dataclasses import dataclass
 
 from packages.agents.state import AgentIntent, ExperimentContext, RequiredAgent
+from packages.experiments.analysis.orchestration.requests import (
+    AnalysisInput,
+    AnalysisRoutingRefusal,
+)
 
 PLANNER_RULE_VERSION = "deterministic_v1"
 
@@ -146,6 +150,31 @@ def plan_question(question: str) -> PlannerPlan:
         planner_notes=planner_notes,
         metrics=metrics,
         experiment_hints=experiment_hints,
+    )
+
+
+def plan_analysis(request: AnalysisInput, legacy_plan: PlannerPlan) -> PlannerPlan:
+    """Structured intent schedules evidence production, never selects an estimator."""
+    agents: list[RequiredAgent] = ["experiment_analysis"]
+    if not isinstance(request, AnalysisRoutingRefusal):
+        if request.business is not None or legacy_plan.intent == "business_impact":
+            agents.append("business_impact")
+        if legacy_plan.intent in {"risk_assessment", "decision_support", "executive_summary"}:
+            agents.append("risk_assessment")
+        if legacy_plan.intent in {"decision_support", "executive_summary"}:
+            agents.extend(["decision", "human_approval"])
+    agents.append("executive_summary")
+    return PlannerPlan(
+        intent=legacy_plan.intent,
+        required_agents=agents,
+        experiment_context={"experiment_ids": [request.experiment_id], "filters": {}},
+        planner_notes="Explicit typed analysis request; method preserved without selection.",
+        metrics={
+            **legacy_plan.metrics,
+            "planner_required_agent_count": len(agents),
+            "analysis_method": request.method,
+        },
+        experiment_hints=[],
     )
 
 

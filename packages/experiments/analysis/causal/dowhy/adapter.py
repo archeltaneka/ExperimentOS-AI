@@ -7,8 +7,6 @@ import platform
 from time import perf_counter
 from typing import Any
 
-import pandas as pd  # type: ignore[import-untyped]
-
 from packages.observability.base import BaseObservabilityProvider
 from packages.observability.noop import NoOpObservabilityProvider
 
@@ -102,6 +100,10 @@ class DoWhyAdapter:
             return self._failed(execution, evidence, provenance, error.code, str(error))
         observed = sorted(node.variable_id for node in graph.nodes if node.observed)
         try:
+            # Optional runtime imports belong after dependency validation, not on
+            # the shared-contract import path used by core workflow commands.
+            import pandas as pd  # type: ignore[import-untyped]
+
             model = backend.CausalModel(
                 data=pd.DataFrame(columns=observed),
                 treatment=source.treatment.treatment_variable,
@@ -272,6 +274,8 @@ class DoWhyAdapter:
         )
         if any(column not in table.columns for column in required):
             raise AdapterError(DoWhyFailureCode.INVALID_DATA, "A required data column is missing.")
+        import pandas as pd
+
         frame = pd.DataFrame(table.rows, columns=table.columns)
         try:
             treatment = frame[binding.treatment_column]

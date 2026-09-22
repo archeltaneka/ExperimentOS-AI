@@ -37,6 +37,10 @@ def load_source(source: PolicySource, report_dir: Path) -> LoadedSource | None:
             metrics = _load_agent_markdown(path)
         elif source.format == "agent_e2e_markdown":
             metrics = _load_agent_e2e_markdown(path)
+        elif source.format in {"agent_json", "agent_e2e_json"}:
+            metrics = _load_agent_json(
+                path, "agent" if source.format == "agent_json" else "agent_e2e"
+            )
         elif source.format == "ragas_json":
             metrics = _load_ragas_json(path)
         elif source.format == "deepeval_json":
@@ -57,6 +61,88 @@ def load_source(source: PolicySource, report_dir: Path) -> LoadedSource | None:
         format=source.format,
         metrics=metrics,
     )
+
+
+def _load_agent_json(path: Path, prefix: str) -> dict[str, SourceMetric]:
+    from packages.evals.agent_analysis_cases import (
+        ANALYSIS_CHECK_CODES,
+        analysis_check_applicability,
+        load_analysis_workflow_cases,
+    )
+
+    payload = _load_json(path)
+    summary = payload.get("summary")
+    samples = payload.get("samples")
+    if not isinstance(summary, dict) or not isinstance(samples, list):
+        raise ValueError("agent JSON requires summary and samples")
+    aliases = {"average_trace_completeness": "trace_completeness"}
+    if prefix == "agent":
+        aliases["sample_count"] = "samples_evaluated"
+    else:
+        aliases["average_latency_ms"] = "average_workflow_latency_ms"
+    metrics = {
+        f"{prefix}.{aliases.get(key, key)}": _value_metric(
+            f"{prefix}.{aliases.get(key, key)}", value
+        )
+        for key, value in summary.items()
+        if isinstance(value, int | float | str | bool)
+    }
+    failures = dict.fromkeys(ANALYSIS_CHECK_CODES, 0)
+    cases = {case.case_id: case for case in load_analysis_workflow_cases()}
+    required = set(cases)
+    seen: set[str] = set()
+    inventory_failures = 0
+    count = 0
+    for sample in samples:
+        if not isinstance(sample, dict):
+            raise ValueError("agent samples must be mappings")
+        checks = sample.get("analysis_checks", {})
+        if not isinstance(checks, dict):
+            raise ValueError("analysis checks must be mappings")
+        case = sample.get("case", {})
+        identity = case.get("analysis_case_id") if isinstance(case, dict) else None
+        if (
+            identity is None
+            and isinstance(case, dict)
+            and str(case.get("id", "")).startswith("analysis-")
+        ):
+            identity = str(case["id"])[len("analysis-") :]
+        if identity is not None:
+            if identity not in required or identity in seen:
+                inventory_failures += 1
+            seen.add(identity)
+        elif checks:
+            inventory_failures += 1
+        if checks or identity is not None:
+            count += 1
+            for missing in failures.keys() - checks.keys():
+                failures[missing] += 1
+        for code, check in checks.items():
+            if (
+                code not in failures
+                or not isinstance(check, dict)
+                or check.get("status") not in {"pass", "warning", "fail", "skipped"}
+            ):
+                raise ValueError("invalid analysis check")
+            if (
+                check["status"] == "fail"
+                or (check["status"] == "skipped" and check.get("applicable") is not False)
+                or (check["status"] != "skipped" and check.get("applicable") is False)
+                or (
+                    identity in cases
+                    and check.get("applicable")
+                    is not analysis_check_applicability(cases[identity])[code]
+                )
+            ):
+                failures[code] += 1
+    for code, count_failed in failures.items():
+        key = f"analysis.failures.{code}"
+        metrics[key] = _value_metric(key, count_failed)
+    metrics["analysis.case_count"] = _value_metric("analysis.case_count", count)
+    metrics["analysis.failures.case_inventory"] = _value_metric(
+        "analysis.failures.case_inventory", inventory_failures + len(required - seen)
+    )
+    return metrics
 
 
 def _load_statistical_baseline_json(path: Path) -> dict[str, SourceMetric]:

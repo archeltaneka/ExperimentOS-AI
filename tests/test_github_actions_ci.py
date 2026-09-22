@@ -10,6 +10,30 @@ def _workflow_jobs() -> dict[str, object]:
     return workflow["jobs"]
 
 
+def test_workflow_analysis_uses_existing_ci_jobs_and_json_reports():
+    jobs = _workflow_jobs()
+    unit = "\n".join(step.get("run", "") for step in jobs["unit"]["steps"])
+    for name in (
+        "test_analysis_service.py",
+        "test_analysis_dispatch*.py",
+        "test_agent_state.py",
+        "test_analysis_e2e.py",
+        "test_analysis_integrity.py",
+        "test_api_analysis.py",
+        "test_analysis_business_gating.py",
+        "test_analysis_workflow_observability.py",
+        "test_agent_analysis_evaluation.py",
+        "test_analysis_policy.py",
+    ):
+        assert "tests/" + name in unit
+    offline = "\n".join(step.get("run", "") for step in jobs["offline-eval-smoke"]["steps"])
+    assert "packages.evals.run_agent " in offline
+    assert "packages.evals.run_agent_e2e " in offline
+    assert "--json-output artifacts/ci/offline/agent_evaluation.json" in offline
+    assert "--json-output artifacts/ci/offline/agent_e2e_evaluation.json" in offline
+    assert "analysis.failures" not in Path(".github/workflows/ci.yml").read_text()
+
+
 def test_advanced_conformance_runs_core_and_required_optional_adapters() -> None:
     jobs = _workflow_jobs()
     core_runs = "\n".join(step.get("run", "") for step in jobs["unit"]["steps"])

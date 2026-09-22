@@ -222,6 +222,7 @@ jobs:
           tests/test_agent_analysis_evaluation.py tests/test_analysis_policy.py
           tests/test_analysis_workflow_documentation.py
           tests/test_analysis_review_regressions.py
+          tests/test_analysis_minimal_dependencies.py
 
   advanced-causal-optional:
     runs-on: ubuntu-latest

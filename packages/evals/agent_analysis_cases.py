@@ -2,25 +2,17 @@
 
 from copy import deepcopy
 from dataclasses import asdict
-from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
 from packages.agents.service import AgentWorkflowService
 from packages.evals.statistical.workflow.cases import read_cases, validate_case_inventory
 from packages.evals.statistical.workflow.models import AnalysisCheck, AnalysisWorkflowCase
-from packages.experiments.analysis.causal.did.service import DifferenceInDifferencesService
-from packages.experiments.analysis.orchestration.datasets import AnalysisDatasetInput
 from packages.experiments.analysis.orchestration.requests import (
     AnalysisRoutingRefusal,
-    DidWorkflowRequest,
-    EconMLDMLWorkflowRequest,
-    FixedHorizonWorkflowRequest,
     normalize_analysis_input,
 )
 from packages.experiments.analysis.orchestration.results import AnalysisEvidence, project_evidence
-from packages.experiments.analysis.randomized.service import RandomizedAnalysisService
-from packages.experiments.analysis.validation import AnalysisTable
 
 FIXTURE_DIRECTORY = Path(__file__).resolve().parents[2] / "data/eval/workflow_analysis"
 
@@ -282,7 +274,18 @@ def load_analysis_workflow_cases(directory: Path | None = None) -> tuple[Analysi
             }
         )
     )
-    return validate_case_inventory(cases + tuple(variants))
+    from packages.evals.statistical.workflow.expectations import attach_expectations
+    from packages.evals.statistical.workflow.fixtures import (
+        build_boundary_variants,
+        build_core_cases,
+    )
+
+    return validate_case_inventory(
+        tuple(
+            attach_expectations(c)
+            for c in (*cases, *variants, *build_core_cases(), *build_boundary_variants(by_id))
+        )
+    )
 
 
 class _NoRetrieval:
@@ -328,56 +331,6 @@ def run_direct_reference(case: AnalysisWorkflowCase) -> AnalysisEvidence | None:
 
 
 def _run_native_reference(case):
-    request = normalize_analysis_input(
-        case.ask_payload["analysis"], experiment_id=str(case.ask_payload["experiment_id"])
-    )
-    datasets = case.ask_payload.get("analysis_datasets")
-    if not isinstance(datasets, list) or not datasets:
-        return None
-    dataset = AnalysisDatasetInput.model_validate(datasets[0])
-    table = AnalysisTable(columns=dataset.columns, rows=dataset.rows)
-    if isinstance(request, FixedHorizonWorkflowRequest):
-        return RandomizedAnalysisService().analyze(
-            request.execution, table, request.binding, provenance=dataset.provenance
-        )
-    if isinstance(request, DidWorkflowRequest):
-        columns = {
-            request.execution.binding.time_column,
-            request.execution.binding.treatment_start_column,
-        }
-        rows = tuple(
-            tuple(
-                datetime.fromisoformat(value)
-                if column in columns and isinstance(value, str)
-                else value
-                for column, value in zip(table.columns, row, strict=True)
-            )
-            for row in table.rows
-        )
-        return DifferenceInDifferencesService().analyze(
-            request.execution,
-            AnalysisTable(columns=table.columns, rows=rows),
-            provenance=dataset.provenance,
-        )
-    if isinstance(request, EconMLDMLWorkflowRequest) and case.optional_unavailable:
-        from packages.experiments.analysis.causal.dml.models import DMLExecutionRequest
-        from packages.experiments.analysis.causal.econml import EconMLDMLAdapter
-        from packages.experiments.analysis.causal.econml.dependency import AdapterError
-        from packages.experiments.analysis.causal.service import CausalIdentificationService
+    from packages.evals.statistical.workflow.references import run_native_reference
 
-        identified = CausalIdentificationService().identify(request.analysis_request)
-        execution = DMLExecutionRequest(
-            identification_result=identified,
-            binding=request.binding,
-            configuration=request.configuration,
-        )
-        with patch(
-            "packages.experiments.analysis.causal.econml.dependency.load_econml",
-            side_effect=AdapterError(
-                "OPTIONAL_DEPENDENCY_UNAVAILABLE", "Offline unavailable-runtime case"
-            ),
-        ):
-            return EconMLDMLAdapter(configuration=request.adapter_configuration).analyze(
-                execution, table, provenance=dataset.provenance
-            )
-    return None
+    return run_native_reference(case)

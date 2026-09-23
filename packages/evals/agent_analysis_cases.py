@@ -4,12 +4,11 @@ from copy import deepcopy
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
 from unittest.mock import patch
 
-from pydantic import BaseModel, ConfigDict, JsonValue
-
 from packages.agents.service import AgentWorkflowService
+from packages.evals.statistical.workflow.cases import read_cases, validate_case_inventory
+from packages.evals.statistical.workflow.models import AnalysisCheck, AnalysisWorkflowCase
 from packages.experiments.analysis.causal.did.service import DifferenceInDifferencesService
 from packages.experiments.analysis.orchestration.datasets import AnalysisDatasetInput
 from packages.experiments.analysis.orchestration.requests import (
@@ -24,24 +23,6 @@ from packages.experiments.analysis.randomized.service import RandomizedAnalysisS
 from packages.experiments.analysis.validation import AnalysisTable
 
 FIXTURE_DIRECTORY = Path(__file__).resolve().parents[2] / "data/eval/workflow_analysis"
-
-
-class AnalysisWorkflowCase(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
-    case_id: str
-    ask_payload: dict[str, JsonValue]
-    expected_method: str | None
-    expected_status: str
-    presenter_candidate: str | None = None
-    optional_unavailable: bool = False
-
-
-class AnalysisCheck(BaseModel):
-    code: str
-    status: Literal["pass", "warning", "fail", "skipped"]
-    method: str | None
-    execution_status: str | None
-    applicable: bool = True
 
 
 ANALYSIS_CHECK_CODES = (
@@ -254,16 +235,18 @@ def safe_run_payload(run) -> dict[str, object]:
     return to_jsonable_python(payload)
 
 
-def load_analysis_workflow_cases() -> tuple[AnalysisWorkflowCase, ...]:
-    cases = tuple(
-        AnalysisWorkflowCase.model_validate_json(path.read_text())
-        for path in sorted(FIXTURE_DIRECTORY.glob("*.json"))
-    )
+def load_analysis_workflow_cases(directory: Path | None = None) -> tuple[AnalysisWorkflowCase, ...]:
+    cases = read_cases(directory or FIXTURE_DIRECTORY)
+    if directory is not None:
+        return cases
     for case in cases:
         request = normalize_analysis_input(
             case.ask_payload.get("analysis"), experiment_id=str(case.ask_payload["experiment_id"])
         )
-        if isinstance(request, AnalysisRoutingRefusal):
+        if isinstance(request, AnalysisRoutingRefusal) and case.expected_status not in {
+            "invalid",
+            "abstained",
+        }:
             raise ValueError(f"Fixture {case.case_id} contains an invalid declaration")
     by_id = {case.case_id: case for case in cases}
     variants = []
@@ -299,7 +282,7 @@ def load_analysis_workflow_cases() -> tuple[AnalysisWorkflowCase, ...]:
             }
         )
     )
-    return cases + tuple(variants)
+    return validate_case_inventory(cases + tuple(variants))
 
 
 class _NoRetrieval:

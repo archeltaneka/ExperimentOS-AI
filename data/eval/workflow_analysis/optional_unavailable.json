@@ -1,5 +1,10 @@
 {
   "case_id": "optional_unavailable",
+  "case_version": "1",
+  "family": "adapter",
+  "design": "observational",
+  "estimand": "ate",
+  "fixture_id": "optional_unavailable",
   "ask_payload": {
     "question": "Analyze",
     "experiment_id": "experiment-a",

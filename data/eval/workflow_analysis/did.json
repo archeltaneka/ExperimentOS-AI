@@ -1,5 +1,10 @@
 {
   "case_id": "did",
+  "case_version": "1",
+  "family": "observational",
+  "design": "difference_in_differences",
+  "estimand": "att",
+  "fixture_id": "did",
   "ask_payload": {
     "question": "Analyze",
     "experiment_id": "experiment-a",

@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import math
 from enum import StrEnum
 from typing import Annotated, Any, Self
 
 from pydantic import (
-    BaseModel,
-    ConfigDict,
     Field,
     FiniteFloat,
     StrictBool,
@@ -17,19 +14,17 @@ from pydantic import (
 )
 
 from .advanced.models import AdvancedCaseDetails, AdvancedResultDetails
-
-type NonEmptyStr = Annotated[str, Field(strict=True, min_length=1)]
-type ExpectedScalar = StrictBool | StrictInt | FiniteFloat | NonEmptyStr | None
+from .reference_values import (
+    ExpectedScalar,
+    NonEmptyStr,
+    StatisticalCaseModel,
+    StatisticalExpectedValue,
+    StatisticalTolerance,
+)
 
 
 def _default_deterministic_configuration() -> dict[NonEmptyStr, ExpectedScalar]:
     return {"execution_mode": "offline_deterministic"}
-
-
-class StatisticalCaseModel(BaseModel):
-    """Frozen strict model used by repository-owned evaluation data."""
-
-    model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=True)
 
 
 class StatisticalCapability(StrEnum):
@@ -175,36 +170,6 @@ class StatisticalBaselineReport(StatisticalCaseModel):
     case_results: tuple[StatisticalCaseResult, ...]
     quality_policy: StatisticalPolicySummary | None = None
     limitations: tuple[NonEmptyStr, ...]
-
-
-class StatisticalTolerance(StatisticalCaseModel):
-    """One independently justified absolute tolerance."""
-
-    absolute: Annotated[FiniteFloat, Field(ge=0)]
-    relative: Annotated[FiniteFloat, Field(ge=0)] = 0.0
-    rationale: NonEmptyStr
-    provenance: NonEmptyStr
-
-    def accepts(self, actual: float, reference: float) -> bool:
-        return (
-            math.isfinite(actual)
-            and math.isfinite(reference)
-            and abs(actual - reference) <= self.absolute + self.relative * abs(reference)
-        )
-
-
-class StatisticalExpectedValue(StatisticalCaseModel):
-    """Expected leaf value addressed by a stable dotted result path."""
-
-    path: NonEmptyStr
-    value: ExpectedScalar
-    tolerance: StatisticalTolerance | None = None
-
-    @model_validator(mode="after")
-    def require_float_tolerance(self) -> Self:
-        if isinstance(self.value, float) and self.tolerance is None:
-            raise ValueError("floating expected values require a tolerance")
-        return self
 
 
 class ObservationalSimulationSpecification(StatisticalCaseModel):

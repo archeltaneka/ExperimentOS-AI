@@ -27,14 +27,22 @@ class CapturedWorkflow:
 def evaluate_workflow_case(case, *, observability_provider=None):
     from packages.evals.agent_analysis_cases import analysis_case_plan, build_analysis_case_service
     from packages.evals.agent_e2e import FULL_AGENT_TRACE_NODES, AgentE2ECase, AgentE2EEvaluator
+    from packages.evals.statistical.telemetry import _RecordingProvider
+    from packages.experiments.analysis.orchestration.requests import (
+        AnalysisRoutingRefusal,
+        normalize_analysis_input,
+    )
+
+    from .telemetry import check_trace_linkage, privacy_violations, trace_summary
 
     started = perf_counter()
     from .optional import effective_case
 
     case, dependency, version = effective_case(case)
-    workflow = CapturedWorkflow(
-        build_analysis_case_service(case, observability_provider=observability_provider)
+    provider = (
+        observability_provider if observability_provider is not None else _RecordingProvider()
     )
+    workflow = CapturedWorkflow(build_analysis_case_service(case, observability_provider=provider))
     plan = analysis_case_plan(case)
     api_case = AgentE2ECase(
         id="analysis-" + case.case_id,
@@ -53,7 +61,7 @@ def evaluate_workflow_case(case, *, observability_provider=None):
         AgentE2EEvaluator(
             cases=[api_case],
             service_factory=lambda _: workflow,
-            observability_provider=observability_provider,
+            observability_provider=provider,
         )
         .evaluate()
         .samples[0]
@@ -63,6 +71,21 @@ def evaluate_workflow_case(case, *, observability_provider=None):
         public = {}
     evidence = public.get("evidence")
     checks = merge_checks(sample.analysis_checks, evidence_checks(case, evidence))
+    records = tuple(getattr(provider, "records", ()))
+    request = normalize_analysis_input(
+        case.ask_payload["analysis"], experiment_id=str(case.ask_payload["experiment_id"])
+    )
+    violations = check_trace_linkage(
+        records,
+        method=case.expected_method,
+        business_requested=bool(case.ask_payload["analysis"].get("business")),
+        estimator_required=not isinstance(request, AnalysisRoutingRefusal),
+    )
+    checks["trace_linkage"] = check(case, "trace_linkage", not violations, evidence=violations)
+    private = privacy_violations(records)
+    checks["telemetry_privacy"] = check(case, "telemetry_privacy", not private, evidence=private)
+    private = privacy_violations(public)
+    checks["artifact_privacy"] = check(case, "artifact_privacy", not private, evidence=private)
     if dependency != "not_required":
         broken = dependency == "broken" or (
             dependency == "installed" and public.get("status") in {"unavailable", "failed"}
@@ -114,6 +137,8 @@ def evaluate_workflow_case(case, *, observability_provider=None):
         native_status=evidence.get("status", evidence.get("current_status")) if evidence else None,
         checks=checks,
         call_counts=workflow.call_counts,
+        provider_failure_count=provider.failure_count,
+        trace_summary=trace_summary(records),
         evidence=deepcopy(evidence),
         business_evidence=deepcopy(public.get("business_impact")),
         duration_ms=(perf_counter() - started) * 1000,

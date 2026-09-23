@@ -67,5 +67,6 @@ class WorkflowCaseResult(StatisticalCaseModel):
     execution_kind: str = "real"
     trace_summary: tuple[dict[str, JsonValue], ...] = ()
     call_counts: dict[str, int] = Field(default_factory=dict)
+    provider_failure_count: int = Field(default=0, ge=0)
     detected_rule_ids: tuple[str, ...] = ()
     injection_detected: bool | None = None

@@ -11,9 +11,14 @@ class CapturedWorkflow:
     def __init__(self, delegate):
         self.delegate = delegate
         self.analysis = None
+        self.call_counts = {}
 
     def run(self, *args, **kwargs):
-        state = self.delegate.run(*args, **kwargs)
+        from .injections import audit_calls
+
+        with audit_calls() as spies:
+            state = self.delegate.run(*args, **kwargs)
+            self.call_counts = {name: spy.call_count for name, spy in spies.items()}
         result = state.get("analysis_result")
         self.analysis = result.model_dump(mode="json") if result is not None else None
         return state
@@ -57,8 +62,24 @@ def evaluate_workflow_case(case, *, observability_provider=None):
     checks = merge_checks(sample.analysis_checks, evidence_checks(case, evidence))
     checks["state_preserved"] = check(case, "state_preserved", workflow.analysis == public)
     checks["api_contract"] = check(
-        case, "api_contract", sample.status_code == 200 and not sample.failure_reasons
+        case,
+        "api_contract",
+        sample.status_code == 200
+        and not set(sample.failure_reasons).difference(sample.analysis_checks),
     )
+    forbidden = {
+        "dml-post-treatment": ("dml",),
+        "ipw-ate-no-overlap": ("ipw",),
+        "insufficient": ("business",),
+        "missing-business-provenance": ("business",),
+    }.get(case.case_id, ()) + case.expectations.forbidden_calls
+    if forbidden:
+        checks["downstream_gating"] = check(
+            case,
+            "downstream_gating",
+            checks["downstream_gating"].status != "fail"
+            and all(workflow.call_counts[name] == 0 for name in forbidden),
+        )
     checks = {
         code: value.model_copy(
             update={"case_id": case.case_id, "rule_id": "analysis.failures." + code}
@@ -75,6 +96,7 @@ def evaluate_workflow_case(case, *, observability_provider=None):
         execution_status=public.get("status", "failed"),
         native_status=evidence.get("status", evidence.get("current_status")) if evidence else None,
         checks=checks,
+        call_counts=workflow.call_counts,
         evidence=deepcopy(evidence),
         business_evidence=deepcopy(public.get("business_impact")),
         duration_ms=(perf_counter() - started) * 1000,

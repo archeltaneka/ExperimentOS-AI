@@ -25,8 +25,120 @@ sources:
     path: phase4/statistical_baseline.json
     format: statistical_baseline_json
 metrics:
+  - metric_id: analysis.scope
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: complete
+    severity: fail
+    required: true
+    description: Partial scope cannot satisfy the complete quality gate.
+  - metric_id: analysis.failures.reference_accuracy
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow reference_accuracy checks.
+  - metric_id: analysis.failures.finite_outputs
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow finite_outputs checks.
+  - metric_id: analysis.failures.required_fields
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow required_fields checks.
+  - metric_id: analysis.failures.state_preserved
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow state_preserved checks.
+  - metric_id: analysis.failures.api_contract
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow api_contract checks.
+  - metric_id: analysis.failures.trace_linkage
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow trace_linkage checks.
+  - metric_id: analysis.failures.telemetry_privacy
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow telemetry_privacy checks.
+  - metric_id: analysis.failures.artifact_privacy
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow artifact_privacy checks.
+  - metric_id: analysis.failures.determinism
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow determinism checks.
+  - metric_id: analysis.failures.dependency
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow dependency checks.
+  - metric_id: analysis.failures.injection_detection
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow injection_detection checks.
+  - metric_id: analysis.failures.compatibility
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow compatibility checks.
+  - metric_id: analysis.failures.provider_isolation
+    source: statistics
+    category: Workflow
+    operator: eq
+    value: 0
+    severity: fail
+    required: true
+    description: Enforce complete workflow provider_isolation checks.
   - metric_id: analysis.failures.case_inventory
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -34,7 +146,7 @@ metrics:
     required: true
     description: Required analysis case identities must be unique and complete.
   - metric_id: analysis.case_count
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: gte
     value: 6
@@ -42,7 +154,7 @@ metrics:
     required: true
     description: Required offline workflow-analysis cases must run.
   - metric_id: analysis.failures.routing
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -50,7 +162,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant routing.
   - metric_id: analysis.failures.execution_status
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -58,7 +170,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant execution_status.
   - metric_id: analysis.failures.adapter_identity
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -66,7 +178,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant adapter_identity.
   - metric_id: analysis.failures.result_integrity
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -74,7 +186,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant result_integrity.
   - metric_id: analysis.failures.uncertainty_preserved
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -82,7 +194,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant uncertainty_preserved.
   - metric_id: analysis.failures.assumptions_preserved
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -90,7 +202,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant assumptions_preserved.
   - metric_id: analysis.failures.diagnostics_preserved
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -98,7 +210,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant diagnostics_preserved.
   - metric_id: analysis.failures.provenance_preserved
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -106,7 +218,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant provenance_preserved.
   - metric_id: analysis.failures.estimand_preserved
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -114,7 +226,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant estimand_preserved.
   - metric_id: analysis.failures.limitations_preserved
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -122,7 +234,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant limitations_preserved.
   - metric_id: analysis.failures.abstention_preserved
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -130,7 +242,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant abstention_preserved.
   - metric_id: analysis.failures.downstream_gating
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -138,7 +250,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant downstream_gating.
   - metric_id: analysis.failures.business_provenance
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -146,7 +258,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant business_provenance.
   - metric_id: analysis.failures.prose_grounding
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0
@@ -154,7 +266,7 @@ metrics:
     required: true
     description: Preserve workflow analysis invariant prose_grounding.
   - metric_id: analysis.failures.object_privacy
-    source: agent_e2e
+    source: statistics
     category: Workflow
     operator: eq
     value: 0

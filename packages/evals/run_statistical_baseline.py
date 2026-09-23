@@ -97,7 +97,7 @@ def run_statistical_baseline(args: argparse.Namespace) -> StatisticalBaselineRep
                 threshold_value=item.threshold_value,
                 required=item.required,
                 message=item.message,
-                method=_policy_rule_method(item.metric_id),
+                method=_policy_rule_method(item.metric_id, report),
                 design=_policy_rule_design(item.metric_id, report),
                 estimand=_policy_rule_estimand(item.metric_id, report),
                 case_id=_policy_rule_case_id(item.metric_id, report),
@@ -126,7 +126,14 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def _policy_rule_method(metric_id: str) -> str:
+def _policy_rule_method(metric_id: str, report: StatisticalBaselineReport | None = None) -> str:
+    if metric_id.startswith("analysis."):
+        methods = (
+            {c.method or "unselected" for c in _matching_cases(metric_id, report)}
+            if report
+            else set()
+        )
+        return ",".join(sorted(methods)) if methods else "workflow"
     if any(
         name in metric_id
         for name in (
@@ -155,7 +162,7 @@ def _policy_rule_method(metric_id: str) -> str:
         return "sequential"
     if "bayesian" in metric_id:
         return "bayesian"
-    return "all_randomized_inference"
+    return "all_statistical_methods"
 
 
 def _policy_rule_design(metric_id: str, report: StatisticalBaselineReport) -> str:
@@ -179,6 +186,13 @@ def _policy_rule_evidence(
     metric_id: str,
     report: StatisticalBaselineReport,
 ) -> tuple[str, ...]:
+    if metric_id.startswith("analysis."):
+        return tuple(
+            f"{case.case_id}:{case.method or 'unselected'}:{finding.rule_id}"
+            for case in report.workflow
+            for finding in case.checks.values()
+            if finding.rule_id == metric_id and finding.status == "fail"
+        ) or (f"observed:{metric_id}",)
     dimension = metric_id.removeprefix("statistics.failures.")
     evidence: set[str] = set()
     for case in report.case_results:
@@ -198,6 +212,14 @@ def _matching_case_ids(
     metric_id: str,
     report: StatisticalBaselineReport,
 ) -> tuple[str, ...]:
+    if metric_id.startswith("analysis."):
+        return tuple(
+            c.case_id
+            for c in report.workflow
+            if any(
+                check.rule_id == metric_id and check.status == "fail" for check in c.checks.values()
+            )
+        )
     dimension = metric_id.removeprefix("statistics.failures.")
     return tuple(
         case.case_id
@@ -213,7 +235,8 @@ def _matching_cases(
     report: StatisticalBaselineReport,
 ) -> tuple[StatisticalCaseResult, ...]:
     matching_ids = set(_matching_case_ids(metric_id, report))
-    return tuple(case for case in report.case_results if case.case_id in matching_ids)
+    cases = report.workflow if metric_id.startswith("analysis.") else report.case_results
+    return tuple(case for case in cases if case.case_id in matching_ids)
 
 
 def main(argv: list[str] | None = None) -> int:

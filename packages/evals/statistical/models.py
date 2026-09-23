@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import (
     Field,
@@ -21,6 +21,7 @@ from .reference_values import (
     StatisticalExpectedValue,
     StatisticalTolerance,
 )
+from .workflow.models import WorkflowCaseResult
 
 
 def _default_deterministic_configuration() -> dict[NonEmptyStr, ExpectedScalar]:
@@ -152,7 +153,10 @@ class StatisticalPolicySummary(StatisticalCaseModel):
 class StatisticalBaselineReport(StatisticalCaseModel):
     """Authoritative deterministic aggregate Phase 4 reliability result."""
 
-    schema_version: NonEmptyStr = "1"
+    schema_version: NonEmptyStr = "2"
+    scope: Literal["complete", "optional-adapters"] = "complete"
+    workflow: tuple[WorkflowCaseResult, ...] = ()
+    workflow_case_count: Annotated[int, Field(strict=True, ge=0)] = 0
     baseline_id: NonEmptyStr
     baseline_version: NonEmptyStr
     fixture_provenance: NonEmptyStr

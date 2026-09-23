@@ -24,7 +24,7 @@ class CapturedWorkflow:
         return state
 
 
-def evaluate_workflow_case(case, *, observability_provider=None):
+def evaluate_workflow_case(case, *, observability_provider=None, _replay=True):
     from packages.evals.agent_analysis_cases import analysis_case_plan, build_analysis_case_service
     from packages.evals.agent_e2e import FULL_AGENT_TRACE_NODES, AgentE2ECase, AgentE2EEvaluator
     from packages.evals.statistical.telemetry import _RecordingProvider
@@ -126,7 +126,7 @@ def evaluate_workflow_case(case, *, observability_provider=None):
         )
         for code, value in checks.items()
     }
-    return WorkflowCaseResult(
+    result = WorkflowCaseResult(
         case_id=case.case_id,
         case_version=case.case_version,
         family=case.family,
@@ -146,3 +146,13 @@ def evaluate_workflow_case(case, *, observability_provider=None):
         dependency_version=version,
         execution_kind="controlled" if dependency == "controlled" else "real",
     )
+    if _replay:
+        replay = evaluate_workflow_case(case, _replay=False)
+        checks["determinism"] = check(
+            case,
+            "determinism",
+            (result.evidence, result.business_evidence, result.execution_status, result.method)
+            == (replay.evidence, replay.business_evidence, replay.execution_status, replay.method),
+        )
+        result = result.model_copy(update={"checks": checks})
+    return result

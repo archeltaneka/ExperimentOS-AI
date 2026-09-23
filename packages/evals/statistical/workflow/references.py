@@ -2,7 +2,6 @@
 
 from contextlib import ExitStack
 from datetime import datetime
-from unittest.mock import patch
 
 from packages.experiments.analysis.causal.dml.models import DMLExecutionRequest
 from packages.experiments.analysis.causal.hte.models import HTEExecutionRequest
@@ -143,17 +142,9 @@ def run_native_reference(case):
             provenance=provenance,
         )
     with ExitStack() as stack:
-        if case.optional_unavailable:
-            from packages.experiments.analysis.causal.econml.dependency import AdapterError
+        from .optional import case_runtime
 
-            stack.enter_context(
-                patch(
-                    "packages.experiments.analysis.causal.econml.dependency.load_econml",
-                    side_effect=AdapterError(
-                        "OPTIONAL_DEPENDENCY_UNAVAILABLE", "Offline unavailable-runtime case"
-                    ),
-                )
-            )
+        stack.enter_context(case_runtime(case))
         if request.method in {"dml", "econml_dml"}:
             from packages.experiments.analysis.causal.dml.service import (
                 DoubleMachineLearningEstimator,

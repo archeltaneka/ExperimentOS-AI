@@ -6,6 +6,24 @@ from .models import WorkflowExpectations
 # Point values are analytical fixture properties, never fitted at runtime.
 # DML/HTE use the same finite-sample DGP interpretation as advanced conformance.
 REFERENCES = {
+    "econml_dml-real": (
+        "point_estimate",
+        2.0,
+        0.15,
+        "Known linear effect DGP; native adapter conformance tolerance",
+    ),
+    "econml_hte-real": (
+        "subgroup_results.0.estimate",
+        1.0,
+        0.4,
+        "Known subgroup effect; finite-sample adapter tolerance",
+    ),
+    "dowhy-real": (
+        "estimate.value",
+        2.0,
+        0.15,
+        "Known confounded linear effect DGP; native DoWhy conformance tolerance",
+    ),
     "randomized": (
         "point_effect.absolute_effect.value",
         10.0,

@@ -3,7 +3,6 @@
 from copy import deepcopy
 from dataclasses import asdict
 from pathlib import Path
-from unittest.mock import patch
 
 from packages.agents.service import AgentWorkflowService
 from packages.evals.statistical.workflow.cases import read_cases, validate_case_inventory
@@ -74,7 +73,10 @@ def check_analysis_response(
             execution_status=result.status == case.expected_status,
             result_integrity=evidence == expected,
             abstention_preserved=(result.abstention is not None)
-            == (case.expected_status in {"abstained", "invalid", "unavailable"}),
+            == (
+                case.expected_status in {"abstained", "invalid", "unavailable"}
+                or getattr(expected, "abstention_reason", None) is not None
+            ),
         )
         for code, field in (
             ("uncertainty_preserved", "test_result"),
@@ -282,11 +284,20 @@ def load_analysis_workflow_cases(directory: Path | None = None) -> tuple[Analysi
         build_boundary_variants,
         build_core_cases,
     )
+    from packages.evals.statistical.workflow.optional import build_optional_cases
+
+    core = build_core_cases()
 
     return validate_case_inventory(
         tuple(
             attach_expectations(c)
-            for c in (*cases, *variants, *build_core_cases(), *build_boundary_variants(by_id))
+            for c in (
+                *cases,
+                *variants,
+                *core,
+                *build_boundary_variants(by_id),
+                *build_optional_cases(core),
+            )
         )
     )
 
@@ -304,24 +315,17 @@ class _CandidatePresenter:
         return {"executive_summary": {**state["executive_summary"], "summary": self.text}}
 
 
-class _UnavailableWorkflow(AgentWorkflowService):
-    def run(self, *args, **kwargs):
-        from packages.experiments.analysis.causal.econml.dependency import AdapterError
-
-        with patch(
-            "packages.experiments.analysis.causal.econml.dependency.load_econml",
-            side_effect=AdapterError(
-                "OPTIONAL_DEPENDENCY_UNAVAILABLE", "Offline unavailable-runtime case"
-            ),
-        ):
-            return super().run(*args, **kwargs)
-
-
 def build_analysis_case_service(
     case: AnalysisWorkflowCase, *, observability_provider=None
 ) -> AgentWorkflowService:
-    factory = _UnavailableWorkflow if case.optional_unavailable else AgentWorkflowService
-    return factory(
+    from packages.evals.statistical.workflow.optional import case_runtime
+
+    class CaseWorkflow(AgentWorkflowService):
+        def run(self, *args, **kwargs):
+            with case_runtime(case):
+                return super().run(*args, **kwargs)
+
+    return CaseWorkflow(
         observability_provider=observability_provider,
         retrieval_agent=_NoRetrieval(),
         executive_summary_agent=_CandidatePresenter(case.presenter_candidate)

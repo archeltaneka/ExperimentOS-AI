@@ -14,7 +14,7 @@ UNCERTAINTY_PATHS = {
     "ipw_att": ("test_result.confidence_interval",),
     "dml": ("test_result.confidence_interval",),
     "hte": ("subgroup_results.0.confidence_interval",),
-    "econml_dml": ("test_result.confidence_interval",),
+    "econml_dml": ("inference.confidence_interval",),
     "econml_hte": ("subgroup_results.0.confidence_interval",),
 }
 

@@ -33,6 +33,7 @@ class AnalysisWorkflowCase(StatisticalCaseModel):
     expectations: WorkflowExpectations = Field(default_factory=WorkflowExpectations)
     presenter_candidate: str | None = None
     optional_unavailable: bool = False
+    optional_scenario: Literal["broken"] | None = None
 
 
 class AnalysisCheck(StatisticalCaseModel):

@@ -289,8 +289,10 @@ def project_evidence(native: OwnedAnalysisResult) -> AnalysisEvidence:
 def native_status(native: OwnedAnalysisResult) -> ExecutionStatus:
     reason = getattr(native, "abstention_reason", None)
     code = reason if isinstance(reason, str) else getattr(reason, "code", None)
-    if code in {"OPTIONAL_DEPENDENCY_UNAVAILABLE", "INCOMPATIBLE_DEPENDENCY_RUNTIME"}:
+    if code == "OPTIONAL_DEPENDENCY_UNAVAILABLE":
         return "unavailable"
+    if code == "INCOMPATIBLE_DEPENDENCY_RUNTIME":
+        return "failed"
     if isinstance(native, SequentialAnalysisHistory):
         if native.current_status.value == "invalid":
             return "invalid"
@@ -298,6 +300,8 @@ def native_status(native: OwnedAnalysisResult) -> ExecutionStatus:
             return "abstained"
         return "completed" if native.current_status.value == "efficacy" else "inconclusive"
     value = native.status.value
+    if value == "error":
+        return "failed"
     if value in {"no_improvement", "degraded_precision"}:
         return "completed"
     if value in {"completed", "inconclusive", "invalid", "abstained"}:

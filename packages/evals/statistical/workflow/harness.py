@@ -29,6 +29,9 @@ def evaluate_workflow_case(case, *, observability_provider=None):
     from packages.evals.agent_e2e import FULL_AGENT_TRACE_NODES, AgentE2ECase, AgentE2EEvaluator
 
     started = perf_counter()
+    from .optional import effective_case
+
+    case, dependency, version = effective_case(case)
     workflow = CapturedWorkflow(
         build_analysis_case_service(case, observability_provider=observability_provider)
     )
@@ -60,6 +63,20 @@ def evaluate_workflow_case(case, *, observability_provider=None):
         public = {}
     evidence = public.get("evidence")
     checks = merge_checks(sample.analysis_checks, evidence_checks(case, evidence))
+    if dependency != "not_required":
+        broken = dependency == "broken" or (
+            dependency == "installed" and public.get("status") in {"unavailable", "failed"}
+        )
+        checks["dependency"] = check(case, "dependency", not broken)
+        if broken:
+            dependency = "broken"
+        elif dependency == "unavailable":
+            checks["dependency"] = checks["dependency"].model_copy(
+                update={
+                    "status": "warning",
+                    "diagnostic_evidence": ("optional_package_absent",),
+                }
+            )
     checks["state_preserved"] = check(case, "state_preserved", workflow.analysis == public)
     checks["api_contract"] = check(
         case,
@@ -100,6 +117,7 @@ def evaluate_workflow_case(case, *, observability_provider=None):
         evidence=deepcopy(evidence),
         business_evidence=deepcopy(public.get("business_impact")),
         duration_ms=(perf_counter() - started) * 1000,
-        dependency_state="controlled" if case.optional_unavailable else "not_required",
-        execution_kind="controlled" if case.optional_unavailable else "real",
+        dependency_state=dependency,
+        dependency_version=version,
+        execution_kind="controlled" if dependency == "controlled" else "real",
     )

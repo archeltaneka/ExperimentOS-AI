@@ -36,6 +36,15 @@ REQUIRED_CASE_IDS = frozenset(
         "hte-sparse",
         "business-negative",
         "business-cross-zero",
+        "econml_dml-real",
+        "econml_dml-absent",
+        "econml_dml-broken",
+        "econml_hte-real",
+        "econml_hte-absent",
+        "econml_hte-broken",
+        "dowhy-real",
+        "dowhy-absent",
+        "dowhy-broken",
     }
 )
 

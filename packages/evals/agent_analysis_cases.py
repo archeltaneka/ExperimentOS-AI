@@ -44,7 +44,10 @@ def analysis_check_applicability(case: AnalysisWorkflowCase) -> dict[str, bool]:
         "estimand_preserved",
         "limitations_preserved",
     }
-    has_reference = case.expected_method in {"randomized_fixed_horizon", "did", "econml_dml"}
+    request = normalize_analysis_input(
+        case.ask_payload["analysis"], experiment_id=str(case.ask_payload["experiment_id"])
+    )
+    has_reference = not isinstance(request, AnalysisRoutingRefusal)
     return {code: has_reference or code not in evidence_checks for code in ANALYSIS_CHECK_CODES}
 
 
@@ -314,9 +317,12 @@ class _UnavailableWorkflow(AgentWorkflowService):
             return super().run(*args, **kwargs)
 
 
-def build_analysis_case_service(case: AnalysisWorkflowCase) -> AgentWorkflowService:
+def build_analysis_case_service(
+    case: AnalysisWorkflowCase, *, observability_provider=None
+) -> AgentWorkflowService:
     factory = _UnavailableWorkflow if case.optional_unavailable else AgentWorkflowService
     return factory(
+        observability_provider=observability_provider,
         retrieval_agent=_NoRetrieval(),
         executive_summary_agent=_CandidatePresenter(case.presenter_candidate)
         if case.presenter_candidate is not None

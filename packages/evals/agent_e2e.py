@@ -12,6 +12,7 @@ from apps.api.main import (
     app,
     get_agent_workflow_service,
     get_experiment_exists_dependency,
+    get_observability_provider,
     get_question_answering_service,
 )
 from packages.agents.state import AgentState, create_initial_state
@@ -228,8 +229,12 @@ async def always_true(_: str) -> bool:
 
 
 class AgentE2EEvaluator:
-    def __init__(self, *, cases: list[AgentE2ECase]) -> None:
+    def __init__(
+        self, *, cases: list[AgentE2ECase], service_factory=None, observability_provider=None
+    ) -> None:
         self.cases = list(cases)
+        self.service_factory = service_factory
+        self.observability_provider = observability_provider
 
     def evaluate(self) -> AgentE2ERun:
         samples = [self._evaluate_case(case) for case in self.cases]
@@ -253,11 +258,16 @@ class AgentE2EEvaluator:
 
     def _evaluate_case(self, case: AgentE2ECase) -> AgentE2ESampleResult:
         previous_ask_mode = os.environ.get("ASK_MODE")
+        previous_overrides = dict(app.dependency_overrides)
         workflow_service: StubWorkflowService | None = None
         qa_service: StubQuestionAnsweringService | None = None
 
         try:
             app.dependency_overrides.clear()
+            if self.observability_provider is not None:
+                app.dependency_overrides[get_observability_provider] = lambda: (
+                    self.observability_provider
+                )
             if case.ask_mode == "legacy_rag":
                 os.environ["ASK_MODE"] = "legacy_rag"
                 qa_service = StubQuestionAnsweringService(_build_legacy_qa_response())
@@ -269,10 +279,12 @@ class AgentE2EEvaluator:
                 )
             else:
                 os.environ.pop("ASK_MODE", None)
-                workflow_service = _build_workflow_service(case)
-                app.dependency_overrides[get_agent_workflow_service] = (
-                    lambda workflow_service=workflow_service: workflow_service
+                workflow_service = (
+                    self.service_factory(case)
+                    if self.service_factory
+                    else _build_workflow_service(case)
                 )
+                app.dependency_overrides[get_agent_workflow_service] = lambda: workflow_service
                 app.dependency_overrides[get_experiment_exists_dependency] = lambda: always_true
                 app.dependency_overrides[get_question_answering_service] = (
                     ExplodingQuestionAnsweringService
@@ -328,6 +340,7 @@ class AgentE2EEvaluator:
             )
         finally:
             app.dependency_overrides.clear()
+            app.dependency_overrides.update(previous_overrides)
             if previous_ask_mode is None:
                 os.environ.pop("ASK_MODE", None)
             else:

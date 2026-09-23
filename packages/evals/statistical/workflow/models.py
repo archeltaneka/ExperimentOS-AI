@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import Field, JsonValue
+from pydantic import Field, FiniteFloat, JsonValue
 
 from ..reference_values import NonEmptyStr, StatisticalCaseModel, StatisticalExpectedValue
 
@@ -41,3 +41,30 @@ class AnalysisCheck(StatisticalCaseModel):
     method: str | None
     execution_status: str | None
     applicable: bool = True
+    rule_id: str = ""
+    case_id: str = ""
+    diagnostic_evidence: tuple[str, ...] = ()
+    expected: str | int | FiniteFloat | bool | None = None
+    actual: str | int | FiniteFloat | bool | None = None
+
+
+class WorkflowCaseResult(StatisticalCaseModel):
+    case_id: NonEmptyStr
+    case_version: NonEmptyStr
+    family: NonEmptyStr
+    method: str | None
+    design: NonEmptyStr
+    estimand: NonEmptyStr
+    execution_status: NonEmptyStr
+    native_status: str | None = None
+    checks: dict[str, AnalysisCheck]
+    evidence: dict[str, JsonValue] | None = None
+    business_evidence: dict[str, JsonValue] | None = None
+    duration_ms: FiniteFloat = Field(ge=0)
+    dependency_state: str = "not_required"
+    dependency_version: str | None = None
+    execution_kind: str = "real"
+    trace_summary: tuple[dict[str, JsonValue], ...] = ()
+    call_counts: dict[str, int] = Field(default_factory=dict)
+    detected_rule_ids: tuple[str, ...] = ()
+    injection_detected: bool | None = None

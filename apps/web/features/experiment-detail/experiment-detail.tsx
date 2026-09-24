@@ -1,5 +1,7 @@
 "use client";
 
+import { analysisAvailability, analysisGuideUrl } from "@/lib/analysis-capabilities";
+
 import Link from "next/link";
 import { ArrowLeft, Database, FileText, FlaskConical, ListChecks } from "lucide-react";
 
@@ -106,7 +108,7 @@ function Metrics({ experiment }: { experiment: ExperimentDetailRecord }) {
 }
 
 function BusinessImpact({ experiment }: { experiment: ExperimentDetailRecord }) {
-  return <section aria-labelledby="business-impact"><h2 className="mb-3 text-xl font-semibold" id="business-impact">Business impact</h2><ContentCard><p className="font-medium">{businessImpactLabels[experiment.businessImpact]}</p><p className="mt-2 text-sm leading-6 text-muted-foreground">Automated business-impact estimation is not connected. No currency value, annualisation, or impact range is calculated in this UI.</p></ContentCard></section>;
+  return <section aria-labelledby="business-impact"><h2 className="mb-3 text-xl font-semibold" id="business-impact">Business impact</h2><ContentCard><p className="font-medium">{businessImpactLabels[experiment.businessImpact]}</p><p className="mt-2 text-sm leading-6 text-muted-foreground">This page does not calculate business-impact scenarios. The backend method requires eligible analysis evidence and explicit business assumptions; no scenario result is attached to this record.</p></ContentCard></section>;
 }
 
 function ExperimentReport({ experiment }: { experiment: ExperimentDetailRecord }) {
@@ -126,7 +128,7 @@ function AnalysisReadinessSection({ readiness }: { readiness?: AnalysisReadiness
 }
 
 function CapabilityMatrix({ capabilities }: { capabilities: readonly Capability[] }) {
-  return <section aria-labelledby="capability-status"><h2 className="mb-3 text-xl font-semibold" id="capability-status">Analysis capabilities</h2><ContentCard><p className="text-sm leading-6 text-muted-foreground">Capability status communicates maturity only. Planned methods are not executable from this record.</p>{capabilities.length === 0 ? <p className="mt-5 text-sm text-muted-foreground">No analysis capability status is attached to this experiment record.</p> : <ul className="mt-5 divide-y rounded-md border">{capabilities.map((capability) => <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between" key={capability.name}><div><p className="font-medium">{capability.name}</p><p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">{capability.detail}</p></div><StatusBadge status={capability.status} /></li>)}</ul>}</ContentCard></section>;
+  return <section aria-labelledby="capability-status"><h2 className="mb-3 text-xl font-semibold" id="capability-status">Backend analysis capabilities</h2><ContentCard><p className="text-sm leading-6 text-muted-foreground">{analysisAvailability.backend} {analysisAvailability.interface} Completed badges describe backend implementation; no analysis result is attached to this fixture.</p><a className="mt-3 inline-flex min-h-11 items-center rounded-sm text-sm text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href={analysisGuideUrl}>Read method requirements and limitations</a>{capabilities.length === 0 ? <p className="mt-5 text-sm text-muted-foreground">No analysis capability status is attached to this experiment record.</p> : <ul className="mt-5 divide-y rounded-md border">{capabilities.map((capability) => <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between" key={capability.name}><div><p className="font-medium">{capability.name}</p><p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">{capability.detail}</p></div><StatusBadge status={capability.status} /></li>)}</ul>}</ContentCard></section>;
 }
 
 function Evidence({ experiment }: { experiment: ExperimentDetailRecord }) {

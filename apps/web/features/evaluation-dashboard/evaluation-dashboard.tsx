@@ -71,7 +71,7 @@ export function EvaluationDashboardView() {
       <section aria-label="Evaluation quality gate" className="rounded-lg border border-status-progress/40 bg-status-progress/10 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-semibold">Release quality gate</h2>
+            <h2 className="font-semibold">Sample release quality gate</h2>
             <p className="mt-1 text-sm text-muted-foreground">{dashboard.gate.message}</p>
           </div>
           <Status status={dashboard.gate.status} />
@@ -85,10 +85,11 @@ export function EvaluationDashboardView() {
             <Button
               className="bg-primary text-primary-foreground hover:bg-primary/90"
               disabled
-              title="Evaluation runs are not connected yet."
+              aria-describedby="evaluation-run-help"
             >
               Run evaluation
             </Button>
+            <p id="evaluation-run-help" className="mt-2 max-w-sm text-sm text-muted-foreground">This page shows saved evaluation results. Starting a run from the web interface is not available.</p>
           </div>
         </div>
         <div className="overflow-x-auto">

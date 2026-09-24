@@ -17,7 +17,7 @@ vi.mock("@/hooks/use-services", () => ({
 afterEach(cleanup);
 
 describe("roadmap page", () => {
-  it("renders the six repository-backed phases in order with the current phase prominent", async () => {
+  it("renders the six repository-backed phases in order without requiring an active phase", async () => {
     render(
       <Providers>
         <Roadmap />
@@ -25,7 +25,7 @@ describe("roadmap page", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1, name: "Roadmap" })).toBeInTheDocument();
-    expect(screen.getByText("phases completed").previousElementSibling).toHaveTextContent("3");
+    expect(screen.getByText("phases implemented").previousElementSibling).toHaveTextContent("4");
 
     const phases = [
       "Foundation",
@@ -38,7 +38,7 @@ describe("roadmap page", () => {
     const timeline = screen.getByLabelText("Roadmap phases").textContent ?? "";
 
     expect(screen.getByRole("heading", { name: "Completed" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "In progress" })).toBeInTheDocument();
+    expect(screen.queryByText("Partial roadmap data")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Future and research" })).toBeInTheDocument();
     expect(phases.every((phase) => timeline.includes(phase))).toBe(true);
     expect(timeline.indexOf("Foundation")).toBeLessThan(timeline.indexOf("Agent Workflow"));
@@ -46,7 +46,7 @@ describe("roadmap page", () => {
       timeline.indexOf("LLMOps and AI Reliability"),
     );
     expect(screen.getAllByText("Product Intelligence and Causal Inference")[1].closest("article")).toHaveTextContent(
-      "In progress",
+      "Completed",
     );
     expect(screen.getByRole("link", { name: "Jump to Product Intelligence and Causal Inference" })).toHaveAttribute(
       "href",

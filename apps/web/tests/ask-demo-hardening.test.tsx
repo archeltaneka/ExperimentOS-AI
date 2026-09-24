@@ -86,7 +86,7 @@ describe("Ask recovery and context integrity", () => {
     const view = renderWithProviders(<AskExperimentWorkspace experimentId={payment} />);
     fireEvent.change(screen.getByRole("textbox", { name: "Question" }), { target: { value: sample } });
     fireEvent.click(screen.getByRole("button", { name: "Ask question" }));
-    await screen.findByText("Retrieving relevant experiment context");
+    await screen.findByText("Loading saved answer");
     view.rerender(<AskExperimentWorkspace experimentId={hotel} />);
     await act(async () => { complete(askFixture); });
     expect(screen.queryByRole("heading", { name: "Grounded answer" })).not.toBeInTheDocument();
@@ -132,7 +132,7 @@ describe("Ask recovery and context integrity", () => {
     const input = screen.getByRole("textbox", { name: "Question" });
     fireEvent.change(input, { target: { value: sample } });
     for (let index = 0; index < 10; index++) fireEvent.keyDown(input, { key: "Enter", ctrlKey: true });
-    await screen.findByText("Retrieving relevant experiment context");
+    await screen.findByText("Loading saved answer");
     expect(ask).toHaveBeenCalledTimes(1);
     await act(async () => { complete(askFixture); });
   });

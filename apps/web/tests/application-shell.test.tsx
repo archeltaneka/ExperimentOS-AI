@@ -23,7 +23,7 @@ describe("application shell", () => {
     render(<ApplicationShell><p>Route content</p></ApplicationShell>);
 
     expect(screen.getByRole("link", { name: "Roadmap" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "View demo" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Product overview" })).toHaveAttribute("href", "/");
     const trigger = screen.getByRole("button", { name: "Open navigation" });
     fireEvent.click(trigger);
     expect(screen.getByRole("dialog", { name: "Navigation" })).toBeVisible();

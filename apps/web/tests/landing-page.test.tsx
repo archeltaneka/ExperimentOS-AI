@@ -66,15 +66,11 @@ describe("landing page", () => {
     expect(text.indexOf("Statistical Analysis")).toBeLessThan(text.indexOf("Decision Intelligence"));
   });
 
-  it("keeps roadmap and unfinished analytical capabilities honest", async () => {
+  it("distinguishes implemented analysis from future enterprise scope", async () => {
     render(await Home());
 
-    expect(screen.getAllByText("Product Intelligence")).not.toHaveLength(0);
-    expect(screen.getAllByText("In progress")).not.toHaveLength(0);
-    expect(screen.getByText("CUPED").closest("li")).toHaveTextContent("Planned");
-    expect(screen.getByText("Double Machine Learning").closest("li")).toHaveTextContent(
-      "Future research",
-    );
+    expect(screen.getByText("CUPED").closest("li")).toHaveTextContent("Completed");
+    expect(screen.getByText("Double Machine Learning").closest("li")).toHaveTextContent("Completed");
     expect(screen.getByText("Enterprise Platform").closest("li")).toHaveTextContent(
       "Future research",
     );

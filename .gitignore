@@ -15,6 +15,8 @@ downloads/
 eggs/
 .eggs/
 lib/
+# Frontend source modules are not Python build output.
+!/apps/web/lib/
 lib64/
 parts/
 sdist/

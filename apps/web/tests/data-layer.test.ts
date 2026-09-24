@@ -87,14 +87,18 @@ describe("typed data layer", () => {
       summary.capabilities.filter((capability) =>
         ["Sequential testing", "Bayesian A/B testing", "Double Machine Learning"].includes(capability.name),
       ),
-    ).not.toEqual(expect.arrayContaining([expect.objectContaining({ status: "completed" })]));
+    ).toEqual([
+      expect.objectContaining({ name: "Sequential testing", status: "completed" }),
+      expect.objectContaining({ name: "Bayesian A/B testing", status: "completed" }),
+      expect.objectContaining({ name: "Double Machine Learning", status: "completed" }),
+    ]);
   });
 
-  it("preserves completed, active, and future roadmap states", async () => {
+  it("preserves implemented phases and future roadmap scope", async () => {
     const phases = await createServices({ dataMode: "mock" }).roadmap.list();
 
     expect(phases.map((phase) => phase.status)).toEqual(
-      expect.arrayContaining(["completed", "in_progress", "future"]),
+      ["completed", "completed", "completed", "completed", "future", "research"],
     );
   });
 

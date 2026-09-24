@@ -58,4 +58,11 @@ def evaluate_workflow_suite(cases, *, scope="complete", required_dependencies=()
         except Exception:
             # Independent cases still run; errors are infrastructure, never successful skips.
             errors.append(identity)
+    if scope == "complete":
+        from .compatibility import workflow_compatibility_results
+
+        try:
+            results.extend(workflow_compatibility_results())
+        except Exception:
+            errors.append("compatibility")
     return tuple(results), tuple(errors)

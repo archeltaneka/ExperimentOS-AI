@@ -42,3 +42,4 @@ def test_real_optional_cases_are_explicitly_recorded():
             result = evaluate_workflow_case(case)
             assert result.dependency_state in {"installed", "unavailable", "broken"}
             assert result.execution_kind == "real"
+            assert not [c for c in result.checks.values() if c.status == "fail"]

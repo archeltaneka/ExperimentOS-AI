@@ -230,11 +230,17 @@ async def always_true(_: str) -> bool:
 
 class AgentE2EEvaluator:
     def __init__(
-        self, *, cases: list[AgentE2ECase], service_factory=None, observability_provider=None
+        self,
+        *,
+        cases: list[AgentE2ECase],
+        service_factory=None,
+        observability_provider=None,
+        qa_service_factory=None,
     ) -> None:
         self.cases = list(cases)
         self.service_factory = service_factory
         self.observability_provider = observability_provider
+        self.qa_service_factory = qa_service_factory
 
     def evaluate(self) -> AgentE2ERun:
         samples = [self._evaluate_case(case) for case in self.cases]
@@ -270,10 +276,12 @@ class AgentE2EEvaluator:
                 )
             if case.ask_mode == "legacy_rag":
                 os.environ["ASK_MODE"] = "legacy_rag"
-                qa_service = StubQuestionAnsweringService(_build_legacy_qa_response())
-                app.dependency_overrides[get_question_answering_service] = (
-                    lambda qa_service=qa_service: qa_service
+                qa_service = (
+                    self.qa_service_factory(case)
+                    if self.qa_service_factory
+                    else StubQuestionAnsweringService(_build_legacy_qa_response())
                 )
+                app.dependency_overrides[get_question_answering_service] = lambda: qa_service
                 app.dependency_overrides[get_agent_workflow_service] = lambda: StubWorkflowService(
                     failure_message="agent workflow should not run"
                 )

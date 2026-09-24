@@ -165,6 +165,9 @@ jobs:
           tests/test_statistical_baseline_reporting.py
           tests/test_statistical_baseline_policy.py
           tests/test_statistical_baseline_cli.py
+          tests/test_phase4_workflow_*.py
+          tests/test_phase4_complete_*.py
+          tests/test_phase4_backward_compatibility.py
           tests/test_observational_reliability_dataset.py
           tests/test_observational_reliability_identification.py
           tests/test_observational_reliability_did.py
@@ -250,9 +253,11 @@ jobs:
         run: >-
           uv run --no-sync pytest -q tests/test_advanced*.py
           tests/test_econml*.py tests/test_dowhy*.py
+          tests/test_phase4_workflow_optional.py
       - name: Run canonical Phase 4 reliability with required adapters
         run: >-
           uv run --no-sync python -m packages.evals.cli statistical-baseline
+          --scope optional-adapters
           --require-optional econml --require-optional dowhy
           --json-output artifacts/ci/advanced/phase4/statistical_baseline.json
           --output artifacts/ci/advanced/phase4/statistical_baseline.md
@@ -336,7 +341,7 @@ jobs:
         if: ${{ always() }}
         shell: bash
         run: |
-          summary_path="artifacts/ci/offline/phase4/statistical_baseline.md"
+          summary_path="artifacts/ci/offline/phase4/github_summary.md"
           if [[ -f "$summary_path" ]]; then
             cat "$summary_path" >> "$GITHUB_STEP_SUMMARY"
           fi

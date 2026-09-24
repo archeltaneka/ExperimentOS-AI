@@ -245,6 +245,15 @@ def _statistical_suite(path: Path) -> SuiteResult:
     normalized_status = "warning" if status == "advisory" else status
     if normalized_status not in {"pass", "warning", "fail"}:
         normalized_status = "fail"
+    workflow = payload.get("workflow", [])
+    workflow = workflow if isinstance(workflow, list) else []
+    workflow_failed = sum(
+        any(c.get("status") == "fail" for c in r.get("checks", {}).values() if isinstance(c, dict))
+        for r in workflow
+        if isinstance(r, dict) and isinstance(r.get("checks"), dict)
+    )
+    if workflow_failed:
+        normalized_status = "fail"
     return SuiteResult(
         suite_name="Phase 4 statistics",
         status=normalized_status,
@@ -253,6 +262,14 @@ def _statistical_suite(path: Path) -> SuiteResult:
         failed=_integer(payload.get("cases_failed")),
         skipped=_integer(payload.get("cases_skipped")),
         key_metrics=(
+            ("Workflow cases", str(len(workflow))),
+            ("Workflow failures", str(workflow_failed)),
+            ("Workflow quality", _string(payload.get("workflow_quality_status")) or "not executed"),
+            ("Scope", _string(payload.get("scope")) or "native references"),
+            ("Business impact", _workflow_family_status(workflow, {"business"})),
+            ("Causal workflow", _workflow_family_status(workflow, {"observational"})),
+            ("Optional adapters", _workflow_family_status(workflow, {"adapter"})),
+            ("Compatibility", _workflow_family_status(workflow, {"compatibility"})),
             ("Invalid", str(_integer(payload.get("cases_invalid")) or 0)),
             ("Abstained", str(_integer(payload.get("cases_abstained")) or 0)),
             ("Advisory", str(_integer(payload.get("cases_advisory")) or 0)),
@@ -268,7 +285,25 @@ def _statistical_suite(path: Path) -> SuiteResult:
             ),
         ),
         report_path="phase4/statistical_baseline.json",
+        error="Phase 4 evaluation infrastructure failure."
+        if payload.get("run_status") == "infrastructure_fail"
+        else None,
     )
+
+
+def _workflow_family_status(results, families):
+    selected = [c for c in results if isinstance(c, dict) and c.get("family") in families]
+    statuses = [
+        v.get("status")
+        for c in selected
+        for v in c.get("checks", {}).values()
+        if isinstance(v, dict)
+    ]
+    if "fail" in statuses:
+        return "fail"
+    if "warning" in statuses:
+        return "warning"
+    return "pass" if "pass" in statuses else "skipped"
 
 
 def _statistical_method_status(payload: dict[str, Any], capabilities: set[str]) -> str:

@@ -2,6 +2,7 @@
 
 from .cases import REQUIRED_CASE_IDS
 from .checks import evidence_checks
+from .compatibility import EXTERNAL_SURFACES, SURFACES
 from .injections import INJECTION_SPECS, injection_detected
 from .models import WorkflowCaseResult
 from .optional import PACKAGES
@@ -41,6 +42,7 @@ def required_ids(scope):
         REQUIRED_CASE_IDS
         | {"injection-" + s.injection_id for s in INJECTION_SPECS}
         | {"provider-export-failure"}
+        | {"compatibility-" + surface for surface in SURFACES}
     )
 
 
@@ -66,7 +68,11 @@ def workflow_metrics(payload, *, scope):
         if identity in seen or identity not in inventory:
             inventory_failures += 1
         seen.add(identity)
-        if identity == "provider-export-failure":
+        if identity.startswith("compatibility-") and identity in inventory:
+            expected = {
+                "compatibility": identity.removeprefix("compatibility-") not in EXTERNAL_SURFACES
+            }
+        elif identity == "provider-export-failure":
             expected = {"provider_isolation": True}
             if result.provider_failure_count < 1:
                 failures["provider_isolation"] += 1

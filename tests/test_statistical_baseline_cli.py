@@ -129,7 +129,8 @@ def test_cli_artifacts_are_byte_stable_across_repeated_runs(tmp_path: Path) -> N
     payloads = [json.loads(output[0]) for output in outputs]
     for payload in payloads:
         for case in payload["workflow"]:
-            assert case.pop("duration_ms") > 0
+            duration = case.pop("duration_ms")
+            assert duration == 0 if case["execution_kind"] == "external" else duration > 0
             for span in case["trace_summary"]:
                 span.pop("trace_id")
         for case in payload["case_results"]:

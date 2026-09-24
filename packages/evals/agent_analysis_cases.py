@@ -56,7 +56,10 @@ def check_analysis_response(
     from pydantic import ValidationError
 
     from apps.api.ask_service import AskResponse
+    from packages.evals.statistical.workflow.optional import effective_case
     from packages.experiments.analysis.orchestration.rendering import render_analysis
+
+    case, _, _ = effective_case(case)
 
     try:
         response = AskResponse.model_validate(payload)

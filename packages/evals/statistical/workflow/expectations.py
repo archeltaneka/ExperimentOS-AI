@@ -19,7 +19,7 @@ REFERENCES = {
         "Known subgroup effect; finite-sample adapter tolerance",
     ),
     "dowhy-real": (
-        "estimate.value",
+        "estimate.point_estimate",
         2.0,
         0.15,
         "Known confounded linear effect DGP; native DoWhy conformance tolerance",

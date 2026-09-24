@@ -274,7 +274,7 @@ The CI quality gate combines these signals with policy checks. Details and confi
 | Foundation | Completed |
 | Agent Workflow | Completed |
 | LLMOps and AI Reliability | Completed |
-| Product Intelligence and Causal Inference | In progress — foundations only |
+| Product Intelligence and Causal Inference | Implemented within documented scope; final review available |
 | Enterprise Platform | Future |
 | Research and Advanced Intelligence | Future research |
 
@@ -283,6 +283,8 @@ Phase 4 includes validated randomized, causal and uncertainty-aware business-imp
 Run `uv run python -m packages.evals.cli statistical-baseline` for the
 [complete offline Phase 4 causal quality gate](docs/phase4/end_to_end_causal_quality_gates.md).
 It writes authoritative JSON, detailed Markdown, centralized policy JSON, and a CI summary.
+The [final Phase 4 reliability review](docs/phase4/reliability_review.md) records
+capability classifications, executed evidence, limitations and milestone readiness.
 
 ## Known limitations
 

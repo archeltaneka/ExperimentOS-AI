@@ -22,8 +22,10 @@ uv sync --group dev --group eval --group observability --group econml
 
 The default development group excludes EconML. `uv sync` installs core without it.
 Importing either adapter does not import EconML. A valid supported request without the
-package produces abstention with `OPTIONAL_DEPENDENCY_UNAVAILABLE`; import failures
-are normalized and cannot expose `ImportError`. Unsupported declarations are rejected
+package produces abstention with `OPTIONAL_DEPENDENCY_UNAVAILABLE`. An installed package
+that cannot import is an incompatible runtime, not optional absence; its conformance
+failure blocks quality. Exceptions are normalized and cannot expose `ImportError`.
+Unsupported declarations are rejected
 before loading the optional implementation. Incompatible installed versions/runtime
 produce `INCOMPATIBLE_DEPENDENCY_RUNTIME`; no dependency repair or downgrade occurs.
 
@@ -141,8 +143,9 @@ predictions; proxy refits are not used for diagnostics.
 
 Minimal `evaluate_advanced_quality` checks completed adapter identification, dependency
 provenance, supported inference, deterministic seeds, finite required uncertainty and
-overlap; HTE delegates existing safety checks too. This does not implement the later
-advanced-adapter conformance suite or auto-selection.
+overlap; HTE delegates existing safety checks too. The separate
+[advanced-adapter conformance suite](advanced_causal_conformance.md) now exercises
+these adapters through the canonical Phase 4 quality gate. Neither layer selects estimators.
 
 Existing observability providers receive adapter/class/category, estimand, inference
 mode, dependency availability where known, status, diagnostic codes and duration only.

@@ -148,7 +148,10 @@ def test_statistical_policy_passes_expected_invalid_and_abstained_cases(tmp_path
 def test_statistical_policy_classifies_blocking_and_advisory_outcomes(
     tmp_path: Path,
 ) -> None:
-    _write_report(tmp_path, cases_failed=1, cases_advisory=1)
+    path = _write_report(tmp_path)
+    payload = json.loads(path.read_text())
+    payload["case_results"][0]["checks"][0]["status"] = "fail"
+    path.write_text(json.dumps(payload))
     policy = _policy(
         _metric("statistics.cases_failed"),
         _metric("statistics.cases_advisory", severity="warning"),

@@ -30,6 +30,8 @@ required; installed-but-broken or incompatible adapters fail, without native fal
 Options:
 
 - `--dataset FILE`: native references, retaining existing companion loading rules.
+  A subset cannot satisfy complete-scope coverage; focused native evaluation remains
+  available through `StatisticalBaselineEvaluator` or optional-adapter scope.
 - `--workflow-dataset DIRECTORY`: complete versioned workflow inventory; malformed,
   missing, or duplicate declarations are rejected.
 - `--policy FILE`: the existing centralized policy.
@@ -153,11 +155,17 @@ Native `dataset_size` and `case_results` keep their historical denominator;
 `warning`, `fail`, `skipped`). Expected ABSTAINED, INVALID, controlled failure, and
 optional UNAVAILABLE results can satisfy correctness checks. Absence stays visible.
 
-All 56 statistics-source rules live in
+All 57 statistics-source rules live in
 [`quality_policy.yaml`](../../config/evaluation/quality_policy.yaml), including
 `analysis.*` workflow rules. Ingestion recomputes inventory, applicability, status,
 forbidden-call counts, references, and injection detection. Forged zero totals,
 missing cases/checks, duplicates, and partial scopes cannot pass the complete gate.
+Native case identities and aggregates are independently checked against the canonical
+fixture inventory. `native_check_inventory.json` pins hashes of required check IDs,
+dimensions, rule IDs, and skip applicability for available/absent locked runtimes;
+it contains no numerical results or thresholds. Changes to native check contracts
+require intentional inventory updates and verification in both runtimes. Core and
+controlled cases cannot use genuine optional absence to bypass evidence checks.
 Legacy schema-1 statistical and agent JSON readers remain supported.
 
 | Exit | Meaning |

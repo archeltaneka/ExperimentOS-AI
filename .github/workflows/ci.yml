@@ -166,6 +166,7 @@ jobs:
           tests/test_statistical_baseline_policy.py
           tests/test_statistical_baseline_cli.py
           tests/test_phase4_workflow_*.py
+          tests/test_phase4_native_policy_integrity.py
           tests/test_phase4_complete_*.py
           tests/test_phase4_backward_compatibility.py
           tests/test_observational_reliability_dataset.py

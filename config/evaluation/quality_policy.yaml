@@ -939,3 +939,12 @@ metrics:
     required: false
     weight: 1.5
     description: Advanced causal dependency violations block reliability.
+  - metric_id: statistics.failures.case_inventory
+    source: statistics
+    category: Statistical Reliability
+    operator: lte
+    value: 0
+    severity: critical
+    required: true
+    weight: 1.5
+    description: Missing native cases/checks, illegal applicability, and inconsistent aggregates block complete reliability.

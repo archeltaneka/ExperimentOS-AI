@@ -59,6 +59,28 @@ def test_optional_scope_cannot_claim_complete(golden_results):
     assert workflow_metrics(results, scope="complete")["analysis.failures.case_inventory"] > 0
 
 
+@pytest.mark.parametrize("identity", ["randomized", "econml_dml-absent", "econml_dml-broken"])
+def test_unavailable_cannot_bypass_core_or_controlled_evidence(golden_results, identity):
+    from packages.evals.statistical.workflow.policy import workflow_metrics
+
+    results = deepcopy(golden_results)
+    target = next(r for r in results if r["case_id"] == identity)
+    target["dependency_state"] = "unavailable"
+    target["evidence"] = None
+    target["checks"]["reference_accuracy"].update(status="skipped", applicable=False)
+    metrics = workflow_metrics(results, scope="complete")
+    assert metrics["analysis.failures.dependency"] > 0
+
+
+def test_controlled_execution_cannot_claim_real(golden_results):
+    from packages.evals.statistical.workflow.policy import workflow_metrics
+
+    results = deepcopy(golden_results)
+    target = next(r for r in results if r["case_id"] == "econml_dml-absent")
+    target["execution_kind"] = "real"
+    assert workflow_metrics(results, scope="complete")["analysis.failures.dependency"] > 0
+
+
 @pytest.mark.parametrize(
     "statuses,expected",
     [

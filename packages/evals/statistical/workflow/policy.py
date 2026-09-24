@@ -85,23 +85,31 @@ def workflow_metrics(payload, *, scope):
                 failures["injection_detection"] += 1
         elif identity in cases:
             case = cases[identity]
-            expected = {**analysis_check_applicability(case), **dict.fromkeys(EXTRA_CHECKS, True)}
-            expected["reference_accuracy"] = (
-                bool(case.expectations.numerical) and result.dependency_state != "unavailable"
+            optional = case.expected_method in PACKAGES
+            controlled = case.optional_unavailable or bool(case.optional_scenario)
+            allowed_states = (
+                {"controlled"}
+                if controlled
+                else {"installed", "unavailable", "broken"}
+                if optional
+                else {"not_required"}
             )
+            absent = optional and not controlled and result.dependency_state == "unavailable"
+            if (
+                result.dependency_state not in allowed_states
+                or result.execution_kind != ("controlled" if controlled else "real")
+                or (absent and result.dependency_version is not None)
+            ):
+                failures["dependency"] += 1
+            expected = {**analysis_check_applicability(case), **dict.fromkeys(EXTRA_CHECKS, True)}
+            expected["reference_accuracy"] = bool(case.expectations.numerical) and not absent
             if case.expected_method in PACKAGES:
                 expected["dependency"] = True
                 if result.dependency_state == "broken":
                     failures["dependency"] += 1
             if result.method != case.expected_method:
                 failures["routing"] += 1
-            expected_status = (
-                "unavailable"
-                if result.dependency_state == "unavailable"
-                and case.expected_method in PACKAGES
-                and not case.optional_scenario
-                else case.expected_status
-            )
+            expected_status = "unavailable" if absent else case.expected_status
             if result.execution_status != expected_status:
                 failures["execution_status"] += 1
             forbidden = {
@@ -120,7 +128,7 @@ def workflow_metrics(payload, *, scope):
             ):
                 inventory_failures += 1
             # Recompute numeric/shape checks; supplied check totals are not an oracle.
-            if result.dependency_state != "unavailable":
+            if not absent:
                 for code, value in evidence_checks(case, result.evidence).items():
                     if value.status == "fail":
                         failures[code] += 1

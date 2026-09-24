@@ -8,17 +8,12 @@ import pytest
 @pytest.fixture(scope="module")
 def golden_results():
     from packages.evals.agent_analysis_cases import load_analysis_workflow_cases
-    from packages.evals.statistical.workflow.harness import evaluate_workflow_case
-    from packages.evals.statistical.workflow.injections import INJECTION_SPECS, evaluate_injection
+    from packages.evals.statistical.workflow.suite import evaluate_workflow_suite
 
     cases = {c.case_id: c for c in load_analysis_workflow_cases()}
-    return [
-        r.model_dump(mode="json")
-        for r in (
-            *(evaluate_workflow_case(c) for c in cases.values()),
-            *(evaluate_injection(s, cases[s.case_id]) for s in INJECTION_SPECS),
-        )
-    ]
+    results, errors = evaluate_workflow_suite(tuple(cases.values()))
+    assert not errors
+    return [r.model_dump(mode="json") for r in results]
 
 
 def test_complete_inventory_passes(golden_results):
@@ -29,7 +24,8 @@ def test_complete_inventory_passes(golden_results):
 
 
 @pytest.mark.parametrize(
-    "mutation", ["missing", "duplicate", "missing-check", "forged-pass", "illegal-skip"]
+    "mutation",
+    ["missing", "duplicate", "missing-check", "forged-pass", "illegal-skip", "forged-status"],
 )
 def test_incomplete_or_forged_checks_fail_closed(golden_results, mutation):
     from packages.evals.statistical.workflow.policy import workflow_metrics
@@ -44,6 +40,8 @@ def test_incomplete_or_forged_checks_fail_closed(golden_results, mutation):
         del target["checks"]["uncertainty_preserved"]
     elif mutation == "forged-pass":
         target["checks"]["reference_accuracy"]["status"] = "fail"
+    elif mutation == "forged-status":
+        target["execution_status"] = "abstained"
     else:
         target["checks"]["routing"].update(status="skipped", applicable=False)
     metrics = workflow_metrics(results, scope="complete")

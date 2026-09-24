@@ -3,24 +3,30 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
+import sys
 from dataclasses import replace
 from pathlib import Path
 
 from packages.evals.policy.config import load_quality_policy
 from packages.evals.policy.evaluator import PolicyEvaluator
 from packages.evals.policy.models import QualityPolicy
+from packages.evals.policy.report import quality_policy_report_to_json
 from packages.evals.statistical.dataset import (
     DEFAULT_STATISTICAL_DATASET_PATH,
     load_statistical_reference_cases,
 )
 from packages.evals.statistical.evaluator import StatisticalBaselineEvaluator
 from packages.evals.statistical.models import (
+    Phase4InfrastructureFailure,
     StatisticalBaselineReport,
     StatisticalCaseResult,
     StatisticalPolicyRuleResult,
     StatisticalPolicySummary,
 )
 from packages.evals.statistical.reporting import (
+    render_phase4_job_summary,
     render_statistical_baseline_markdown,
     statistical_baseline_to_json,
 )
@@ -47,20 +53,98 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--policy", type=Path, default=DEFAULT_POLICY_PATH)
     parser.add_argument("--json-output", type=Path, default=DEFAULT_JSON_OUTPUT)
     parser.add_argument("--output", type=Path, default=DEFAULT_MARKDOWN_OUTPUT)
-    return parser.parse_args(argv)
+    parser.add_argument("--scope", choices=("complete", "optional-adapters"), default="complete")
+    parser.add_argument("--workflow-dataset", type=Path)
+    parser.add_argument("--policy-json-output", type=Path)
+    parser.add_argument("--summary-output", type=Path)
+    args = parser.parse_args(argv)
+    args.policy_json_output = (
+        args.policy_json_output or args.json_output.parent / "quality_policy.json"
+    )
+    args.summary_output = args.summary_output or args.json_output.parent / "github_summary.md"
+    return args
 
 
 def run_statistical_baseline(args: argparse.Namespace) -> StatisticalBaselineReport:
     """Evaluate references, apply centralized policy rules, and write both artifacts."""
+    from packages.evals.agent_analysis_cases import load_analysis_workflow_cases
+    from packages.evals.statistical.advanced.registry import REGISTRY
+    from packages.evals.statistical.workflow.cases import REQUIRED_CASE_IDS, validate_case_inventory
+    from packages.evals.statistical.workflow.optional import PACKAGES
+    from packages.evals.statistical.workflow.policy import workflow_quality_status
+    from packages.evals.statistical.workflow.suite import evaluate_workflow_suite
+    from packages.evals.statistical.workflow.telemetry import privacy_violations
+
+    args._stage = "configuration"
+    outputs = (args.json_output, args.output, args.policy_json_output, args.summary_output)
+    if len({p.resolve() for p in outputs}) != len(outputs):
+        raise ValueError("artifact destinations must be distinct")
     central_policy = load_quality_policy(args.policy)
+    args._stage = "fixtures"
+    cases = validate_case_inventory(
+        load_analysis_workflow_cases(args.workflow_dataset), required_ids=REQUIRED_CASE_IDS
+    )
     dataset = load_statistical_reference_cases(args.dataset)
+    if args.scope == "optional-adapters":
+        cases = tuple(c for c in cases if c.expected_method in PACKAGES)
+        dataset = dataset.model_copy(
+            update={
+                "cases": tuple(
+                    c
+                    for c in dataset.cases
+                    if c.advanced and REGISTRY[c.advanced.capability_id].dependency
+                )
+            }
+        )
+    args._stage = "native"
     report = (
         StatisticalBaselineEvaluator(required_dependencies=tuple(args.require_optional))
         .evaluate(dataset)
         .model_copy(update={"policy_version": central_policy.version})
     )
+    args._report = report
+    args._stage = "workflow"
+    workflow, errors = evaluate_workflow_suite(
+        cases, scope=args.scope, required_dependencies=tuple(args.require_optional)
+    )
+    version = hashlib.sha256(
+        json.dumps(
+            [c.model_dump(mode="json") for c in cases],
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode()
+    ).hexdigest()
+    report = report.model_copy(
+        update={
+            "scope": args.scope,
+            "workflow": workflow,
+            "workflow_case_count": len(workflow),
+            "workflow_dataset_version": version,
+            "workflow_quality_status": workflow_quality_status(
+                tuple(check.status for c in workflow for check in c.checks.values())
+            ),
+            "limitations": tuple(
+                x for x in report.limitations if not x.startswith("Business-impact conversion")
+            )
+            + (
+                "Database integration is skipped by this offline command; "
+                "the existing database CI job executes it separately.",
+                "Business-impact scenarios require explicit sourced inputs; "
+                "no rollout automation is performed.",
+            ),
+        }
+    )
+    if privacy_violations(report.model_dump(mode="json")):
+        args._report = None
+        raise ValueError("unsafe evaluation artifact")
+    args._report = report
+    if errors:
+        raise ValueError("workflow infrastructure failure")
+    args._stage = "writing"
     _write(args.json_output, statistical_baseline_to_json(report))
 
+    args._stage = "policy"
     source = central_policy.sources.get("statistics")
     if source is None:
         raise ValueError("centralized quality policy is missing the statistics source")
@@ -72,7 +156,11 @@ def run_statistical_baseline(args: argparse.Namespace) -> StatisticalBaselineRep
                 path=Path(args.json_output.name),
             )
         },
-        metrics=tuple(metric for metric in central_policy.metrics if metric.source == "statistics"),
+        metrics=tuple(
+            replace(metric, value=args.scope) if metric.metric_id == "analysis.scope" else metric
+            for metric in central_policy.metrics
+            if metric.source == "statistics"
+        ),
     )
     if not statistical_policy.metrics:
         raise ValueError("centralized quality policy has no statistical rules")
@@ -110,20 +198,46 @@ def run_statistical_baseline(args: argparse.Namespace) -> StatisticalBaselineRep
     )
     overall_status = (
         "fail"
-        if report.overall_status == "fail" or policy_result.overall_status == "fail"
+        if report.overall_status == "fail"
+        or policy_result.overall_status == "fail"
+        or report.workflow_quality_status == "fail"
+        else "warning"
+        if policy_result.overall_status == "warning"
+        or report.workflow_quality_status == "warning"
+        or report.cases_advisory > 0
         else "pass"
     )
     report = report.model_copy(
         update={"overall_status": overall_status, "quality_policy": policy_summary}
     )
-    _write(args.json_output, statistical_baseline_to_json(report))
-    _write(args.output, render_statistical_baseline_markdown(report))
+    args._report = report
+    args._stage = "rendering"
+    contents = (
+        statistical_baseline_to_json(report),
+        render_statistical_baseline_markdown(report),
+        quality_policy_report_to_json(policy_result),
+        render_phase4_job_summary(report),
+    )
+    if any(privacy_violations(value) for value in contents):
+        raise ValueError("unsafe rendered artifact")
+    args._stage = "writing"
+    for path, content in zip(outputs, contents, strict=True):
+        _write(path, content)
     return report
 
 
 def _write(path: Path, content: str) -> None:
+    import os
+    from tempfile import mkstemp
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
+    descriptor, temporary = mkstemp(prefix=".phase4-", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(content)
+        Path(temporary).replace(path)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
 
 
 def _policy_rule_method(metric_id: str, report: StatisticalBaselineReport | None = None) -> str:
@@ -243,8 +357,25 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
         report = run_statistical_baseline(args)
-    except Exception as error:
-        print(f"Statistical baseline infrastructure error: {error}")
+    except Exception:
+        failure = Phase4InfrastructureFailure(
+            stage=getattr(args, "_stage", "configuration"),
+            evaluation=getattr(args, "_report", None),
+        )
+        message = (
+            "Phase 4 infrastructure_fail: " + failure.stage + " (phase4.infrastructure_failure)\n"
+        )
+        for path, content in (
+            (args.json_output, failure.model_dump_json(indent=2) + "\n"),
+            (args.policy_json_output, failure.model_dump_json(indent=2) + "\n"),
+            (args.output, message),
+            (args.summary_output, message),
+        ):
+            try:
+                _write(path, content)
+            except OSError:
+                pass
+        print(message.strip(), file=sys.stderr)
         return STATISTICAL_INFRASTRUCTURE_EXIT_CODE
     print(f"Wrote Phase 4 statistical baseline JSON to {args.json_output}")
     print(f"Wrote Phase 4 statistical baseline Markdown to {args.output}")

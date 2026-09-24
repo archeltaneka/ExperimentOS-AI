@@ -37,7 +37,11 @@ def required_ids(scope):
         }
     if scope != "complete":
         raise ValueError("invalid workflow scope")
-    return REQUIRED_CASE_IDS | {"injection-" + s.injection_id for s in INJECTION_SPECS}
+    return (
+        REQUIRED_CASE_IDS
+        | {"injection-" + s.injection_id for s in INJECTION_SPECS}
+        | {"provider-export-failure"}
+    )
 
 
 def workflow_metrics(payload, *, scope):
@@ -62,7 +66,11 @@ def workflow_metrics(payload, *, scope):
         if identity in seen or identity not in inventory:
             inventory_failures += 1
         seen.add(identity)
-        if identity in injections:
+        if identity == "provider-export-failure":
+            expected = {"provider_isolation": True}
+            if result.provider_failure_count < 1:
+                failures["provider_isolation"] += 1
+        elif identity in injections:
             spec = injections[identity]
             expected = {"injection_detection": True}
             if not result.injection_detected or not injection_detected(
@@ -81,6 +89,23 @@ def workflow_metrics(payload, *, scope):
                     failures["dependency"] += 1
             if result.method != case.expected_method:
                 failures["routing"] += 1
+            expected_status = (
+                "unavailable"
+                if result.dependency_state == "unavailable"
+                and case.expected_method in PACKAGES
+                and not case.optional_scenario
+                else case.expected_status
+            )
+            if result.execution_status != expected_status:
+                failures["execution_status"] += 1
+            forbidden = {
+                "dml-post-treatment": ("dml",),
+                "ipw-ate-no-overlap": ("ipw",),
+                "missing-business-provenance": ("business",),
+                "insufficient": ("business",),
+            }.get(identity, ())
+            if any(result.call_counts.get(name) != 0 for name in forbidden):
+                failures["downstream_gating"] += 1
             if (result.case_version, result.family, result.design, result.estimand) != (
                 case.case_version,
                 case.family,
@@ -99,6 +124,7 @@ def workflow_metrics(payload, *, scope):
             value = result.checks.get(code)
             if (
                 value is None
+                or value.code != code
                 or value.status == "fail"
                 or value.applicable != applicable
                 or ((value.status == "skipped") == applicable)

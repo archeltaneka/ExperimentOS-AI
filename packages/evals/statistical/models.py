@@ -153,10 +153,14 @@ class StatisticalPolicySummary(StatisticalCaseModel):
 class StatisticalBaselineReport(StatisticalCaseModel):
     """Authoritative deterministic aggregate Phase 4 reliability result."""
 
-    schema_version: NonEmptyStr = "2"
+    schema_version: Literal["1", "2"] = "2"
+    run_status: Literal["completed"] = "completed"
     scope: Literal["complete", "optional-adapters"] = "complete"
     workflow: tuple[WorkflowCaseResult, ...] = ()
     workflow_case_count: Annotated[int, Field(strict=True, ge=0)] = 0
+    workflow_dataset_id: NonEmptyStr = "workflow_analysis.v1"
+    workflow_dataset_version: str = ""
+    workflow_quality_status: Literal["pass", "warning", "fail", "skipped"] = "skipped"
     baseline_id: NonEmptyStr
     baseline_version: NonEmptyStr
     fixture_provenance: NonEmptyStr
@@ -174,6 +178,16 @@ class StatisticalBaselineReport(StatisticalCaseModel):
     case_results: tuple[StatisticalCaseResult, ...]
     quality_policy: StatisticalPolicySummary | None = None
     limitations: tuple[NonEmptyStr, ...]
+
+
+class Phase4InfrastructureFailure(StatisticalCaseModel):
+    schema_version: Literal["2"] = "2"
+    run_status: Literal["infrastructure_fail"] = "infrastructure_fail"
+    stage: Literal[
+        "configuration", "fixtures", "native", "workflow", "policy", "rendering", "writing"
+    ]
+    error_code: Literal["phase4.infrastructure_failure"] = "phase4.infrastructure_failure"
+    evaluation: StatisticalBaselineReport | None = None
 
 
 class ObservationalSimulationSpecification(StatisticalCaseModel):

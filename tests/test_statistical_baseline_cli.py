@@ -30,7 +30,7 @@ def test_cli_success_writes_json_and_markdown_artifacts(tmp_path: Path) -> None:
     assert json_output.is_file()
     assert markdown_output.is_file()
     payload = json.loads(json_output.read_text(encoding="utf-8"))
-    assert payload["overall_status"] == "pass"
+    assert payload["overall_status"] == "warning"
     assert payload["quality_policy"]["overall_status"] == "warning"
     assert payload["quality_policy"]["rules"]
     assert all(rule["method"] for rule in payload["quality_policy"]["rules"])
@@ -128,6 +128,10 @@ def test_cli_artifacts_are_byte_stable_across_repeated_runs(tmp_path: Path) -> N
     # New advanced cases record real duration; statistical evidence remains stable.
     payloads = [json.loads(output[0]) for output in outputs]
     for payload in payloads:
+        for case in payload["workflow"]:
+            assert case.pop("duration_ms") > 0
+            for span in case["trace_summary"]:
+                span.pop("trace_id")
         for case in payload["case_results"]:
             if case["advanced"] is not None:
                 assert case["duration_ms"] > 0

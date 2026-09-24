@@ -10,6 +10,35 @@ def statistical_baseline_to_json(report: StatisticalBaselineReport) -> str:
     return report.model_dump_json(indent=2) + "\n"
 
 
+def render_phase4_job_summary(report: StatisticalBaselineReport) -> str:
+    unavailable = sum(c.dependency_state == "unavailable" for c in report.workflow)
+    failed = sum(any(v.status == "fail" for v in c.checks.values()) for c in report.workflow)
+    methods = ", ".join(sorted({c.method for c in report.workflow if c.method}))
+    blocking = report.quality_policy.blocking_rule_ids if report.quality_policy else ()
+    advisory = report.quality_policy.advisory_rule_ids if report.quality_policy else ()
+    return "\n".join(
+        [
+            "## Phase 4 Complete Causal Quality",
+            "",
+            f"- Scope: `{report.scope}`; status: **{report.overall_status}**.",
+            f"- Native references: {report.dataset_size}; failed: {report.cases_failed}; "
+            f"advisory: {report.cases_advisory}.",
+            f"- Workflow cases: {len(report.workflow)}; failed: {failed}; "
+            f"quality: {report.workflow_quality_status}.",
+            f"- Methods: {methods or 'not executed'}.",
+            f"- Optional unavailable: {unavailable}; "
+            "controlled absence is listed separately in JSON.",
+            f"- Blocking rules: {', '.join(blocking) or 'none'}.",
+            f"- Advisory rules: {', '.join(advisory) or 'none'}.",
+            "- Privacy and compatibility: see per-case structured checks; skipped is not passing.",
+            "- Database integration: skipped offline; executed separately by the database CI job.",
+            "- Artifacts: statistical_baseline.json, statistical_baseline.md, "
+            "quality_policy.json, github_summary.md.",
+            "",
+        ]
+    )
+
+
 def render_statistical_baseline_markdown(report: StatisticalBaselineReport) -> str:
     """Render a concise developer and CI investigation view from structured results."""
     lines = [
@@ -28,6 +57,33 @@ def render_statistical_baseline_markdown(report: StatisticalBaselineReport) -> s
             "identification, DiD, propensity diagnostics, IPW ATE, and IPW ATT."
         ),
     ]
+    if report.workflow:
+        lines.extend(
+            [
+                "",
+                "## End-to-End Workflow Quality",
+                "",
+                render_phase4_job_summary(report),
+                "| Case | Method | Execution | Quality | Dependency |",
+                "| --- | --- | --- | --- | --- |",
+            ]
+        )
+        from .workflow.policy import workflow_quality_status
+
+        for case in report.workflow:
+            quality = workflow_quality_status(tuple(c.status for c in case.checks.values()))
+            lines.append(
+                f"| {case.case_id} | {case.method or 'unselected'} | {case.execution_status} | "
+                f"{quality} | {case.dependency_state} |"
+            )
+        lines.extend(["", "### Workflow Findings", ""])
+        for case in report.workflow:
+            for finding in case.checks.values():
+                if finding.status in {"fail", "warning"}:
+                    lines.append(
+                        f"- {finding.status}: `{case.case_id}` / "
+                        f"`{case.method or 'unselected'}` / `{finding.rule_id}`."
+                    )
     _method_section(
         lines,
         report,

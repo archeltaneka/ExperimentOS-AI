@@ -69,8 +69,8 @@ describe("landing page", () => {
   it("distinguishes implemented analysis from future enterprise scope", async () => {
     render(await Home());
 
-    expect(screen.getByText("CUPED").closest("li")).toHaveTextContent("Completed");
-    expect(screen.getByText("Double Machine Learning").closest("li")).toHaveTextContent("Completed");
+    expect(screen.getByText("CUPED").closest("section")).toHaveTextContent("Completed");
+    expect(screen.getByText("Double Machine Learning").closest("section")).toHaveTextContent("Completed");
     expect(screen.getByText("Enterprise Platform").closest("li")).toHaveTextContent(
       "Future research",
     );

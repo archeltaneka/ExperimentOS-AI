@@ -31,6 +31,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --radius: 0.625rem;
   --background: oklch(0.145 0.008 265);
   --foreground: oklch(0.965 0.004 265);
@@ -73,8 +74,26 @@
 
 html {
   background: var(--background);
+  scrollbar-color: var(--secondary) var(--background);
 }
 
 body {
   min-width: 320px;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+input,
+textarea {
+  caret-color: var(--primary);
+}
+
+@layer base {
+  :where(a, button, input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
 }

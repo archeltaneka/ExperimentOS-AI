@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import math
 from enum import StrEnum
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import (
-    BaseModel,
-    ConfigDict,
     Field,
     FiniteFloat,
     StrictBool,
@@ -17,19 +14,18 @@ from pydantic import (
 )
 
 from .advanced.models import AdvancedCaseDetails, AdvancedResultDetails
-
-type NonEmptyStr = Annotated[str, Field(strict=True, min_length=1)]
-type ExpectedScalar = StrictBool | StrictInt | FiniteFloat | NonEmptyStr | None
+from .reference_values import (
+    ExpectedScalar,
+    NonEmptyStr,
+    StatisticalCaseModel,
+    StatisticalExpectedValue,
+    StatisticalTolerance,
+)
+from .workflow.models import WorkflowCaseResult
 
 
 def _default_deterministic_configuration() -> dict[NonEmptyStr, ExpectedScalar]:
     return {"execution_mode": "offline_deterministic"}
-
-
-class StatisticalCaseModel(BaseModel):
-    """Frozen strict model used by repository-owned evaluation data."""
-
-    model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=True)
 
 
 class StatisticalCapability(StrEnum):
@@ -157,7 +153,14 @@ class StatisticalPolicySummary(StatisticalCaseModel):
 class StatisticalBaselineReport(StatisticalCaseModel):
     """Authoritative deterministic aggregate Phase 4 reliability result."""
 
-    schema_version: NonEmptyStr = "1"
+    schema_version: Literal["1", "2"] = "2"
+    run_status: Literal["completed"] = "completed"
+    scope: Literal["complete", "optional-adapters"] = "complete"
+    workflow: tuple[WorkflowCaseResult, ...] = ()
+    workflow_case_count: Annotated[int, Field(strict=True, ge=0)] = 0
+    workflow_dataset_id: NonEmptyStr = "workflow_analysis.v1"
+    workflow_dataset_version: str = ""
+    workflow_quality_status: Literal["pass", "warning", "fail", "skipped"] = "skipped"
     baseline_id: NonEmptyStr
     baseline_version: NonEmptyStr
     fixture_provenance: NonEmptyStr
@@ -177,34 +180,14 @@ class StatisticalBaselineReport(StatisticalCaseModel):
     limitations: tuple[NonEmptyStr, ...]
 
 
-class StatisticalTolerance(StatisticalCaseModel):
-    """One independently justified absolute tolerance."""
-
-    absolute: Annotated[FiniteFloat, Field(ge=0)]
-    relative: Annotated[FiniteFloat, Field(ge=0)] = 0.0
-    rationale: NonEmptyStr
-    provenance: NonEmptyStr
-
-    def accepts(self, actual: float, reference: float) -> bool:
-        return (
-            math.isfinite(actual)
-            and math.isfinite(reference)
-            and abs(actual - reference) <= self.absolute + self.relative * abs(reference)
-        )
-
-
-class StatisticalExpectedValue(StatisticalCaseModel):
-    """Expected leaf value addressed by a stable dotted result path."""
-
-    path: NonEmptyStr
-    value: ExpectedScalar
-    tolerance: StatisticalTolerance | None = None
-
-    @model_validator(mode="after")
-    def require_float_tolerance(self) -> Self:
-        if isinstance(self.value, float) and self.tolerance is None:
-            raise ValueError("floating expected values require a tolerance")
-        return self
+class Phase4InfrastructureFailure(StatisticalCaseModel):
+    schema_version: Literal["2"] = "2"
+    run_status: Literal["infrastructure_fail"] = "infrastructure_fail"
+    stage: Literal[
+        "configuration", "fixtures", "native", "workflow", "policy", "rendering", "writing"
+    ]
+    error_code: Literal["phase4.infrastructure_failure"] = "phase4.infrastructure_failure"
+    evaluation: StatisticalBaselineReport | None = None
 
 
 class ObservationalSimulationSpecification(StatisticalCaseModel):

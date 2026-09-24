@@ -1,5 +1,10 @@
 # Phase 4 Statistical Reliability Baseline
 
+The canonical command now includes real workflow/API, business-impact, trace/privacy,
+corruption, and compatibility gates. See [complete causal quality gates](end_to_end_causal_quality_gates.md)
+for schema 2, scope options, all four artifacts, and exit semantics. Native evaluator
+APIs and historical native counts remain available unchanged.
+
 The shared baseline now also covers observational causal reliability for DiD, propensity-score
 diagnostics, IPW ATE, and IPW ATT. See
 [`observational_causal_reliability.md`](observational_causal_reliability.md) for the reference
@@ -44,6 +49,8 @@ Default artifacts:
 
 - `reports/phase4/statistical_baseline.json` — authoritative structured result;
 - `reports/phase4/statistical_baseline.md` — derived developer and CI investigation report.
+- `reports/phase4/quality_policy.json` — centralized policy decision;
+- `reports/phase4/github_summary.md` — concise CI summary and explicit skipped checks.
 
 Exit codes are:
 

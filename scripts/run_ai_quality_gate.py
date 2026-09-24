@@ -35,6 +35,10 @@ DEFAULT_PROMPT_EXPERIMENT = "rag-answer-abstention-v1-v2"
 DEFAULT_COMMAND_TIMEOUT_SECONDS = 600
 
 REQUIRED_REPORT_PATHS = (
+    Path("phase4/statistical_baseline.json"),
+    Path("phase4/statistical_baseline.md"),
+    Path("phase4/quality_policy.json"),
+    Path("phase4/github_summary.md"),
     Path("evaluation.md"),
     Path("evaluation.json"),
     Path("agent_evaluation.md"),
@@ -203,6 +207,7 @@ def _run_commands(args: argparse.Namespace) -> tuple[str | None, int, list[Comma
     repo_root = Path(__file__).resolve().parent.parent
     commands = _build_commands(args)
     results: list[CommandResult] = []
+    phase4_failed = False
     for command in commands:
         print(f"Running {command.name}: {' '.join(command.argv)}")
         completed = subprocess.run(
@@ -219,7 +224,12 @@ def _run_commands(args: argparse.Namespace) -> tuple[str | None, int, list[Comma
             )
         )
         if completed.returncode != 0:
+            if command.name == "phase4_statistical_baseline" and completed.returncode == 1:
+                phase4_failed = True
+                continue
             return command.name, completed.returncode, results
+    if phase4_failed:
+        return "phase4_statistical_baseline", 1, results
     return None, 0, results
 
 
@@ -423,6 +433,22 @@ def _build_commands(args: argparse.Namespace) -> tuple[EvaluationCommand, ...]:
             timeout_seconds=timeout,
         ),
         EvaluationCommand(
+            name="phase4_statistical_baseline",
+            argv=(
+                python,
+                "-m",
+                "packages.evals.cli",
+                "statistical-baseline",
+                "--policy",
+                str(args.policy),
+                "--json-output",
+                str(args.artifact_root / "phase4/statistical_baseline.json"),
+                "--output",
+                str(args.artifact_root / "phase4/statistical_baseline.md"),
+            ),
+            timeout_seconds=timeout,
+        ),
+        EvaluationCommand(
             name="quality_policy",
             argv=(
                 python,
@@ -445,7 +471,10 @@ def _build_commands(args: argparse.Namespace) -> tuple[EvaluationCommand, ...]:
 def _status_from_result(command_name: str | None, exit_code: int) -> tuple[str, str]:
     if exit_code == 0:
         return "pass", "All required evaluation suites satisfied the centralized quality policy."
-    if command_name == "quality_policy" and exit_code == QUALITY_POLICY_FAILURE_EXIT_CODE:
+    if (
+        command_name in {"quality_policy", "phase4_statistical_baseline"}
+        and exit_code == QUALITY_POLICY_FAILURE_EXIT_CODE
+    ):
         return "quality_fail", "Blocking quality policy violations were detected."
     if exit_code == QUALITY_POLICY_INFRASTRUCTURE_EXIT_CODE:
         return "infrastructure_fail", "The quality policy evaluation encountered an internal error."

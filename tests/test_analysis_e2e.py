@@ -10,10 +10,12 @@ from packages.evals.agent_analysis_cases import (
     load_analysis_workflow_cases,
     run_direct_reference,
 )
+from packages.evals.statistical.workflow.optional import effective_case
 
 
 @pytest.mark.parametrize("case", load_analysis_workflow_cases(), ids=lambda case: case.case_id)
 def test_local_analysis_fixture_end_to_end(case):
+    case, _, _ = effective_case(case)
     response = asyncio.run(
         AgentWorkflowAskService(build_analysis_case_service(case)).answer(
             AskRequest.model_validate(case.ask_payload)

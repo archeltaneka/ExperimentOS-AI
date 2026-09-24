@@ -42,9 +42,11 @@ def test_canonical_cli_renders_advanced_and_blocks_required_absence(tmp_path, mo
         "--output",
         str(md),
     ]
-    assert main(args) == 0
+    # A focused native dataset cannot claim complete coverage.
+    assert main(args) == 1
     payload = json.loads(out.read_text())
     assert payload["case_results"]
+    assert "statistics.failures.case_inventory" in payload["quality_policy"]["blocking_rule_ids"]
     assert "Advanced Causal Conformance" in md.read_text()
     assert "unavailable" in md.read_text()
     assert main([*args, "--require-optional", "econml"]) == 1
@@ -69,9 +71,11 @@ def test_malformed_installed_evidence_overrides_advisory(tmp_path):
     data = report.model_dump(mode="json")
     data["case_results"][0]["checks"].append(
         {
+            "check_id": "malformed-installed-evidence",
             "dimension": "interface_leakage",
             "status": "fail",
             "rule_id": "statistics.advanced.interface",
+            "message": "Controlled malformed installed evidence",
         }
     )
     path = tmp_path / "report.json"

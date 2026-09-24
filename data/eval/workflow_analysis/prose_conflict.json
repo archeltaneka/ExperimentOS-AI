@@ -1,5 +1,10 @@
 {
   "case_id": "prose_conflict",
+  "case_version": "1",
+  "family": "workflow",
+  "design": "randomized_experiment",
+  "estimand": "difference_in_means",
+  "fixture_id": "prose_conflict",
   "ask_payload": {
     "question": "Analyze",
     "experiment_id": "experiment-a",

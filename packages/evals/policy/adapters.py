@@ -147,6 +147,10 @@ def _load_agent_json(path: Path, prefix: str) -> dict[str, SourceMetric]:
 
 def _load_statistical_baseline_json(path: Path) -> dict[str, SourceMetric]:
     payload = _load_json(path)
+    if payload.get("schema_version", "1") not in {"1", "2"}:
+        raise ValueError("unsupported statistical report schema")
+    if payload.get("run_status") == "infrastructure_fail":
+        raise ValueError("statistical evaluation infrastructure failure")
     required_counts = (
         "dataset_size",
         "cases_passed",
@@ -270,6 +274,28 @@ def _load_statistical_baseline_json(path: Path) -> dict[str, SourceMetric]:
     metrics["statistics.performance.advisory_findings"] = _value_metric(
         "statistics.performance.advisory_findings", advisory_findings
     )
+    if payload.get("schema_version") == "2":
+        from packages.evals.statistical.models import StatisticalBaselineReport
+        from packages.evals.statistical.native_integrity import native_integrity_metrics
+        from packages.evals.statistical.workflow.policy import workflow_metrics
+
+        try:
+            typed_report = StatisticalBaselineReport.model_validate(payload)
+        except ValueError:
+            raise ValueError("invalid complete statistical report schema") from None
+        workflow = payload.get("workflow")
+        if not isinstance(workflow, list):
+            raise ValueError("statistics workflow must be a list")
+        values = workflow_metrics(workflow, scope=payload.get("scope"))
+        if payload.get("workflow_case_count") != len(workflow):
+            values["analysis.failures.case_inventory"] += 1
+        metrics.update({key: _value_metric(key, value) for key, value in values.items()})
+        metrics.update(
+            {
+                key: _value_metric(key, value)
+                for key, value in native_integrity_metrics(typed_report).items()
+            }
+        )
     return metrics
 
 

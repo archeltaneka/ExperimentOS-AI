@@ -59,10 +59,13 @@ SAFE_FIELDS = frozenset(
 
 
 def safe_fields(values: dict[str, object] | None) -> dict[str, object]:
+    from .requests import SUPPORTED_METHODS
+
     return {
         key: value
         for key, value in (values or {}).items()
         if key in SAFE_FIELDS
+        and (key != "method" or value in (*SUPPORTED_METHODS, "unsupported"))
         and (
             value is None
             or isinstance(value, str | int | float | bool)
@@ -109,6 +112,11 @@ class _SafeAnalysisProvider(BaseObservabilityProvider):
         metadata: dict[str, object] | None = None,
         tags: tuple[str, ...] | list[str] = (),
     ) -> BufferedSpan:
+        parent = self.current_span()
+        if parent is not None:
+            return self.start_span(
+                name, run_type=run_type, inputs=inputs, metadata=metadata, tags=tags, parent=parent
+            )
         span = super().start_root_span(
             name,
             trace_id=trace_id,

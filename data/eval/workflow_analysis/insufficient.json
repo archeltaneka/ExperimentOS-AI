@@ -1,5 +1,10 @@
 {
   "case_id": "insufficient",
+  "case_version": "1",
+  "family": "randomized",
+  "design": "randomized_experiment",
+  "estimand": "difference_in_means",
+  "fixture_id": "insufficient",
   "ask_payload": {
     "question": "Analyze",
     "experiment_id": "experiment-a",

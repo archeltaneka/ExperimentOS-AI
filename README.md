@@ -280,6 +280,10 @@ The CI quality gate combines these signals with policy checks. Details and confi
 
 Phase 4 includes validated randomized, causal and uncertainty-aware business-impact services. Optional structured `/ask` requests expose the implemented methods through the existing agent workflow, with explicit method selection, typed evidence, abstention and human-approval safeguards. EconML/DoWhy remain optional; the LLM never calculates statistics or invents business inputs. See [workflow analysis and runnable examples](docs/phase4/workflow_analysis.md) for the supported-method inventory and limitations. No autonomous rollout or production deployment is implied.
 
+Run `uv run python -m packages.evals.cli statistical-baseline` for the
+[complete offline Phase 4 causal quality gate](docs/phase4/end_to_end_causal_quality_gates.md).
+It writes authoritative JSON, detailed Markdown, centralized policy JSON, and a CI summary.
+
 ## Known limitations
 
 - No public deployment has been verified yet; the documented target is fixture-mode frontend hosting.

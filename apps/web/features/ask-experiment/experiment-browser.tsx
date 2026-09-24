@@ -7,19 +7,33 @@ import { PageHeader } from "@/components/layout/page-header";
 import { SourceDisclosure } from "@/components/source-disclosure";
 import { Button } from "@/components/ui/button";
 import { AskExperimentWorkspace } from "@/features/ask-experiment/ask-experiment-workspace";
-import { useExperimentDataSource, useExperimentDetailQuery, useExperimentsQuery } from "@/hooks/use-services";
+import { useAskDataSource, useAskSamples, useExperimentDataSource, useExperimentDetailQuery, useExperimentsQuery } from "@/hooks/use-services";
 
 const linkClass = "inline-flex min-h-11 items-center rounded-sm text-sm text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export function ExperimentBrowser() {
   const query = useExperimentsQuery();
   const source = useExperimentDataSource();
+  const askSource = useAskDataSource();
+  const samples = useAskSamples();
+  const recommended = askSource.kind === "deterministic_fixture" && !query.isPending && !query.isError
+    ? query.data?.find((experiment) => samples.some((sample) => sample.experimentId === experiment.id))
+    : undefined;
   return <PageContainer className="py-8 sm:py-10">
     <PageHeader title="Experiments" description="Open an experiment to review its report and ask grounded questions." actions={<SourceDisclosure compact source={source} />} />
+    {recommended && <section aria-labelledby="sample-start" className="mt-8 border-y border-border py-6 sm:py-8">
+      <h2 id="sample-start" className="text-xl font-semibold">Start with a cited answer</h2>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Try {recommended.name}. Choose a supported question, view its saved answer, then inspect the citations and report excerpts behind it.</p>
+      <p className="mt-2 text-sm text-muted-foreground">This sample uses demo fixtures. No setup is needed.</p>
+      <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+        <Link className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href={`/ask-experiment/${recommended.id}#question-workspace`}>Try a sample question</Link>
+        <a className={linkClass} href="#all-experiments">Browse all experiments</a>
+      </div>
+    </section>}
     {query.isPending ? <p role="status" className="mt-8">Loading experiments…</p> : query.isError ?
       <ContentCard className="mt-8 space-y-4 p-5" role="alert"><p>Experiments could not be loaded. {query.error.userMessage}</p><Button onClick={() => void query.refetch()}>Retry loading experiments</Button></ContentCard> :
-      !query.data?.length ? <ContentCard className="mt-8 space-y-4 p-5"><p role="status">No experiments are available.</p><p className="text-sm text-muted-foreground">The current data source has no records to review.</p><Button variant="outline" onClick={() => void query.refetch()}>Reload experiments</Button></ContentCard> :
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">{query.data.map((experiment) => <Link className="min-w-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" key={experiment.id} href={`/ask-experiment/${experiment.id}`}><ContentCard className="h-full p-5 transition-colors hover:bg-muted/50"><h2 className="break-words font-semibold">{experiment.name}</h2><p className="mt-2 text-sm text-muted-foreground">{experiment.status}</p></ContentCard></Link>)}</div>}
+      !query.data?.length ? <ContentCard className="mt-8 space-y-4 p-5"><p role="status">No experiments are available.</p><p className="text-sm text-muted-foreground">An experiment report is needed before you can inspect answers and citations. Reload after records have been added to the current data source.</p><Button variant="outline" onClick={() => void query.refetch()}>Reload experiments</Button></ContentCard> :
+      <div id="all-experiments" className="mt-8 grid scroll-mt-8 gap-4 sm:grid-cols-2">{query.data.map((experiment) => <Link className="min-w-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" key={experiment.id} href={`/ask-experiment/${experiment.id}`}><ContentCard className="h-full p-5 transition-colors hover:bg-muted/50"><h2 className="break-words font-semibold">{experiment.name}</h2><p className="mt-2 text-sm text-muted-foreground">{experiment.status}</p></ContentCard></Link>)}</div>}
   </PageContainer>;
 }
 

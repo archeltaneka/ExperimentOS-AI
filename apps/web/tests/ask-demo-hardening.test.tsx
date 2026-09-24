@@ -46,6 +46,31 @@ describe("demo answer boundaries", () => {
 });
 
 describe("Ask recovery and context integrity", () => {
+  it("recommends a supported experiment while keeping the full list available", async () => {
+    renderWithProviders(<ExperimentBrowser />);
+    expect(await screen.findByRole("link", { name: "Try a sample question" })).toHaveAttribute("href", `/ask-experiment/${payment}#question-workspace`);
+    expect(screen.getByRole("link", { name: /Adaptive payment recommendation/ })).toBeInTheDocument();
+  });
+
+  it("does not recommend a demo when the listed records have no supported samples", async () => {
+    const records = await services.experiments.list();
+    vi.spyOn(services.experiments, "list").mockResolvedValue(records.filter((record) => record.id !== payment));
+    renderWithProviders(<ExperimentBrowser />);
+    await screen.findByRole("heading", { name: "Experiments" });
+    await waitFor(() => expect(screen.queryByText("Loading experiments…")).not.toBeInTheDocument());
+    expect(screen.queryByRole("link", { name: "Try a sample question" })).not.toBeInTheDocument();
+  });
+
+  it("takes a newcomer from a sample question to its cited evidence", async () => {
+    renderWithProviders(<AskExperimentWorkspace experimentId={payment} />);
+    expect(screen.getByText("Choose a sample, then ask")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: sample }));
+    expect(screen.getByRole("textbox", { name: "Question" })).toHaveValue(sample);
+    fireEvent.click(screen.getByRole("button", { name: "Ask question" }));
+    expect(await screen.findByRole("heading", { name: "Citations" })).toBeInTheDocument();
+    expect(screen.getByText("Next, inspect the evidence")).toBeInTheDocument();
+  });
+
   it("discloses saved samples before submission and refuses arbitrary questions without showing evidence", async () => {
     renderWithProviders(<AskExperimentWorkspace experimentId={payment} />);
     expect(screen.getByText(/saved answers.*sample questions/i)).toBeInTheDocument();

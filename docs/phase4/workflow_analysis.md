@@ -1,5 +1,10 @@
 # Product intelligence in the analysis workflow
 
+The [complete causal quality gate](end_to_end_causal_quality_gates.md) verifies these
+boundaries through `statistical-baseline`, including every implemented method,
+optional adapters, business refusals, trace linkage, privacy, and backward compatibility.
+Incompatible installed runtimes are failures, not optional absence.
+
 Issue #108 exposes the existing validated Phase 4 services through `agent_workflow`.
 The LLM does not calculate statistics. It can classify intent or explain evidence;
 method selection is validated, business inputs are never invented, and structured

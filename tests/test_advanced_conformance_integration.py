@@ -69,9 +69,11 @@ def test_malformed_installed_evidence_overrides_advisory(tmp_path):
     data = report.model_dump(mode="json")
     data["case_results"][0]["checks"].append(
         {
+            "check_id": "malformed-installed-evidence",
             "dimension": "interface_leakage",
             "status": "fail",
             "rule_id": "statistics.advanced.interface",
+            "message": "Controlled malformed installed evidence",
         }
     )
     path = tmp_path / "report.json"

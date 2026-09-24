@@ -4,10 +4,16 @@ from contextlib import contextmanager
 from copy import deepcopy
 from unittest.mock import patch
 
-from ..advanced.harness import dependency_state
 from .models import WorkflowExpectations
 
 PACKAGES = {"econml_dml": "econml", "econml_hte": "econml", "dowhy": "dowhy"}
+
+
+def dependency_state(package):
+    """Resolve the current probe without retaining an import-time override."""
+    from ..advanced.harness import dependency_state as current_dependency_state
+
+    return current_dependency_state(package)
 
 
 @contextmanager

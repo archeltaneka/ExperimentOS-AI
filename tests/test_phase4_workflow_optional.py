@@ -1,8 +1,50 @@
 """Optional identity, genuine absence, and installed breakage are distinct."""
 
+import subprocess
+import sys
+from pathlib import Path
+from textwrap import dedent
+
 import pytest
 
 from packages.evals.agent_analysis_cases import load_analysis_workflow_cases
+
+
+def test_first_import_during_absence_probe_does_not_retain_the_override():
+    # A fresh interpreter reproduces first-import ordering without polluting the suite.
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            dedent("""\
+                from unittest.mock import patch
+                from packages.evals.statistical.advanced import harness
+
+                with patch.object(harness, "dependency_state", return_value=("installed", "test")):
+                    with patch.object(
+                        harness, "dependency_state", return_value=("unavailable", None)
+                    ):
+                        from packages.evals.statistical.workflow import optional
+                    from packages.evals.statistical.workflow.models import AnalysisWorkflowCase
+                    for method in ("econml_dml", "econml_hte", "dowhy"):
+                        case = AnalysisWorkflowCase(
+                            case_id=method + "-real",
+                            ask_payload={},
+                            expected_method=method,
+                            expected_status="completed",
+                        )
+                        effective, state, version = optional.effective_case(case)
+                        assert (state, version) == ("installed", "test"), (method, state, version)
+                        assert effective.expected_status == "completed"
+                """),
+        ],
+        cwd=Path(__file__).resolve().parents[1],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
 
 
 @pytest.mark.parametrize("method", ["econml_dml", "econml_hte", "dowhy"])

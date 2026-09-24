@@ -16,5 +16,8 @@ export const metadata: Metadata = {
 export default async function Home() {
   const roadmap = await createServices().roadmap.list();
 
-  return <LandingPage roadmap={roadmap} />;
+  const demo = createServices({ dataMode: "mock" });
+  const records = await demo.experiments.list();
+  const featuredExperiment = records[0] ? await demo.experiments.getById(records[0].id) : undefined;
+  return <LandingPage roadmap={roadmap} featuredExperiment={featuredExperiment} />;
 }

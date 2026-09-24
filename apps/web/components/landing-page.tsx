@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight, ExternalLink, Layers, FileText } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { analysisAvailability, analysisGuideUrl } from "@/lib/analysis-capabilities";
@@ -10,7 +10,7 @@ import {
   demoUrl,
   githubUrl,
 } from "@/lib/landing-content";
-import type { CapabilityStatus, RoadmapPhase } from "@/types/domain";
+import type { CapabilityStatus, ExperimentDetail, RoadmapPhase } from "@/types/domain";
 
 const textLink = "inline-flex min-h-11 items-center gap-2 rounded-sm text-sm text-primary underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const disclosure = "cursor-pointer rounded-sm py-4 font-medium marker:text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -22,10 +22,10 @@ function StatusBadge({ status }: { status: CapabilityStatus }) {
 
 function PublicHeader() {
   return (
-    <header className="border-b border-border">
+    <header className="atlas-public-header">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-2 px-5 py-4 sm:px-8">
-        <Link className="rounded-sm font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href="/">
-          ExperimentOS <span className="text-primary">AI</span>
+        <Link className="atlas-brand rounded-sm text-lg font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href="/">
+          <span className="atlas-brand-mark"><Layers aria-hidden="true" className="size-5" /></span><span>ExperimentOS AI</span>
         </Link>
         <nav aria-label="Landing page navigation" className="flex flex-wrap items-center gap-x-5 text-sm text-muted-foreground">
           <a className={textLink} href="#architecture">Workflow</a>
@@ -42,7 +42,7 @@ function PublicHeader() {
 
 function ArchitectureFlow() {
   return (
-    <ol aria-label="ExperimentOS system architecture" className="mt-8 grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+    <ol aria-label="ExperimentOS system architecture" className="atlas-architecture mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {architectureStages.map((stage, index) => (
         <li className="flex min-w-0 gap-4 border-t pt-5" key={stage.title}>
           <span aria-hidden="true" className="text-sm tabular-nums text-muted-foreground">{index + 1}</span>
@@ -72,17 +72,42 @@ function RoadmapSummary({ phases }: { phases: readonly RoadmapPhase[] }) {
   );
 }
 
-export function LandingPage({ roadmap }: { roadmap: readonly RoadmapPhase[] }) {
+function FeaturedExperiment({ experiment }: { experiment: ExperimentDetail }) {
+  return (
+    <section aria-label="Featured demo experiment" className="atlas-demo">
+      <div className="atlas-demo-heading">
+        <h2>{experiment.name}</h2>
+        <p>Deterministic fixture · Recorded experiment evidence</p>
+      </div>
+      <dl className="atlas-demo-metrics">
+        {experiment.metrics.slice(0, 2).map((metric) => (
+          <div key={metric.name}><dt>{metric.name}</dt><dd>{metric.value > 0 ? "+" : ""}{metric.value}<span> {metric.unit}</span></dd></div>
+        ))}
+      </dl>
+      <div className="atlas-demo-source">
+        <h3 className="flex items-center gap-2"><FileText aria-hidden="true" className="size-4" />Report evidence</h3>
+        <p>{experiment.report?.executiveSummary ?? experiment.summary}</p>
+        <p><strong>Recorded recommendation:</strong> {experiment.decision.recommendation}</p>
+      </div>
+      <footer>
+        <p>Descriptive fixture values, not a causal impact estimate. No confidence interval is attached.</p>
+        <Link className={textLink} href={`/experiment-explorer/${experiment.id}`}>Inspect experiment <ArrowRight aria-hidden="true" className="size-4" /></Link>
+      </footer>
+    </section>
+  );
+}
+
+export function LandingPage({ roadmap, featuredExperiment }: { roadmap: readonly RoadmapPhase[]; featuredExperiment?: ExperimentDetail }) {
   return (
     <div className="min-h-screen bg-background selection:bg-primary selection:text-primary-foreground">
       <a className="sr-only fixed left-4 top-4 z-[60] rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground focus:not-sr-only focus:outline-none focus:ring-2 focus:ring-ring" href="#main-content">
         Skip to main content
       </a>
       <PublicHeader />
-      <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl px-5 sm:px-8">
-        <section className="py-16 sm:py-24">
+      <main id="main-content" tabIndex={-1} className="atlas-landing-main mx-auto px-5 sm:px-8 lg:px-12">
+        <section className="atlas-hero"><div className="atlas-hero-copy">
           <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-            Evidence-backed answers for product experiments.
+            <span>Evidence-backed answers</span> for product experiments.
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
             Find the evidence behind an experiment decision. Ask a question, inspect its answer and citations, and trace the source reports.
@@ -99,9 +124,9 @@ export function LandingPage({ roadmap }: { roadmap: readonly RoadmapPhase[] }) {
           <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
             The demo uses saved records and answers. Try a saved question to inspect its citations; free-form questions require a local backend.
           </p>
-        </section>
+        </div>{featuredExperiment && <FeaturedExperiment experiment={featuredExperiment} />}</section>
 
-        <section aria-label="Product availability" className="border-t py-10 sm:py-12">
+        <section aria-label="Product availability" className="atlas-availability">
           <h2 className="text-2xl font-semibold tracking-tight">What you can use today</h2>
           <dl className="mt-6 grid gap-6 md:grid-cols-3 md:gap-10">
             <div>
@@ -157,7 +182,7 @@ export function LandingPage({ roadmap }: { roadmap: readonly RoadmapPhase[] }) {
           <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
             Completed means implemented within the documented scope. Optional dependencies, method assumptions, and UI availability still determine how a capability can be used.
           </p>
-          <div className="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-10">
+          <div className="atlas-capabilities mt-8 grid gap-5 lg:grid-cols-3">
             {capabilityStatusGroups.map((group) => (
               <section aria-label={group.title} key={group.title}>
                 <StatusBadge status={group.status} />
@@ -185,7 +210,7 @@ export function LandingPage({ roadmap }: { roadmap: readonly RoadmapPhase[] }) {
           </div>
         </section>
       </main>
-      <footer className="border-t">
+      <footer className="atlas-footer">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm text-muted-foreground sm:px-8 md:flex-row md:items-center md:justify-between">
           <p className="max-w-lg leading-6">ExperimentOS AI — a portfolio project for traceable experiment evidence, grounded answers, and decision support.</p>
           <Link className={textLink} href={demoUrl}>Explore the demo <ArrowRight aria-hidden="true" className="size-4" /></Link>

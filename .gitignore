@@ -242,5 +242,9 @@ docs/superpowers/specs/
 # External visual references are local research material, not ExperimentOS documentation assets.
 docs/ui-references/
 
+# Local design review captures and decision-page runtime files.
+.impeccable/review/
+.impeccable/questions/
+
 # Agents markdown
 *AGENTS.md

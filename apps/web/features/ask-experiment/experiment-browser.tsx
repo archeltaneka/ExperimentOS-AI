@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { ContentCard } from "@/components/layout/content-card";
 import { PageContainer } from "@/components/layout/page-container";
 import { PageHeader } from "@/components/layout/page-header";
@@ -21,7 +22,7 @@ export function ExperimentBrowser() {
     : undefined;
   return <PageContainer className="py-8 sm:py-10">
     <PageHeader title="Experiments" description="Open an experiment to review its report and ask grounded questions." actions={<SourceDisclosure compact source={source} />} />
-    {recommended && <section aria-labelledby="sample-start" className="mt-8 border-y border-border py-6 sm:py-8">
+    {recommended && <section aria-labelledby="sample-start" className="atlas-sample-start mt-8 rounded-xl p-6 sm:p-8">
       <h2 id="sample-start" className="text-xl font-semibold">Start with a cited answer</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Try {recommended.name}. Choose a supported question, view its saved answer, then inspect the citations and report excerpts behind it.</p>
       <p className="mt-2 text-sm text-muted-foreground">This sample uses demo fixtures. No setup is needed.</p>
@@ -33,7 +34,7 @@ export function ExperimentBrowser() {
     {query.isPending ? <p role="status" className="mt-8">Loading experiments…</p> : query.isError ?
       <ContentCard className="mt-8 space-y-4 p-5" role="alert"><p>Experiments could not be loaded. {query.error.userMessage}</p><Button onClick={() => void query.refetch()}>Retry loading experiments</Button></ContentCard> :
       !query.data?.length ? <ContentCard className="mt-8 space-y-4 p-5"><p role="status">No experiments are available.</p><p className="text-sm text-muted-foreground">An experiment report is needed before you can inspect answers and citations. Reload after records have been added to the current data source.</p><Button variant="outline" onClick={() => void query.refetch()}>Reload experiments</Button></ContentCard> :
-      <div id="all-experiments" className="mt-8 grid scroll-mt-8 gap-4 sm:grid-cols-2">{query.data.map((experiment) => <Link className="min-w-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" key={experiment.id} href={`/ask-experiment/${experiment.id}`}><ContentCard className="h-full p-5 transition-colors hover:bg-muted/50"><h2 className="break-words font-semibold">{experiment.name}</h2><p className="mt-2 text-sm text-muted-foreground">{experiment.status}</p></ContentCard></Link>)}</div>}
+      <div id="all-experiments" className="mt-8 grid scroll-mt-8 gap-4 sm:grid-cols-2">{query.data.map((experiment) => <Link className="min-w-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" key={experiment.id} href={`/ask-experiment/${experiment.id}`}><ContentCard className="atlas-experiment-entry h-full p-6 transition-colors hover:bg-accent"><div className="flex items-start justify-between gap-4"><h2 className="break-words text-lg font-semibold">{experiment.name}</h2><ArrowUpRight aria-hidden="true" className="size-5 shrink-0 text-primary" /></div><div className="mt-5 flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm text-muted-foreground">{experiment.primaryMetric.name}</p><p className="mt-1 text-xl font-semibold text-primary">{Number.isFinite(experiment.primaryMetric.value) ? `${experiment.primaryMetric.value} ${experiment.primaryMetric.unit}` : "Unavailable"}</p></div><p className="text-sm text-muted-foreground">{experiment.status}</p></div><p className="mt-4 border-t pt-3 text-xs text-muted-foreground">Recorded metric · {experiment.owner.team}</p></ContentCard></Link>)}</div>}
   </PageContainer>;
 }
 
@@ -51,6 +52,6 @@ export function ExperimentReportPage({ experimentId }: { experimentId: string })
     <div className="mb-4">{back}</div>
     <PageHeader title={experiment.name} description={experiment.summary} actions={<SourceDisclosure compact source={source} />} />
     <ContentCard className="mt-8 p-5 sm:p-6"><h2 className="text-lg font-semibold">Experiment report</h2>{experiment.report?.executiveSummary ? <p className="mt-4 break-words whitespace-pre-wrap text-base leading-7">{experiment.report.executiveSummary}</p> : <p className="mt-4 text-sm text-muted-foreground">No report content is available.</p>}</ContentCard>
-    <div className="mt-8"><AskExperimentWorkspace experimentId={experimentId} /></div>
+    <div className="mt-8"><AskExperimentWorkspace experimentId={experimentId} embedded /></div>
   </PageContainer>;
 }

@@ -59,6 +59,15 @@ const answer: RagAnswer = {
 };
 
 describe("AskExperimentWorkspace", () => {
+  it("exposes the selected sample and clears selection when the question is edited", () => {
+    render(<AskExperimentWorkspace />);
+    const sample = screen.getByRole("button", { name: /What evidence supported/i });
+    expect(sample).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(sample);
+    expect(sample).toHaveAttribute("aria-pressed", "true");
+    fireEvent.change(screen.getByRole("textbox", { name: "Question" }), { target: { value: "A different question" } });
+    expect(sample).toHaveAttribute("aria-pressed", "false");
+  });
   it("renders a labelled question form and prevents blank submissions", () => {
     render(<AskExperimentWorkspace />);
 

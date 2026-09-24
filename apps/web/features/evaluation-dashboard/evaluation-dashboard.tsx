@@ -56,13 +56,13 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 function MetricResult({ metric }: { metric: EvaluationMetric }) {
   return (
-    <article id={`metric-${metric.id}`} aria-labelledby={`metric-title-${metric.id}`} tabIndex={-1} className={`scroll-mt-6 border-t py-5 ${focusClass}`}>
+    <article id={`metric-${metric.id}`} aria-labelledby={`metric-title-${metric.id}`} tabIndex={-1} className={`atlas-evaluation-metric scroll-mt-6 ${focusClass}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0"><h3 id={`metric-title-${metric.id}`} className="break-words text-lg font-medium">{metric.label}</h3><p className="mt-1 text-sm text-muted-foreground">{metric.framework ?? "Framework not recorded"}</p></div>
         <Status status={metric.status} />
       </div>
       <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4">
-        <Field label="Current score">{valueLabel(metric.value)}</Field>
+        <Field label="Current score"><span className={metric.value !== undefined && Number.isFinite(metric.value) ? "atlas-score" : undefined}>{valueLabel(metric.value)}</span></Field>
         <Field label="Required threshold">{thresholdLabel(metric)}</Field>
         <Field label="Baseline score">{valueLabel(metric.baseline)}</Field>
         <Field label="Sample count">{valueLabel(metric.sampleCount)}</Field>
@@ -126,7 +126,7 @@ function DashboardResults({ dashboard }: { dashboard: EvaluationDashboard }) {
       <h2 id="attention-heading" className="text-xl font-semibold">Needs attention</h2>
       {hasFailures ? <>
         <p className="max-w-prose text-sm leading-6 text-muted-foreground">Inspect the failed checks and regressions first. Metric results and case examples are independent lists; no case-to-metric mapping was recorded.</p>
-        <ul className="divide-y rounded-lg border px-4">
+        <ul className="divide-y rounded-lg border bg-card px-4">
           {attentionResults.map((entry) => {
             const { result, kind } = entry;
             return <li key={`${kind}-${result.id}`} className="py-4">
@@ -141,8 +141,8 @@ function DashboardResults({ dashboard }: { dashboard: EvaluationDashboard }) {
       {(warnings > 0 || gate.status === "warning" || gate.warnings > 0) && <p className="text-sm text-muted-foreground">Warnings are recorded. Review their status and explanations in the results below.</p>}
     </section>
 
-    <section aria-labelledby="metrics-heading"><h2 id="metrics-heading" className="text-xl font-semibold">All metrics</h2><p className="mb-4 mt-2 text-sm text-muted-foreground">Compare recorded scores with their thresholds. A missing score is not a failed score.</p>{dashboard.metrics.length ? dashboard.metrics.map((metric) => <MetricResult key={metric.id} metric={metric} />) : <p className="py-5 text-sm text-muted-foreground">No metric results were recorded.</p>}</section>
-    <section aria-labelledby="cases-heading"><h2 id="cases-heading" className="text-xl font-semibold">All cases</h2><p className="mb-4 mt-2 text-sm text-muted-foreground">Expand a case to inspect its expected behavior, recorded answer, and evidence.</p>{dashboard.cases.length ? dashboard.cases.map((result) => <CaseResult key={result.id} result={result} open={expandedCases.has(result.id)} onToggle={() => toggleCase(result.id)} />) : <p className="py-5 text-sm text-muted-foreground">No case results were recorded.</p>}</section>
+    <section aria-labelledby="metrics-heading"><h2 id="metrics-heading" className="text-xl font-semibold">All metrics</h2><p className="mb-4 mt-2 text-sm text-muted-foreground">Compare recorded scores with their thresholds. A missing score is not a failed score.</p>{dashboard.metrics.length ? <div className="atlas-evaluation-grid">{dashboard.metrics.map((metric) => <MetricResult key={metric.id} metric={metric} />)}</div> : <p className="py-5 text-sm text-muted-foreground">No metric results were recorded.</p>}</section>
+    <section aria-labelledby="cases-heading" className="atlas-cases"><h2 id="cases-heading" className="text-xl font-semibold">All cases</h2><p className="mb-4 mt-2 text-sm text-muted-foreground">Expand a case to inspect its expected behavior, recorded answer, and evidence.</p>{dashboard.cases.length ? dashboard.cases.map((result) => <CaseResult key={result.id} result={result} open={expandedCases.has(result.id)} onToggle={() => toggleCase(result.id)} />) : <p className="py-5 text-sm text-muted-foreground">No case results were recorded.</p>}</section>
 
     <details className="rounded-lg border p-5"><summary className={`cursor-pointer text-lg font-medium ${focusClass}`}>Run metadata and integrations</summary><div className="mt-5 space-y-6">
       <dl className="grid gap-4 sm:grid-cols-2"><Field label="Run ID">{run.id}</Field><Field label="Dataset">{run.dataset}</Field><Field label="Model">{run.model || "Not recorded"}</Field><Field label="Prompt">{run.prompt || "Not recorded"}</Field><Field label="Recorded at">{Number.isNaN(date.getTime()) ? "Not recorded" : `${dateFormat.format(date)} UTC`}</Field><Field label="Saved run status"><Status status={run.status} /></Field></dl>
@@ -157,7 +157,7 @@ export function EvaluationDashboardView() {
   const source = useEvaluationDataSource();
   const dashboard = query.data;
   return <div className="min-w-0 space-y-8">
-    <header className="flex flex-wrap items-start justify-between gap-5"><div className="min-w-0"><h1 className="text-3xl font-semibold tracking-tight">Evaluations</h1>{dashboard && <p className="mt-2 break-words text-base text-muted-foreground">{dashboard.run.name}</p>}</div><div className="max-w-sm"><Button disabled aria-describedby="evaluation-run-help">Run evaluation</Button><p id="evaluation-run-help" className="mt-2 text-sm leading-6 text-muted-foreground">This page shows saved evaluation results. Starting a run from the web interface is not available.</p></div></header>
+    <header className="atlas-page-header flex flex-wrap items-start justify-between gap-5"><div className="min-w-0"><h1 className="text-3xl font-semibold tracking-tight">Evaluations</h1>{dashboard && <p className="mt-2 break-words text-base text-muted-foreground">{dashboard.run.name}</p>}</div><div className="max-w-sm"><Button disabled aria-describedby="evaluation-run-help">Run evaluation</Button><p id="evaluation-run-help" className="mt-2 text-sm leading-6 text-muted-foreground">This page shows saved evaluation results. Starting a run from the web interface is not available.</p></div></header>
     <SourceDisclosure source={source} />
     {query.isPending ? <div role="status" aria-busy="true" className="space-y-4"><p>Loading evaluation results…</p><Skeleton className="h-16 w-full" /><Skeleton className="h-28 w-full" /></div> : query.isError ? <Card className="space-y-4 p-5" role="alert"><h2 className="font-semibold">Evaluation results could not be loaded</h2><p className="text-sm text-muted-foreground">{query.error.userMessage}</p><Button variant="outline" onClick={() => void query.refetch()}>Retry loading evaluations</Button></Card> : !dashboard ? <p role="status">No evaluation run is available.</p> : <DashboardResults key={dashboard.run.id} dashboard={dashboard} />}
   </div>;

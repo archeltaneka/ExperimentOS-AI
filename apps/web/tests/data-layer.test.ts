@@ -47,7 +47,7 @@ describe("typed data layer", () => {
 
   it("returns deterministic fixture ask responses", async () => {
     const services = createServices({ dataMode: "mock" });
-    const request = { question: "What happened?", experimentId: knownExperimentId, topK: 3 };
+    const request = { question: "What evidence supported the payment experiment recommendation?", experimentId: knownExperimentId, topK: 3 };
 
     await expect(services.ask.ask(request)).resolves.toEqual(await services.ask.ask(request));
   });

@@ -50,6 +50,20 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 typed configuration error. `live` requires `NEXT_PUBLIC_API_BASE_URL`; no failure falls back to mock.
 The explicit default remains `mock` so the portfolio starts without a backend.
 
+### Saved-answer Ask demo
+
+Mock Ask accepts only the sample question and experiment pairs declared in
+`apps/web/mock/ask.ts`. The payment record provides a recommendation-evidence sample and
+a limitations sample. Matching ignores case and whitespace; other questions or experiment
+IDs return `demo_unavailable`, never an unrelated answer. The adapter exposes sample
+questions through `AskService.samples` and `useAskSamples`, keeping fixtures out of UI imports.
+
+The question form explains this boundary before submission. Records without saved answers
+link to the supported payment sample. Live Ask continues accepting free-form questions
+scoped to the selected experiment. Changing experiments resets the question workspace so
+an earlier request cannot display its answer under a new experiment; retry preserves the
+failed question even when the draft has changed.
+
 | Service | Mock mode | Live mode |
 | --- | --- | --- |
 | Ask | deterministic fixture | real `POST /ask` |

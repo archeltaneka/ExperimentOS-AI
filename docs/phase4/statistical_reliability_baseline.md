@@ -184,12 +184,13 @@ DiD, propensity diagnostics, IPW ATE, and IPW ATT. It also includes
 [advanced causal conformance](advanced_causal_conformance.md) for repository DML/HTE,
 the supported EconML adapters, and existing DoWhy identification/handoff/refuters.
 Optional adapter absence is advisory; installed contract failures block.
+Complete scope additionally covers uncertainty-aware business-impact scenarios and
+product-intelligence workflow integration through the real in-process `/ask` API.
+Those checks use deterministic fixtures and mock presentation, not a live deployment.
 It does not cover:
 
 - causal forests;
 - unmeasured-confounding sensitivity analysis;
-- business-impact estimation;
-- product-intelligence workflow integration;
 - production telemetry deployment;
 - database-backed Phase 4 evaluation;
 - live LLM evaluation.

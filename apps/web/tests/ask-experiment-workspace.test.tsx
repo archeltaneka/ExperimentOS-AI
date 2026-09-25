@@ -7,6 +7,7 @@ const mutate = vi.fn();
 const reset = vi.fn();
 
 vi.mock("@/hooks/use-services", () => ({
+  useAskSamples: () => [{ experimentId: "8bb4bf4d-a372-4b6e-93a5-0dd9ad7c8750", question: "What evidence supported the payment experiment recommendation?" }],
   useAskMutation: () => ({ mutate, reset, isPending: false, isError: false, error: null }),
   useExperimentsQuery: () => ({
     data: [
@@ -58,6 +59,15 @@ const answer: RagAnswer = {
 };
 
 describe("AskExperimentWorkspace", () => {
+  it("exposes the selected sample and clears selection when the question is edited", () => {
+    render(<AskExperimentWorkspace />);
+    const sample = screen.getByRole("button", { name: /What evidence supported/i });
+    expect(sample).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(sample);
+    expect(sample).toHaveAttribute("aria-pressed", "true");
+    fireEvent.change(screen.getByRole("textbox", { name: "Question" }), { target: { value: "A different question" } });
+    expect(sample).toHaveAttribute("aria-pressed", "false");
+  });
   it("renders a labelled question form and prevents blank submissions", () => {
     render(<AskExperimentWorkspace />);
 
@@ -80,14 +90,14 @@ describe("AskExperimentWorkspace", () => {
   it("populates editable text from an example and submits only with Ctrl+Enter", () => {
     render(<AskExperimentWorkspace />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Which experiment produced/i }));
+    fireEvent.click(screen.getByRole("button", { name: /What evidence supported/i }));
     const question = screen.getByRole("textbox", { name: "Question" });
-    expect(question).toHaveValue("Which experiment produced the highest conversion lift?");
+    expect(question).toHaveValue("What evidence supported the payment experiment recommendation?");
     fireEvent.keyDown(question, { key: "Enter" });
     expect(mutate).not.toHaveBeenCalled();
     fireEvent.keyDown(question, { key: "Enter", ctrlKey: true });
     expect(mutate).toHaveBeenCalledWith(
-      expect.objectContaining({ question: "Which experiment produced the highest conversion lift?" }),
+      expect.objectContaining({ question: "What evidence supported the payment experiment recommendation?" }),
       expect.any(Object),
     );
   });

@@ -23,7 +23,7 @@ export function SourceDisclosure({
       <Database aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
       <div className="min-w-0">
         <p className="font-medium text-foreground">{source.label}</p>
-        <p className="mt-1 break-words text-muted-foreground">{source.detail}</p>
+        <p className="mt-1 break-words leading-6 text-muted-foreground">{source.detail}</p>
       </div>
     </div>
   );

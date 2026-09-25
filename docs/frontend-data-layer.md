@@ -50,6 +50,41 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 typed configuration error. `live` requires `NEXT_PUBLIC_API_BASE_URL`; no failure falls back to mock.
 The explicit default remains `mock` so the portfolio starts without a backend.
 
+### Saved-answer Ask demo
+
+Mock Ask accepts only the sample question and experiment pairs declared in
+`apps/web/mock/ask.ts`. The payment record provides a recommendation-evidence sample and
+a limitations sample. Matching ignores case and whitespace; other questions or experiment
+IDs return `demo_unavailable`, never an unrelated answer. The adapter exposes sample
+questions through `AskService.samples` and `useAskSamples`, keeping fixtures out of UI imports.
+
+The question form explains this boundary before submission. Records without saved answers
+link to the supported payment sample. Live Ask continues accepting free-form questions
+scoped to the selected experiment. Changing experiments resets the question workspace so
+an earlier request cannot display its answer under a new experiment; retry preserves the
+failed question even when the draft has changed.
+
+### Capability terminology
+
+`apps/web/lib/analysis-capabilities.ts` is the shared Phase 4 implementation inventory
+used by landing content, roadmap metadata, and experiment/evaluation fixtures. Its
+sources are `docs/phase4/workflow_analysis.md` and `docs/phase4/reliability_review.md`.
+
+- **Completed:** implemented within the documented backend scope. This is not a claim
+  of a result for an experiment, a web control, deployment, or production certification.
+- **Optional adapter:** implemented, but execution requires compatible dependencies
+  and configuration. EconML and DoWhy retain this qualification.
+- **Saved-answer demo:** fixed answers for explicitly supported experiment/question pairs.
+- **Live Ask:** free-form questions sent to the backend about one experiment. The web
+  request does not include the structured analysis declaration or datasets needed to
+  execute Phase 4 methods.
+- **Future research:** scope beyond the implemented methods, without a delivery commitment.
+
+Phase 4 is implemented within the reviewed scope, with method-specific advisories.
+The roadmap permits zero active phases; it must not invent active work to fill a display.
+Public deployment remains unverified. Human approval and method/input validation remain
+required wherever the documented workflow calls for them.
+
 | Service | Mock mode | Live mode |
 | --- | --- | --- |
 | Ask | deterministic fixture | real `POST /ask` |

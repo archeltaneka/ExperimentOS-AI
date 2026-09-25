@@ -1,14 +1,20 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const pathname = "/roadmap";
+let pathname = "/roadmap";
 vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
 
 import { ApplicationShell } from "@/components/application-shell";
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); pathname = "/roadmap"; });
 
 describe("application shell", () => {
+  it("keeps the parent workspace selected while viewing an experiment", () => {
+    pathname = "/ask-experiment/8bb4bf4d-a372-4b6e-93a5-0dd9ad7c8750";
+    render(<ApplicationShell><p>Experiment evidence</p></ApplicationShell>);
+    expect(screen.getByRole("link", { name: "Ask Experiment" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Overview" })).not.toHaveAttribute("aria-current");
+  });
   it("provides a skip link that targets the main content landmark", () => {
     render(<ApplicationShell><p>Route content</p></ApplicationShell>);
 
@@ -23,7 +29,7 @@ describe("application shell", () => {
     render(<ApplicationShell><p>Route content</p></ApplicationShell>);
 
     expect(screen.getByRole("link", { name: "Roadmap" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "View demo" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Product overview" })).toHaveAttribute("href", "/");
     const trigger = screen.getByRole("button", { name: "Open navigation" });
     fireEvent.click(trigger);
     expect(screen.getByRole("dialog", { name: "Navigation" })).toBeVisible();

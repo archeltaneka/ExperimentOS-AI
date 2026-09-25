@@ -1,4 +1,4 @@
-export type ApiErrorCode = "network" | "timeout" | "aborted" | "invalid_response" | "validation" | "server" | "not_found" | "configuration" | "unsupported";
+export type ApiErrorCode = "network" | "timeout" | "aborted" | "invalid_response" | "validation" | "server" | "not_found" | "configuration" | "unsupported" | "demo_unavailable";
 
 export class ApiError extends Error {
   readonly code: ApiErrorCode; readonly status?: number; readonly diagnostic?: string;
@@ -6,6 +6,7 @@ export class ApiError extends Error {
     super(message); this.name = "ApiError"; this.code = code; this.status = status; this.diagnostic = diagnostic;
   }
   get userMessage(): string {
+    if (this.code === "demo_unavailable") return "There is no saved answer for this question and experiment. Choose one of the supported sample questions for the payment experiment.";
     if (this.code === "network") return "Unable to reach the service.";
     if (this.code === "timeout") return "The request timed out.";
     if (this.code === "aborted") return "The request was cancelled.";

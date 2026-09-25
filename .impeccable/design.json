@@ -1,0 +1,505 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-24T14:19:13.213235+00:00",
+  "title": "Design System: ExperimentOS AI",
+  "extensions": {
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Background",
+        "tonalRamp": [
+          "oklch(15% 0.0060 223.46)",
+          "oklch(26% 0.0060 223.46)",
+          "oklch(38% 0.0060 223.46)",
+          "oklch(49% 0.0060 223.46)",
+          "oklch(61% 0.0060 223.46)",
+          "oklch(72% 0.0060 223.46)",
+          "oklch(84% 0.0060 223.46)",
+          "oklch(95% 0.0060 223.46)"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0422 220.35)",
+          "oklch(26% 0.0422 220.35)",
+          "oklch(38% 0.0422 220.35)",
+          "oklch(49% 0.0422 220.35)",
+          "oklch(61% 0.0422 220.35)",
+          "oklch(72% 0.0422 220.35)",
+          "oklch(84% 0.0422 220.35)",
+          "oklch(95% 0.0422 220.35)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(49% 0.0000 89.88)",
+          "oklch(61% 0.0000 89.88)",
+          "oklch(72% 0.0000 89.88)",
+          "oklch(84% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "card-foreground": {
+        "role": "neutral",
+        "displayName": "Card Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0422 220.35)",
+          "oklch(26% 0.0422 220.35)",
+          "oklch(38% 0.0422 220.35)",
+          "oklch(49% 0.0422 220.35)",
+          "oklch(61% 0.0422 220.35)",
+          "oklch(72% 0.0422 220.35)",
+          "oklch(84% 0.0422 220.35)",
+          "oklch(95% 0.0422 220.35)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(15% 0.0095 222.06)",
+          "oklch(26% 0.0095 222.06)",
+          "oklch(38% 0.0095 222.06)",
+          "oklch(49% 0.0095 222.06)",
+          "oklch(61% 0.0095 222.06)",
+          "oklch(72% 0.0095 222.06)",
+          "oklch(84% 0.0095 222.06)",
+          "oklch(95% 0.0095 222.06)"
+        ]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Muted Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0282 223.05)",
+          "oklch(26% 0.0282 223.05)",
+          "oklch(38% 0.0282 223.05)",
+          "oklch(49% 0.0282 223.05)",
+          "oklch(61% 0.0282 223.05)",
+          "oklch(72% 0.0282 223.05)",
+          "oklch(84% 0.0282 223.05)",
+          "oklch(95% 0.0282 223.05)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "tonalRamp": [
+          "oklch(15% 0.0166 221.10)",
+          "oklch(26% 0.0166 221.10)",
+          "oklch(38% 0.0166 221.10)",
+          "oklch(49% 0.0166 221.10)",
+          "oklch(61% 0.0166 221.10)",
+          "oklch(72% 0.0166 221.10)",
+          "oklch(84% 0.0166 221.10)",
+          "oklch(95% 0.0166 221.10)"
+        ]
+      },
+      "input": {
+        "role": "neutral",
+        "displayName": "Input",
+        "tonalRamp": [
+          "oklch(15% 0.0248 227.86)",
+          "oklch(26% 0.0248 227.86)",
+          "oklch(38% 0.0248 227.86)",
+          "oklch(49% 0.0248 227.86)",
+          "oklch(61% 0.0248 227.86)",
+          "oklch(72% 0.0248 227.86)",
+          "oklch(84% 0.0248 227.86)",
+          "oklch(95% 0.0248 227.86)"
+        ]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Primary",
+        "tonalRamp": [
+          "oklch(15% 0.2028 263.88)",
+          "oklch(26% 0.2028 263.88)",
+          "oklch(38% 0.2028 263.88)",
+          "oklch(49% 0.2028 263.88)",
+          "oklch(61% 0.2028 263.88)",
+          "oklch(72% 0.2028 263.88)",
+          "oklch(84% 0.2028 263.88)",
+          "oklch(95% 0.2028 263.88)"
+        ]
+      },
+      "primary-foreground": {
+        "role": "semantic",
+        "displayName": "Primary Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(49% 0.0000 89.88)",
+          "oklch(61% 0.0000 89.88)",
+          "oklch(72% 0.0000 89.88)",
+          "oklch(84% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "secondary": {
+        "role": "semantic",
+        "displayName": "Secondary",
+        "tonalRamp": [
+          "oklch(15% 0.0140 219.63)",
+          "oklch(26% 0.0140 219.63)",
+          "oklch(38% 0.0140 219.63)",
+          "oklch(49% 0.0140 219.63)",
+          "oklch(61% 0.0140 219.63)",
+          "oklch(72% 0.0140 219.63)",
+          "oklch(84% 0.0140 219.63)",
+          "oklch(95% 0.0140 219.63)"
+        ]
+      },
+      "secondary-foreground": {
+        "role": "semantic",
+        "displayName": "Secondary Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0487 218.65)",
+          "oklch(26% 0.0487 218.65)",
+          "oklch(38% 0.0487 218.65)",
+          "oklch(49% 0.0487 218.65)",
+          "oklch(61% 0.0487 218.65)",
+          "oklch(72% 0.0487 218.65)",
+          "oklch(84% 0.0487 218.65)",
+          "oklch(95% 0.0487 218.65)"
+        ]
+      },
+      "accent": {
+        "role": "semantic",
+        "displayName": "Accent",
+        "tonalRamp": [
+          "oklch(15% 0.0314 267.97)",
+          "oklch(26% 0.0314 267.97)",
+          "oklch(38% 0.0314 267.97)",
+          "oklch(49% 0.0314 267.97)",
+          "oklch(61% 0.0314 267.97)",
+          "oklch(72% 0.0314 267.97)",
+          "oklch(84% 0.0314 267.97)",
+          "oklch(95% 0.0314 267.97)"
+        ]
+      },
+      "accent-foreground": {
+        "role": "semantic",
+        "displayName": "Accent Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.1573 263.94)",
+          "oklch(26% 0.1573 263.94)",
+          "oklch(38% 0.1573 263.94)",
+          "oklch(49% 0.1573 263.94)",
+          "oklch(61% 0.1573 263.94)",
+          "oklch(72% 0.1573 263.94)",
+          "oklch(84% 0.1573 263.94)",
+          "oklch(95% 0.1573 263.94)"
+        ]
+      },
+      "destructive": {
+        "role": "semantic",
+        "displayName": "Destructive",
+        "tonalRamp": [
+          "oklch(15% 0.1656 19.28)",
+          "oklch(26% 0.1656 19.28)",
+          "oklch(38% 0.1656 19.28)",
+          "oklch(49% 0.1656 19.28)",
+          "oklch(61% 0.1656 19.28)",
+          "oklch(72% 0.1656 19.28)",
+          "oklch(84% 0.1656 19.28)",
+          "oklch(95% 0.1656 19.28)"
+        ]
+      },
+      "destructive-foreground": {
+        "role": "semantic",
+        "displayName": "Destructive Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(49% 0.0000 89.88)",
+          "oklch(61% 0.0000 89.88)",
+          "oklch(72% 0.0000 89.88)",
+          "oklch(84% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "ring": {
+        "role": "semantic",
+        "displayName": "Ring",
+        "tonalRamp": [
+          "oklch(15% 0.2028 263.88)",
+          "oklch(26% 0.2028 263.88)",
+          "oklch(38% 0.2028 263.88)",
+          "oklch(49% 0.2028 263.88)",
+          "oklch(61% 0.2028 263.88)",
+          "oklch(72% 0.2028 263.88)",
+          "oklch(84% 0.2028 263.88)",
+          "oklch(95% 0.2028 263.88)"
+        ]
+      },
+      "status-completed": {
+        "role": "semantic",
+        "displayName": "Status Completed",
+        "tonalRamp": [
+          "oklch(15% 0.0936 164.82)",
+          "oklch(26% 0.0936 164.82)",
+          "oklch(38% 0.0936 164.82)",
+          "oklch(49% 0.0936 164.82)",
+          "oklch(61% 0.0936 164.82)",
+          "oklch(72% 0.0936 164.82)",
+          "oklch(84% 0.0936 164.82)",
+          "oklch(95% 0.0936 164.82)"
+        ]
+      },
+      "status-progress": {
+        "role": "semantic",
+        "displayName": "Status Progress",
+        "tonalRamp": [
+          "oklch(15% 0.1059 64.83)",
+          "oklch(26% 0.1059 64.83)",
+          "oklch(38% 0.1059 64.83)",
+          "oklch(49% 0.1059 64.83)",
+          "oklch(61% 0.1059 64.83)",
+          "oklch(72% 0.1059 64.83)",
+          "oklch(84% 0.1059 64.83)",
+          "oklch(95% 0.1059 64.83)"
+        ]
+      },
+      "status-planned": {
+        "role": "semantic",
+        "displayName": "Status Planned",
+        "tonalRamp": [
+          "oklch(15% 0.2028 263.88)",
+          "oklch(26% 0.2028 263.88)",
+          "oklch(38% 0.2028 263.88)",
+          "oklch(49% 0.2028 263.88)",
+          "oklch(61% 0.2028 263.88)",
+          "oklch(72% 0.2028 263.88)",
+          "oklch(84% 0.2028 263.88)",
+          "oklch(95% 0.2028 263.88)"
+        ]
+      },
+      "status-research": {
+        "role": "semantic",
+        "displayName": "Status Research",
+        "tonalRamp": [
+          "oklch(15% 0.1251 307.00)",
+          "oklch(26% 0.1251 307.00)",
+          "oklch(38% 0.1251 307.00)",
+          "oklch(49% 0.1251 307.00)",
+          "oklch(61% 0.1251 307.00)",
+          "oklch(72% 0.1251 307.00)",
+          "oklch(84% 0.1251 307.00)",
+          "oklch(95% 0.1251 307.00)"
+        ]
+      },
+      "status-unavailable": {
+        "role": "semantic",
+        "displayName": "Status Unavailable",
+        "tonalRamp": [
+          "oklch(15% 0.0259 233.81)",
+          "oklch(26% 0.0259 233.81)",
+          "oklch(38% 0.0259 233.81)",
+          "oklch(49% 0.0259 233.81)",
+          "oklch(61% 0.0259 233.81)",
+          "oklch(72% 0.0259 233.81)",
+          "oklch(84% 0.0259 233.81)",
+          "oklch(95% 0.0259 233.81)"
+        ]
+      },
+      "atlas-teal": {
+        "role": "secondary",
+        "displayName": "Atlas Teal",
+        "tonalRamp": [
+          "oklch(15% 0.0487 218.65)",
+          "oklch(26% 0.0487 218.65)",
+          "oklch(38% 0.0487 218.65)",
+          "oklch(49% 0.0487 218.65)",
+          "oklch(61% 0.0487 218.65)",
+          "oklch(72% 0.0487 218.65)",
+          "oklch(84% 0.0487 218.65)",
+          "oklch(95% 0.0487 218.65)"
+        ]
+      },
+      "atlas-amber": {
+        "role": "tertiary",
+        "displayName": "Atlas Amber",
+        "tonalRamp": [
+          "oklch(15% 0.1480 68.86)",
+          "oklch(26% 0.1480 68.86)",
+          "oklch(38% 0.1480 68.86)",
+          "oklch(49% 0.1480 68.86)",
+          "oklch(61% 0.1480 68.86)",
+          "oklch(72% 0.1480 68.86)",
+          "oklch(84% 0.1480 68.86)",
+          "oklch(95% 0.1480 68.86)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Implemented display text role."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Implemented headline text role."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Implemented title text role."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Implemented body text role."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Implemented label text role."
+      },
+      "reference": {
+        "displayName": "Reference",
+        "purpose": "Source references and identifiers."
+      },
+      "score": {
+        "displayName": "Score",
+        "purpose": "Finite numerical evaluation scores only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sample-evidence",
+        "value": "0 18px 50px #143d4814",
+        "purpose": "Public sample panel only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "evidence-arrival",
+        "value": ".7s cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Answer background fades from pale cobalt to white."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "Animation and transition duration under reduced-motion preference."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Shared primary action.",
+      "html": "<button class=\"ds-button\">Ask question</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;border:0;border-radius:calc(var(--radius, .875rem) - 2px);padding:8px 12px;font:500 14px/20px var(--font-geist-sans, sans-serif);transition:color .15s,background-color .15s}.ds-button:focus-visible{outline:2px solid var(--ring, #2457d6);outline-offset:2px}.ds-button:disabled{pointer-events:none;opacity:.5}@media(prefers-reduced-motion:reduce){.ds-button{transition-duration:.01ms}}.ds-button{background:var(--primary, #2457d6);color:var(--primary-foreground, #ffffff);}.ds-button:hover{background:color-mix(in srgb, var(--primary, #2457d6) 90%, transparent)}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Shared secondary action.",
+      "html": "<button class=\"ds-button\">Ask question</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;border:0;border-radius:calc(var(--radius, .875rem) - 2px);padding:8px 12px;font:500 14px/20px var(--font-geist-sans, sans-serif);transition:color .15s,background-color .15s}.ds-button:focus-visible{outline:2px solid var(--ring, #2457d6);outline-offset:2px}.ds-button:disabled{pointer-events:none;opacity:.5}@media(prefers-reduced-motion:reduce){.ds-button{transition-duration:.01ms}}.ds-button{background:var(--secondary, #dce8ec);color:var(--secondary-foreground, #143d48);}.ds-button:hover{background:color-mix(in srgb, var(--secondary, #dce8ec) 80%, transparent)}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Shared outline action.",
+      "html": "<button class=\"ds-button\">Ask question</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;border:0;border-radius:calc(var(--radius, .875rem) - 2px);padding:8px 12px;font:500 14px/20px var(--font-geist-sans, sans-serif);transition:color .15s,background-color .15s}.ds-button:focus-visible{outline:2px solid var(--ring, #2457d6);outline-offset:2px}.ds-button:disabled{pointer-events:none;opacity:.5}@media(prefers-reduced-motion:reduce){.ds-button{transition-duration:.01ms}}.ds-button{background:transparent;color:var(--foreground, #173842);border:1px solid var(--input, #9cafb8);}.ds-button:hover{background:var(--muted, #e2eaed)}"
+    },
+    {
+      "name": "Question Field",
+      "kind": "input",
+      "refersTo": "question-field",
+      "description": "Multiline question input.",
+      "html": "<label class=\"ds-label\" for=\"ds-question\">Question</label><textarea class=\"ds-field\" id=\"ds-question\" rows=\"4\" placeholder=\"Choose a supported sample question above.\"></textarea>",
+      "css": ".ds-label{display:block;font:500 14px var(--font-geist-sans,sans-serif);margin-bottom:8px}.ds-field{width:90%;resize:vertical;background:var(--background,#edf2f4);color:var(--foreground,#173842);border:1px solid var(--input,#9cafb8);border-radius:calc(var(--radius,.875rem) - 2px);padding:8px 12px;font:16px/24px var(--font-geist-sans,sans-serif)}.ds-field::placeholder{color:var(--muted-foreground,#52676f)}.ds-field:focus-visible{outline:2px solid var(--ring,#2457d6);outline-offset:2px}.ds-field:disabled{opacity:.6}"
+    },
+    {
+      "name": "Evidence Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Outer evidence container with flat ruled source rows.",
+      "html": "<section class=\"ds-card\"><h2 class=\"ds-title\">Citations</h2><p class=\"ds-row\"><span class=\"ds-ref\">[1]</span> Experiment report \u00b7 Results</p></section>",
+      "css": ".ds-card{background:var(--card,#fff);color:var(--card-foreground,#173842);border:1px solid var(--border,#cbd9de);border-radius:var(--radius,.875rem);padding:24px;font-family:var(--font-geist-sans,sans-serif)}.ds-title{font-size:18px;font-weight:600;margin:0}.ds-row{border-top:1px solid var(--border,#cbd9de);padding:12px 0;font-size:14px}.ds-ref{font:12px var(--font-geist-mono,monospace);color:var(--muted-foreground,#52676f)}"
+    },
+    {
+      "name": "Completed Chip",
+      "kind": "chip",
+      "refersTo": "status-chip",
+      "description": "Explicit semantic capability label.",
+      "html": "<span class=\"ds-chip\">Completed</span>",
+      "css": ".ds-chip{display:inline-flex;border-radius:9999px;padding:2px 8px;font:500 12px/16px var(--font-geist-sans,sans-serif);white-space:nowrap;color:var(--status-completed,#197052);background:color-mix(in srgb,var(--status-completed,#197052) 10%,transparent);border:1px solid color-mix(in srgb,var(--status-completed,#197052) 30%,transparent)}"
+    },
+    {
+      "name": "Rail Navigation",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "Teal rail with amber current destination.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Sample navigation\"><a href=\"#ask\" aria-current=\"page\">Ask Experiment</a><a href=\"#explore\">Experiment Explorer</a></nav>",
+      "css": ".ds-nav{background:var(--atlas-teal,#143d48);padding:16px;font:500 14px var(--font-geist-sans,sans-serif)}.ds-nav a{display:flex;align-items:center;min-height:56px;padding:0 12px;margin:8px 0;border-radius:12px;color:#bdd2d9;text-decoration:none;transition:background-color .15s}.ds-nav a:hover{background:#245360;color:#f1f8fa}.ds-nav a[aria-current]{background:var(--atlas-amber,#f3a33b);color:#193b43}.ds-nav a:focus-visible{outline:2px solid var(--atlas-amber,#f3a33b);outline-offset:2px}@media(prefers-reduced-motion:reduce){.ds-nav a{transition-duration:.01ms}}"
+    },
+    {
+      "name": "Evaluation Score",
+      "kind": "custom",
+      "refersTo": "evaluation-score",
+      "description": "Finite score emphasis; unavailable values remain normal-sized.",
+      "html": "<dl class=\"ds-metric\"><dt>Current score</dt><dd class=\"ds-score\">0.92</dd><dt>Baseline score</dt><dd class=\"ds-unavailable\">Unavailable</dd></dl>",
+      "css": ".ds-metric{background:var(--card,#fff);border:1px solid var(--border,#cbd9de);border-radius:16px;padding:24px;font:14px var(--font-geist-sans,sans-serif);color:var(--foreground,#173842)}.ds-metric dt{color:var(--muted-foreground,#52676f);font-size:12px;margin-top:12px}.ds-metric dd{margin:4px 0 0;font-variant-numeric:tabular-nums}.ds-score{color:var(--primary,#2457d6);font-size:32px;font-weight:600;line-height:1.2}.ds-unavailable{font-size:14px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Evidence Atlas",
+    "overview": "Evidence Atlas uses deep teal framing, cobalt section fields, a cool pale canvas, and white evidence surfaces to make analysis prominent and sources inspectable. Geist provides a readable operating interface, with enlarged, tightly set headings and aligned numerical measurements.\n\nThe system is expressive through color, hierarchy, and asymmetric evidence layouts. Fixture disclosure, uncertainty, capability status, and human decision authority remain visible alongside results.",
+    "keyCharacteristics": [
+      "Strong teal framing and cobalt orientation fields.",
+      "Prominent measurements with readable source material.",
+      "Restrained rounded containers and flat ruled evidence rows."
+    ],
+    "rules": [
+      {
+        "name": "The Measured Evidence Rule",
+        "body": "Use the enlarged evaluation score treatment only for finite numerical scores; unavailable labels retain normal text size.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do retain fixture disclosures, source links, and uncertainty beside the evidence they qualify.",
+      "Do use tabular numerals for measurements and Geist Mono for identifiers and references.",
+      "Do preserve visible selected, focus, disabled, and unavailable states.",
+      "Do keep citations and retrieved context as flat ruled rows inside their outer cards."
+    ],
+    "donts": [
+      "Don't apply the enlarged evaluation score style to unavailable text.",
+      "Don't turn execution status into a claim of quality or rollout approval.",
+      "Don't add decorative raster imagery as a substitute for actual evidence."
+    ]
+  }
+}

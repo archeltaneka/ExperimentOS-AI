@@ -6,7 +6,7 @@ import { experimentFixtures, paymentRecommendationExperiment } from "@/mock/expe
 import { roadmapFixtures } from "@/mock/roadmap";
 import { evaluateMetric } from "@/types/domain";
 
-const futureCapabilities = [
+const implementedAnalysisCapabilities = [
   "CUPED",
   "Sequential testing",
   "Bayesian A/B testing",
@@ -36,17 +36,16 @@ describe("deterministic fixture contracts", () => {
     ).toEqual((paymentRecommendationExperiment.citations ?? []).map((citation) => citation.id));
   });
 
-  it("keeps roadmap order, active status, and future capability claims honest", () => {
+  it("keeps roadmap order and implemented analysis status consistent", () => {
     expect(roadmapFixtures.map((phase) => phase.number)).toEqual([1, 2, 3, 4, 5, 6]);
-    expect(roadmapFixtures.filter((phase) => phase.status === "in_progress")).toHaveLength(1);
+    expect(roadmapFixtures.filter((phase) => phase.status === "in_progress")).toHaveLength(0);
     expect(new Set(roadmapFixtures.map((phase) => phase.number)).size).toBe(roadmapFixtures.length);
 
     const capabilities = roadmapFixtures.flatMap((phase) =>
       phase.capabilityGroups.flatMap((group) => group.capabilities),
     );
-    for (const capability of capabilities.filter((item) => futureCapabilities.includes(item.name))) {
-      expect(capability.status).not.toBe("completed");
-      expect(capability.status).not.toBe("in-progress");
+    for (const capability of capabilities.filter((item) => implementedAnalysisCapabilities.includes(item.name))) {
+      expect(capability.status).toBe("completed");
     }
   });
 

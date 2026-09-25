@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import Home from "@/app/page";
@@ -6,6 +6,17 @@ import Home from "@/app/page";
 afterEach(cleanup);
 
 describe("landing page", () => {
+  it("keeps the featured evidence disclosed and linked to its matching record", async () => {
+    render(await Home());
+    const preview = screen.getByRole("region", { name: "Featured demo experiment" });
+    expect(preview).toHaveTextContent("Adaptive payment recommendation");
+    expect(preview).toHaveTextContent("4.2");
+    expect(preview).toHaveTextContent(/fixture/i);
+    expect(preview).toHaveTextContent(/not a causal/i);
+    expect(within(preview).getByRole("link", { name: /inspect experiment/i })).toHaveAttribute(
+      "href", "/experiment-explorer/8bb4bf4d-a372-4b6e-93a5-0dd9ad7c8750",
+    );
+  });
   it("explains grounded experiment decision support with one primary heading", async () => {
     render(await Home());
 
@@ -66,15 +77,11 @@ describe("landing page", () => {
     expect(text.indexOf("Statistical Analysis")).toBeLessThan(text.indexOf("Decision Intelligence"));
   });
 
-  it("keeps roadmap and unfinished analytical capabilities honest", async () => {
+  it("distinguishes implemented analysis from future enterprise scope", async () => {
     render(await Home());
 
-    expect(screen.getAllByText("Product Intelligence")).not.toHaveLength(0);
-    expect(screen.getAllByText("In progress")).not.toHaveLength(0);
-    expect(screen.getByText("CUPED").closest("li")).toHaveTextContent("Planned");
-    expect(screen.getByText("Double Machine Learning").closest("li")).toHaveTextContent(
-      "Future research",
-    );
+    expect(screen.getByText("CUPED").closest("section")).toHaveTextContent("Completed");
+    expect(screen.getByText("Double Machine Learning").closest("section")).toHaveTextContent("Completed");
     expect(screen.getByText("Enterprise Platform").closest("li")).toHaveTextContent(
       "Future research",
     );
